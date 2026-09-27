@@ -20,12 +20,16 @@ schema.org Product JSON-LD `sku`/`mpn`), same barcode-keyed-identity
 principle as the rest of the catalog — a relaunch under a new SKU becomes
 a new row.
 
-Currently one brand (The Ordinary) as a proof of concept — chosen because
-it's the exact brand the gap was first found against (zero real entries
-existed for it before this), robots.txt allows its product pages, and its
-pages are server-rendered (no JS execution needed to read the ingredient
-list). Adding another brand means adding one BRANDS entry, matching each
-site's own JSON-LD + ingredient-list markup.
+Started with The Ordinary (chosen because it's the exact brand the gap
+was first found against — zero real entries existed for it before this).
+Added CeraVe second: also server-rendered and robots.txt-allowed, but a
+messier site than The Ordinary's — its product-listing grids are
+client-rendered (Vue.js), so its full catalog isn't discoverable via
+static sitemap/HTML the way The Ordinary's is; only 9 product URLs were
+reachable this way (see README_cosmetic.md for the accepted gap and what
+a full crawl would need). Its ingredient-list markup and product-identity
+field also differ from The Ordinary's, hence the per-brand `parser` key
+and extractor function below rather than one shared extractor.
 """
 from __future__ import annotations
 
@@ -38,12 +42,27 @@ import urllib.error
 import urllib.request
 
 SLEEP = 0.4
+# A real ingredient list is at most a few hundred words. Guards against the
+# exact bug found while building this: a boundary regex that (on some pages
+# only) matched 50,000+ characters of unrelated page content instead of the
+# ingredient list. If a future page-structure change reintroduces something
+# like it, this rejects the row instead of silently storing garbage.
+MAX_INGREDIENT_TEXT_LEN = 3000
 
 BRANDS = {
     "the_ordinary": {
         "brand_name": "The Ordinary",
         "sitemap_url": "https://theordinary.com/sitemap-en_US.xml",
         "url_pattern": re.compile(r"https://theordinary\.com/en-us/[a-z0-9-]+\.html"),
+        "parser": "the_ordinary",
+    },
+    "cerave": {
+        "brand_name": "CeraVe",
+        "sitemap_url": "https://a82962.sitemaphosting.com/4034207/sitemap.xml",
+        # Real product pages are exactly /skincare/{category}/{subcategory}/{slug} —
+        # category hub pages (fewer segments) are excluded by this depth match.
+        "url_pattern": re.compile(r"https://www\.cerave\.com/skincare/[a-z0-9-]+/[a-z0-9-]+/[a-z0-9-]+"),
+        "parser": "cerave",
     },
 }
 
@@ -88,17 +107,22 @@ def matched_active_ids(ingredients_text: str) -> list[str]:
     return [aid for aid, needles in COSMETIC_ACTIVES.items() if any(n in lowered for n in needles)]
 
 
-def extract_product(html: str, url: str) -> dict | None:
-    ld_json_blocks = re.findall(r'<script type="application/ld\+json">(.*?)</script>', html, re.DOTALL)
-    product_data = None
-    for block in ld_json_blocks:
+def find_product_json_ld(html: str) -> dict | None:
+    for block in re.findall(r'<script type="application/ld\+json">(.*?)</script>', html, re.DOTALL):
         try:
-            data = json.loads(block.strip())
+            # strict=False: CeraVe's Product JSON-LD embeds literal control
+            # characters (real newlines) inside string values, which fails
+            # strict JSON parsing — confirmed by hand before adding this.
+            data = json.loads(block.strip(), strict=False)
         except json.JSONDecodeError:
             continue
         if data.get("@type") == "Product":
-            product_data = data
-            break
+            return data
+    return None
+
+
+def extract_product_the_ordinary(html: str, url: str) -> dict | None:
+    product_data = find_product_json_ld(html)
     if not product_data:
         return None
 
@@ -106,6 +130,9 @@ def extract_product(html: str, url: str) -> dict | None:
     if not ingredients_match:
         return None
     ingredients_text = ingredients_match.group(1)
+    if len(ingredients_text) > MAX_INGREDIENT_TEXT_LEN:
+        print(f"  skipping {url}: extracted ingredient text implausibly long ({len(ingredients_text)} chars)", file=sys.stderr)
+        return None
 
     active_ids = matched_active_ids(ingredients_text)
     if not active_ids:
@@ -125,10 +152,65 @@ def extract_product(html: str, url: str) -> dict | None:
     }
 
 
+def extract_product_cerave(html: str, url: str) -> dict | None:
+    product_data = find_product_json_ld(html)
+    if not product_data:
+        return None
+
+    # Bug found by hand-inspecting a rendered page before trusting this at
+    # scale: originally cut at the first "<br" after the ingredients block,
+    # but that tag's distance from the block varies wildly by page -- on
+    # one product the nearest "<br" was 88,752 characters away (elsewhere
+    # on the page entirely), so the "ingredient text" swept up nearly the
+    # whole document. The reliable boundary is the block's own closing
+    # "</div>"; a "please be aware ingredients are updated" disclaimer and
+    # inline "<a href>" links to ingredient-detail pages both still land
+    # inside that div on other products, so those are stripped explicitly
+    # rather than relied on to be outside the boundary.
+    ingredients_match = re.search(r'keyIngredients-details__content">(.*?)</div>', html, re.DOTALL)
+    if not ingredients_match:
+        return None
+    ingredients_text = re.sub(r"<[^>]+>", " ", ingredients_match.group(1))
+    ingredients_text = re.split(r"please be aware", ingredients_text, flags=re.IGNORECASE)[0]
+    ingredients_text = re.sub(r"\s+", " ", ingredients_text).strip(" ,.")
+    if not ingredients_text:
+        return None
+    if len(ingredients_text) > MAX_INGREDIENT_TEXT_LEN:
+        print(f"  skipping {url}: extracted ingredient text implausibly long ({len(ingredients_text)} chars)", file=sys.stderr)
+        return None
+
+    active_ids = matched_active_ids(ingredients_text)
+    if not active_ids:
+        return None
+
+    # No single unambiguous barcode: pages embed multiple (this product's
+    # own, plus related-product carousel items), and JSON-LD here has no
+    # sku/mpn field. The canonical URL is CeraVe's own stable identifier
+    # for this product instead — still satisfies the "one distinct id per
+    # product" principle even though it isn't a GS1 barcode.
+    product_id = product_data.get("@id") or url
+
+    return {
+        "product_ndc": product_id,
+        "brand_name": product_data.get("name", "").strip() or "(unnamed product)",
+        "manufacturer_name": "CeraVe",
+        "active_ingredient_text": ingredients_text,
+        "active_ingredients_structured": ";".join(active_ids),
+        "source_url": url,
+    }
+
+
+EXTRACTORS = {
+    "the_ordinary": extract_product_the_ordinary,
+    "cerave": extract_product_cerave,
+}
+
+
 def main() -> None:
     rows: list[dict] = []
 
     for key, brand in BRANDS.items():
+        extractor = EXTRACTORS[brand["parser"]]
         print(f"Fetching sitemap for {brand['brand_name']}...", file=sys.stderr)
         sitemap_xml = _get(brand["sitemap_url"])
         if not sitemap_xml:
@@ -140,7 +222,7 @@ def main() -> None:
         for i, url in enumerate(urls, 1):
             html = _get(url)
             if html:
-                product = extract_product(html, url)
+                product = extractor(html, url)
                 if product:
                     product["manufacturer_name"] = product["manufacturer_name"] or brand["brand_name"]
                     rows.append(product)

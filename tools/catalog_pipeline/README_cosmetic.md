@@ -138,15 +138,54 @@ actual extracted output before running the full 102-page pass. Added
 `alpha-arbutin`, `glycolic-acid`, and `squalane` as new canonical actives
 (`app/src/db/actives.ts`) to cover what showed up in the real catalog.
 
+## Second brand: CeraVe (added 2026-09-27)
+
+Also server-rendered and robots.txt-allowed, but messier than The
+Ordinary: its product-listing/category grids are client-rendered (Vue.js),
+so only 9 product URLs were discoverable via its sitemap + static HTML
+(depth-4 `/skincare/{category}/{subcategory}/{slug}` paths) — nowhere near
+its full real catalog. A full crawl would need a JS-capable fetch
+(Playwright) to render the category grids before extracting links; not
+built. 9 of 9 matched a tracked active — real signature CeraVe formulas
+(niacinamide + hyaluronic acid + ceramides together, repeatedly).
+
+**A serious bug was caught here before it reached the database**, worth
+recording in full: the first extraction attempt cut the ingredient text at
+the first `<br` tag after the ingredients block, copying The Ordinary
+script's approach. On most CeraVe pages that boundary sits right after a
+short disclaimer paragraph — but on one product, the nearest `<br` in the
+*entire rest of the page* was 88,752 characters away, so the "ingredient
+text" swept up nearly the whole document. This silently inserted a
+53KB garbage string into `products.active_ingredient_text` and made that
+product's page render as an unstyled 11,000px wall of text — caught by
+actually looking at a Playwright screenshot after seeding, not by the
+curl/grep checks run beforehand, which found the right substrings amid
+the noise and reported false positives. Fixed by bounding at the block's
+own `</div>` instead (verified against both the pathological page and a
+page that does have the inline disclaimer, stripping that and any nested
+`<a href>` ingredient links explicitly rather than relying on the
+boundary alone) and adding `MAX_INGREDIENT_TEXT_LEN` as a standing guard
+against this bug class recurring silently.
+
+Product identity: CeraVe's JSON-LD has no `sku`/`mpn` field, and the page
+embeds several barcodes (this product's own plus related-product carousel
+items) with no reliable way to tell which is which — so the canonical
+product URL (`@id` in the JSON-LD) is used as the identifier instead.
+Still one distinct id per product, just not a GS1 barcode for this brand.
+
 ## Adding another brand
 
-Add one `BRANDS` entry (sitemap URL + product-URL regex) and, if the site's
-markup differs, adjust `extract_product()`'s JSON-LD/ingredient-attribute
-lookup to match. Check `robots.txt` and confirm pages are server-rendered
-(no JS needed) before adding a new brand.
+Add one `BRANDS` entry (sitemap URL + product-URL regex) and a matching
+extractor function in `EXTRACTORS` if the site's JSON-LD/ingredient markup
+differs from the two already handled (it has, both times). Check
+`robots.txt`, confirm pages are server-rendered (no JS needed), and —
+learned the hard way above — **actually look at a rendered product page
+screenshot after seeding**, not just HTTP status codes and grep, before
+trusting a new extractor at scale.
 
 ## Files
 
-- `output/brand_direct_catalog.csv` — 43 rows, same schema as
-  `cosmetic_catalog.csv` (`source=brand_direct`, `verified=true`) plus a
-  `source_url` column pointing at the exact page scraped.
+- `output/brand_direct_catalog.csv` — 52 rows (43 The Ordinary + 9 CeraVe),
+  same schema as `cosmetic_catalog.csv` (`source=brand_direct`,
+  `verified=true`) plus a `source_url` column pointing at the exact page
+  scraped.

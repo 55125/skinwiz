@@ -36,8 +36,8 @@ This matters more than usual for a health product — read before demoing.
 **Real:**
 - All products, brand names, active ingredients, and exact concentrations
   — pulled live from openFDA + DailyMed + Open Beauty Facts + brand-direct
-  scraping (`tools/catalog_pipeline/`), not fabricated. 16,525 as of
-  2026-09-27 (15,255 FDA-sourced across 7 drug concerns; 1,270 in the new
+  scraping (`tools/catalog_pipeline/`), not fabricated. 16,534 as of
+  2026-09-27 (15,255 FDA-sourced across 7 drug concerns; 1,279 in the new
   Brightening & Texture concern, split across two trust tiers below) — run
   `npm run db:seed` and read its printed count for the current total, it
   grows as the catalog pipeline is re-run.
@@ -45,7 +45,7 @@ This matters more than usual for a health product — read before demoing.
   (`src/lib/data-source.ts`, `products.dataSource`/`verified` in
   `src/db/schema.ts`): openFDA/DailyMed (a manufacturer's legal FDA
   filing — no badge, the default), brand-direct (scraped from a brand's
-  own published product page — e.g. The Ordinary, 43 products; blue
+  own published product page — The Ordinary and CeraVe, 52 products; blue
   "Brand-verified" badge), and Open Beauty Facts (crowd-edited — real junk
   entries found in it during testing, e.g. a `"TESTBRAND"` test product;
   amber "Community-sourced" badge). Every non-default tier renders its

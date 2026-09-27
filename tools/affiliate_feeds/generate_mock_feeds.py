@@ -95,12 +95,37 @@ def write_cj_feed(sample: list[tuple[dict, str, str]], path: str) -> None:
             })
 
 
+def write_impact_feed(sample: list[tuple[dict, str, str]], path: str) -> None:
+    fields = [
+        "CatalogItemId", "Name", "Manufacturer", "Description", "CurrentPrice",
+        "Currency", "ImageUrl", "Url", "Gtin", "Category", "StockAvailability",
+    ]
+    with open(path, "w", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=fields)
+        writer.writeheader()
+        for i, (catalog_row, retail_title, size) in enumerate(sample):
+            writer.writerow({
+                "CatalogItemId": f"IMPACT{3000+i}",
+                "Name": f"{retail_title} - {size}",
+                "Manufacturer": catalog_row["brand_name"].split()[0],
+                "Description": f"{retail_title} with {catalog_row['active_ingredients_structured']}",
+                "CurrentPrice": f"{random.uniform(6.99, 24.99):.2f}",
+                "Currency": "USD",
+                "ImageUrl": f"https://example-cdn.invalid/impact/{3000+i}.jpg",
+                "Url": f"https://www.target.com/p/-/A-{3000+i}",
+                "Gtin": "",
+                "Category": "Health > Skin Care > Acne Treatment",
+                "StockAvailability": "InStock",
+            })
+
+
 def main() -> None:
     sample = load_catalog_sample()
     print(f"Matched {len(sample)}/{len(RETAILER_TITLE_OVERRIDES)} override rows against the real catalog")
     write_awin_feed(sample, "mock_feeds/awin_sample_feed.csv")
     write_cj_feed(sample, "mock_feeds/cj_sample_feed.csv")
-    print("Wrote mock_feeds/awin_sample_feed.csv and mock_feeds/cj_sample_feed.csv")
+    write_impact_feed(sample, "mock_feeds/impact_sample_feed.csv")
+    print("Wrote mock_feeds/awin_sample_feed.csv, cj_sample_feed.csv, impact_sample_feed.csv")
 
 
 if __name__ == "__main__":

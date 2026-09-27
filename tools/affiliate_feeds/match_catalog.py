@@ -106,6 +106,7 @@ def main() -> None:
     feeds = [
         ("awin", "mock_feeds/awin_sample_feed.csv"),
         ("cj", "mock_feeds/cj_sample_feed.csv"),
+        ("impact", "mock_feeds/impact_sample_feed.csv"),
     ]
 
     matched_rows = []

@@ -5,9 +5,15 @@ for why (no affiliate accounts approved yet) and what changes once one is.
 
 Field names below match each network's actual publicly-documented product
 feed spec (Awin's "Product Feed" datafeed, CJ's Product Catalog Search /
-bulk feed) — these are standard, publicly documented formats, not guesses.
-Amazon's PA API is JSON over a signed REST call, not a bulk feed, and is
-intentionally not adapted here — see README.md.
+bulk feed, Impact's Catalog Items schema) — these are standard, publicly
+documented formats, not guesses. Amazon's PA API is JSON over a signed
+REST call, not a bulk feed, and is intentionally not adapted here — see
+README.md.
+
+Impact is the highest-priority network for this catalog (see
+README.md#which-network-to-actually-target) — Target, Walmart, CVS, and
+Ulta are all hosted there, covering most of where these products are
+actually sold.
 """
 from __future__ import annotations
 
@@ -66,7 +72,33 @@ def from_cj_row(row: dict) -> NormalizedProduct:
     )
 
 
+def from_impact_row(row: dict) -> NormalizedProduct:
+    """Impact.com Catalog Items schema: https://integrations.impact.com/brand-api-reference/reference/catalogs/catalog-items
+
+    Note: Impact's raw catalog feed gives the merchant's destination Url, not
+    a ready-to-click affiliate link — the actual tracking/deep link is
+    generated per-publisher (via Impact's Deep Link Generator or link-build
+    API) at integration time, not baked into the product feed itself. buy_url
+    below is a placeholder for that until a real Impact account exists.
+    """
+    return NormalizedProduct(
+        network="impact",
+        external_id=row.get("CatalogItemId", ""),
+        title=row.get("Name", ""),
+        brand=row.get("Manufacturer", ""),
+        description=row.get("Description", ""),
+        price=row.get("CurrentPrice", ""),
+        currency=row.get("Currency", ""),
+        image_url=row.get("ImageUrl", ""),
+        buy_url=row.get("Url", ""),  # placeholder — needs Impact's deep-link step, see docstring
+        gtin_or_upc=row.get("Gtin", ""),
+        category=row.get("Category", ""),
+        in_stock=row.get("StockAvailability", ""),
+    )
+
+
 ADAPTERS = {
     "awin": from_awin_row,
     "cj": from_cj_row,
+    "impact": from_impact_row,
 }

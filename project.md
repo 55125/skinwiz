@@ -227,7 +227,7 @@ and hard for a brand to fake without being caught on disclosure.
 | **OTC drug product catalog** (names, labeler, exact active %, full inactive-ingredient list, images, dosage form) | **openFDA** (NDC + drug-label endpoints) / **DailyMed** | Free | Covers sunscreens, acne washes/treatments, skin protectants, hydrocortisone, antifungals, dandruff/seb-derm shampoos, colloidal-oatmeal eczema creams. More of a typical skincare catalog is "drug" than assumed — **this alone can carry an MVP launch niche.** Expect dupes, discontinued SKUs, inconsistent naming; not FDA-verified for accuracy, just listing data. |
 | **OTC monograph rules** | FDA OTC monographs (acne, sunscreen, skin protectant, antifungal) | Free | Defines allowed actives/concentrations/claims — also the claim-compliance guardrail |
 | **Cosmetic product catalog** (serums, non-monograph moisturizers/cleansers) | Open Beauty Facts | Free (ODbL — share-alike; keep derived scores/data in a separate DB) | Weak US coverage — supplement with brand-submitted data + user label-photo OCR |
-| **Retail price/image/buy-link** | Affiliate network feeds (Rakuten, Impact, CJ, Awin, Amazon PA API) | Free w/ approval | Amazon API requires ongoing qualifying sales. No account approved yet — [tools/affiliate_feeds/](tools/affiliate_feeds/) builds the normalized schema + Awin/CJ adapters + matching pipeline against synthetic mock feeds, ready to point at a real feed once one exists. |
+| **Retail price/image/buy-link** | Affiliate network feeds (Rakuten, Impact, CJ, Awin, Amazon PA API) | Free w/ approval | **Targeting decided 2026-09-27**, see [tools/affiliate_feeds/README.md](tools/affiliate_feeds/README.md#which-network-to-actually-target): apply to **Impact** (Target, Walmart, CVS, Ulta) and **CJ Affiliate** (Walgreens, Neutrogena brand-direct at 4–8%) first — both free, together cover most of where this catalog's products are actually sold. Amazon deprioritized (1% health/personal-care commission, needs ongoing qualifying sales to keep access). No account approved yet — the pipeline has adapters for all three (Awin/CJ/Impact) plus a matching pipeline validated against synthetic mock feeds, ready to point at a real feed once one exists. |
 | **Barcode matching** | ~~Drug NDC↔UPC mapping~~ — **not reliable, corrected 2026-09-27** | Free | The NDC→UPC numeric conversion is a pharmacy point-of-sale convention for relabeled prescriptions, not how retail OTC products' manufacturer-assigned UPCs work — there's no mathematical link to join on. Real mechanism: fuzzy title/brand text matching with an active-ingredient cross-check + a manual-review tier for low-confidence matches, see [tools/affiliate_feeds/README.md](tools/affiliate_feeds/README.md). |
 | **Ingredient function/restrictions** | EU CosIng | Free | |
 | **Chemistry/identifiers** | PubChem API | Free | |
@@ -387,3 +387,9 @@ directly licensing the evidence engine.
       grade, concentration, vehicle, contraindication/interaction rules,
       red-flag gate) — structure can be built ahead of the clinical
       content, which you author/verify.
+- [ ] **Apply to Impact and CJ Affiliate** — the two networks worth
+      targeting first per the research in
+      [tools/affiliate_feeds/README.md](tools/affiliate_feeds/README.md#which-network-to-actually-target)
+      (Target/Walmart/CVS/Ulta via Impact, Walgreens + Neutrogena
+      brand-direct via CJ). This needs your own site/business info to
+      apply — not something to do from here.

@@ -4,6 +4,49 @@ Joins affiliate-network product feeds (price, image, buy-link) onto the
 openFDA acne+sun catalog from `tools/catalog_pipeline/` — project.md §6,
 MVP build order step 2.
 
+## Which network to actually target
+
+Researched live (2026-09-27) which network hosts the retailers that
+actually sell the products in the acne+sun catalog — CeraVe, Neutrogena,
+Differin, Aveeno, Cetaphil are mass-market drugstore brands, not prestige
+beauty, so Sephora-style luxury programs are a poor fit even though they
+pay well.
+
+| Retailer / brand | Network | Commission | Notes |
+|---|---|---|---|
+| Target | **Impact** | 1–8% (8% on Target-exclusive brands) | |
+| Walmart | **Impact** | up to 4% | Near-instant (~24h) approval reported |
+| CVS | **Impact** (7%) or FlexOffers (0.8%) | 7% via Impact | Apply via Impact, not FlexOffers |
+| Ulta | **Impact** | 2–5% | Confirmed via ulta.com/company/affiliate directly |
+| Walgreens | **CJ Affiliate** | 2%, 45-day cookie | Also listed on FlexOffers/Skimlinks/VigLink, CJ is primary |
+| Neutrogena (brand-direct) | **CJ Affiliate** | 4–8%, 45-day cookie | Confirmed via Neutrogena's own CJ signup link |
+| Sephora | Rakuten (primary) | 5–15% | Luxury/prestige-skewed, 24h cookie — deprioritize, doesn't match this catalog |
+| Amazon | Amazon Associates (own program) | 1% (health/personal care), 3% (non-luxury beauty) | Requires ongoing qualifying sales to keep access — weak pre-launch fit, already flagged in project.md §6 |
+
+**Recommendation: apply to Impact and CJ Affiliate first, both free to
+join.** Together they cover Target, Walmart, CVS, Ulta (Impact) plus
+Walgreens and Neutrogena's own direct program (CJ) — the actual retail
+destinations for most of what's in the catalog, in two applications.
+Deprioritize Amazon (thin margin, sales-qualification risk) and Rakuten/
+Sephora (wrong price tier for this niche) for now.
+
+**This changed the adapter plan.** Awin was one of the two adapters built
+in the first pass, picked for being well-documented, without first
+checking retailer coverage — a mistake. A search for Awin's US
+drugstore/mass-retail presence turned up nothing; it's UK/EU-centric and
+doesn't appear to carry Target, Walmart, CVS, or Walgreens. Kept the Awin
+adapter (harmless, and useful if a future DTC/European brand deal runs
+through it) but added a real Impact adapter to `affiliate_schema.py`,
+built from Impact's documented Catalog Items schema
+(`integrations.impact.com/brand-api-reference`), plus a matching mock feed
+— now 27/27 (9 products × 3 networks) match correctly.
+
+One caveat on Impact specifically: its product catalog feed gives the
+merchant's plain destination URL, not a ready-to-click affiliate link —
+the real tracking link is generated per-publisher via Impact's deep-link
+step at integration time, not baked into the feed. `buy_url` from the
+Impact adapter is a placeholder for that until a real account exists.
+
 ## No live data yet — by design
 
 You don't have an approved affiliate account (Rakuten, CJ, Impact, Awin) or

@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { parse } from "csv-parse/sync";
+import { sql } from "drizzle-orm";
 import { db } from "./client";
 import * as schema from "./schema";
 import { ACTIVE_DEFINITIONS, CONCERN_DEFINITIONS, matchActiveIds, nicheToConcernId } from "./actives";
@@ -67,14 +68,24 @@ async function main() {
   console.log("Seeding SkinWiz database...");
 
   // Wipe and regenerate reference/catalog data only, in FK-safe order.
-  // dermRatings, audienceOutcomes, dermRaters, and raterApplications are
-  // deliberately NOT wiped here -- once real submissions exist (a
-  // clinician's panel application, a real derm rating), this script needs
-  // to keep running safely on every deploy (see the repo-root Dockerfile's
-  // startup command) without silently deleting them. Safe today because
-  // SQLite doesn't enforce foreign keys here by default and product ids
-  // are stable across reseeds (openFDA NDC / barcode / manufacturer SKU),
-  // so any rows referencing them keep resolving correctly.
+  // dermRatings, audienceOutcomes, dermRaters, raterApplications, routines,
+  // routineSteps, and routineVotes are deliberately NOT wiped here -- once
+  // real submissions exist (a clinician's panel application, a real derm
+  // rating, a posted routine), this script needs to keep running safely on
+  // every deploy (see the repo-root Dockerfile's startup command) without
+  // silently deleting them.
+  //
+  // better-sqlite3 enforces foreign keys by default (confirmed the hard
+  // way: this threw SQLITE_CONSTRAINT_FOREIGNKEY the moment a real routine
+  // existed and referenced a concern this script was about to delete-then-
+  // reinsert) -- suspended for just this refresh, since concern/active ids
+  // are static code constants (CONCERN_DEFINITIONS/ACTIVE_DEFINITIONS) and
+  // product ids are stable across reseeds (openFDA NDC / barcode /
+  // manufacturer SKU), so every id a preserved row references gets
+  // reinserted identically a few lines down. Re-enabled before returning
+  // so runtime inserts (a new routine, a new vote) still get real
+  // integrity checking.
+  db.run(sql`PRAGMA foreign_keys = OFF`);
   db.delete(schema.affiliateLinks).run();
   db.delete(schema.evidenceNotes).run();
   db.delete(schema.products).run();
@@ -191,7 +202,8 @@ async function main() {
     console.log("  no affiliate output found, skipping (run tools/affiliate_feeds/match_catalog.py first)");
   }
 
-  console.log("Done. dermRaters, dermRatings, and audienceOutcomes are intentionally empty — no real panel or users yet.");
+  db.run(sql`PRAGMA foreign_keys = ON`);
+  console.log("Done. dermRaters, dermRatings, audienceOutcomes, and routines are intentionally left untouched.");
 }
 
 main();

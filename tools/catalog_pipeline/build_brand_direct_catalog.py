@@ -34,6 +34,7 @@ and extractor function below rather than one shared extractor.
 from __future__ import annotations
 
 import csv
+import html as html_module
 import json
 import re
 import sys
@@ -129,9 +130,18 @@ def extract_product_the_ordinary(html: str, url: str) -> dict | None:
     ingredients_match = re.search(r'data-original-ingredients="([^"]*)"', html)
     if not ingredients_match:
         return None
-    ingredients_text = ingredients_match.group(1)
+    ingredients_text = html_module.unescape(ingredients_match.group(1))
     if len(ingredients_text) > MAX_INGREDIENT_TEXT_LEN:
         print(f"  skipping {url}: extracted ingredient text implausibly long ({len(ingredients_text)} chars)", file=sys.stderr)
+        return None
+    # Bundle/kit pages (e.g. "The Daily Set") concatenate several products'
+    # ingredient lists into this one attribute, separated by embedded
+    # &lt;strong&gt;/&lt;br&gt; markup for display formatting -- caught by
+    # actually reading a rendered product card, not by reasoning about the
+    # HTML alone. A real single-product ingredient list is a plain
+    # comma-separated INCI string with no markup, so any HTML-entity marker
+    # here is itself the signal that this page isn't one.
+    if "&lt;" in ingredients_text or "<" in ingredients_text:
         return None
 
     active_ids = matched_active_ids(ingredients_text)
@@ -171,6 +181,10 @@ def extract_product_cerave(html: str, url: str) -> dict | None:
     if not ingredients_match:
         return None
     ingredients_text = re.sub(r"<[^>]+>", " ", ingredients_match.group(1))
+    # html.unescape handles &nbsp;/&amp;/etc -- found a live &nbsp; leaking
+    # through into a rendered product card (a real, visible bug, not just a
+    # theoretical one) because tag-stripping alone doesn't decode entities.
+    ingredients_text = html_module.unescape(ingredients_text)
     ingredients_text = re.split(r"please be aware", ingredients_text, flags=re.IGNORECASE)[0]
     ingredients_text = re.sub(r"\s+", " ", ingredients_text).strip(" ,.")
     if not ingredients_text:

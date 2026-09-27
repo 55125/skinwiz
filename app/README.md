@@ -5,7 +5,8 @@ concerns (acne, sun protection, antifungal, antidandruff, anti-itch, dry
 skin/eczema, excessive sweating, brightening & texture), each with a dual
 score model (Derm Score / Audience Score) in the spirit of Rotten
 Tomatoes' critic/audience split, plus video-review search links (YouTube/
-TikTok/Instagram) — see `../project.md` for the full product brief.
+TikTok/Instagram), site search, "top" showcases, and community-submitted,
+voted-on routines — see `../project.md` for the full product brief.
 
 Built overnight (2026-09-27), expanded same-day — see "What's real vs. not"
 below before treating anything here as launch-ready.
@@ -78,7 +79,7 @@ This matters more than usual for a health product — read before demoing.
   (`src/lib/data-source.ts`, `products.dataSource`/`verified` in
   `src/db/schema.ts`): openFDA/DailyMed (a manufacturer's legal FDA
   filing — no badge, the default), brand-direct (scraped from a brand's
-  own published product page — The Ordinary and CeraVe, 52 products; blue
+  own published product page — The Ordinary and CeraVe, 48 products; blue
   "Brand-verified" badge), and Open Beauty Facts (crowd-edited — real junk
   entries found in it during testing, e.g. a `"TESTBRAND"` test product;
   amber "Community-sourced" badge). Every non-default tier renders its
@@ -102,8 +103,31 @@ This matters more than usual for a health product — read before demoing.
   (what an FDA monograph active is, typical concentration) — deliberately
   not a clinical efficacy grade. `evidenceGrade` stays `null` in the schema
   until a verified dermatologist sets one; nothing here invents one.
+- Search (`/search`, `src/lib/queries.ts`'s `searchProducts`/`searchActives`)
+  is a real substring match against brand name, manufacturer, and the raw
+  ingredient text — not FTS5/ranked relevance, but genuinely queries the
+  full catalog, not a canned subset.
+- "Top Actives" on the homepage is a real signal — an actual count of how
+  many catalog products contain each active (`getTopActives`, via SQLite's
+  `json_each` over `products.active_ids`), not a guess.
+- Routine vote scores (`routine_votes`) are real, unfaked community votes
+  once someone posts and others vote — see the routines section below for
+  what "real" doesn't cover here (no moderation).
 
 **Demo/placeholder — do not treat as real:**
+- **"Top Products" on the homepage is not a quality ranking.** There's no
+  popularity or rating signal to rank by yet (Derm Score / Audience Score
+  are still empty for everything), so it orders by data-source trust tier
+  first, then rotates randomly within tier (`getTopProducts`). The UI
+  caption says this explicitly — don't remove that caption without
+  replacing the underlying logic with a real signal first.
+- **Routines have zero moderation.** Anyone can post a routine and it's
+  live immediately — no review step, no report mechanism, unlike every
+  other form of content on the site (products are sourced/verified,
+  evidence notes are dermatologist-only). Every routines page carries a
+  visible disclaimer (`src/components/routine-disclaimer.tsx`) for this
+  reason. A moderation/reporting flow is a real gap for actual launch, not
+  an oversight — flag it in `project.md` §11 if it isn't already there.
 - **Affiliate prices and buy links** (27 products total, all acne). No
   affiliate account is approved yet (see
   `../tools/affiliate_feeds/README.md`), so these are synthetic mock-feed
@@ -136,8 +160,12 @@ This matters more than usual for a health product — read before demoing.
 - No auth, no user accounts, no first-party outcome-logging UI yet (the
   `audience_outcomes` table exists but nothing writes to it) — that's the
   next real feature once there's something to log against.
-- No search, only per-concern browsing + an active-ingredient filter chip
-  row.
+- No moderation/reporting mechanism for routines (see above) — the single
+  biggest content-safety gap on the site right now.
+- No product-linked routine steps — a step is free text (e.g. "Cleanser:
+  CeraVe Hydrating Cleanser"), not a reference to an actual catalog row.
+  Linking would need a product-search picker component this pass didn't
+  build.
 - Import pipeline, character-shift logic, etc. from the wizard architecture
   in the *other* project this workspace's CLAUDE.md describes (StoryPlume)
   are unrelated — don't confuse the two codebases.
@@ -154,5 +182,8 @@ src/lib/scoring.ts    the dual-score threshold logic
 src/lib/queries.ts    all DB reads, used by pages
 src/lib/video-links.ts   review search-link builder (YouTube/TikTok/Instagram)
 src/lib/data-source.ts   the three-tier trust badge logic — see above
-src/app/              routes: / , /concern/[slug] , /product/[id] , /about , /for-clinicians
+src/lib/routines.ts   routine queries + vote upsert (computed score, never stored)
+src/lib/session.ts    anonymous session cookie for routine submission/voting
+src/app/              routes: / , /concern/[slug] , /product/[id] , /about ,
+                      /for-clinicians , /search , /routines , /routines/[id] , /routines/new
 ```

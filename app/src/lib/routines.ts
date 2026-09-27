@@ -1,0 +1,133 @@
+import { and, eq, sql } from "drizzle-orm";
+import { db } from "@/db/client";
+import { routines, routineSteps, routineVotes, concerns } from "@/db/schema";
+
+// Vote score is computed on read (SUM of routine_votes.value), never
+// stored as a column on routines — see schema.ts's comment on why: a
+// stored score column could drift from the votes table, a computed one
+// can't.
+const scoreExpr = sql<number>`COALESCE(SUM(${routineVotes.value}), 0)`;
+const stepCountExpr = sql<number>`(SELECT COUNT(*) FROM routine_steps WHERE routine_steps.routine_id = ${routines.id})`;
+
+export function getTopRoutines(limit = 6) {
+  return db
+    .select({
+      id: routines.id,
+      title: routines.title,
+      concernId: routines.concernId,
+      concernName: concerns.name,
+      authorName: routines.authorName,
+      createdAt: routines.createdAt,
+      score: scoreExpr,
+      stepCount: stepCountExpr,
+    })
+    .from(routines)
+    .innerJoin(concerns, eq(concerns.id, routines.concernId))
+    .leftJoin(routineVotes, eq(routineVotes.routineId, routines.id))
+    .groupBy(routines.id)
+    .orderBy(sql`${scoreExpr} DESC`, sql`${routines.createdAt} DESC`)
+    .limit(limit)
+    .all();
+}
+
+export function getRoutinesForConcern(concernId: string) {
+  return db
+    .select({
+      id: routines.id,
+      title: routines.title,
+      authorName: routines.authorName,
+      notes: routines.notes,
+      createdAt: routines.createdAt,
+      score: scoreExpr,
+      stepCount: stepCountExpr,
+    })
+    .from(routines)
+    .leftJoin(routineVotes, eq(routineVotes.routineId, routines.id))
+    .where(eq(routines.concernId, concernId))
+    .groupBy(routines.id)
+    .orderBy(sql`${scoreExpr} DESC`, sql`${routines.createdAt} DESC`)
+    .all();
+}
+
+export function getRoutine(id: number) {
+  const routine = db
+    .select({
+      id: routines.id,
+      title: routines.title,
+      concernId: routines.concernId,
+      concernName: concerns.name,
+      authorName: routines.authorName,
+      notes: routines.notes,
+      createdAt: routines.createdAt,
+      score: scoreExpr,
+    })
+    .from(routines)
+    .innerJoin(concerns, eq(concerns.id, routines.concernId))
+    .leftJoin(routineVotes, eq(routineVotes.routineId, routines.id))
+    .where(eq(routines.id, id))
+    .groupBy(routines.id)
+    .get();
+  if (!routine) return null;
+
+  const steps = db
+    .select()
+    .from(routineSteps)
+    .where(eq(routineSteps.routineId, id))
+    .orderBy(routineSteps.stepOrder)
+    .all();
+
+  return { ...routine, steps };
+}
+
+export function getSessionVote(routineId: number, sessionId: string): number | null {
+  const row = db
+    .select({ value: routineVotes.value })
+    .from(routineVotes)
+    .where(and(eq(routineVotes.routineId, routineId), eq(routineVotes.sessionId, sessionId)))
+    .get();
+  return row?.value ?? null;
+}
+
+export function createRoutine(input: {
+  title: string;
+  concernId: string;
+  authorName: string | null;
+  notes: string | null;
+  steps: string[];
+  sessionId: string;
+}): number {
+  const result = db
+    .insert(routines)
+    .values({
+      title: input.title,
+      concernId: input.concernId,
+      authorName: input.authorName,
+      notes: input.notes,
+      sessionId: input.sessionId,
+    })
+    .run();
+  const routineId = Number(result.lastInsertRowid);
+
+  const stepRows = input.steps
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .map((description, i) => ({ routineId, stepOrder: i, description }));
+  if (stepRows.length > 0) {
+    db.insert(routineSteps).values(stepRows).run();
+  }
+  return routineId;
+}
+
+// onConflictDoUpdate lets someone change their vote (up -> down or vice
+// versa) rather than being locked into their first click; the unique
+// index on (routine_id, session_id) is what makes this an upsert instead
+// of a second row.
+export function voteOnRoutine(routineId: number, sessionId: string, value: 1 | -1) {
+  db.insert(routineVotes)
+    .values({ routineId, sessionId, value })
+    .onConflictDoUpdate({
+      target: [routineVotes.routineId, routineVotes.sessionId],
+      set: { value },
+    })
+    .run();
+}

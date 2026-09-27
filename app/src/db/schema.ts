@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { sqliteTable, text, integer, real } from "drizzle-orm/sqlite-core";
+import { sqliteTable, text, integer, real, uniqueIndex } from "drizzle-orm/sqlite-core";
 
 // A "concern" is a launch niche slice (acne, sun protection) — see project.md
 // §11's data-driven niche decision. Kept as a table, not an enum, so a third
@@ -146,3 +146,49 @@ export const raterApplications = sqliteTable("rater_applications", {
   message: text("message"),
   createdAt: text("created_at").notNull().default(sql`(current_timestamp)`),
 });
+
+// User-submitted skincare routines, one per concern, ranked by community
+// vote score (lib/routines.ts computes the score from routine_votes; no
+// stored score column, so it can never drift out of sync with the votes
+// table). Unlike everything else on the site, this is unmoderated
+// user-generated content with no verification step at all — see the
+// disclaimer required on every routines page in app/routines/*. A report/
+// moderation mechanism is a known gap, not an oversight; project.md §11
+// should get an entry for it.
+export const routines = sqliteTable("routines", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  title: text("title").notNull(),
+  concernId: text("concern_id").notNull().references(() => concerns.id),
+  authorName: text("author_name"), // optional, free text, not authenticated
+  sessionId: text("session_id").notNull(), // anonymous submitter identity — see lib/session.ts
+  notes: text("notes"),
+  createdAt: text("created_at").notNull().default(sql`(current_timestamp)`),
+});
+
+// Ordered steps within a routine. description is free text (e.g. "Cleanser
+// — CeraVe Hydrating Cleanser") rather than a structured product picker —
+// linking a step to an exact catalog row is a real future improvement, not
+// built here, since it would need a product-search UI component this pass
+// didn't have room for.
+export const routineSteps = sqliteTable("routine_steps", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  routineId: integer("routine_id").notNull().references(() => routines.id),
+  stepOrder: integer("step_order").notNull(),
+  description: text("description").notNull(),
+});
+
+// One row per (routine, session) — the unique index is what actually
+// enforces "one vote per session per routine", not application logic
+// alone, so a race between two requests from the same session can't double
+// up a vote.
+export const routineVotes = sqliteTable(
+  "routine_votes",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    routineId: integer("routine_id").notNull().references(() => routines.id),
+    sessionId: text("session_id").notNull(),
+    value: integer("value").notNull(), // 1 = upvote, -1 = downvote
+    createdAt: text("created_at").notNull().default(sql`(current_timestamp)`),
+  },
+  (table) => [uniqueIndex("routine_votes_routine_session_idx").on(table.routineId, table.sessionId)],
+);

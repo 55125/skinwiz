@@ -117,18 +117,19 @@ python3 build_brand_direct_catalog.py
 
 ## Results (run 2026-09-27)
 
-43 of 102 real SKUs matched a tracked active (the rest use actives not yet
-in `COSMETIC_ACTIVES` — expected, not a bug):
+39 of 102 real SKUs matched a tracked active after excluding bundle/kit
+pages (see below; the rest use actives not yet in `COSMETIC_ACTIVES` or
+are the dropped bundles — expected, not a bug):
 
 | Active | Products matched |
 |---|---|
-| Hyaluronic Acid | 18 |
-| Squalane | 15 |
-| Niacinamide | 6 |
+| Hyaluronic Acid | 15 |
+| Squalane | 14 |
+| Niacinamide | 5 |
 | Vitamin C (Ascorbic Acid) | 4 |
 | Retinol (cosmetic) | 4 |
-| Glycolic Acid | 4 |
-| Alpha Arbutin | 2 |
+| Glycolic Acid | 3 |
+| Alpha Arbutin | 1 |
 | Azelaic Acid (cosmetic) | 1 |
 
 Found and fixed a real bug while building this: the ingredient list
@@ -173,6 +174,27 @@ items) with no reliable way to tell which is which — so the canonical
 product URL (`@id` in the JSON-LD) is used as the identifier instead.
 Still one distinct id per product, just not a GS1 barcode for this brand.
 
+## Two more bugs, both caught by reading real output before trusting it
+
+Both found the same way as the `</div>`-boundary bug above: by actually
+looking at a rendered card, not by reasoning about the extraction code.
+
+- **Bundle/kit pages produce garbage, not a bug in the regex.** The
+  Ordinary's "The Daily Set" concatenates three separate products'
+  ingredient lists into one `data-original-ingredients` attribute,
+  separated by embedded `&lt;strong&gt;`/`&lt;br&gt;` display markup. A
+  real single-product ingredient list is a plain comma-separated string
+  with no markup at all — so the fix isn't more parsing, it's detecting
+  and skipping: any HTML-entity marker in the extracted text means the
+  page isn't a real single product, and the row is dropped rather than
+  half-parsed.
+- **`&nbsp;` and other HTML entities survive tag-stripping.** Regexing out
+  `<[^>]+>` removes tags but doesn't decode entities — a CeraVe sunscreen's
+  ingredient text rendered with a literal `&nbsp;` visible on the homepage
+  before this was caught. Fixed with Python's `html.unescape()` in both
+  extractors (imported as `html_module` since the function parameter is
+  already named `html`).
+
 ## Adding another brand
 
 Add one `BRANDS` entry (sitemap URL + product-URL regex) and a matching
@@ -185,7 +207,8 @@ trusting a new extractor at scale.
 
 ## Files
 
-- `output/brand_direct_catalog.csv` — 52 rows (43 The Ordinary + 9 CeraVe),
-  same schema as `cosmetic_catalog.csv` (`source=brand_direct`,
+- `output/brand_direct_catalog.csv` — 48 rows (39 The Ordinary + 9 CeraVe,
+  after dropping bundle/kit pages — see above), same schema as
+  `cosmetic_catalog.csv` (`source=brand_direct`,
   `verified=true`) plus a `source_url` column pointing at the exact page
   scraped.

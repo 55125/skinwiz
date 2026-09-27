@@ -299,7 +299,7 @@ content, Michael authors/verifies clinical logic.
 | 1. Evidence engine | 3–10 | Grading table (30–40 actives × 10–12 concerns): evidence grade, concentration, vehicle; contraindication/interaction rules; red-flag gate | 40–60 |
 | 2. Data pipeline | 6–14 | openFDA/DailyMed + Open Beauty Facts + CosIng ingest, INCI normalization, active mapping, affiliate feed integration | 30–50 |
 | 3. MVP web app | 10–18 | Concern quiz → routine builder, programmatic SEO templates, disclosures/ToS, analytics | 40–60 |
-|    → **first pass built 2026-09-27, expanded same day** | | [app/](app/) — Next.js + Drizzle/SQLite, browse the catalog across 7 concerns (acne, sun protection, antifungal, antidandruff, anti-itch, dry skin/eczema, excessive sweating) by active ingredient, dual Derm/Audience score model with honest empty states (no real raters/users yet), evidence notes, draft disclaimers, video-review search links (YouTube/TikTok/Instagram — real YouTube API integration exists behind an opt-in `YOUTUBE_API_KEY`, unused until set), `/for-clinicians` panel-interest form. Demo affiliate data clearly badged as non-live. See [app/README.md](app/README.md) for what's real vs. placeholder — no routine builder, no auth, no outcome-logging UI, no programmatic SEO content beyond metadata/sitemap. | |
+|    → **first pass built 2026-09-27, expanded same day, live on Railway** | | [app/](app/) — Next.js + Drizzle/SQLite (deployed at https://skinwiz-production.up.railway.app), browse the catalog across 8 concerns by active ingredient, dual Derm/Audience score model with honest empty states, evidence notes, draft disclaimers, video-review search links, `/for-clinicians` panel-interest form, site search, homepage "top" showcases (Top Products/Actives/Routines), and community-submitted routines with real upvote/downvote per concern. Demo affiliate data clearly badged as non-live. See [app/README.md](app/README.md) for what's real vs. placeholder — notably **routines have zero moderation** (anyone can post, live immediately, no report mechanism — see §11), no auth, no outcome-logging UI, no product-linked routine steps yet. | |
 | 4. Content + launch | 16–24 | 200–500 physician-reviewed concern×active×skin-type pages (~5–10 min review each) | 30–80 |
 | 5. Growth | Months 6–12 | Media distribution, outcome logging, email list, premium tier | ~5/wk |
 | 6. Expansion | Year 2 | B2B licensing, mobile app, telederm referral partner | Variable |
@@ -400,3 +400,12 @@ directly licensing the evidence engine.
       (Target/Walmart/CVS/Ulta via Impact, Walgreens + Neutrogena
       brand-direct via CJ). This needs your own site/business info to
       apply — not something to do from here.
+- [ ] **Routines have no moderation** — built 2026-09-27
+      ([app/README.md](app/README.md)): anyone can post a routine to
+      `/routines/new` and it's live immediately, with only a static
+      disclaimer, no review step, and no report mechanism. Every other
+      form of content on the site is either sourced/verified (products) or
+      dermatologist-gated (evidence grades) — this is the one exception,
+      and the biggest content-safety gap on the live site right now. Needs
+      a decision: pre-publish review queue, a report-abuse flow, both, or
+      an accepted risk for this stage — not something to infer.

@@ -227,8 +227,8 @@ and hard for a brand to fake without being caught on disclosure.
 | **OTC drug product catalog** (names, labeler, exact active %, full inactive-ingredient list, images, dosage form) | **openFDA** (NDC + drug-label endpoints) / **DailyMed** | Free | Covers sunscreens, acne washes/treatments, skin protectants, hydrocortisone, antifungals, dandruff/seb-derm shampoos, colloidal-oatmeal eczema creams. More of a typical skincare catalog is "drug" than assumed — **this alone can carry an MVP launch niche.** Expect dupes, discontinued SKUs, inconsistent naming; not FDA-verified for accuracy, just listing data. |
 | **OTC monograph rules** | FDA OTC monographs (acne, sunscreen, skin protectant, antifungal) | Free | Defines allowed actives/concentrations/claims — also the claim-compliance guardrail |
 | **Cosmetic product catalog** (serums, non-monograph moisturizers/cleansers) | Open Beauty Facts | Free (ODbL — share-alike; keep derived scores/data in a separate DB) | Weak US coverage — supplement with brand-submitted data + user label-photo OCR |
-| **Retail price/image/buy-link** | Affiliate network feeds (Rakuten, Impact, CJ, Awin, Amazon PA API) | Free w/ approval | Amazon API requires ongoing qualifying sales |
-| **Barcode matching** | Drug NDC↔UPC mapping | Free | Auto-links OTC drug catalog to affiliate buy-links |
+| **Retail price/image/buy-link** | Affiliate network feeds (Rakuten, Impact, CJ, Awin, Amazon PA API) | Free w/ approval | Amazon API requires ongoing qualifying sales. No account approved yet — [tools/affiliate_feeds/](tools/affiliate_feeds/) builds the normalized schema + Awin/CJ adapters + matching pipeline against synthetic mock feeds, ready to point at a real feed once one exists. |
+| **Barcode matching** | ~~Drug NDC↔UPC mapping~~ — **not reliable, corrected 2026-09-27** | Free | The NDC→UPC numeric conversion is a pharmacy point-of-sale convention for relabeled prescriptions, not how retail OTC products' manufacturer-assigned UPCs work — there's no mathematical link to join on. Real mechanism: fuzzy title/brand text matching with an active-ingredient cross-check + a manual-review tier for low-confidence matches, see [tools/affiliate_feeds/README.md](tools/affiliate_feeds/README.md). |
 | **Ingredient function/restrictions** | EU CosIng | Free | |
 | **Chemistry/identifiers** | PubChem API | Free | |
 | **Safety assessments** | Cosmetic Ingredient Review (CIR) | Free | |
@@ -248,7 +248,10 @@ and hard for a brand to fake without being caught on disclosure.
    label→NDC linkage only resolves ~33% of the full label universe
    (13,719 records logged unmatched but not lost — see the README for why
    and what's needed to close that gap).
-2. Affiliate feeds → prices/links/images.
+2. Affiliate feeds → prices/links/images. **Pipeline built 2026-09-27**
+   ([tools/affiliate_feeds/](tools/affiliate_feeds/)), validated against
+   synthetic mock feeds (9/9 products matched correctly across 2 networks)
+   — real feeds still need an approved affiliate account.
 3. Top 200–500 cosmetic INCI lists for the niche (brand sites + OCR
    cleanup).
 4. Join CosIng/PubChem/allergen data onto the catalog.

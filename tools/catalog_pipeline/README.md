@@ -67,13 +67,20 @@ Neutrogena Mineral Invisible Daily Defense Face Sunscreen Broad Spectrum SPF 30 
   pass (truncation heuristics, or cross-reference against retailer listing
   titles) before it's presentable.
 - **~67% of the niche's label universe has no resolvable NDC at all**
-  (13,719 of 20,481). This isn't a bug to fix — it's how incomplete
-  openFDA's own SPL-to-NDC harmonization is. Expect the real usable catalog
-  to always trail the full label universe by roughly this ratio unless a
-  DailyMed-based resolution pass is built later (DailyMed's `setid` linkage
-  is more complete than openFDA's, per early spot checks, but pulling and
-  parsing DailyMed SPL XML per set_id for ~14k records is a separate, much
-  bigger task — not attempted here).
+  (13,719 of 20,481) via openFDA's own SPL-to-NDC harmonization. **Partially
+  closed 2026-09-27** by `resolve_unmatched_via_dailymed.py`, which hits
+  DailyMed's own `packaging.json` per set_id instead — that resolved
+  4,567 more products (483 acne, 4,084 sunscreen) from the 13,719
+  unmatched, a ~33% recovery rate, taking the catalog from 6,674 to 11,241
+  products. The remaining ~67% of *that* gap returns an empty
+  `packaging.json` from DailyMed too, even when the DailyMed HTML page for
+  the same set_id renders a real product page — the structured API just
+  doesn't have current data for those specific SPL versions. Not worth
+  chasing further without a different data source. One caveat on the
+  recovered rows: only ~1% got a `dosage_form` from the NDC-directory
+  enrichment step (vs. 98.6% for the original catalog) — these NDCs mostly
+  aren't listed in openFDA's NDC directory either, so brand name and active
+  ingredient are solid but dosage form is usually missing.
 - **Ingredient-name normalization is still needed.** `substance_name` and
   `active_ingredients_structured` use FDA's raw naming, which includes
   synonym duplication (e.g. `OCTINOXATE` and `ETHYLHEXYL METHOXYCINNAMATE`
@@ -87,6 +94,7 @@ Neutrogena Mineral Invisible Daily Defense Face Sunscreen Broad Spectrum SPF 30 
 
 ## Files
 
-- `output/acne_sun_catalog.csv` — 6,674 rows, the actual catalog
-- `output/acne_sun_unmatched.csv` — 13,719 rows, no resolvable NDC but real ingredient/purpose data
-- `output/catalog_summary.json` — run stats
+- `output/acne_sun_catalog.csv` — 6,674 rows, the primary openFDA-resolved catalog
+- `output/acne_sun_unmatched.csv` — 13,719 rows with no resolvable NDC from openFDA, real ingredient/purpose data
+- `output/dailymed_resolved_catalog.csv` — 4,567 more rows recovered from that unmatched set via DailyMed (see above); same column schema, seed.ts reads both
+- `output/catalog_summary.json` — run stats for the primary build

@@ -6,7 +6,15 @@ import * as schema from "./schema";
 import { ACTIVE_DEFINITIONS, matchActiveIds } from "./actives";
 
 const REPO_ROOT = path.resolve(process.cwd(), "..");
-const CATALOG_CSV = path.join(REPO_ROOT, "tools/catalog_pipeline/output/acne_sun_catalog.csv");
+// Two sources: the primary openFDA catalog, plus the DailyMed resolution
+// pass that recovers some of the ~67% of label records openFDA's own
+// label->NDC linkage missed (see tools/catalog_pipeline/README.md and
+// resolve_unmatched_via_dailymed.py's docstring). The second file may not
+// exist yet if that script hasn't been run — handled below.
+const CATALOG_CSVS = [
+  path.join(REPO_ROOT, "tools/catalog_pipeline/output/acne_sun_catalog.csv"),
+  path.join(REPO_ROOT, "tools/catalog_pipeline/output/dailymed_resolved_catalog.csv"),
+];
 const AFFILIATE_CSV = path.join(REPO_ROOT, "tools/affiliate_feeds/output/matched_catalog.csv");
 
 type CatalogRow = {
@@ -82,34 +90,40 @@ async function main() {
   }));
   db.insert(schema.evidenceNotes).values(evidenceRows).run();
 
-  console.log(`Reading catalog from ${CATALOG_CSV}...`);
-  const catalogRows = readCsv<CatalogRow>(CATALOG_CSV);
-  console.log(`  ${catalogRows.length} rows`);
-
   let inserted = 0;
   let skippedNoActive = 0;
   const productBatch: (typeof schema.products.$inferInsert)[] = [];
   const seenNdc = new Set<string>();
 
-  for (const row of catalogRows) {
-    if (!row.product_ndc || seenNdc.has(row.product_ndc)) continue;
-    const combinedText = [row.active_ingredients_structured, row.substance_name, row.active_ingredient_text].join(" ");
-    const activeIds = matchActiveIds(combinedText);
-    if (activeIds.length === 0) {
-      skippedNoActive++;
+  for (const csvPath of CATALOG_CSVS) {
+    if (!fs.existsSync(csvPath)) {
+      console.log(`Skipping ${csvPath} (not found — run its generating script first)`);
       continue;
     }
-    seenNdc.add(row.product_ndc);
-    productBatch.push({
-      id: row.product_ndc,
-      concernId: nicheToConcernId(row.niche),
-      brandName: row.brand_name?.trim() || "(unnamed product)",
-      manufacturer: row.manufacturer_name || null,
-      dosageForm: row.dosage_form || null,
-      activeIngredientText: row.active_ingredients_structured || row.active_ingredient_text || null,
-      activeIds,
-      splSetId: row.spl_set_id || null,
-    });
+    console.log(`Reading catalog from ${csvPath}...`);
+    const catalogRows = readCsv<CatalogRow>(csvPath);
+    console.log(`  ${catalogRows.length} rows`);
+
+    for (const row of catalogRows) {
+      if (!row.product_ndc || seenNdc.has(row.product_ndc)) continue;
+      const combinedText = [row.active_ingredients_structured, row.substance_name, row.active_ingredient_text].join(" ");
+      const activeIds = matchActiveIds(combinedText);
+      if (activeIds.length === 0) {
+        skippedNoActive++;
+        continue;
+      }
+      seenNdc.add(row.product_ndc);
+      productBatch.push({
+        id: row.product_ndc,
+        concernId: nicheToConcernId(row.niche),
+        brandName: row.brand_name?.trim() || "(unnamed product)",
+        manufacturer: row.manufacturer_name || null,
+        dosageForm: row.dosage_form || null,
+        activeIngredientText: row.active_ingredients_structured || row.active_ingredient_text || null,
+        activeIds,
+        splSetId: row.spl_set_id || null,
+      });
+    }
   }
 
   // better-sqlite3 has a bound-parameter ceiling per statement — batch inserts.

@@ -385,14 +385,15 @@ directly licensing the evidence engine.
       elsewhere but not settled for this specific product)
 - [x] **Phase 1 evidence engine schema** — built 2026-09-27 into
       [app/src/db/schema.ts](app/src/db/schema.ts) (`evidenceNotes` table)
-      + [app/src/db/actives.ts](app/src/db/actives.ts) (14 canonical
-      actives, factual/regulatory descriptions only — `evidenceGrade`
-      stays `null` until you set one). Still open: the actual clinical
-      grading content, contraindication/interaction rules, and expanding
-      past the 2 broad concerns (acne, sun protection) into the finer
-      10–12-concern granularity the original brief envisioned (e.g.
-      cystic vs. mild acne) — all of that is your clinical call, not
-      something to infer.
+      + [app/src/db/actives.ts](app/src/db/actives.ts), grown same day from
+      14 to 35 canonical actives across 8 concerns (added antifungal/
+      antidandruff/anti-itch/skin-protectant/antiperspirant/brightening-
+      texture) as the catalog itself expanded — factual/regulatory
+      descriptions only, `evidenceGrade` stays `null` until you set one.
+      Still open: the actual clinical grading content, contraindication/
+      interaction rules, and finer sub-concern granularity within each of
+      the 8 (e.g. cystic vs. mild acne) — all of that is your clinical
+      call, not something to infer.
 - [ ] **Apply to Impact and CJ Affiliate** — the two networks worth
       targeting first per the research in
       [tools/affiliate_feeds/README.md](tools/affiliate_feeds/README.md#which-network-to-actually-target)

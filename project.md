@@ -376,3 +376,11 @@ directly licensing the evidence engine.
 - [ ] Recruit 5–10 dermatologist colleagues for the seed rating panel
 - [ ] Decide on domain/brand name (Antigravity brand was floated
       elsewhere but not settled for this specific product)
+- [ ] **Phase 1 evidence engine schema** — deferred 2026-09-27 in favor of
+      Phase 2 affiliate feed integration (build order step 2, on the
+      6,674-product acne+sun catalog from
+      [tools/catalog_pipeline/](tools/catalog_pipeline/)). Pick this up
+      once feeds are wired: the active×concern grading table (evidence
+      grade, concentration, vehicle, contraindication/interaction rules,
+      red-flag gate) — structure can be built ahead of the clinical
+      content, which you author/verify.

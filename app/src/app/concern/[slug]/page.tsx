@@ -1,9 +1,20 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { ProductCard } from "@/components/product-card";
 import { RedFlagBanner } from "@/components/red-flag-banner";
 import { getConcern, getActivesForConcern, getProductsForConcern } from "@/lib/queries";
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params;
+  const concern = getConcern(slug);
+  if (!concern) return {};
+  return {
+    title: `${concern.name} — SkinWiz`,
+    description: `${concern.description} Derm Score and Audience Score for every product.`,
+  };
+}
 
 export default async function ConcernPage({
   params,

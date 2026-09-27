@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ExternalLink, FlaskConical } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -9,6 +10,19 @@ import { DualScoreBadges } from "@/components/score-badge";
 import { RedFlagBanner } from "@/components/red-flag-banner";
 import { getProduct, getEvidenceNotesForActives, getAffiliateLinksForProduct, getConcern } from "@/lib/queries";
 import { getDermScore, getAudienceScore } from "@/lib/scoring";
+
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const { id } = await params;
+  const product = getProduct(decodeURIComponent(id));
+  if (!product) return {};
+  const description = product.activeIngredientText
+    ? `${product.brandName} — ${product.activeIngredientText}. Derm Score and Audience Score on SkinWiz.`
+    : `${product.brandName} on SkinWiz.`;
+  return {
+    title: `${product.brandName} — SkinWiz`,
+    description,
+  };
+}
 
 export default async function ProductPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;

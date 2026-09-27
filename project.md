@@ -241,7 +241,13 @@ and hard for a brand to fake without being caught on disclosure.
 
 **MVP build order:**
 1. openFDA/DailyMed → complete OTC drug catalog for the launch niche (exact
-   data, day one, zero scraping).
+   data, day one, zero scraping). **Step 1 done 2026-09-27** for acne+sun —
+   [tools/catalog_pipeline/README.md](tools/catalog_pipeline/README.md):
+   6,674 products (841 acne, 5,833 sunscreen) with brand, exact
+   active-ingredient strength, and dosage form. Caveat: openFDA's own
+   label→NDC linkage only resolves ~33% of the full label universe
+   (13,719 records logged unmatched but not lost — see the README for why
+   and what's needed to close that gap).
 2. Affiliate feeds → prices/links/images.
 3. Top 200–500 cosmetic INCI lists for the niche (brand sites + OCR
    cleanup).

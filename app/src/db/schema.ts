@@ -53,6 +53,14 @@ export const products = sqliteTable("products", {
   activeIngredientText: text("active_ingredient_text"), // exact FDA label text, incl. %, or raw OBF ingredients_text
   activeIds: text("active_ids", { mode: "json" }).$type<string[]>().notNull().default(sql`'[]'`),
   splSetId: text("spl_set_id"), // DailyMed backlink: dailymed.nlm.nih.gov/dailymed/lookup.cfm?setid=
+  // Only populated for open_beauty_facts (OBF's own image_front_url) and
+  // brand_direct (the manufacturer page's own product photo) rows -- openFDA
+  // and DailyMed have no product-photo field anywhere in their data, so the
+  // ~15k FDA-sourced rows (the large majority of the catalog) stay null.
+  // That's a real, disclosed data gap, not a bug -- the UI must show a plain
+  // placeholder rather than a broken image or a stock photo standing in for
+  // an unverified product.
+  imageUrl: text("image_url"),
   // "openfda" | "dailymed" | "open_beauty_facts" -- which pipeline produced
   // this row. verified=true only for openfda/dailymed (derived from what a
   // manufacturer legally filed with the FDA); false for open_beauty_facts

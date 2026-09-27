@@ -66,6 +66,15 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
         </div>
       </div>
 
+      {product.imageUrl && (
+        // eslint-disable-next-line @next/next/no-img-element -- external product photos from many uncontrolled hosts (OBF, brand CDNs); not worth a next/image remotePatterns allowlist for an MVP
+        <img
+          src={product.imageUrl}
+          alt={product.brandName}
+          className="mx-auto aspect-square w-full max-w-xs rounded-lg bg-muted object-contain p-4"
+        />
+      )}
+
       <DualScoreBadges dermScore={dermScore} audienceScore={audienceScore} />
 
       {product.dataSource === "open_beauty_facts" && (

@@ -46,6 +46,10 @@ type CatalogRow = {
   // directly rather than re-deriving via matchActiveIds().
   source?: "open_beauty_facts" | "brand_direct";
   verified?: "true" | "false";
+  // Also only present in those two CSVs — openFDA/DailyMed have no
+  // product-photo field at all, so this is undefined for the bulk of rows
+  // and products.imageUrl stays null for them (see schema.ts's comment).
+  image_url?: string;
 };
 
 const PRE_MATCHED_SOURCES = new Set(["open_beauty_facts", "brand_direct"]);
@@ -166,6 +170,7 @@ async function main() {
         splSetId: row.spl_set_id || null,
         dataSource: row.source ?? (csvPath.includes("dailymed") ? "dailymed" : "openfda"),
         verified: row.verified === "false" ? false : true,
+        imageUrl: row.image_url || null,
       });
     }
   }

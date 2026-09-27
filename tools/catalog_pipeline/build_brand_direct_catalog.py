@@ -81,6 +81,15 @@ COSMETIC_ACTIVES = {
     "alpha-arbutin": ["alpha arbutin", "alpha-arbutin"],
     "glycolic-acid": ["glycolic acid"],
     "squalane": ["squalane"],
+    # Added 2026-09-27 alongside the same additions in build_cosmetic_catalog.py.
+    "peptides": ["palmitoyl pentapeptide", "palmitoyl tripeptide", "palmitoyl hexapeptide", "copper tripeptide", "copper peptide", "acetyl hexapeptide"],
+    "bakuchiol": ["bakuchiol"],
+    "tranexamic-acid": ["tranexamic acid"],
+    "centella-asiatica": ["centella asiatica"],
+    "panthenol": ["panthenol", "dexpanthenol"],
+    "kojic-acid": ["kojic acid"],
+    "mandelic-acid": ["mandelic acid"],
+    "lactic-acid": ["lactic acid"],
 }
 
 
@@ -152,6 +161,13 @@ def extract_product_the_ordinary(html: str, url: str) -> dict | None:
     if not sku:
         return None
 
+    # JSON-LD "image" is a list of several photos (product shot, application
+    # shot, before/after, infographics...) -- the first is consistently the
+    # plain product-bottle photo on every page checked, so take just that one
+    # rather than showing an infographic as the card thumbnail.
+    image = product_data.get("image")
+    image_url = image[0] if isinstance(image, list) and image else (image if isinstance(image, str) else "")
+
     return {
         "product_ndc": sku,
         "brand_name": product_data.get("name", "").strip() or "(unnamed product)",
@@ -159,6 +175,7 @@ def extract_product_the_ordinary(html: str, url: str) -> dict | None:
         "active_ingredient_text": ingredients_text,
         "active_ingredients_structured": ";".join(active_ids),
         "source_url": url,
+        "image_url": image_url,
     }
 
 
@@ -204,6 +221,13 @@ def extract_product_cerave(html: str, url: str) -> dict | None:
     # product" principle even though it isn't a GS1 barcode.
     product_id = product_data.get("@id") or url
 
+    # CeraVe's JSON-LD "image" entries are site-relative paths (unlike The
+    # Ordinary's absolute URLs) -- confirmed by inspecting real output before
+    # trusting it, same discipline as every other extraction bug found here.
+    image = product_data.get("image")
+    raw_image = image[0] if isinstance(image, list) and image else (image if isinstance(image, str) else "")
+    image_url = f"https://www.cerave.com{raw_image}" if raw_image.startswith("/") else raw_image
+
     return {
         "product_ndc": product_id,
         "brand_name": product_data.get("name", "").strip() or "(unnamed product)",
@@ -211,6 +235,7 @@ def extract_product_cerave(html: str, url: str) -> dict | None:
         "active_ingredient_text": ingredients_text,
         "active_ingredients_structured": ";".join(active_ids),
         "source_url": url,
+        "image_url": image_url,
     }
 
 
@@ -249,7 +274,7 @@ def main() -> None:
         "active_ingredient_text", "active_ingredients_structured", "dosage_form", "route",
         "marketing_category", "product_type", "finished", "listing_expiration_date",
         "package_ndcs", "purpose_text", "indications_and_usage", "inactive_ingredient_text",
-        "spl_set_id", "effective_time", "source", "verified", "source_url",
+        "spl_set_id", "effective_time", "source", "verified", "source_url", "image_url",
     ]
     with open("output/brand_direct_catalog.csv", "w", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)

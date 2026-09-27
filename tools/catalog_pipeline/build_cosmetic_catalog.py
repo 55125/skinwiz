@@ -56,6 +56,22 @@ COSMETIC_ACTIVES = {
     "sodium-hyaluronate": ("hyaluronic-acid", ["hyaluronic acid", "sodium hyaluronate"]),
     "retinol": ("retinol-cosmetic", ["retinol"]),
     "ceramide-np": ("ceramides", ["ceramide"]),
+    # Added 2026-09-27 closing the same class of gap niacinamide/vitamin C
+    # closed originally -- real, heavily-searched cosmetic actives with no
+    # FDA drug-monograph status. Every tag below was confirmed against a
+    # live OBF count before being added (no guessed/dead tags).
+    "palmitoyl-pentapeptide-4": ("peptides", ["palmitoyl pentapeptide", "palmitoyl tripeptide", "palmitoyl hexapeptide"]),
+    "copper-tripeptide-1": ("peptides", ["copper tripeptide", "copper peptide"]),
+    "acetyl-hexapeptide-8": ("peptides", ["acetyl hexapeptide"]),
+    "bakuchiol": ("bakuchiol", ["bakuchiol"]),
+    "tranexamic-acid": ("tranexamic-acid", ["tranexamic acid"]),
+    "centella-asiatica": ("centella-asiatica", ["centella asiatica"]),
+    "centella-asiatica-extract": ("centella-asiatica", ["centella asiatica"]),
+    "panthenol": ("panthenol", ["panthenol", "dexpanthenol"]),
+    "dexpanthenol": ("panthenol", ["panthenol", "dexpanthenol"]),
+    "kojic-acid": ("kojic-acid", ["kojic acid"]),
+    "mandelic-acid": ("mandelic-acid", ["mandelic acid"]),
+    "lactic-acid": ("lactic-acid", ["lactic acid"]),
 }
 
 JUNK_PATTERN = re.compile(r"\btest\b", re.IGNORECASE)
@@ -82,7 +98,7 @@ def fetch_tag(tag: str) -> list[dict]:
             "ingredients_tags": tag,
             "page": page,
             "page_size": PAGE_SIZE,
-            "fields": "code,product_name,brands,ingredients_text,completeness",
+            "fields": "code,product_name,brands,ingredients_text,completeness,image_front_url",
         }
         data = _get(f"{OBF_BASE}?{urllib.parse.urlencode(params)}")
         if not data:
@@ -167,6 +183,7 @@ def main() -> None:
                 "effective_time": "",
                 "source": "open_beauty_facts",
                 "verified": "false",
+                "image_url": p.get("image_front_url") or "",
             }
 
     rows = list(by_barcode.values())
@@ -175,7 +192,7 @@ def main() -> None:
         "active_ingredient_text", "active_ingredients_structured", "dosage_form", "route",
         "marketing_category", "product_type", "finished", "listing_expiration_date",
         "package_ndcs", "purpose_text", "indications_and_usage", "inactive_ingredient_text",
-        "spl_set_id", "effective_time", "source", "verified",
+        "spl_set_id", "effective_time", "source", "verified", "image_url",
     ]
     with open("output/cosmetic_catalog.csv", "w", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)

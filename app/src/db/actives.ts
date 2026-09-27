@@ -458,6 +458,82 @@ export const ACTIVE_DEFINITIONS: ActiveDefinition[] = [
       "A stable, plant- or lab-derived emollient oil used in cosmetic moisturizers and face oils. Not an FDA-regulated drug ingredient — no OTC monograph or FDA efficacy claim applies to it.",
     typicalConcentrationText: "Often used at or near 100% in single-ingredient face oils; varies in blended formulations.",
   },
+  {
+    id: "peptides",
+    canonicalName: "Peptides",
+    categories: ["brightening-texture"],
+    // Grouped the way "Aluminum Zirconium Complexes" groups its variants —
+    // several distinct peptide compounds, none individually common enough
+    // to warrant its own catalog row, but the family as a whole shows up
+    // constantly in searched cosmetic products.
+    synonyms: ["palmitoyl pentapeptide", "palmitoyl tripeptide", "palmitoyl hexapeptide", "copper tripeptide", "copper peptide", "acetyl hexapeptide", "matrixyl"],
+    summary:
+      "A broad family of short amino-acid chains added to cosmetic serums and moisturizers, often marketed for texture and firmness. Not an FDA-regulated drug ingredient — no OTC monograph or FDA efficacy claim applies to it.",
+    typicalConcentrationText: "Concentration and specific peptide compound vary widely by formulation; not standardized.",
+  },
+  {
+    id: "bakuchiol",
+    canonicalName: "Bakuchiol",
+    categories: ["brightening-texture"],
+    synonyms: ["bakuchiol"],
+    summary:
+      "A plant-derived cosmetic ingredient often marketed as a gentler alternative to retinol. Not an FDA-regulated drug ingredient — no OTC monograph or FDA efficacy claim applies to it, and it is chemically unrelated to retinol.",
+    typicalConcentrationText: "Concentration varies widely by product; not standardized.",
+  },
+  {
+    id: "tranexamic-acid",
+    canonicalName: "Tranexamic Acid",
+    categories: ["brightening-texture"],
+    synonyms: ["tranexamic acid"],
+    summary:
+      "A cosmetic brightening ingredient increasingly used for uneven tone. Separately, higher-dose tranexamic acid is also an oral/injectable prescription drug for unrelated uses — the cosmetic topical form here has no OTC drug monograph or FDA efficacy claim.",
+    typicalConcentrationText: "Commonly formulated at 2%–5% in cosmetic products; not a standardized concentration.",
+  },
+  {
+    id: "centella-asiatica",
+    canonicalName: "Centella Asiatica (Cica)",
+    categories: ["brightening-texture"],
+    synonyms: ["centella asiatica"],
+    summary:
+      "A plant extract widely used in cosmetic moisturizers and serums for soothing/barrier-support marketing claims (often labeled \"cica\"). Not an FDA-regulated drug ingredient — no OTC monograph or FDA efficacy claim applies to it.",
+    typicalConcentrationText: "Concentration varies widely by formulation; not standardized.",
+  },
+  {
+    id: "panthenol",
+    canonicalName: "Panthenol",
+    categories: ["brightening-texture"],
+    synonyms: ["panthenol", "dexpanthenol", "provitamin b5"],
+    summary:
+      "A provitamin-B5 derivative used broadly in cosmetic moisturizers for hydration and soothing marketing claims. Not an FDA-regulated drug ingredient — no OTC monograph or FDA efficacy claim applies to it.",
+    typicalConcentrationText: "Commonly formulated at 1%–5% in cosmetic products; not a standardized concentration.",
+  },
+  {
+    id: "kojic-acid",
+    canonicalName: "Kojic Acid",
+    categories: ["brightening-texture"],
+    synonyms: ["kojic acid"],
+    summary:
+      "A fungal-derived cosmetic brightening ingredient. Not an FDA-regulated drug ingredient — no OTC monograph or FDA efficacy claim applies to it; a known skin-irritation/sensitization risk in some users is worth a dermatologist note, not established here.",
+    typicalConcentrationText: "Commonly formulated at 1%–4% in cosmetic products; not a standardized concentration.",
+  },
+  {
+    id: "mandelic-acid",
+    canonicalName: "Mandelic Acid",
+    categories: ["brightening-texture"],
+    synonyms: ["mandelic acid"],
+    summary:
+      "An alpha-hydroxy acid (AHA) exfoliant, often marketed as gentler than glycolic acid due to its larger molecule size. Not an FDA-regulated drug ingredient — no OTC monograph or FDA efficacy claim applies to it.",
+    typicalConcentrationText: "Commonly formulated at 5%–10% in cosmetic products; not a standardized concentration.",
+  },
+  {
+    id: "lactic-acid",
+    canonicalName: "Lactic Acid",
+    categories: ["brightening-texture"],
+    synonyms: ["lactic acid"],
+    summary:
+      "An alpha-hydroxy acid (AHA) exfoliant with humectant properties, used in cosmetic peels, serums, and moisturizers. Not an FDA-regulated drug ingredient — no OTC monograph or FDA efficacy claim applies to it.",
+    typicalConcentrationText: "Commonly formulated at 5%–12% in cosmetic products; not a standardized concentration.",
+  },
 ];
 
 /** Returns the canonical active ids whose synonyms appear in the given free text. */

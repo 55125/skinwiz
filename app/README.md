@@ -70,11 +70,19 @@ This matters more than usual for a health product — read before demoing.
 **Real:**
 - All products, brand names, active ingredients, and exact concentrations
   — pulled live from openFDA + DailyMed + Open Beauty Facts + brand-direct
-  scraping (`tools/catalog_pipeline/`), not fabricated. 16,534 as of
-  2026-09-27 (15,255 FDA-sourced across 7 drug concerns; 1,279 in the new
-  Brightening & Texture concern, split across two trust tiers below) — run
-  `npm run db:seed` and read its printed count for the current total, it
-  grows as the catalog pipeline is re-run.
+  scraping (`tools/catalog_pipeline/`), not fabricated. 17,509 as of
+  2026-09-27 (15,255 FDA-sourced across 7 drug concerns; 2,248 in the
+  Brightening & Texture concern across 14 cosmetic actives, split across
+  two trust tiers below) — run `npm run db:seed` and read its printed
+  count for the current total, it grows as the catalog pipeline is re-run.
+- **Product photos, where a source has one.** `products.imageUrl`
+  (`src/db/schema.ts`) is populated from Open Beauty Facts'
+  `image_front_url` and each brand-direct page's own JSON-LD product photo
+  — 1,633 of 17,509 products as of 2026-09-27. The ~15,255 openFDA/DailyMed
+  products have no image field in either source at all and render a plain
+  "No photo yet" placeholder (`src/components/product-card.tsx`) instead of
+  a broken image or a stock photo standing in for an unverified product —
+  a real, disclosed coverage gap, not a bug.
 - **Three distinct trust tiers, never blended silently**
   (`src/lib/data-source.ts`, `products.dataSource`/`verified` in
   `src/db/schema.ts`): openFDA/DailyMed (a manufacturer's legal FDA

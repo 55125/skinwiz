@@ -51,14 +51,22 @@ accepted, documented gap, not an oversight.
 
 | Active | Products matched |
 |---|---|
-| Niacinamide | 500 |
-| Hyaluronic Acid | 725 |
-| Ceramides | 171 |
-| Vitamin C (Ascorbic Acid) | 148 |
-| Azelaic Acid (cosmetic) | 13 |
+| Niacinamide | 502 |
+| Panthenol | 984 |
+| Hyaluronic Acid | 730 |
+| Lactic Acid | 522 |
+| Ceramides | 174 |
+| Peptides | 100 |
+| Vitamin C (Ascorbic Acid) | 150 |
+| Centella Asiatica (Cica) | 73 |
 | Retinol (cosmetic) | 39 |
+| Mandelic Acid | 17 |
+| Azelaic Acid (cosmetic) | 13 |
+| Bakuchiol | 11 |
+| Kojic Acid | 7 |
+| Tranexamic Acid | 9 |
 
-**1,227 distinct products** (by barcode) after junk filtering, all mapped
+**2,195 distinct products** (by barcode) after junk filtering, all mapped
 to the new **Brightening & Texture** concern (`brightening-texture`).
 Azelaic acid's canonical active definition is shared with the drug catalog
 (same molecule) — it's tagged under both `acne` and `brightening-texture`
@@ -66,6 +74,34 @@ categories in `app/src/db/actives.ts`, but a given cosmetic-sourced product
 row only gets the `brightening-texture` concern in this first pass
 (cross-listing a product under multiple concerns isn't built yet — see
 `products.concernId`'s single-value limitation in schema.ts).
+
+### Second pass (same day): 8 more actives, plus real product images
+
+Closed the same class of gap the original niacinamide search found — real,
+heavily-searched cosmetic actives with no FDA drug-monograph status and
+therefore no catalog presence: peptides (grouped from
+`palmitoyl-pentapeptide-4`/`copper-tripeptide-1`/`acetyl-hexapeptide-8`,
+the same way `app/src/db/actives.ts` already groups the aluminum-zirconium
+antiperspirant variants), bakuchiol, tranexamic acid, centella asiatica,
+panthenol, kojic acid, mandelic acid, and lactic acid. Every OBF tag above
+was confirmed against a live `count` in the API before being added — no
+guessed or dead tags. **`urea` was deliberately not added**: its INCI
+substring collides with unrelated preservatives ("Diazolidinyl Urea",
+"Imidazolidinyl Urea"), and `matched_active_ids`/`matchActiveIds` only do a
+plain substring check, so adding it would have mislabeled every product
+containing those preservatives as containing moisturizing urea. Fixing
+that would need real exclusion logic, not just another synonym — parked,
+not silently worked around.
+
+Also added `image_url` to this script's OBF `fields` request and CSV
+output (`image_front_url` — OBF's own front-of-pack photo), and to
+`build_brand_direct_catalog.py`'s two extractors (each brand's own
+JSON-LD `image` array, first entry — consistently the plain product-bottle
+shot on every page checked, ahead of application photos and infographics
+later in the array). `app/src/db/schema.ts`'s `products.imageUrl` and the
+product card/detail page render it when present; 1,633 of 17,509 products
+have one as of this pass — the ~15,255 openFDA/DailyMed rows have no image
+field in either FDA source at all and fall back to a plain placeholder.
 
 ## Known limitations
 
@@ -207,8 +243,9 @@ trusting a new extractor at scale.
 
 ## Files
 
-- `output/brand_direct_catalog.csv` — 48 rows (39 The Ordinary + 9 CeraVe,
-  after dropping bundle/kit pages — see above), same schema as
-  `cosmetic_catalog.csv` (`source=brand_direct`,
-  `verified=true`) plus a `source_url` column pointing at the exact page
-  scraped.
+- `output/brand_direct_catalog.csv` — 53 rows (44 The Ordinary + 9 CeraVe,
+  after dropping bundle/kit pages — see above; grew from 48 when the 8
+  actives above were added), same schema as `cosmetic_catalog.csv`
+  (`source=brand_direct`, `verified=true`) plus `source_url` (the exact
+  page scraped) and `image_url` (each page's own JSON-LD product photo)
+  columns.

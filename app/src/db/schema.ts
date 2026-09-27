@@ -16,7 +16,9 @@ export const concerns = sqliteTable("concerns", {
 export const actives = sqliteTable("actives", {
   id: text("id").primaryKey(), // canonical slug, e.g. "benzoyl-peroxide"
   canonicalName: text("canonical_name").notNull(),
-  category: text("category").notNull(), // "acne" | "sunscreen"
+  // Some actives are FDA-recognized for more than one concern (salicylic
+  // acid: acne AND antidandruff) — see db/actives.ts's ActiveDefinition comment.
+  categories: text("categories", { mode: "json" }).$type<string[]>().notNull(),
   synonyms: text("synonyms", { mode: "json" }).$type<string[]>().notNull(),
 });
 
@@ -64,6 +66,26 @@ export const affiliateLinks = sqliteTable("affiliate_links", {
   buyUrl: text("buy_url").notNull(),
   imageUrl: text("image_url"),
   isDemo: integer("is_demo", { mode: "boolean" }).notNull().default(true),
+});
+
+// Real video results, cached from the YouTube Data API (see
+// scripts/fetch-youtube-videos.ts) — only populated if YOUTUBE_API_KEY is
+// set and that script has been run; empty otherwise. Populated on demand,
+// not fetched live per pageview, to respect the API's free daily quota
+// (100 search calls/day). TikTok and Instagram have no comparable
+// free/accessible search API for a small site, so there's no equivalent
+// table for them — src/lib/video-links.ts builds a plain search-deep-link
+// for those two instead, always, with no caching needed.
+export const videoLinks = sqliteTable("video_links", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  productId: text("product_id").notNull().references(() => products.id),
+  platform: text("platform").notNull().default("youtube"),
+  videoId: text("video_id").notNull(),
+  title: text("title").notNull(),
+  channelTitle: text("channel_title"),
+  thumbnailUrl: text("thumbnail_url"),
+  publishedAt: text("published_at"),
+  fetchedAt: text("fetched_at").notNull().default(sql`(current_timestamp)`),
 });
 
 // Verified board-certified dermatologist raters. Empty at seed time —

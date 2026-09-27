@@ -3,7 +3,7 @@ import path from "node:path";
 import { parse } from "csv-parse/sync";
 import { db } from "./client";
 import * as schema from "./schema";
-import { ACTIVE_DEFINITIONS, matchActiveIds } from "./actives";
+import { ACTIVE_DEFINITIONS, CONCERN_DEFINITIONS, matchActiveIds, nicheToConcernId } from "./actives";
 
 const REPO_ROOT = path.resolve(process.cwd(), "..");
 // Two sources: the primary openFDA catalog, plus the DailyMed resolution
@@ -19,7 +19,7 @@ const AFFILIATE_CSV = path.join(REPO_ROOT, "tools/affiliate_feeds/output/matched
 
 type CatalogRow = {
   product_ndc: string;
-  niche: "acne" | "sunscreen";
+  niche: "acne" | "sunscreen" | "antifungal" | "antidandruff" | "anti-itch" | "skin-protectant" | "antiperspirant";
   brand_name: string;
   manufacturer_name: string;
   active_ingredient_text: string;
@@ -37,10 +37,6 @@ type AffiliateRow = {
   image_url: string;
   matched_product_ndc: string;
 };
-
-function nicheToConcernId(niche: string): string {
-  return niche === "sunscreen" ? "sun-protection" : "acne";
-}
 
 function readCsv<T>(filePath: string): T[] {
   const raw = fs.readFileSync(filePath, "utf-8");
@@ -62,10 +58,7 @@ async function main() {
   db.delete(schema.concerns).run();
 
   db.insert(schema.concerns)
-    .values([
-      { id: "acne", name: "Acne", description: "Evidence-graded OTC actives and products for acne-prone skin." },
-      { id: "sun-protection", name: "Sun Protection", description: "FDA-recognized sunscreen actives and products." },
-    ])
+    .values(CONCERN_DEFINITIONS.map((c) => ({ id: c.id, name: c.name, description: c.description })))
     .run();
 
   db.insert(schema.actives)
@@ -73,21 +66,26 @@ async function main() {
       ACTIVE_DEFINITIONS.map((a) => ({
         id: a.id,
         canonicalName: a.canonicalName,
-        category: a.category,
+        categories: a.categories,
         synonyms: a.synonyms,
       })),
     )
     .run();
 
-  const evidenceRows = ACTIVE_DEFINITIONS.map((a) => ({
-    activeId: a.id,
-    concernId: a.category === "sunscreen" ? "sun-protection" : "acne",
-    summary: a.summary,
-    typicalConcentrationText: a.typicalConcentrationText,
-    evidenceGrade: null,
-    needsClinicianReview: true,
-    citations: [] as string[],
-  }));
+  // One evidence note per (active, concern) pair — an active recognized for
+  // more than one concern (e.g. salicylic acid: acne + antidandruff) gets
+  // one row per concern, not one row shared across concerns.
+  const evidenceRows = ACTIVE_DEFINITIONS.flatMap((a) =>
+    a.categories.map((niche) => ({
+      activeId: a.id,
+      concernId: nicheToConcernId(niche),
+      summary: a.summary,
+      typicalConcentrationText: a.typicalConcentrationText,
+      evidenceGrade: null,
+      needsClinicianReview: true,
+      citations: [] as string[],
+    })),
+  );
   db.insert(schema.evidenceNotes).values(evidenceRows).run();
 
   let inserted = 0;

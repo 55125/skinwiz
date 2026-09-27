@@ -1,11 +1,13 @@
 # SkinWiz — app
 
-The MVP web app: browse OTC acne + sun-protection products by active
-ingredient, each with a dual score model (Derm Score / Audience Score),
-in the spirit of Rotten Tomatoes' critic/audience split — see
+The MVP web app: browse OTC skincare products by active ingredient across
+7 concerns (acne, sun protection, antifungal, antidandruff, anti-itch, dry
+skin/eczema, excessive sweating), each with a dual score model (Derm Score
+/ Audience Score) in the spirit of Rotten Tomatoes' critic/audience split,
+plus video-review search links (YouTube/TikTok/Instagram) — see
 `../project.md` for the full product brief.
 
-Built overnight (2026-09-27) as a first pass — see "What's real vs. not"
+Built overnight (2026-09-27), expanded same-day — see "What's real vs. not"
 below before treating anything here as launch-ready.
 
 ## Stack
@@ -32,9 +34,13 @@ Re-run `db:seed` any time — it wipes and reloads, so it's safe to repeat.
 This matters more than usual for a health product — read before demoing.
 
 **Real:**
-- All 6,653 products, brand names, active ingredients, and exact
-  concentrations — pulled live from openFDA (`tools/catalog_pipeline/`),
-  not fabricated.
+- All products, brand names, active ingredients, and exact concentrations
+  — pulled live from openFDA + DailyMed (`tools/catalog_pipeline/`), not
+  fabricated. 15,247 as of 2026-09-27 across all 7 concerns (9,895 sun
+  protection, 1,351 excessive sweating, 1,332 dry skin/eczema, 1,322 acne,
+  899 antifungal, 383 itch relief, 65 antidandruff) — run `npm run db:seed`
+  and read its printed count for the current total, it grows as the
+  catalog pipeline is re-run.
 - The empty derm-rating and audience-outcome states. **No dermatologist
   has rated anything and no user has logged an outcome yet** — that's
   reality, not a bug, and the UI is built to show "not yet rated" honestly
@@ -47,11 +53,21 @@ This matters more than usual for a health product — read before demoing.
   until a verified dermatologist sets one; nothing here invents one.
 
 **Demo/placeholder — do not treat as real:**
-- **Affiliate prices and buy links** (27 of 6,653 products). No affiliate
-  account is approved yet (see `../tools/affiliate_feeds/README.md`), so
-  these are synthetic mock-feed rows, and every one of them renders with a
-  visible "Demo — not a live price" badge (`isDemo` in the schema
-  defaults `true`). Don't strip that badge without a real feed behind it.
+- **Affiliate prices and buy links** (27 products total, all acne). No
+  affiliate account is approved yet (see
+  `../tools/affiliate_feeds/README.md`), so these are synthetic mock-feed
+  rows, and every one of them renders with a visible "Demo — not a live
+  price" badge (`isDemo` in the schema defaults `true`). Don't strip that
+  badge without a real feed behind it.
+- **Video review links are search links, not curated results**, for the
+  same reason: YouTube/TikTok/Instagram have no accessible free search API
+  for a small/solo site to actually fetch and vet specific videos (see
+  `src/lib/video-links.ts`). The one exception is YouTube, which does have
+  a real (optional) integration: set `YOUTUBE_API_KEY` and run
+  `npm run fetch:youtube-videos` to cache real top results into
+  `video_links` — quota-limited to ~90 products/run by default, so it's a
+  slow-build-up, not a one-shot fill. Until that's run, every product falls
+  back to the plain search-link buttons, clearly labeled as such in the UI.
 - **The Terms of Service section on `/about`** is explicitly labeled draft,
   pending the attorney review `project.md` §11 still has open. Don't ship
   it as final legal language.
@@ -80,9 +96,11 @@ This matters more than usual for a health product — read before demoing.
 ```
 src/db/schema.ts     Drizzle schema — read the comments, several fields
                       encode a deliberate integrity decision (see above)
-src/db/actives.ts     canonical active-ingredient definitions + synonym matching
+src/db/actives.ts     canonical active-ingredient + concern definitions, synonym matching
 src/db/seed.ts        loads tools/catalog_pipeline + tools/affiliate_feeds CSVs
+src/db/fetch-youtube-videos.ts   optional, real YouTube API fetch — see above
 src/lib/scoring.ts    the dual-score threshold logic
 src/lib/queries.ts    all DB reads, used by pages
+src/lib/video-links.ts   review search-link builder (YouTube/TikTok/Instagram)
 src/app/              routes: / , /concern/[slug] , /product/[id] , /about , /for-clinicians
 ```

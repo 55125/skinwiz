@@ -1,9 +1,14 @@
 {
-  "matched_products": 6674,
-  "unmatched_label_records": 13719,
+  "matched_products": 10637,
+  "unmatched_label_records": 21266,
   "by_niche": {
     "acne": 841,
-    "sunscreen": 5833
+    "sunscreen": 5833,
+    "antifungal": 914,
+    "antidandruff": 65,
+    "anti-itch": 396,
+    "skin-protectant": 1231,
+    "antiperspirant": 1357
   },
   "expired_listing_estimate": 0
 }

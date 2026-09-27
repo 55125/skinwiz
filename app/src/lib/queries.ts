@@ -1,6 +1,7 @@
 import { and, eq, inArray, sql } from "drizzle-orm";
 import { db } from "@/db/client";
-import { concerns, products, actives, evidenceNotes, affiliateLinks } from "@/db/schema";
+import { concerns, products, actives, evidenceNotes, affiliateLinks, videoLinks } from "@/db/schema";
+import { concernIdToNiche } from "@/db/actives";
 
 export function getConcerns() {
   return db.select().from(concerns).all();
@@ -11,8 +12,12 @@ export function getConcern(id: string) {
 }
 
 export function getActivesForConcern(concernId: string) {
-  const category = concernId === "sun-protection" ? "sunscreen" : "acne";
-  return db.select().from(actives).where(eq(actives.category, category)).all();
+  const niche = concernIdToNiche(concernId);
+  return db
+    .select()
+    .from(actives)
+    .where(sql`${actives.categories} LIKE ${"%\"" + niche + "\"%"}`)
+    .all();
 }
 
 const PAGE_SIZE = 24;
@@ -33,7 +38,11 @@ export function getProduct(id: string) {
   return db.select().from(products).where(eq(products.id, id)).get();
 }
 
-export function getEvidenceNotesForActives(activeIds: string[]) {
+// concernId is required, not just activeIds — some actives (e.g. salicylic
+// acid) have an evidence note per concern they're recognized for (acne AND
+// antidandruff). Without this filter a product would show evidence notes
+// for concerns it has nothing to do with.
+export function getEvidenceNotesForActives(activeIds: string[], concernId: string) {
   if (activeIds.length === 0) return [];
   return db
     .select({
@@ -46,10 +55,16 @@ export function getEvidenceNotesForActives(activeIds: string[]) {
     })
     .from(evidenceNotes)
     .innerJoin(actives, eq(actives.id, evidenceNotes.activeId))
-    .where(inArray(evidenceNotes.activeId, activeIds))
+    .where(and(inArray(evidenceNotes.activeId, activeIds), eq(evidenceNotes.concernId, concernId)))
     .all();
 }
 
 export function getAffiliateLinksForProduct(productId: string) {
   return db.select().from(affiliateLinks).where(eq(affiliateLinks.productId, productId)).all();
+}
+
+// Real cached YouTube results (see db/fetch-youtube-videos.ts) — empty for
+// almost every product until that script has been run with a real API key.
+export function getVideoLinksForProduct(productId: string) {
+  return db.select().from(videoLinks).where(eq(videoLinks.productId, productId)).all();
 }

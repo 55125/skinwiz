@@ -1,7 +1,22 @@
 #!/usr/bin/env python3
 """
-Build the acne+sun OTC drug catalog from openFDA (project.md §6, MVP build
-order step 1).
+Build the skin-concern OTC drug catalog from openFDA (project.md §6, MVP
+build order step 1). Filename/module name is historical (started as
+acne+sun only) — PURPOSES below now covers every FDA OTC monograph
+category that maps to a browsable skin concern on SkinWiz.
+
+Deliberately excluded, even though they're technically skin-adjacent
+(scoped 2026-09-27 per a product decision to stay within dermatology-
+relevant concerns a consumer would actually browse for):
+  - "Antiseptic" (25,104 labels) — dominated by hand sanitizer/surgical
+    scrub, general hygiene rather than a skin concern.
+  - "External analgesic" — topical musculoskeletal pain relief (menthol/
+    camphor rubs), not a dermatology concern.
+  - "Antibacterial" — redundant with Antiseptic, same hygiene-soap space.
+  - "First aid antibiotic" — wound care is borderline in-scope but cut
+    for this pass; revisit if a "cuts & wounds" concern is wanted later.
+
+Two-stage pipeline, because the two openFDA endpoints don't compose cleanly:
 
 Two-stage pipeline, because the two openFDA endpoints don't compose cleanly:
 
@@ -43,6 +58,11 @@ SLEEP = 0.25
 PURPOSES = {
     "acne": "Acne treatment",
     "sunscreen": "Sunscreen",
+    "antifungal": "Antifungal",
+    "antidandruff": "Antidandruff",
+    "anti-itch": "Anti-itch",
+    "skin-protectant": "Skin protectant",
+    "antiperspirant": "Antiperspirant",
 }
 
 

@@ -10,11 +10,8 @@ export function SiteHeader() {
           SkinWiz
         </Link>
         <nav className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground sm:justify-end">
-          <Link href="/concern/acne" className="hover:text-foreground">
-            Acne
-          </Link>
-          <Link href="/concern/sun-protection" className="hover:text-foreground">
-            Sun Protection
+          <Link href="/" className="hover:text-foreground">
+            Browse concerns
           </Link>
           <Link href="/for-clinicians" className="hover:text-foreground">
             For Clinicians

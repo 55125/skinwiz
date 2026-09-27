@@ -109,7 +109,7 @@ def resolve_one(row: dict) -> list[dict]:
         out.append({
             "product_ndc": product_ndc,
             "niche": row["niche"],
-            "brand_name": product.get("product_name", "").strip() or "(unnamed product)",
+            "brand_name": (product.get("product_name") or "").strip() or "(unnamed product)",
             "manufacturer_name": manufacturer or "",
             "substance_name": ";".join(a.get("name", "") for a in product.get("active_ingredients", [])),
             "route": "",

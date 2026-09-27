@@ -19,7 +19,7 @@ export default function Home() {
         </p>
       </section>
 
-      <section className="grid gap-4 sm:grid-cols-2">
+      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {concerns.map((c) => (
           <Link key={c.id} href={`/concern/${c.id}`}>
             <Card className="h-full transition-shadow hover:shadow-md">

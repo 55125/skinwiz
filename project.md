@@ -241,13 +241,16 @@ and hard for a brand to fake without being caught on disclosure.
 
 **MVP build order:**
 1. openFDA/DailyMed → complete OTC drug catalog for the launch niche (exact
-   data, day one, zero scraping). **Step 1 done 2026-09-27** for acne+sun —
-   [tools/catalog_pipeline/README.md](tools/catalog_pipeline/README.md):
-   6,674 products (841 acne, 5,833 sunscreen) with brand, exact
-   active-ingredient strength, and dosage form. Caveat: openFDA's own
-   label→NDC linkage only resolves ~33% of the full label universe
-   (13,719 records logged unmatched but not lost — see the README for why
-   and what's needed to close that gap).
+   data, day one, zero scraping). **Step 1 done 2026-09-27, expanded same
+   day** to every skin-related OTC category, not just acne+sun (antifungal,
+   antidandruff, anti-itch, skin protectant, antiperspirant) — see
+   [tools/catalog_pipeline/README.md](tools/catalog_pipeline/README.md)
+   for the full scope decision and current counts (they grow as the
+   pipeline is re-run; check the README rather than treating any number
+   here as current). Caveat: openFDA's own label→NDC linkage only resolves
+   roughly a third of the full label universe on its own; a DailyMed-based
+   second pass recovers a further ~third of what's left — both documented
+   in the README, including what still isn't recoverable.
 2. Affiliate feeds → prices/links/images. **Pipeline built 2026-09-27**
    ([tools/affiliate_feeds/](tools/affiliate_feeds/)), validated against
    synthetic mock feeds (9/9 products matched correctly across 2 networks)
@@ -296,7 +299,7 @@ content, Michael authors/verifies clinical logic.
 | 1. Evidence engine | 3–10 | Grading table (30–40 actives × 10–12 concerns): evidence grade, concentration, vehicle; contraindication/interaction rules; red-flag gate | 40–60 |
 | 2. Data pipeline | 6–14 | openFDA/DailyMed + Open Beauty Facts + CosIng ingest, INCI normalization, active mapping, affiliate feed integration | 30–50 |
 | 3. MVP web app | 10–18 | Concern quiz → routine builder, programmatic SEO templates, disclosures/ToS, analytics | 40–60 |
-|    → **first pass built 2026-09-27** | | [app/](app/) — Next.js + Drizzle/SQLite, browse acne+sun catalog (6,653 real products) by active ingredient, dual Derm/Audience score model with honest empty states (no real raters/users yet), evidence notes, draft disclaimers, `/for-clinicians` panel-interest form. Demo affiliate data clearly badged as non-live. See [app/README.md](app/README.md) for what's real vs. placeholder — no routine builder, no auth, no outcome-logging UI, no programmatic SEO yet. | |
+|    → **first pass built 2026-09-27, expanded same day** | | [app/](app/) — Next.js + Drizzle/SQLite, browse the catalog across 7 concerns (acne, sun protection, antifungal, antidandruff, anti-itch, dry skin/eczema, excessive sweating) by active ingredient, dual Derm/Audience score model with honest empty states (no real raters/users yet), evidence notes, draft disclaimers, video-review search links (YouTube/TikTok/Instagram — real YouTube API integration exists behind an opt-in `YOUTUBE_API_KEY`, unused until set), `/for-clinicians` panel-interest form. Demo affiliate data clearly badged as non-live. See [app/README.md](app/README.md) for what's real vs. placeholder — no routine builder, no auth, no outcome-logging UI, no programmatic SEO content beyond metadata/sitemap. | |
 | 4. Content + launch | 16–24 | 200–500 physician-reviewed concern×active×skin-type pages (~5–10 min review each) | 30–80 |
 | 5. Growth | Months 6–12 | Media distribution, outcome logging, email list, premium tier | ~5/wk |
 | 6. Expansion | Year 2 | B2B licensing, mobile app, telederm referral partner | Variable |

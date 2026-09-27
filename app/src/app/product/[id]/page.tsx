@@ -1,15 +1,22 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { ExternalLink, FlaskConical } from "lucide-react";
+import { ExternalLink, FlaskConical, PlaySquare, Music2, Camera } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { DualScoreBadges } from "@/components/score-badge";
 import { RedFlagBanner } from "@/components/red-flag-banner";
-import { getProduct, getEvidenceNotesForActives, getAffiliateLinksForProduct, getConcern } from "@/lib/queries";
+import {
+  getProduct,
+  getEvidenceNotesForActives,
+  getAffiliateLinksForProduct,
+  getVideoLinksForProduct,
+  getConcern,
+} from "@/lib/queries";
 import { getDermScore, getAudienceScore } from "@/lib/scoring";
+import { getVideoSearchLinks } from "@/lib/video-links";
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
@@ -30,8 +37,10 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
   if (!product) notFound();
 
   const concern = getConcern(product.concernId);
-  const evidenceNotes = getEvidenceNotesForActives(product.activeIds as string[]);
+  const evidenceNotes = getEvidenceNotesForActives(product.activeIds as string[], product.concernId);
   const affiliateLinks = getAffiliateLinksForProduct(product.id);
+  const videoLinks = getVideoLinksForProduct(product.id);
+  const videoSearchLinks = getVideoSearchLinks(product.brandName);
   const dermScore = getDermScore(product.id, product.concernId);
   const audienceScore = getAudienceScore(product.id, product.concernId);
 
@@ -126,6 +135,70 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
             </AlertDescription>
           </Alert>
         )}
+      </div>
+
+      <Separator />
+
+      <div className="space-y-3">
+        <h2 className="text-lg font-medium">Video reviews</h2>
+        {videoLinks.length > 0 ? (
+          <div className="grid gap-3 sm:grid-cols-3">
+            {videoLinks.map((v) => (
+              <a
+                key={v.id}
+                href={`https://www.youtube.com/watch?v=${v.videoId}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block overflow-hidden rounded-md border hover:shadow-md"
+              >
+                {v.thumbnailUrl && (
+                  // eslint-disable-next-line @next/next/no-img-element -- external thumbnails, no fixed domain worth configuring for a rarely-populated field
+                  <img src={v.thumbnailUrl} alt="" className="aspect-video w-full object-cover" />
+                )}
+                <div className="p-2">
+                  <p className="line-clamp-2 text-xs font-medium">{v.title}</p>
+                  <p className="text-xs text-muted-foreground">{v.channelTitle}</p>
+                </div>
+              </a>
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            We haven&apos;t indexed specific videos for this product yet — search directly:
+          </p>
+        )}
+        <div className="flex flex-wrap gap-2">
+          {videoLinks.length === 0 && (
+            <a
+              href={videoSearchLinks.youtube}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={buttonVariants({ variant: "outline", size: "sm" })}
+            >
+              <PlaySquare className="h-3.5 w-3.5" /> YouTube
+            </a>
+          )}
+          <a
+            href={videoSearchLinks.tiktok}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={buttonVariants({ variant: "outline", size: "sm" })}
+          >
+            <Music2 className="h-3.5 w-3.5" /> TikTok
+          </a>
+          <a
+            href={videoSearchLinks.instagram}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={buttonVariants({ variant: "outline", size: "sm" })}
+          >
+            <Camera className="h-3.5 w-3.5" /> Instagram
+          </a>
+        </div>
+        <p className="text-xs italic text-muted-foreground">
+          These are search links, not vetted reviews — SkinWiz doesn&apos;t screen or endorse social
+          content. Only Derm Score and Audience Score above reflect verified feedback.
+        </p>
       </div>
 
       {product.splSetId && (

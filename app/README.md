@@ -35,20 +35,24 @@ This matters more than usual for a health product — read before demoing.
 
 **Real:**
 - All products, brand names, active ingredients, and exact concentrations
-  — pulled live from openFDA + DailyMed + Open Beauty Facts
-  (`tools/catalog_pipeline/`), not fabricated. 16,482 as of 2026-09-27
-  (15,255 FDA-sourced across 7 drug concerns; 1,227 community-sourced
-  cosmetic products in the new Brightening & Texture concern — see the two
-  trust tiers below) — run `npm run db:seed` and read its printed count for
-  the current total, it grows as the catalog pipeline is re-run.
-- **Two distinct trust tiers, never blended silently.** `products.verified`
-  is `true` for openFDA/DailyMed rows (derived from what a manufacturer
-  legally filed with the FDA) and `false` for Open Beauty Facts rows
-  (crowd-edited — real junk entries were found in it during testing, e.g.
-  a `"TESTBRAND"` test product). Every unverified product renders a visible
-  "Community-sourced, not FDA-verified" badge on both the card and detail
-  page (`src/components/product-card.tsx`, `src/app/product/[id]/page.tsx`)
-  — see `tools/catalog_pipeline/README_cosmetic.md`.
+  — pulled live from openFDA + DailyMed + Open Beauty Facts + brand-direct
+  scraping (`tools/catalog_pipeline/`), not fabricated. 16,525 as of
+  2026-09-27 (15,255 FDA-sourced across 7 drug concerns; 1,270 in the new
+  Brightening & Texture concern, split across two trust tiers below) — run
+  `npm run db:seed` and read its printed count for the current total, it
+  grows as the catalog pipeline is re-run.
+- **Three distinct trust tiers, never blended silently**
+  (`src/lib/data-source.ts`, `products.dataSource`/`verified` in
+  `src/db/schema.ts`): openFDA/DailyMed (a manufacturer's legal FDA
+  filing — no badge, the default), brand-direct (scraped from a brand's
+  own published product page — e.g. The Ordinary, 43 products; blue
+  "Brand-verified" badge), and Open Beauty Facts (crowd-edited — real junk
+  entries found in it during testing, e.g. a `"TESTBRAND"` test product;
+  amber "Community-sourced" badge). Every non-default tier renders its
+  badge on both the card and detail page
+  (`src/components/product-card.tsx`, `src/app/product/[id]/page.tsx`) —
+  see `tools/catalog_pipeline/README_cosmetic.md` and the brand-direct
+  script's docstring for both sources' specifics.
 - **Product identity is barcode/NDC-keyed on purpose.** A repackaged or
   reformulated relaunch gets a new barcode in practice (GS1 convention), so
   it becomes a new catalog row instead of overwriting what an existing
@@ -116,5 +120,6 @@ src/db/fetch-youtube-videos.ts   optional, real YouTube API fetch — see above
 src/lib/scoring.ts    the dual-score threshold logic
 src/lib/queries.ts    all DB reads, used by pages
 src/lib/video-links.ts   review search-link builder (YouTube/TikTok/Instagram)
+src/lib/data-source.ts   the three-tier trust badge logic — see above
 src/app/              routes: / , /concern/[slug] , /product/[id] , /about , /for-clinicians
 ```

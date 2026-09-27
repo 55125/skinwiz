@@ -13,6 +13,13 @@ Facts" plan, run for the first time 2026-09-27.
 python3 build_cosmetic_catalog.py
 ```
 
+See also `build_brand_direct_catalog.py` — the higher-trust sibling layer
+sourced directly from a brand's own product pages (The Ordinary, currently)
+instead of crowd-edited data. Same active-ingredient scope, different
+provenance, kept in a separate script/CSV/README section because the
+extraction method (per-brand HTML scraping) is fundamentally different
+from OBF's uniform search API.
+
 ## This is a different trust tier, on purpose
 
 Open Beauty Facts is crowd-sourced — anyone can submit or edit an entry.
@@ -67,10 +74,6 @@ row only gets the `brightening-texture` concern in this first pass
   testing (OBF's country tagging is unreliable), so this pulls globally.
   Expect non-US brands and non-English product names in the results (real,
   not a bug — e.g. genuine German-market products from Balea).
-- **No brand-direct layer yet.** The plan discussed alongside this build
-  was to layer OBF (broad, unverified) with data sourced directly from top
-  brands' own published ingredient pages (narrow, verifiable) — only the
-  first layer is built. The second is future work.
 - **`active_ingredient_text` is truncated to 500 characters** for display
   (full INCI lists can be very long) — but matching against
   `COSMETIC_ACTIVES` runs on the untruncated text before truncation, so
@@ -83,3 +86,67 @@ row only gets the `brightening-texture` concern in this first pass
   reads to set `products.dataSource`/`verified` instead of re-deriving
   active ids via text matching (this source's `active_ingredients_structured`
   already holds canonical active ids, not raw substance names).
+
+---
+
+# build_brand_direct_catalog.py
+
+The higher-trust layer discussed alongside the above: sourced directly
+from a brand's own product pages, not a crowd-edited database. Chosen
+target — **The Ordinary** — is the exact brand the original gap was found
+against (zero real entries existed for it before this work; Open Beauty
+Facts itself only has 14 of its 40+ real SKUs, some junk).
+
+```bash
+python3 build_brand_direct_catalog.py
+```
+
+## Why this brand, and how it works
+
+- `robots.txt` on theordinary.com allows product pages (only disallows
+  cart/checkout/search/filter paths).
+- Product pages are server-rendered — no JS execution needed. Each page
+  carries a `schema.org/Product` JSON-LD block (name, sku/mpn, brand) and
+  a `data-original-ingredients="..."` HTML attribute with the full INCI
+  list, both extracted with plain regex, no HTML parser needed.
+- Product identity uses the JSON-LD `sku`/`mpn` field — the manufacturer's
+  own stable product code (same barcode-keyed-identity principle as the
+  rest of the catalog).
+- The full real catalog (102 US SKUs) comes from `sitemap-en_US.xml`, not
+  a hand-picked subset — every product actually sold, not a curated sample.
+
+## Results (run 2026-09-27)
+
+43 of 102 real SKUs matched a tracked active (the rest use actives not yet
+in `COSMETIC_ACTIVES` — expected, not a bug):
+
+| Active | Products matched |
+|---|---|
+| Hyaluronic Acid | 18 |
+| Squalane | 15 |
+| Niacinamide | 6 |
+| Vitamin C (Ascorbic Acid) | 4 |
+| Retinol (cosmetic) | 4 |
+| Glycolic Acid | 4 |
+| Alpha Arbutin | 2 |
+| Azelaic Acid (cosmetic) | 1 |
+
+Found and fixed a real bug while building this: the ingredient list
+spells it `Alpha-Arbutin` (hyphenated), but the matcher's needle was
+`"alpha arbutin"` (space) — missed every match until caught by inspecting
+actual extracted output before running the full 102-page pass. Added
+`alpha-arbutin`, `glycolic-acid`, and `squalane` as new canonical actives
+(`app/src/db/actives.ts`) to cover what showed up in the real catalog.
+
+## Adding another brand
+
+Add one `BRANDS` entry (sitemap URL + product-URL regex) and, if the site's
+markup differs, adjust `extract_product()`'s JSON-LD/ingredient-attribute
+lookup to match. Check `robots.txt` and confirm pages are server-rendered
+(no JS needed) before adding a new brand.
+
+## Files
+
+- `output/brand_direct_catalog.csv` — 43 rows, same schema as
+  `cosmetic_catalog.csv` (`source=brand_direct`, `verified=true`) plus a
+  `source_url` column pointing at the exact page scraped.

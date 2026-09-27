@@ -431,6 +431,33 @@ export const ACTIVE_DEFINITIONS: ActiveDefinition[] = [
       "Lipids naturally found in skin's barrier, added to cosmetic moisturizers to support barrier function. Not an FDA-regulated drug ingredient — no OTC monograph or FDA efficacy claim applies to it.",
     typicalConcentrationText: "Concentration varies by formulation; not standardized.",
   },
+  {
+    id: "alpha-arbutin",
+    canonicalName: "Alpha Arbutin",
+    categories: ["brightening-texture"],
+    synonyms: ["alpha arbutin", "alpha-arbutin"],
+    summary:
+      "A cosmetic brightening ingredient, often paired with hyaluronic acid in serums. Not an FDA-regulated drug ingredient — no OTC monograph or FDA efficacy claim applies to it.",
+    typicalConcentrationText: "Commonly formulated at 1%–2% in cosmetic products; not a standardized concentration.",
+  },
+  {
+    id: "glycolic-acid",
+    canonicalName: "Glycolic Acid",
+    categories: ["brightening-texture"],
+    synonyms: ["glycolic acid"],
+    summary:
+      "An alpha-hydroxy acid (AHA) exfoliant used in cosmetic peels and toners. Not an FDA-regulated drug ingredient — no OTC monograph or FDA efficacy claim applies to it, unlike the OTC monograph acne actives.",
+    typicalConcentrationText: "Commonly formulated at 5%–30% depending on product type (leave-on vs. peel); not standardized.",
+  },
+  {
+    id: "squalane",
+    canonicalName: "Squalane",
+    categories: ["brightening-texture"],
+    synonyms: ["squalane"],
+    summary:
+      "A stable, plant- or lab-derived emollient oil used in cosmetic moisturizers and face oils. Not an FDA-regulated drug ingredient — no OTC monograph or FDA efficacy claim applies to it.",
+    typicalConcentrationText: "Often used at or near 100% in single-ingredient face oils; varies in blended formulations.",
+  },
 ];
 
 /** Returns the canonical active ids whose synonyms appear in the given free text. */

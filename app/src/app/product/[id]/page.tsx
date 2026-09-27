@@ -17,6 +17,7 @@ import {
 } from "@/lib/queries";
 import { getDermScore, getAudienceScore } from "@/lib/scoring";
 import { getVideoSearchLinks } from "@/lib/video-links";
+import { dataSourceBadge } from "@/lib/data-source";
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
@@ -43,6 +44,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
   const videoSearchLinks = getVideoSearchLinks(product.brandName);
   const dermScore = getDermScore(product.id, product.concernId);
   const audienceScore = getAudienceScore(product.id, product.concernId);
+  const sourceBadge = dataSourceBadge(product.dataSource);
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-10 space-y-8">
@@ -56,19 +58,34 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
         {product.manufacturer && <p className="text-muted-foreground">{product.manufacturer}</p>}
         <div className="mt-3 flex flex-wrap gap-2">
           {product.dosageForm && <Badge variant="secondary">{product.dosageForm}</Badge>}
+          {sourceBadge && (
+            <Badge variant="outline" className={sourceBadge.className}>
+              {sourceBadge.label}
+            </Badge>
+          )}
         </div>
       </div>
 
       <DualScoreBadges dermScore={dermScore} audienceScore={audienceScore} />
 
-      {!product.verified && (
+      {product.dataSource === "open_beauty_facts" && (
         <Alert className="border-amber-300 bg-amber-50 dark:border-amber-900 dark:bg-amber-950/40">
           <AlertTitle>Community-sourced listing, not FDA-verified</AlertTitle>
           <AlertDescription>
             This product&apos;s data comes from Open Beauty Facts, a crowd-edited database — anyone can
-            submit or edit an entry. Unlike the rest of the catalog (sourced from FDA drug filings),
-            this listing hasn&apos;t been independently verified. Ingredient names and amounts may be
-            incomplete or inaccurate.
+            submit or edit an entry. Unlike the rest of the catalog, this listing hasn&apos;t been
+            independently verified. Ingredient names and amounts may be incomplete or inaccurate.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {product.dataSource === "brand_direct" && (
+        <Alert className="border-sky-300 bg-sky-50 dark:border-sky-900 dark:bg-sky-950/40">
+          <AlertTitle>Sourced directly from the manufacturer</AlertTitle>
+          <AlertDescription>
+            This ingredient list comes from {product.manufacturer || "the brand"}&apos;s own published
+            product page, not a crowd-edited database. It isn&apos;t an FDA drug filing (this active has
+            no OTC monograph status), but it is the manufacturer&apos;s own disclosed claim.
           </AlertDescription>
         </Alert>
       )}
@@ -78,7 +95,11 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
       {product.activeIngredientText && (
         <div>
           <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide mb-1">
-            {product.verified ? "Active ingredient (from FDA label)" : "Ingredients (community-sourced)"}
+            {product.dataSource === "openfda" || product.dataSource === "dailymed"
+              ? "Active ingredient (from FDA label)"
+              : product.dataSource === "brand_direct"
+                ? "Ingredients (from manufacturer)"
+                : "Ingredients (community-sourced)"}
           </h2>
           <p className="text-sm">{product.activeIngredientText}</p>
         </div>

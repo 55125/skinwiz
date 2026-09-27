@@ -3,11 +3,13 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { DualScoreBadges } from "@/components/score-badge";
 import { getDermScore, getAudienceScore } from "@/lib/scoring";
+import { dataSourceBadge } from "@/lib/data-source";
 import type { products } from "@/db/schema";
 
 export function ProductCard({ product }: { product: typeof products.$inferSelect }) {
   const dermScore = getDermScore(product.id, product.concernId);
   const audienceScore = getAudienceScore(product.id, product.concernId);
+  const sourceBadge = dataSourceBadge(product.dataSource);
 
   return (
     <Link href={`/product/${encodeURIComponent(product.id)}`}>
@@ -23,9 +25,9 @@ export function ProductCard({ product }: { product: typeof products.$inferSelect
         <CardContent className="space-y-3">
           <div className="flex flex-wrap gap-1">
             {product.dosageForm && <Badge variant="secondary">{product.dosageForm}</Badge>}
-            {!product.verified && (
-              <Badge variant="outline" className="border-dashed text-amber-700 dark:text-amber-400">
-                Community-sourced
+            {sourceBadge && (
+              <Badge variant="outline" className={sourceBadge.className}>
+                {sourceBadge.label}
               </Badge>
             )}
           </div>

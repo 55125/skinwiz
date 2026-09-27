@@ -10,12 +10,14 @@ Pulls public App Store, Google Play, and Reddit mentions of a competitor app
 Feed `complaints_summary.csv` back into the §4 complaint table in `project.md`
 to replace the manual frequency estimates with real counts.
 
-## Must run locally
+## Must run somewhere with real network egress
 
-This can't run from a sandboxed Claude Code environment — that environment's
-network egress is limited to package registries (pypi, npm, github, etc.),
-not to `apple.com`, `play.google.com`, or `reddit.com`. Run it from your own
-machine.
+Some sandboxed Claude Code environments only allow egress to package
+registries (pypi, npm, github, etc.), not to `apple.com`, `play.google.com`,
+or `reddit.com`. If that's the case where you're running this, run it from
+your own machine instead. (Confirmed working from a Claude Code server
+environment with normal internet access on 2026-09-27 — see "Known source
+status" below for what actually worked.)
 
 ## Setup
 
@@ -32,6 +34,9 @@ pip install -r requirements.txt
 
 Neither is hardcoded in the script — pass them as flags so this works for
 any competitor, not just SkinSort.
+
+For SkinSort specifically (looked up 2026-09-27): App Store id `6478040418`,
+Google Play package `com.skinsort` — same bundle id on both stores.
 
 ## Run
 
@@ -58,17 +63,30 @@ Theme keyword lists live in the `THEMES` dict at the top of
 `project.md` §4 — after a first run, skim `complaints_raw.csv` rows that
 landed in `other` and add keywords/phrases you see repeating.
 
-## Rate limits & etiquette
+## Known source status (as of 2026-09-27, live run against SkinSort)
 
-- App Store RSS: unauthenticated, but the feed only exposes roughly the
-  most recent 500 reviews (10 pages × 50) per country — that's a hard
-  ceiling on `--max-app-store-pages`, not a script bug.
-- Google Play: `google-play-scraper` scrapes the public web UI, no API key,
-  but batch size >200/request is unreliable — the script already batches at 200.
-- Reddit: uses the unauthenticated public `.json` search/comment endpoints
-  with a 1s default delay (`--sleep`) between requests. Cloud/datacenter IPs
-  are sometimes blocked outright by Reddit — if requests fail on a VPS but
-  work from your laptop, that's why.
+- **App Store RSS — dead.** `itunes.apple.com/*/rss/customerreviews/...`
+  returns a valid empty feed (200 OK, no `entry` key) for every app tested,
+  including high-review apps like Instagram, in both `us` and `gb`. This is
+  Apple's side, not a SkinSort- or code-specific issue — the RSS reviews
+  feed appears to have been effectively retired. The community
+  `app-store-scraper` PyPI package is not a fix either: it pins
+  `requests==2.23.0`/`urllib3<2`, which are incompatible with modern Python
+  (3.13+) — don't sink time into it. If iOS review data is worth the
+  cost, the real options are Apple's App Store Connect API (requires being
+  the app's own developer — not usable against a competitor) or a paid
+  third-party review-aggregation API (e.g. AppFollow, Appbot).
+- **Google Play — works, but capped.** `google-play-scraper`'s `Sort.NEWEST`
+  pagination exhausts after roughly 150–200 reviews regardless of
+  `--max-play-reviews` — that's Play's own unauthenticated-scraping limit,
+  not a script bug. Good enough for a first read, not for exhaustive
+  coverage.
+- **Reddit — blocked from server IPs.** The public `.json` search/comment
+  endpoints now redirect to a login wall (`/login/?reason=lor2`) when hit
+  from a datacenter/server IP, regardless of `User-Agent`. Confirmed via
+  direct `curl` from this environment, not just the script. Run the Reddit
+  half of this from a residential/laptop IP, or skip straight to the PRAW
+  (OAuth) path below.
 
 ## Scaling beyond this script
 

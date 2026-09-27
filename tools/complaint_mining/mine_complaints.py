@@ -37,10 +37,10 @@ THEMES: dict[str, dict] = {
         "label": "Aggressive paywall / subscription",
         "baseline_severity": "medium",
         "keywords": [
-            "paywall", "subscription", "free trial", "3-day trial", "3 day trial",
+            "paywall", "pay wall", "subscription", "free trial", "3-day trial", "3 day trial",
             "hard to cancel", "auto renew", "auto-renew", "scan limit",
             "upsell", "per week", "$6/wk", "too expensive", "cancel my subscription",
-            "money back", "refund",
+            "money back", "refund", "unsubscribe", "charged", "deducted", "deduction",
         ],
     },
     "contradictory_routine": {
@@ -67,7 +67,8 @@ THEMES: dict[str, dict] = {
         "keywords": [
             "crash", "crashes", "bug", "blank page", "won't load", "wont load",
             "freezes", "freezing", "slow", "glitch", "broken", "keeps loading",
-            "stuck on", "error message",
+            "stuck on", "error message", "won't let me log", "can't log in",
+            "cannot login", "sign in with", "won't redirect",
         ],
     },
     "no_context": {

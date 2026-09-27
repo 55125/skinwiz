@@ -131,8 +131,10 @@ dermatologist or medical advisory board found publicly on their team page.
 - Growth engine = SEO + word of mouth, not paid/owned social. No dominant
   channel to out-compete head-on.
 
-**App store standing:** 4.7★ / ~4.2k ratings on iOS — genuinely well-liked
-overall; don't underestimate them.
+**App store standing:** 4.74★ / 6,252 ratings on iOS (id `6478040418`,
+verified via App Store search API 2026-09-27 — higher than the ~4.2k
+originally estimated). Genuinely well-liked overall; don't underestimate
+them.
 
 ### Complaint themes (manual pass — confirm with the mining script in §6)
 
@@ -151,6 +153,32 @@ dermatologists, not guesses from an ingredient list. Core features free."*
 — hits their highest-severity gap (score validity) and highest-frequency
 gap (paywall) simultaneously, and neither is fixable for them without
 abandoning their business model.
+
+### Real complaint-mining run (2026-09-27, partial — see caveats)
+
+Ran `tools/complaint_mining/mine_complaints.py` against SkinSort. Only
+Google Play yielded data — see
+[tools/complaint_mining/README.md](tools/complaint_mining/README.md#known-source-status-as-of-2026-09-27-live-run-against-skinsort)
+for why App Store RSS (dead feed, Apple-side) and Reddit (server-IP login
+wall) didn't. Of 172 scraped Play reviews (the practical ceiling of
+`google-play-scraper`'s unauthenticated pagination, not a filter we chose):
+
+| Theme | Count | % of 172 | Avg rating |
+|---|---|---|---|
+| Aggressive paywall / subscription | 12 | 7.0% | 1.58★ |
+| Bugs / blank pages / slow app | 3 | 1.7% | 1.0★ |
+| Other / uncategorized (mostly 5★ praise) | 157 | 91.3% | 4.39★ |
+
+No Play reviews matched score-validity, contradictory-routine,
+avoided-ingredient, no-context, or ingredient-claim-accuracy — those may be
+more of an App-Store/Reddit/TikTok phenomenon (matches the original manual
+read, which sourced the trust/accuracy complaints from TikTok, not app
+stores), or may just not show up in written Play reviews. **Treat this as
+directional, not a replacement for the manual table**: n=172 from one
+source only. Paywall is the one theme with real, high-confidence backing
+so far — 12/172 (7%) skewing to 1★, i.e. it's overwhelmingly the reason for
+a bad rating when it comes up at all. Full raw data:
+[tools/complaint_mining/output/](tools/complaint_mining/output/).
 
 **Adjacent competitor spotted during research:** HadaBuddy — already
 publishing "vs. SkinSort" comparison content, confirming the

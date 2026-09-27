@@ -1,0 +1,19 @@
+{
+  "note": "Supplementary check: full-text search on indications_and_usage instead of the structured purpose field. Purpose-field search is precise but 'Skin protectant' turned out to be a broad monograph bucket shared by eczema creams, diaper-rash cream, lip balm, and combo sunscreen products alike (see niche_analysis README). This search estimates how much of that bucket is actually eczema/seb-derm relevant, at the cost of being noisier itself (a cosmetic product can mention 'acne-prone skin' in marketing copy without being an acne drug).",
+  "acne_indication_text": {
+    "total_labels": 5257,
+    "distinct_brands": 1000,
+    "distinct_brands_capped": true
+  },
+  "eczema_sebderm_dandruff_indication_text_combined": {
+    "query": "eczema OR seborrheic dermatitis OR dandruff (deduped via OR)",
+    "total_labels": 4663,
+    "distinct_brands": 1000,
+    "distinct_brands_capped": true
+  },
+  "individual_terms": {
+    "eczema": 1485,
+    "seborrheic dermatitis": 2531,
+    "dandruff": 1639
+  }
+}

@@ -348,13 +348,25 @@ directly licensing the evidence engine.
 
 ## 11. Open decisions before build starts
 
-- [ ] Confirm launch niche (acne+sun vs. eczema/barrier+seb derm) —
-      pick based on openFDA data completeness + SkinSort SEO gap analysis
+- [x] openFDA data-completeness half of the launch-niche decision — run
+      2026-09-27, see [tools/niche_analysis/README.md](tools/niche_analysis/README.md).
+      **Finding:** acne+sun is the lower-friction MVP niche on data grounds —
+      both "Acne treatment" and "Sunscreen" are precisely-defined FDA
+      monograph purpose categories (20 + 90 distinct substances, close to
+      Phase 1's 30–40-active target), while eczema/seb-derm's biggest
+      bucket ("Skin protectant") is shared with diaper-rash cream, lip
+      balm, and combo sunscreens and needs real filtering work before
+      Phase 2 can start cleanly.
+- [ ] Confirm launch niche — still needs the SkinSort SEO gap analysis
+      (Ahrefs/Semrush, not run) and your own market/interest judgment
+      before the openFDA finding above becomes a final pick
 - [ ] Attorney review of the whole structure (LLC, ToS, claims review)
 - [ ] Media contract review (CNN Underscored, Wirecutter) for
       competing-business clauses
-- [ ] Run `mine_complaints.py` locally, replace manual complaint
-      frequencies in §4 with real counts
+- [x] Ran `mine_complaints.py` against SkinSort 2026-09-27 — partial
+      (Google Play only; App Store RSS dead, Reddit blocked from server
+      IPs). See §4 "Real complaint-mining run" and
+      [tools/complaint_mining/README.md](tools/complaint_mining/README.md).
 - [ ] Recruit 5–10 dermatologist colleagues for the seed rating panel
 - [ ] Decide on domain/brand name (Antigravity brand was floated
       elsewhere but not settled for this specific product)

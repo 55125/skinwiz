@@ -1,0 +1,58 @@
+{
+  "acne_sun": {
+    "label": "Acne + sun protection",
+    "purposes": [
+      {
+        "purpose": "Acne treatment",
+        "total_labels": 2390,
+        "distinct_brands": 781,
+        "distinct_brands_capped": false,
+        "distinct_substances": 20,
+        "distinct_substances_capped": false
+      },
+      {
+        "purpose": "Sunscreen",
+        "total_labels": 18091,
+        "distinct_brands": 1000,
+        "distinct_brands_capped": true,
+        "distinct_substances": 90,
+        "distinct_substances_capped": false
+      }
+    ],
+    "total_labels_sum": 20481,
+    "distinct_brands_sum": 1781,
+    "distinct_substances_sum": 110
+  },
+  "eczema_sebderm": {
+    "label": "Eczema/barrier + seb derm",
+    "purposes": [
+      {
+        "purpose": "Skin protectant",
+        "total_labels": 5489,
+        "distinct_brands": 1000,
+        "distinct_brands_capped": true,
+        "distinct_substances": 119,
+        "distinct_substances_capped": false
+      },
+      {
+        "purpose": "Anti-itch",
+        "total_labels": 889,
+        "distinct_brands": 276,
+        "distinct_brands_capped": false,
+        "distinct_substances": 28,
+        "distinct_substances_capped": false
+      },
+      {
+        "purpose": "Antidandruff",
+        "total_labels": 194,
+        "distinct_brands": 58,
+        "distinct_brands_capped": false,
+        "distinct_substances": 5,
+        "distinct_substances_capped": false
+      }
+    ],
+    "total_labels_sum": 6572,
+    "distinct_brands_sum": 1334,
+    "distinct_substances_sum": 152
+  }
+}

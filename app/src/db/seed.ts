@@ -66,12 +66,16 @@ function readCsv<T>(filePath: string): T[] {
 async function main() {
   console.log("Seeding SkinWiz database...");
 
-  // Wipe in FK-safe order so this script is idempotent.
+  // Wipe and regenerate reference/catalog data only, in FK-safe order.
+  // dermRatings, audienceOutcomes, dermRaters, and raterApplications are
+  // deliberately NOT wiped here -- once real submissions exist (a
+  // clinician's panel application, a real derm rating), this script needs
+  // to keep running safely on every deploy (see the repo-root Dockerfile's
+  // startup command) without silently deleting them. Safe today because
+  // SQLite doesn't enforce foreign keys here by default and product ids
+  // are stable across reseeds (openFDA NDC / barcode / manufacturer SKU),
+  // so any rows referencing them keep resolving correctly.
   db.delete(schema.affiliateLinks).run();
-  db.delete(schema.dermRatings).run();
-  db.delete(schema.audienceOutcomes).run();
-  db.delete(schema.raterApplications).run();
-  db.delete(schema.dermRaters).run();
   db.delete(schema.evidenceNotes).run();
   db.delete(schema.products).run();
   db.delete(schema.actives).run();

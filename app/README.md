@@ -27,7 +27,40 @@ npm run db:seed    # loads the real openFDA catalog + demo affiliate data
 npm run dev
 ```
 
-Re-run `db:seed` any time — it wipes and reloads, so it's safe to repeat.
+Re-run `db:seed` any time — it wipes and reloads catalog/reference data
+(concerns, actives, products, affiliate links), but **not** `dermRatings`,
+`audienceOutcomes`, `dermRaters`, or `rater_applications` — those are real
+user-submitted data once they exist, and this script runs on every deploy
+(see the repo-root `Dockerfile`), so wiping them there would mean losing
+real submissions on every redeploy. Verified by inserting a test row and
+re-running the seed before this was relied on in production.
+
+## Deployment
+
+Live on Railway (project `skinwiz`), deployed 2026-09-27 from the
+repo-root `Dockerfile` — not `app/`-scoped, because `db/seed.ts` resolves
+the catalog CSVs via a relative `../tools/...` path and the container
+needs `tools/` alongside `app/` for that to keep working unchanged.
+
+- **Persistent volume** mounted at `/data`; `DATABASE_PATH=/data/skinwiz.db`
+  env var (see `src/db/client.ts`) points SQLite at it instead of the
+  container's ephemeral filesystem, which is wiped on every redeploy.
+- **Startup command** runs `db:push` (idempotent schema sync) then
+  `db:seed` then `next start` on every boot — see the note above on why
+  that's safe for catalog data but must never touch the user-data tables.
+- **`/` and `/sitemap.xml` are forced dynamic** (`export const dynamic =
+  "force-dynamic"`) rather than statically generated. The Docker build
+  runs `next build` *before* the database is seeded (no volume is mounted
+  during the build stage) — a static build would have queried an empty
+  database once and baked that in permanently. This is what caused the
+  first deploy attempt to fail outright (see below) before being fixed.
+- **Node 22, not 20**, in the Dockerfile — `better-sqlite3@13` requires it;
+  Node 20 didn't just warn, it segfaulted during the production build.
+
+No Postgres migration needed for this — SQLite-on-a-volume is a
+reasonable choice for an MVP at this traffic level; revisit if real
+concurrent write load ever shows up (see `src/db/client.ts`'s comment on
+swapping to `drizzle-orm/postgres-js`).
 
 ## What's real vs. not
 

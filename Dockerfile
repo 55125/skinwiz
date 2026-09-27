@@ -1,0 +1,47 @@
+# Repo-root Dockerfile (not app/-scoped) so the deployed container keeps
+# tools/catalog_pipeline + tools/affiliate_feeds alongside app/ — app/src/db/seed.ts
+# resolves those CSVs via a relative ../tools/... path, same as local dev.
+# Duplicating the CSVs into app/ instead would risk them silently drifting
+# out of sync with the pipeline that generates them.
+# node:22, not 20 -- better-sqlite3@13 requires Node >=22 (an EBADENGINE
+# warning on Node 20 during a real deploy attempt turned out not to be
+# just a warning: the build segfaulted, presumably from an ABI mismatch
+# in the native addon).
+FROM node:22-bookworm-slim AS build
+
+# build-essential + python3: better-sqlite3 compiles a native addon at
+# install time; no prebuilt binary is guaranteed for every deploy target.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3 make g++ \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /repo
+COPY . .
+
+WORKDIR /repo/app
+# Skip Playwright's browser download during install -- it's a devDependency
+# used only for local screenshot-based UI testing, not needed at runtime,
+# and downloading it here just slows the build.
+ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
+RUN npm ci
+RUN npm run build
+
+FROM node:22-bookworm-slim
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3 make g++ \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /repo
+COPY --from=build /repo /repo
+WORKDIR /repo/app
+
+# DATABASE_PATH should point at a mounted persistent volume in production
+# (see src/db/client.ts) -- without one, data is lost on every redeploy.
+ENV NODE_ENV=production
+EXPOSE 3000
+
+# db:push (idempotent, creates tables if missing) + db:seed (wipes and
+# reloads product/concern/active data every start -- fine while
+# dermRatings/audienceOutcomes are still empty; revisit once real user
+# data exists, see seed.ts) before serving.
+CMD npm run db:push -- --force && npm run db:seed && npm start

@@ -3,6 +3,13 @@ import { Stethoscope, Users, ShieldCheck } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { getConcerns } from "@/lib/queries";
 
+// Force dynamic: without this, Next.js statically prerenders "/" once at
+// build time -- against whatever the database contains at that moment.
+// The Docker build runs before db:push/db:seed (see repo-root Dockerfile),
+// so a static build would bake in an empty concerns list permanently
+// until the next deploy. Same reasoning as sitemap.ts.
+export const dynamic = "force-dynamic";
+
 export default function Home() {
   const concerns = getConcerns();
 

@@ -18,7 +18,15 @@
 // concern" filter chips and which concerns get an evidence note for a
 // given active.
 
-export type Concern = "acne" | "sunscreen" | "antifungal" | "antidandruff" | "anti-itch" | "skin-protectant" | "antiperspirant";
+export type Concern =
+  | "acne"
+  | "sunscreen"
+  | "antifungal"
+  | "antidandruff"
+  | "anti-itch"
+  | "skin-protectant"
+  | "antiperspirant"
+  | "brightening-texture";
 
 // Maps each niche key (used throughout tools/catalog_pipeline and this
 // file's `categories` arrays) to the concern row shown in the UI. Kept in
@@ -32,6 +40,12 @@ export const CONCERN_DEFINITIONS: { niche: Concern; id: string; name: string; de
   { niche: "anti-itch", id: "itch-relief", name: "Itch Relief", description: "OTC actives and products for itch from eczema, insect bites, poison ivy, and minor irritation." },
   { niche: "skin-protectant", id: "dry-skin-eczema", name: "Dry Skin & Eczema", description: "OTC skin-protectant actives and products for dry, chapped, or eczema-prone skin." },
   { niche: "antiperspirant", id: "excessive-sweating", name: "Excessive Sweating", description: "OTC antiperspirant actives and products." },
+  {
+    niche: "brightening-texture",
+    id: "brightening-texture",
+    name: "Brightening & Texture",
+    description: "Cosmetic actives and products for skin tone, texture, and pore appearance — not FDA drug claims.",
+  },
 ];
 
 export function nicheToConcernId(niche: string): string {
@@ -96,7 +110,7 @@ export const ACTIVE_DEFINITIONS: ActiveDefinition[] = [
   {
     id: "azelaic-acid",
     canonicalName: "Azelaic Acid",
-    categories: ["acne"],
+    categories: ["acne", "brightening-texture"],
     synonyms: ["azelaic acid"],
     summary:
       "In the US, higher-strength azelaic acid (e.g. 15–20%) is prescription-only (Finacea, Azelex). Lower-concentration azelaic acid appears in some cosmetic-labeled products; those are not FDA OTC drug monograph acne treatments.",
@@ -363,6 +377,59 @@ export const ACTIVE_DEFINITIONS: ActiveDefinition[] = [
     summary:
       "A family of FDA OTC monograph antiperspirant actives (differing in aluminum:zirconium ratio), grouped here as one canonical entry since the ratio distinction isn't a consumer-meaningful difference without a dermatologist's input.",
     typicalConcentrationText: "Concentration varies by product strength (regular vs. clinical-strength).",
+  },
+
+  // --- Brightening & texture (cosmetic ingredients, NOT FDA drug actives) ---
+  // These have no OTC monograph status at all — no Drug Facts panel, no
+  // FDA-recognized concentration limits, no "purpose" claim. Products
+  // containing them come from Open Beauty Facts (community-sourced,
+  // unverified — see build_cosmetic_catalog.py), not openFDA/DailyMed.
+  // Summaries here describe what the ingredient is, explicitly note the
+  // lack of FDA drug status, and make no efficacy claim.
+  {
+    id: "niacinamide",
+    canonicalName: "Niacinamide",
+    categories: ["brightening-texture"],
+    synonyms: ["niacinamide"],
+    summary:
+      "A form of vitamin B3 widely used in cosmetic serums and moisturizers for skin tone and texture. Not an FDA-regulated drug ingredient — no OTC monograph or FDA efficacy claim applies to it.",
+    typicalConcentrationText: "Commonly formulated at 2%–10% in cosmetic products; not a standardized concentration.",
+  },
+  {
+    id: "vitamin-c",
+    canonicalName: "Vitamin C (Ascorbic Acid)",
+    categories: ["brightening-texture"],
+    synonyms: ["ascorbic acid"],
+    summary:
+      "An antioxidant used in cosmetic serums, often for brightening. Not an FDA-regulated drug ingredient — no OTC monograph or FDA efficacy claim applies to it. Formulation and stability vary widely by product.",
+    typicalConcentrationText: "Commonly formulated at 5%–20% in cosmetic products; not a standardized concentration.",
+  },
+  {
+    id: "hyaluronic-acid",
+    canonicalName: "Hyaluronic Acid",
+    categories: ["brightening-texture"],
+    synonyms: ["hyaluronic acid", "sodium hyaluronate"],
+    summary:
+      "A humectant that draws moisture into skin, used broadly in cosmetic serums and moisturizers. Not an FDA-regulated drug ingredient — no OTC monograph or FDA efficacy claim applies to it.",
+    typicalConcentrationText: "Concentration varies by molecular weight and formulation; not standardized.",
+  },
+  {
+    id: "retinol-cosmetic",
+    canonicalName: "Retinol (cosmetic)",
+    categories: ["brightening-texture"],
+    synonyms: ["retinol"],
+    summary:
+      "A cosmetic vitamin-A derivative, distinct from the FDA OTC monograph acne active adapalene and from prescription retinoids (tretinoin) — retinol itself has no OTC monograph or FDA drug status. Potency and stability vary widely by formulation.",
+    typicalConcentrationText: "Concentration varies widely by product; not standardized.",
+  },
+  {
+    id: "ceramides",
+    canonicalName: "Ceramides",
+    categories: ["brightening-texture"],
+    synonyms: ["ceramide"],
+    summary:
+      "Lipids naturally found in skin's barrier, added to cosmetic moisturizers to support barrier function. Not an FDA-regulated drug ingredient — no OTC monograph or FDA efficacy claim applies to it.",
+    typicalConcentrationText: "Concentration varies by formulation; not standardized.",
   },
 ];
 

@@ -36,11 +36,21 @@ export default function AboutPage() {
       <section className="space-y-2">
         <h2 className="text-lg font-medium">Where the data comes from</h2>
         <p className="text-sm text-muted-foreground">
-          Product and active-ingredient data comes from the FDA&apos;s openFDA drug label and NDC
+          Most product and active-ingredient data comes from the FDA&apos;s openFDA drug label and NDC
           directory — the same regulatory data manufacturers file with the FDA. Ingredient summaries on
           this site describe what a monograph active is and how it&apos;s typically used; they are not a
           clinical efficacy judgment. Any evidence grade you see (or don&apos;t, yet) is assigned only by
           a verified dermatologist rater, never inferred automatically.
+        </p>
+        <p className="text-sm text-muted-foreground">
+          Products for cosmetic ingredients with no FDA drug status (niacinamide, vitamin C, and similar)
+          come from{" "}
+          <a href="https://world.openbeautyfacts.org" target="_blank" rel="noopener noreferrer" className="underline">
+            Open Beauty Facts
+          </a>
+          , a community-edited database, used here under its Open Database License. These listings are
+          clearly marked &quot;Community-sourced&quot; throughout the site and are not independently
+          verified the way the FDA-sourced catalog is.
         </p>
       </section>
 

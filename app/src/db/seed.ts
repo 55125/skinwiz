@@ -6,20 +6,30 @@ import * as schema from "./schema";
 import { ACTIVE_DEFINITIONS, CONCERN_DEFINITIONS, matchActiveIds, nicheToConcernId } from "./actives";
 
 const REPO_ROOT = path.resolve(process.cwd(), "..");
-// Two sources: the primary openFDA catalog, plus the DailyMed resolution
-// pass that recovers some of the ~67% of label records openFDA's own
-// label->NDC linkage missed (see tools/catalog_pipeline/README.md and
-// resolve_unmatched_via_dailymed.py's docstring). The second file may not
-// exist yet if that script hasn't been run — handled below.
+// Three sources: the primary openFDA catalog, the DailyMed resolution pass
+// that recovers some of the label records openFDA's own label->NDC
+// linkage missed, and the Open Beauty Facts cosmetic-ingredient catalog
+// (niacinamide, vitamin C, etc. — actives with no FDA drug-monograph
+// status, so they're invisible to the first two). Any file may not exist
+// yet if its generating script hasn't been run — handled below.
 const CATALOG_CSVS = [
   path.join(REPO_ROOT, "tools/catalog_pipeline/output/acne_sun_catalog.csv"),
   path.join(REPO_ROOT, "tools/catalog_pipeline/output/dailymed_resolved_catalog.csv"),
+  path.join(REPO_ROOT, "tools/catalog_pipeline/output/cosmetic_catalog.csv"),
 ];
 const AFFILIATE_CSV = path.join(REPO_ROOT, "tools/affiliate_feeds/output/matched_catalog.csv");
 
 type CatalogRow = {
   product_ndc: string;
-  niche: "acne" | "sunscreen" | "antifungal" | "antidandruff" | "anti-itch" | "skin-protectant" | "antiperspirant";
+  niche:
+    | "acne"
+    | "sunscreen"
+    | "antifungal"
+    | "antidandruff"
+    | "anti-itch"
+    | "skin-protectant"
+    | "antiperspirant"
+    | "brightening-texture";
   brand_name: string;
   manufacturer_name: string;
   active_ingredient_text: string;
@@ -27,6 +37,13 @@ type CatalogRow = {
   dosage_form: string;
   substance_name: string;
   spl_set_id: string;
+  // Only present in cosmetic_catalog.csv. When set, active_ingredients_structured
+  // already holds canonical active ids (from build_cosmetic_catalog.py's own
+  // matching against the full, untruncated ingredient list) — trust it directly
+  // rather than re-deriving via matchActiveIds() against the (possibly truncated
+  // for display) active_ingredient_text.
+  source?: "open_beauty_facts";
+  verified?: "true" | "false";
 };
 
 type AffiliateRow = {
@@ -104,8 +121,11 @@ async function main() {
 
     for (const row of catalogRows) {
       if (!row.product_ndc || seenNdc.has(row.product_ndc)) continue;
-      const combinedText = [row.active_ingredients_structured, row.substance_name, row.active_ingredient_text].join(" ");
-      const activeIds = matchActiveIds(combinedText);
+
+      const activeIds = row.source === "open_beauty_facts"
+        ? row.active_ingredients_structured.split(";").filter(Boolean)
+        : matchActiveIds([row.active_ingredients_structured, row.substance_name, row.active_ingredient_text].join(" "));
+
       if (activeIds.length === 0) {
         skippedNoActive++;
         continue;
@@ -117,9 +137,17 @@ async function main() {
         brandName: row.brand_name?.trim() || "(unnamed product)",
         manufacturer: row.manufacturer_name || null,
         dosageForm: row.dosage_form || null,
-        activeIngredientText: row.active_ingredients_structured || row.active_ingredient_text || null,
+        // For cosmetic rows, active_ingredients_structured holds internal
+        // canonical ids (see activeIds above), not display text — show the
+        // raw ingredient list instead.
+        activeIngredientText:
+          row.source === "open_beauty_facts"
+            ? row.active_ingredient_text || null
+            : row.active_ingredients_structured || row.active_ingredient_text || null,
         activeIds,
         splSetId: row.spl_set_id || null,
+        dataSource: row.source ?? (csvPath.includes("dailymed") ? "dailymed" : "openfda"),
+        verified: row.verified === "false" ? false : true,
       });
     }
   }

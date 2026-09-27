@@ -1,11 +1,11 @@
 # SkinWiz — app
 
-The MVP web app: browse OTC skincare products by active ingredient across
-7 concerns (acne, sun protection, antifungal, antidandruff, anti-itch, dry
-skin/eczema, excessive sweating), each with a dual score model (Derm Score
-/ Audience Score) in the spirit of Rotten Tomatoes' critic/audience split,
-plus video-review search links (YouTube/TikTok/Instagram) — see
-`../project.md` for the full product brief.
+The MVP web app: browse skincare products by active ingredient across 8
+concerns (acne, sun protection, antifungal, antidandruff, anti-itch, dry
+skin/eczema, excessive sweating, brightening & texture), each with a dual
+score model (Derm Score / Audience Score) in the spirit of Rotten
+Tomatoes' critic/audience split, plus video-review search links (YouTube/
+TikTok/Instagram) — see `../project.md` for the full product brief.
 
 Built overnight (2026-09-27), expanded same-day — see "What's real vs. not"
 below before treating anything here as launch-ready.
@@ -35,12 +35,26 @@ This matters more than usual for a health product — read before demoing.
 
 **Real:**
 - All products, brand names, active ingredients, and exact concentrations
-  — pulled live from openFDA + DailyMed (`tools/catalog_pipeline/`), not
-  fabricated. 15,247 as of 2026-09-27 across all 7 concerns (9,895 sun
-  protection, 1,351 excessive sweating, 1,332 dry skin/eczema, 1,322 acne,
-  899 antifungal, 383 itch relief, 65 antidandruff) — run `npm run db:seed`
-  and read its printed count for the current total, it grows as the
-  catalog pipeline is re-run.
+  — pulled live from openFDA + DailyMed + Open Beauty Facts
+  (`tools/catalog_pipeline/`), not fabricated. 16,482 as of 2026-09-27
+  (15,255 FDA-sourced across 7 drug concerns; 1,227 community-sourced
+  cosmetic products in the new Brightening & Texture concern — see the two
+  trust tiers below) — run `npm run db:seed` and read its printed count for
+  the current total, it grows as the catalog pipeline is re-run.
+- **Two distinct trust tiers, never blended silently.** `products.verified`
+  is `true` for openFDA/DailyMed rows (derived from what a manufacturer
+  legally filed with the FDA) and `false` for Open Beauty Facts rows
+  (crowd-edited — real junk entries were found in it during testing, e.g.
+  a `"TESTBRAND"` test product). Every unverified product renders a visible
+  "Community-sourced, not FDA-verified" badge on both the card and detail
+  page (`src/components/product-card.tsx`, `src/app/product/[id]/page.tsx`)
+  — see `tools/catalog_pipeline/README_cosmetic.md`.
+- **Product identity is barcode/NDC-keyed on purpose.** A repackaged or
+  reformulated relaunch gets a new barcode in practice (GS1 convention), so
+  it becomes a new catalog row instead of overwriting what an existing
+  link/review pointed at — see the `products` table comment in
+  `src/db/schema.ts`. Known accepted gap: a silent reformulation with no
+  barcode change won't be caught.
 - The empty derm-rating and audience-outcome states. **No dermatologist
   has rated anything and no user has logged an outcome yet** — that's
   reality, not a bug, and the UI is built to show "not yet rated" honestly

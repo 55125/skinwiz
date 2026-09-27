@@ -38,17 +38,30 @@ export const evidenceNotes = sqliteTable("evidence_notes", {
   citations: text("citations", { mode: "json" }).$type<string[]>().notNull().default(sql`'[]'`),
 });
 
-// One row per distinct openFDA product (product_ndc), from
-// tools/catalog_pipeline/output/acne_sun_catalog.csv.
+// One row per distinct product, keyed by barcode/NDC (whichever the source
+// uses) -- from tools/catalog_pipeline/output/{acne_sun,dailymed_resolved,
+// cosmetic}_catalog.csv. Barcode/NDC as the primary key is deliberate: a
+// repackaged or reformulated relaunch gets a new barcode in practice (GS1
+// convention), so it becomes a new row instead of silently overwriting
+// what an existing review/link/citation pointed at.
 export const products = sqliteTable("products", {
-  id: text("id").primaryKey(), // product_ndc
+  id: text("id").primaryKey(), // product_ndc (drug) or barcode (cosmetic)
   concernId: text("concern_id").notNull().references(() => concerns.id),
   brandName: text("brand_name").notNull(),
   manufacturer: text("manufacturer"),
   dosageForm: text("dosage_form"),
-  activeIngredientText: text("active_ingredient_text"), // exact FDA label text, incl. %
+  activeIngredientText: text("active_ingredient_text"), // exact FDA label text, incl. %, or raw OBF ingredients_text
   activeIds: text("active_ids", { mode: "json" }).$type<string[]>().notNull().default(sql`'[]'`),
   splSetId: text("spl_set_id"), // DailyMed backlink: dailymed.nlm.nih.gov/dailymed/lookup.cfm?setid=
+  // "openfda" | "dailymed" | "open_beauty_facts" -- which pipeline produced
+  // this row. verified=true only for openfda/dailymed (derived from what a
+  // manufacturer legally filed with the FDA); false for open_beauty_facts
+  // (crowd-sourced, unverified -- confirmed real junk entries exist in it
+  // during spot-checks, see build_cosmetic_catalog.py). The UI must render
+  // an unmistakable badge when verified is false -- never blend this with
+  // the FDA-sourced rows without a visible distinction.
+  dataSource: text("data_source").notNull().default("openfda"),
+  verified: integer("verified", { mode: "boolean" }).notNull().default(true),
 });
 
 // Real affiliate integration exists (tools/affiliate_feeds/) but no network

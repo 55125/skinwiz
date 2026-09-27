@@ -61,12 +61,24 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
 
       <DualScoreBadges dermScore={dermScore} audienceScore={audienceScore} />
 
+      {!product.verified && (
+        <Alert className="border-amber-300 bg-amber-50 dark:border-amber-900 dark:bg-amber-950/40">
+          <AlertTitle>Community-sourced listing, not FDA-verified</AlertTitle>
+          <AlertDescription>
+            This product&apos;s data comes from Open Beauty Facts, a crowd-edited database — anyone can
+            submit or edit an entry. Unlike the rest of the catalog (sourced from FDA drug filings),
+            this listing hasn&apos;t been independently verified. Ingredient names and amounts may be
+            incomplete or inaccurate.
+          </AlertDescription>
+        </Alert>
+      )}
+
       <RedFlagBanner />
 
       {product.activeIngredientText && (
         <div>
           <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide mb-1">
-            Active ingredient (from FDA label)
+            {product.verified ? "Active ingredient (from FDA label)" : "Ingredients (community-sourced)"}
           </h2>
           <p className="text-sm">{product.activeIngredientText}</p>
         </div>

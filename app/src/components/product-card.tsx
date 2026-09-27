@@ -23,6 +23,11 @@ export function ProductCard({ product }: { product: typeof products.$inferSelect
         <CardContent className="space-y-3">
           <div className="flex flex-wrap gap-1">
             {product.dosageForm && <Badge variant="secondary">{product.dosageForm}</Badge>}
+            {!product.verified && (
+              <Badge variant="outline" className="border-dashed text-amber-700 dark:text-amber-400">
+                Community-sourced
+              </Badge>
+            )}
           </div>
           {product.activeIngredientText && (
             <p className="line-clamp-2 text-xs text-muted-foreground">{product.activeIngredientText}</p>

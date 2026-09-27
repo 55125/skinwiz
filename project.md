@@ -296,6 +296,7 @@ content, Michael authors/verifies clinical logic.
 | 1. Evidence engine | 3–10 | Grading table (30–40 actives × 10–12 concerns): evidence grade, concentration, vehicle; contraindication/interaction rules; red-flag gate | 40–60 |
 | 2. Data pipeline | 6–14 | openFDA/DailyMed + Open Beauty Facts + CosIng ingest, INCI normalization, active mapping, affiliate feed integration | 30–50 |
 | 3. MVP web app | 10–18 | Concern quiz → routine builder, programmatic SEO templates, disclosures/ToS, analytics | 40–60 |
+|    → **first pass built 2026-09-27** | | [app/](app/) — Next.js + Drizzle/SQLite, browse acne+sun catalog (6,653 real products) by active ingredient, dual Derm/Audience score model with honest empty states (no real raters/users yet), evidence notes, draft disclaimers, `/for-clinicians` panel-interest form. Demo affiliate data clearly badged as non-live. See [app/README.md](app/README.md) for what's real vs. placeholder — no routine builder, no auth, no outcome-logging UI, no programmatic SEO yet. | |
 | 4. Content + launch | 16–24 | 200–500 physician-reviewed concern×active×skin-type pages (~5–10 min review each) | 30–80 |
 | 5. Growth | Months 6–12 | Media distribution, outcome logging, email list, premium tier | ~5/wk |
 | 6. Expansion | Year 2 | B2B licensing, mobile app, telederm referral partner | Variable |

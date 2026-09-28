@@ -424,7 +424,10 @@ def _finish_shopify_product(raw_ingredients_html: str, url: str, product_json: d
     # "($80+ Free Gift)"-style prefix on the *same* underlying product --
     # real, distinct SKUs (different promo threshold/price point), not a
     # bug, but the prefix is noise for a product name display.
-    title = re.sub(r"^\(\s*[$£€]?\d+\+?\s*Free\s*Gifts?\s*\)\s*", "", (product_json.get("title") or "").strip(), flags=re.IGNORECASE)
+    # \d* (not \d+) and the fullwidth pound sign both needed after finding
+    # real "(Free Gift)" (no number) and "(￡70+ Free Gift)" variants that
+    # the first pass of this regex missed.
+    title = re.sub(r"^\(\s*[$£€￡]?\d*\+?\s*Free\s*Gifts?\s*\)\s*", "", (product_json.get("title") or "").strip(), flags=re.IGNORECASE)
 
     return {
         "product_ndc": sku,

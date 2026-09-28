@@ -3,13 +3,8 @@ import { SearchBar } from "@/components/search-bar";
 import { ProductCard } from "@/components/product-card";
 import { FreeFromFilters } from "@/components/free-from-filters";
 import { Badge } from "@/components/ui/badge";
-import { searchProducts, searchActives, getConcerns } from "@/lib/queries";
-
-const TRUST_TIERS: { label: string; dataSources: string[] }[] = [
-  { label: "FDA-sourced", dataSources: ["openfda", "dailymed"] },
-  { label: "Brand-verified", dataSources: ["brand_direct"] },
-  { label: "Community-sourced", dataSources: ["open_beauty_facts"] },
-];
+import { searchProducts, searchProductsCount, searchActives, getConcerns } from "@/lib/queries";
+import { TRUST_TIERS } from "@/lib/trust-tiers";
 
 export default async function SearchPage({
   searchParams,
@@ -22,10 +17,10 @@ export default async function SearchPage({
   const selectedTier = TRUST_TIERS.find((t) => t.label === tier);
   const concerns = getConcerns();
 
+  const searchFilters = { concernId: concern, dataSources: selectedTier?.dataSources, freeFromIds };
   const activeResults = query ? searchActives(query) : [];
-  const productResults = query
-    ? searchProducts(query, { concernId: concern, dataSources: selectedTier?.dataSources, freeFromIds })
-    : [];
+  const productResults = query ? searchProducts(query, searchFilters) : [];
+  const productTotal = query ? searchProductsCount(query, searchFilters) : 0;
 
   function hrefWith(overrides: Record<string, string | undefined>) {
     const params = new URLSearchParams();
@@ -99,8 +94,14 @@ export default async function SearchPage({
       {productResults.length > 0 && (
         <div className="space-y-3">
           <h2 className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
-            Products ({productResults.length})
+            Products ({productTotal.toLocaleString()})
           </h2>
+          {productTotal > productResults.length && (
+            <p className="text-xs text-muted-foreground">
+              Showing the first {productResults.length} — narrow with a filter above or refine your search to see
+              others.
+            </p>
+          )}
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {productResults.map((p) => (
               <ProductCard key={p.id} product={p} />
@@ -110,9 +111,9 @@ export default async function SearchPage({
       )}
 
       <p className="text-xs text-muted-foreground">
-        Looking for a full ingredient browse instead?{" "}
-        <Link href="/" className="underline">
-          Browse by concern
+        Looking for a full catalog browse instead?{" "}
+        <Link href="/browse" className="underline">
+          Browse all products
         </Link>
         .
       </p>

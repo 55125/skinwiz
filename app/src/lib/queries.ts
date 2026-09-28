@@ -44,6 +44,33 @@ export function getProductsForConcern(concernId: string, page: number, activeId?
   return { rows, total: count, pageSize: PAGE_SIZE, page };
 }
 
+// The general catalog browser (/browse) -- every filter here is optional,
+// unlike getProductsForConcern where concernId is required. Same query
+// shape otherwise (paginated rows + a real COUNT(*), not a capped length).
+export function browseProducts(
+  filters: { concernId?: string; dataSources?: string[]; activeId?: string; freeFromIds?: string[] },
+  page: number,
+) {
+  const offset = (page - 1) * PAGE_SIZE;
+  const clauses = [...freeFromWhereClauses(filters.freeFromIds ?? [])];
+  if (filters.concernId) clauses.push(eq(products.concernId, filters.concernId));
+  if (filters.dataSources && filters.dataSources.length > 0) clauses.push(inArray(products.dataSource, filters.dataSources));
+  if (filters.activeId) clauses.push(sql`${products.activeIds} LIKE ${"%\"" + filters.activeId + "\"%"}`);
+  const whereClause = clauses.length > 0 ? and(...clauses) : undefined;
+
+  const rows = db.select().from(products).where(whereClause).limit(PAGE_SIZE).offset(offset).all();
+  const [{ count }] = db.select({ count: sql<number>`count(*)` }).from(products).where(whereClause).all();
+
+  return { rows, total: count, pageSize: PAGE_SIZE, page };
+}
+
+// Top actives across the WHOLE catalog (no concern scoping) -- the browse
+// page's sidebar active-ingredient filter needs this since it isn't
+// anchored to one concern the way /concern/[slug]'s chips are.
+export function getAllActives() {
+  return db.select().from(actives).orderBy(actives.canonicalName).all();
+}
+
 export function getProduct(id: string) {
   return db.select().from(products).where(eq(products.id, id)).get();
 }
@@ -92,10 +119,7 @@ export function getVideoLinksForProduct(productId: string) {
 // order of magnitude or search feels slow in practice.
 const SEARCH_LIMIT = 40;
 
-export function searchProducts(
-  q: string,
-  filters: { concernId?: string; dataSources?: string[]; freeFromIds?: string[] } = {},
-) {
+function buildSearchWhere(q: string, filters: { concernId?: string; dataSources?: string[]; freeFromIds?: string[] }) {
   const needle = `%${q}%`;
   // Also matches activeIngredientText (the raw FDA/manufacturer ingredient
   // list) -- without this, searching "niacinamide" found the active-
@@ -108,13 +132,37 @@ export function searchProducts(
   ];
   if (filters.concernId) clauses.push(eq(products.concernId, filters.concernId));
   if (filters.dataSources && filters.dataSources.length > 0) clauses.push(inArray(products.dataSource, filters.dataSources));
+  return and(...clauses);
+}
 
+export function searchProducts(
+  q: string,
+  filters: { concernId?: string; dataSources?: string[]; freeFromIds?: string[] } = {},
+) {
   return db
     .select()
     .from(products)
-    .where(and(...clauses))
+    .where(buildSearchWhere(q, filters))
     .limit(SEARCH_LIMIT)
     .all();
+}
+
+// Separate COUNT(*) query, same reason getProductsForConcern has one --
+// searchProducts is capped at SEARCH_LIMIT, so productResults.length can
+// never tell a user whether a filter actually narrowed anything (it reads
+// "40" whether 40 or 4,000 products match). Real bug: the search page
+// never had this, so a filter chip visibly doing nothing to the count made
+// filtering look broken even when the underlying query was correct.
+export function searchProductsCount(
+  q: string,
+  filters: { concernId?: string; dataSources?: string[]; freeFromIds?: string[] } = {},
+) {
+  const [{ count }] = db
+    .select({ count: sql<number>`count(*)` })
+    .from(products)
+    .where(buildSearchWhere(q, filters))
+    .all();
+  return count;
 }
 
 export function searchActives(q: string) {

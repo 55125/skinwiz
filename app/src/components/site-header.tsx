@@ -13,6 +13,9 @@ export function SiteHeader() {
           <Link href="/" className="hover:text-foreground">
             Browse concerns
           </Link>
+          <Link href="/browse" className="hover:text-foreground">
+            Browse all
+          </Link>
           <Link href="/routines" className="hover:text-foreground">
             Routines
           </Link>

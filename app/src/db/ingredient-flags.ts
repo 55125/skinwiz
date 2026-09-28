@@ -50,10 +50,44 @@ export const FREE_FROM_CHECKS: FreeFromCheck[] = [
   { id: "peg-free", label: "PEG-free", category: "clean", avoidSubstrings: ["peg-", "polyethylene glycol"] },
 
   // Contact-allergen-avoidance half -- common, well-documented allergens per
-  // NACDG/ACDS core allergen series. Not exhaustive (nickel, formaldehyde
-  // itself rather than its releasers, and many fragrance-mix components
-  // individually are all real omissions) -- a starting list, not a clinical tool.
+  // NACDG/ACDS core allergen series. Not exhaustive -- a starting list, not
+  // a clinical tool. The four below (formaldehyde, oxybenzone, iodopropynyl
+  // butylcarbamate, named fragrance allergens) were added 2026-09-29 after
+  // cross-checking against the Contact Dermatitis Institute's public
+  // allergen database (contactdermatitisinstitute.com/database.php, a
+  // physician-contributed reference used for patient education) -- every
+  // substring below corresponds to a named entry there, not a guess.
   { id: "lanolin-free", label: "Lanolin-free", category: "contact-allergen", avoidSubstrings: ["lanolin", "wool wax", "wool alcohol"] },
+  { id: "formaldehyde-free", label: "Formaldehyde-free", category: "contact-allergen", avoidSubstrings: ["formaldehyde"] },
+  {
+    id: "oxybenzone-free",
+    label: "Oxybenzone-free",
+    category: "contact-allergen",
+    // A well-documented photoallergen -- also one of our tracked FDA
+    // sunscreen actives (app/src/db/actives.ts), tracked separately here
+    // since "is this active present" and "should this be avoided" are
+    // different questions.
+    avoidSubstrings: ["oxybenzone", "benzophenone-3"],
+  },
+  { id: "iodopropynyl-butylcarbamate-free", label: "Iodopropynyl butylcarbamate-free", category: "contact-allergen", avoidSubstrings: ["iodopropynyl butylcarbamate"] },
+  {
+    id: "named-fragrance-allergen-free",
+    label: "Named fragrance allergen-free",
+    category: "contact-allergen",
+    // Individually-named fragrance chemicals a product can list on its own
+    // ingredient panel instead of the generic "fragrance"/"parfum" -- the
+    // existing fragrance-free check (top of this file) only catches the
+    // generic terms, so a product listing these by name would otherwise
+    // pass it. Limonene/linalool specifically: the allergen is technically
+    // their oxidized (hydroperoxide) form, not the pristine molecule, but
+    // an ingredient list only ever declares the parent name, so that's the
+    // practical signal to check -- same convention the EU's mandatory
+    // fragrance-allergen labeling list uses.
+    avoidSubstrings: [
+      "cinnamal", "cinnamyl alcohol", "hydroxycitronellal", "eugenol", "isoeugenol", "geraniol",
+      "coumarin", "farnesol", "citral", "citronellol", "limonene", "linalool", "oakmoss", "evernia prunastri",
+    ],
+  },
   {
     id: "formaldehyde-releaser-free",
     label: "Formaldehyde-releaser-free",

@@ -226,7 +226,7 @@ and hard for a brand to fake without being caught on disclosure.
 |---|---|---|---|
 | **OTC drug product catalog** (names, labeler, exact active %, full inactive-ingredient list, images, dosage form) | **openFDA** (NDC + drug-label endpoints) / **DailyMed** | Free | Covers sunscreens, acne washes/treatments, skin protectants, hydrocortisone, antifungals, dandruff/seb-derm shampoos, colloidal-oatmeal eczema creams. More of a typical skincare catalog is "drug" than assumed — **this alone can carry an MVP launch niche.** Expect dupes, discontinued SKUs, inconsistent naming; not FDA-verified for accuracy, just listing data. |
 | **OTC monograph rules** | FDA OTC monographs (acne, sunscreen, skin protectant, antifungal) | Free | Defines allowed actives/concentrations/claims — also the claim-compliance guardrail |
-| **Cosmetic product catalog** (serums, non-monograph moisturizers/cleansers) | Open Beauty Facts + brand-direct scraping | Free (ODbL — share-alike; keep derived scores/data in a separate DB) | **Built 2026-09-27, expanded across 2026-09-28** — [tools/catalog_pipeline/README_cosmetic.md](tools/catalog_pipeline/README_cosmetic.md): 2,196 products from Open Beauty Facts across 14 cosmetic actives, plus 243 brand-direct products across **seven brands** — The Ordinary (43), CeraVe (9), Naturium (93), First Aid Beauty (52), COSRX (7), and — added 2026-09-28 — **Skinfix** (27, Shopify) and **Vanicream** (9, its own site, declares brand-side "free from" badges that independently confirm the app's own ingredient-derived flags below). Checked and skipped: La Roche-Posay/Aveeno/Neutrogena (bot-blocked), Paula's Choice (bot-gated sitemap), Eucerin (redirects to an unrelated portal), The Inkey List (UK-only storefront, formulations can legally differ from US). Three trust tiers throughout (`src/lib/data-source.ts`). **Images**: self-hosted for all brand-direct rows (hotlinked only for OBF, an open database built for that reuse) — 1,633+ of 17,698 products have one; the ~15,255 FDA-sourced rows have no image field at all and show a placeholder. **Actual-fit concern tagging**: `pick_niche()` routes ceramide/squalane/panthenol/centella/hyaluronic-acid-leaning products to Dry Skin & Eczema instead of a blanket Brightening & Texture (2,619 vs. 1,159 today). **"Buy directly" links**: `products.sourceUrl` renders as a non-affiliate link when no real affiliate link exists. **"Clean ingredient" / contact-allergen-avoidance filters** ([app/src/db/ingredient-flags.ts](app/src/db/ingredient-flags.ts)): 12 ingredient-presence checks computed from each product's own published ingredient list — including, for the first time, openFDA's own Inactive Ingredients text (99.8% coverage, never read before) — not a brand's marketing claim; v1, not exhaustive, a real dermatologist pass on the contact-allergen half would be valuable (see §11). `urea` stays deliberately excluded from the active list — its INCI substring collides with unrelated preservatives. Attribution on `/about`. |
+| **Cosmetic product catalog** (serums, non-monograph moisturizers/cleansers) | Open Beauty Facts + brand-direct scraping | Free (ODbL — share-alike; keep derived scores/data in a separate DB) | **Built 2026-09-27, expanded through 2026-09-29** — [tools/catalog_pipeline/README_cosmetic.md](tools/catalog_pipeline/README_cosmetic.md): 2,196 products from Open Beauty Facts across 14 cosmetic actives, plus 432 brand-direct products across **nine brands** — Naturium (93), COSRX (82, after fixing a second-template discovery bug), CeraVe (67, after fixing a category-hub discovery bug that had it stuck at 9), First Aid Beauty (52), The Ordinary (44), Cetaphil (40, new), Skinfix (28), Vanicream (12), Aquaphor (9, new — also the reason `petrolatum` is now a tracked cosmetic active for the first time). Checked and skipped: La Roche-Posay/Aveeno/Neutrogena (bot-blocked), Paula's Choice (bot-gated sitemap), Eucerin (redirects to an unrelated portal), The Inkey List (UK-only storefront, formulations can legally differ from US). Three trust tiers throughout (`src/lib/data-source.ts`). **Images**: self-hosted for all brand-direct rows (hotlinked only for OBF, an open database built for that reuse) — ~2,000 of 17,884 products have one; the ~15,700 FDA-sourced rows have no image field at all and show a placeholder. **Actual-fit concern tagging**: `pick_niche()` routes ceramide/squalane/panthenol/centella/hyaluronic-acid/petrolatum-leaning products to Dry Skin & Eczema instead of a blanket Brightening & Texture. **"Buy directly" links**: `products.sourceUrl` renders as a non-affiliate link when no real affiliate link exists. **"Clean ingredient" / contact-allergen-avoidance filters** ([app/src/db/ingredient-flags.ts](app/src/db/ingredient-flags.ts)): 16 ingredient-presence checks computed from each product's own published ingredient list — including openFDA's own Inactive Ingredients text (99.8% coverage, never read before) — not a brand's marketing claim. The four contact-allergen checks added 2026-09-29 (formaldehyde, oxybenzone, iodopropynyl butylcarbamate, named fragrance allergens) were cross-checked against the Contact Dermatitis Institute's public physician-contributed allergen database before adding, not guessed. **PubChem enrichment** ([app/src/db/enrich-pubchem.ts](app/src/db/enrich-pubchem.ts)): 44 of 51 actives now link to a real compound id/formula, runs automatically (and idempotently) on every deploy. Still v1/not-exhaustive — a real dermatologist pass on the contact-allergen half would be valuable (see §11). `urea` stays deliberately excluded from the active list — its INCI substring collides with unrelated preservatives. Attribution on `/about`. |
 | **Retail price/image/buy-link** | Affiliate network feeds (Rakuten, Impact, CJ, Awin, Amazon PA API) | Free w/ approval | **Targeting decided 2026-09-27**, see [tools/affiliate_feeds/README.md](tools/affiliate_feeds/README.md#which-network-to-actually-target): apply to **Impact** (Target, Walmart, CVS, Ulta) and **CJ Affiliate** (Walgreens, Neutrogena brand-direct at 4–8%) first — both free, together cover most of where this catalog's products are actually sold. Amazon deprioritized (1% health/personal-care commission, needs ongoing qualifying sales to keep access). No account approved yet — the pipeline has adapters for all three (Awin/CJ/Impact) plus a matching pipeline validated against synthetic mock feeds, ready to point at a real feed once one exists. |
 | **Barcode matching** | ~~Drug NDC↔UPC mapping~~ — **not reliable, corrected 2026-09-27** | Free | The NDC→UPC numeric conversion is a pharmacy point-of-sale convention for relabeled prescriptions, not how retail OTC products' manufacturer-assigned UPCs work — there's no mathematical link to join on. Real mechanism: fuzzy title/brand text matching with an active-ingredient cross-check + a manual-review tier for low-confidence matches, see [tools/affiliate_feeds/README.md](tools/affiliate_feeds/README.md). |
 | **Ingredient function/restrictions** | EU CosIng | Free | |
@@ -420,19 +420,32 @@ directly licensing the evidence engine.
       manufacturer sites per-brand (same cost profile as the brand-direct
       ingredient work) or a paid product-image API — not something to do
       silently, since it's a real spend/scope decision.
-- [ ] **"Clean ingredient" / contact-allergen-avoidance flags need a real
-      dermatologist pass** — built 2026-09-28
+- [ ] **"Clean ingredient" / contact-allergen-avoidance flags still need a
+      real dermatologist pass** — built 2026-09-28, expanded 2026-09-29
       ([app/src/db/ingredient-flags.ts](app/src/db/ingredient-flags.ts)):
-      12 checks (fragrance/paraben/sulfate/silicone/mineral-oil/dye/PEG for
-      "clean," plus lanolin/formaldehyde-releasers/MI-MCI/cocamidopropyl
-      betaine/balsam of Peru/propylene glycol for contact-dermatitis
-      avoidance), computed as a plain substring-absence check against each
-      product's actual published ingredient list — not a brand's marketing
-      claim, not a certification. Same structural posture as
-      `evidenceNotes`: built without clinical review, explicitly labeled
-      v1/not-exhaustive in the UI, and a real board-certified dermatologist
-      pass on the contact-allergen half specifically (is the list right,
-      is anything major missing, e.g. individual fragrance-mix components
-      or nickel-adjacent metals) would be genuinely valuable, not just a
-      formality — this is closer to your actual specialty than most of
-      what's in this file.
+      16 checks (fragrance/paraben/sulfate/silicone/mineral-oil/dye/PEG for
+      "clean," plus lanolin/formaldehyde/formaldehyde-releasers/MI-MCI/
+      cocamidopropyl betaine/balsam of Peru/propylene glycol/oxybenzone/
+      iodopropynyl butylcarbamate/named fragrance allergens for
+      contact-dermatitis avoidance), computed as a plain substring-absence
+      check against each product's actual published ingredient list — not
+      a brand's marketing claim, not a certification. The four newest
+      checks were cross-checked against the Contact Dermatitis Institute's
+      public physician-contributed allergen database
+      (contactdermatitisinstitute.com/database.php, ~500 named allergens,
+      no bulk API but browsable) before adding — every substring
+      corresponds to a named entry there, not a guess. ACDS CAMP and Mayo's
+      CARD (the two clinical patient-matching tools you asked about) turned
+      out to be membership/patient-code-gated, not public databases — no
+      way to pull data from either. **SkinSAFE**
+      (skinsafeproducts.com, a Mayo Clinic collaboration, same lineage as
+      CARD) is the interesting one: publicly accessible, 18,000+ allergens/
+      cross-reactors against 15,000+ pre-screened products, updated weekly
+      — no API found, but worth a closer look as either a reference to
+      validate this list against or a future data-partnership conversation,
+      not something built here. Same structural posture as `evidenceNotes`:
+      built without clinical review, explicitly labeled v1/not-exhaustive
+      in the UI, and a real board-certified dermatologist pass on the
+      contact-allergen half specifically would be genuinely valuable, not
+      just a formality — this is closer to your actual specialty than most
+      of what's in this file.

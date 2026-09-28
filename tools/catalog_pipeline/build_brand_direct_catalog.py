@@ -36,6 +36,7 @@ from __future__ import annotations
 import csv
 import html as html_module
 import json
+import os
 import re
 import sys
 import time
@@ -49,6 +50,20 @@ SLEEP = 0.4
 # ingredient list. If a future page-structure change reintroduces something
 # like it, this rejects the row instead of silently storing garbage.
 MAX_INGREDIENT_TEXT_LEN = 3000
+
+# Self-host brand-direct photos instead of hotlinking the brand's own CDN --
+# unlike Open Beauty Facts (an open ODbL database whose API is meant for
+# reuse), these are commercial product photos scraped off a retail page with
+# no license to embed them live from their origin, and hotlinking also means
+# our product pages silently break the moment a brand adds referrer-based
+# hotlink protection or reshuffles a URL. Downloaded once here and committed
+# into the Next.js app's public/ dir, same as any other static asset --
+# app/src/db/seed.ts stores whatever string is in this CSV's image_url column
+# as-is, so a root-relative path works exactly like the old full URL did with
+# no app-side changes needed.
+IMAGE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "app", "public", "product-images", "brand-direct")
+IMAGE_URL_PREFIX = "/product-images/brand-direct"
+MAX_IMAGE_BYTES = 5_000_000
 
 BRANDS = {
     "the_ordinary": {
@@ -110,6 +125,52 @@ def _get(url: str, retries: int = 3) -> str | None:
                 return None
             time.sleep(1.5 * (attempt + 1))
     return None
+
+
+def _get_bytes(url: str, retries: int = 3) -> bytes | None:
+    for attempt in range(retries):
+        try:
+            req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 (skinwiz-catalog-pipeline/0.1)"})
+            with urllib.request.urlopen(req, timeout=20) as resp:
+                data = resp.read(MAX_IMAGE_BYTES + 1)
+                if len(data) > MAX_IMAGE_BYTES:
+                    print(f"  skipping image {url}: over {MAX_IMAGE_BYTES} bytes", file=sys.stderr)
+                    return None
+                return data
+        except urllib.error.HTTPError as exc:
+            if exc.code == 404:
+                return None
+            if attempt == retries - 1:
+                return None
+            time.sleep(1.5 * (attempt + 1))
+        except Exception:
+            if attempt == retries - 1:
+                return None
+            time.sleep(1.5 * (attempt + 1))
+    return None
+
+
+def download_image(url: str, product_id: str) -> str:
+    """Downloads a product photo into IMAGE_DIR, returns the root-relative
+    app path to store in the CSV, or "" if the download failed (a missing
+    photo is not fatal to the row -- the product still gets everything else,
+    same as a product with no image_url at all)."""
+    if not url:
+        return ""
+    ext_match = re.search(r"\.(jpg|jpeg|png|webp)(?:[?#]|$)", url, re.IGNORECASE)
+    ext = ext_match.group(1).lower() if ext_match else "jpg"
+    slug = re.sub(r"[^a-zA-Z0-9_-]+", "-", product_id).strip("-").lower()[:80]
+    filename = f"{slug}.{ext}"
+    dest_path = os.path.join(IMAGE_DIR, filename)
+
+    data = _get_bytes(url)
+    if not data:
+        print(f"  failed to download image for {product_id}: {url}", file=sys.stderr)
+        return ""
+    os.makedirs(IMAGE_DIR, exist_ok=True)
+    with open(dest_path, "wb") as f:
+        f.write(data)
+    return f"{IMAGE_URL_PREFIX}/{filename}"
 
 
 def matched_active_ids(ingredients_text: str) -> list[str]:
@@ -264,6 +325,9 @@ def main() -> None:
                 product = extractor(html, url)
                 if product:
                     product["manufacturer_name"] = product["manufacturer_name"] or brand["brand_name"]
+                    remote_image_url = product.get("image_url", "")
+                    product["image_url"] = download_image(remote_image_url, product["product_ndc"])
+                    time.sleep(SLEEP)
                     rows.append(product)
             if i % 20 == 0:
                 print(f"  {i}/{len(urls)} pages checked, {len(rows)} matched so far", file=sys.stderr)

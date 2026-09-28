@@ -103,6 +103,20 @@ product card/detail page render it when present; 1,633 of 17,509 products
 have one as of this pass — the ~15,255 openFDA/DailyMed rows have no image
 field in either FDA source at all and fall back to a plain placeholder.
 
+**OBF images are hotlinked directly from `images.openbeautyfacts.org`** —
+that's the intended/designed reuse pattern for an open, ODbL-licensed
+database with a public API built for exactly this. **Brand-direct images
+are downloaded and self-hosted instead** (`download_image()` in
+`build_brand_direct_catalog.py`, into `app/public/product-images/brand-direct/`,
+committed to git like any other static asset) — those are commercial
+product photography scraped off a retail page with no license to embed
+live from the brand's own CDN, and hotlinking them would also mean a
+product page silently breaks the moment the brand adds referrer-based
+hotlink protection or reshuffles a URL. `app/src/db/seed.ts` stores
+whatever string is in the CSV's `image_url` column as-is, so the
+root-relative local path works identically to the old full URL with zero
+app-side changes. 53 images, ~6.4MB total.
+
 ## Known limitations
 
 - **Thin, non-US-filtered coverage.** Queries aren't restricted to

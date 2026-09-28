@@ -78,11 +78,17 @@ This matters more than usual for a health product — read before demoing.
 - **Product photos, where a source has one.** `products.imageUrl`
   (`src/db/schema.ts`) is populated from Open Beauty Facts'
   `image_front_url` and each brand-direct page's own JSON-LD product photo
-  — 1,633 of 17,509 products as of 2026-09-27. The ~15,255 openFDA/DailyMed
+  — 1,633 of 17,509 products as of 2026-09-28. The ~15,255 openFDA/DailyMed
   products have no image field in either source at all and render a plain
   "No photo yet" placeholder (`src/components/product-card.tsx`) instead of
   a broken image or a stock photo standing in for an unverified product —
-  a real, disclosed coverage gap, not a bug.
+  a real, disclosed coverage gap, not a bug. OBF photos are hotlinked
+  (an open database built for exactly that kind of reuse); the 53
+  brand-direct photos are downloaded and self-hosted at
+  `public/product-images/brand-direct/` instead, since those are
+  commercial product photography scraped off a retail page with no license
+  to embed live from the brand's own CDN — see
+  `tools/catalog_pipeline/README_cosmetic.md`.
 - **Three distinct trust tiers, never blended silently**
   (`src/lib/data-source.ts`, `products.dataSource`/`verified` in
   `src/db/schema.ts`): openFDA/DailyMed (a manufacturer's legal FDA

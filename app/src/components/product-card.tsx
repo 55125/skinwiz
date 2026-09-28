@@ -20,7 +20,7 @@ export function ProductCard({ product }: { product: typeof products.$inferSelect
             rather than showing a broken image or a stock photo. */}
         <div className="flex aspect-square w-full items-center justify-center bg-muted">
           {product.imageUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element -- external product photos from many uncontrolled hosts (OBF, brand CDNs); not worth a next/image remotePatterns allowlist for an MVP
+            // eslint-disable-next-line @next/next/no-img-element -- mix of same-origin (brand-direct, self-hosted -- see tools/catalog_pipeline/build_brand_direct_catalog.py) and external OBF-hosted photos; not worth a next/image remotePatterns allowlist for the OBF case alone
             <img
               src={product.imageUrl}
               alt={product.brandName}

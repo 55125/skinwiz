@@ -67,7 +67,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
       </div>
 
       {product.imageUrl && (
-        // eslint-disable-next-line @next/next/no-img-element -- external product photos from many uncontrolled hosts (OBF, brand CDNs); not worth a next/image remotePatterns allowlist for an MVP
+        // eslint-disable-next-line @next/next/no-img-element -- mix of same-origin (brand-direct, self-hosted) and external OBF-hosted photos; not worth a next/image remotePatterns allowlist for the OBF case alone
         <img
           src={product.imageUrl}
           alt={product.brandName}

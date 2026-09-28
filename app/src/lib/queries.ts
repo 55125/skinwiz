@@ -1,7 +1,17 @@
-import { and, eq, inArray, sql } from "drizzle-orm";
+import { and, eq, inArray, sql, type SQL } from "drizzle-orm";
 import { db } from "@/db/client";
 import { concerns, products, actives, evidenceNotes, affiliateLinks, videoLinks } from "@/db/schema";
 import { concernIdToNiche } from "@/db/actives";
+
+// Shared by getProductsForConcern and searchProducts -- one LIKE per
+// selected free-from id, ANDed together, so a product must satisfy every
+// checked filter (e.g. "fragrance-free" AND "paraben-free"), not just one.
+// freeFromFlags is null for unassessed products (see ingredient-flags.ts),
+// so those simply never match any filter here -- they're not silently
+// treated as passing.
+function freeFromWhereClauses(freeFromIds: string[]): SQL[] {
+  return freeFromIds.map((id) => sql`${products.freeFromFlags} LIKE ${"%\"" + id + "\"%"}`);
+}
 
 export function getConcerns() {
   return db.select().from(concerns).all();
@@ -22,11 +32,11 @@ export function getActivesForConcern(concernId: string) {
 
 const PAGE_SIZE = 24;
 
-export function getProductsForConcern(concernId: string, page: number, activeId?: string) {
+export function getProductsForConcern(concernId: string, page: number, activeId?: string, freeFromIds: string[] = []) {
   const offset = (page - 1) * PAGE_SIZE;
-  const whereClause = activeId
-    ? and(eq(products.concernId, concernId), sql`${products.activeIds} LIKE ${"%\"" + activeId + "\"%"}`)
-    : eq(products.concernId, concernId);
+  const clauses = [eq(products.concernId, concernId), ...freeFromWhereClauses(freeFromIds)];
+  if (activeId) clauses.push(sql`${products.activeIds} LIKE ${"%\"" + activeId + "\"%"}`);
+  const whereClause = and(...clauses);
 
   const rows = db.select().from(products).where(whereClause).limit(PAGE_SIZE).offset(offset).all();
   const [{ count }] = db.select({ count: sql<number>`count(*)` }).from(products).where(whereClause).all();
@@ -75,19 +85,27 @@ export function getVideoLinksForProduct(productId: string) {
 // order of magnitude or search feels slow in practice.
 const SEARCH_LIMIT = 40;
 
-export function searchProducts(q: string) {
+export function searchProducts(
+  q: string,
+  filters: { concernId?: string; dataSources?: string[]; freeFromIds?: string[] } = {},
+) {
   const needle = `%${q}%`;
   // Also matches activeIngredientText (the raw FDA/manufacturer ingredient
   // list) -- without this, searching "niacinamide" found the active-
   // ingredient badge but zero products, since most product names don't
   // literally contain the ingredient name. Caught by testing the search
   // page with a real ingredient query before considering this done.
+  const clauses = [
+    sql`(${products.brandName} LIKE ${needle} OR ${products.manufacturer} LIKE ${needle} OR ${products.activeIngredientText} LIKE ${needle})`,
+    ...freeFromWhereClauses(filters.freeFromIds ?? []),
+  ];
+  if (filters.concernId) clauses.push(eq(products.concernId, filters.concernId));
+  if (filters.dataSources && filters.dataSources.length > 0) clauses.push(inArray(products.dataSource, filters.dataSources));
+
   return db
     .select()
     .from(products)
-    .where(
-      sql`${products.brandName} LIKE ${needle} OR ${products.manufacturer} LIKE ${needle} OR ${products.activeIngredientText} LIKE ${needle}`,
-    )
+    .where(and(...clauses))
     .limit(SEARCH_LIMIT)
     .all();
 }

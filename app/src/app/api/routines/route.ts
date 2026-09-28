@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getOrCreateSessionId } from "@/lib/session";
 import { createRoutine } from "@/lib/routines";
-import { getConcern } from "@/lib/queries";
+import { getConcern, getProduct } from "@/lib/queries";
 
 export async function POST(request: Request) {
   const body = await request.json().catch(() => null);
@@ -14,8 +14,19 @@ export async function POST(request: Request) {
   if (!getConcern(body.concernId)) {
     return NextResponse.json({ error: "Unknown concern." }, { status: 400 });
   }
-  const steps = Array.isArray(body.steps) ? body.steps.filter((s: unknown) => typeof s === "string") : [];
-  if (steps.filter((s: string) => s.trim()).length === 0) {
+  const rawSteps: unknown[] = Array.isArray(body.steps) ? body.steps : [];
+  const steps = rawSteps
+    .filter((s): s is { description?: unknown; productId?: unknown } => typeof s === "object" && s !== null)
+    .map((s) => ({
+      description: typeof s.description === "string" ? s.description : "",
+      // routine_steps.productId is a real foreign key and this app enforces
+      // FK constraints (better-sqlite3's default) -- a stale or fabricated
+      // id would throw on insert, not silently no-op, so it's checked here
+      // and dropped rather than trusted from the client.
+      productId: typeof s.productId === "string" && getProduct(s.productId) ? s.productId : null,
+    }))
+    .filter((s) => s.description.trim());
+  if (steps.length === 0) {
     return NextResponse.json({ error: "Please add at least one step." }, { status: 400 });
   }
 

@@ -5,6 +5,7 @@ import { sql } from "drizzle-orm";
 import { db } from "./client";
 import * as schema from "./schema";
 import { ACTIVE_DEFINITIONS, CONCERN_DEFINITIONS, matchActiveIds, nicheToConcernId } from "./actives";
+import { computeFreeFromFlags } from "./ingredient-flags";
 
 const REPO_ROOT = path.resolve(process.cwd(), "..");
 // Four sources: the primary openFDA catalog, the DailyMed resolution pass
@@ -53,6 +54,13 @@ type CatalogRow = {
   // Only present in brand_direct_catalog.csv -- the exact page scraped,
   // reused as a "Buy directly" link (see schema.ts's sourceUrl comment).
   source_url?: string;
+  // Populated for ~99.8% of acne_sun_catalog.csv rows (the SPL label's own
+  // Inactive Ingredients section) but 0% of dailymed_resolved_catalog.csv
+  // (that resolution pass never recovered it) -- a real, full ingredient
+  // list when present, not a guess. Combined with active_ingredient_text to
+  // feed computeFreeFromFlags() below; never previously read at all before
+  // the free-from-flags feature.
+  inactive_ingredient_text?: string;
 };
 
 const PRE_MATCHED_SOURCES = new Set(["open_beauty_facts", "brand_direct"]);
@@ -196,6 +204,16 @@ async function main() {
       // Only openfda/dailymed rows get normalized -- brand_direct/OBF brand
       // names are already human-written product names, not SPL label text.
       const isPreMatched = row.source && PRE_MATCHED_SOURCES.has(row.source);
+      // The full ingredient list for free-from-flag purposes -- NOT the
+      // same text as activeIngredientText above, which for openfda/dailymed
+      // is deliberately just the active-ingredient line for display. Using
+      // that alone here would wrongly mark almost everything "paraben-free"
+      // etc. just because an active-ingredient line never mentions parabens.
+      const fullIngredientText = isPreMatched
+        ? row.active_ingredient_text || null
+        : row.inactive_ingredient_text
+          ? `${row.active_ingredient_text || ""} ${row.inactive_ingredient_text}`
+          : null; // dailymed-resolved rows and any acne_sun row missing it: unknown, not "clean"
       productBatch.push({
         id: row.product_ndc,
         concernId: nicheToConcernId(row.niche),
@@ -215,6 +233,7 @@ async function main() {
         verified: row.verified === "false" ? false : true,
         imageUrl: row.image_url || null,
         sourceUrl: row.source === "brand_direct" ? row.source_url || null : null,
+        freeFromFlags: computeFreeFromFlags(fullIngredientText),
       });
     }
   }

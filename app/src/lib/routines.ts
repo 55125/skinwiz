@@ -1,6 +1,6 @@
 import { and, eq, sql } from "drizzle-orm";
 import { db } from "@/db/client";
-import { routines, routineSteps, routineVotes, routineReports, concerns } from "@/db/schema";
+import { routines, routineSteps, routineVotes, routineReports, concerns, products } from "@/db/schema";
 
 // Vote score is computed on read (SUM of routine_votes.value), never
 // stored as a column on routines — see schema.ts's comment on why: a
@@ -69,9 +69,20 @@ export function getRoutine(id: number) {
     .get();
   if (!routine) return null;
 
+  // leftJoin, not inner -- a step's productId can point at nothing (never
+  // linked, or linked to a product that's since been removed from the
+  // catalog); either way the step still renders, just without a product link.
   const steps = db
-    .select()
+    .select({
+      id: routineSteps.id,
+      stepOrder: routineSteps.stepOrder,
+      description: routineSteps.description,
+      productId: routineSteps.productId,
+      productBrandName: products.brandName,
+      productConcernId: products.concernId,
+    })
     .from(routineSteps)
+    .leftJoin(products, eq(products.id, routineSteps.productId))
     .where(eq(routineSteps.routineId, id))
     .orderBy(routineSteps.stepOrder)
     .all();
@@ -93,7 +104,7 @@ export function createRoutine(input: {
   concernId: string;
   authorName: string | null;
   notes: string | null;
-  steps: string[];
+  steps: { description: string; productId: string | null }[];
   sessionId: string;
 }): number {
   const result = db
@@ -108,10 +119,14 @@ export function createRoutine(input: {
     .run();
   const routineId = Number(result.lastInsertRowid);
 
+  // productId is assumed valid here -- routine_steps.productId is a real
+  // foreign key (FK enforcement is on by default in this app), so a bogus
+  // id would throw on insert, not silently no-op. The API route validates
+  // it exists before calling this; this function trusts that's already done.
   const stepRows = input.steps
-    .map((s) => s.trim())
-    .filter(Boolean)
-    .map((description, i) => ({ routineId, stepOrder: i, description }));
+    .map((s) => ({ description: s.description.trim(), productId: s.productId }))
+    .filter((s) => s.description)
+    .map((s, i) => ({ routineId, stepOrder: i, description: s.description, productId: s.productId }));
   if (stepRows.length > 0) {
     db.insert(routineSteps).values(stepRows).run();
   }

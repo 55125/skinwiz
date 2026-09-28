@@ -69,6 +69,14 @@ export const products = sqliteTable("products", {
   // Never set for openfda/dailymed/open_beauty_facts rows: the first two
   // have no single product page to link to, and OBF isn't a place to buy.
   sourceUrl: text("source_url"),
+  // "Clean ingredient" / common-contact-allergen-avoidance flags -- see
+  // db/ingredient-flags.ts for the full rationale and check list. null means
+  // "not enough ingredient text to assess" (most openfda-only rows before
+  // DailyMed resolution, and dailymed-resolved rows, which have no inactive-
+  // ingredient data at all) -- the UI must treat null as "unknown," never as
+  // "assumed clean." A non-null value is computed from the actual published
+  // ingredient list, not a brand's own marketing claim.
+  freeFromFlags: text("free_from_flags", { mode: "json" }).$type<string[] | null>(),
   // "openfda" | "dailymed" | "open_beauty_facts" -- which pipeline produced
   // this row. verified=true only for openfda/dailymed (derived from what a
   // manufacturer legally filed with the FDA); false for open_beauty_facts
@@ -181,16 +189,19 @@ export const routines = sqliteTable("routines", {
   createdAt: text("created_at").notNull().default(sql`(current_timestamp)`),
 });
 
-// Ordered steps within a routine. description is free text (e.g. "Cleanser
-// — CeraVe Hydrating Cleanser") rather than a structured product picker —
-// linking a step to an exact catalog row is a real future improvement, not
-// built here, since it would need a product-search UI component this pass
-// didn't have room for.
+// Ordered steps within a routine. description is always free text (e.g.
+// "Cleanser — CeraVe Hydrating Cleanser"), but productId optionally links
+// it to an exact catalog row -- added 2026-09-28 via a product-search
+// picker in routine-form.tsx. Nullable and independent of description on
+// purpose: a step can name a product without a catalog match (a brand we
+// don't carry yet) or describe something that isn't a single product at
+// all ("Sunscreen: reapply midday") -- the link is additive, never required.
 export const routineSteps = sqliteTable("routine_steps", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   routineId: integer("routine_id").notNull().references(() => routines.id),
   stepOrder: integer("step_order").notNull(),
   description: text("description").notNull(),
+  productId: text("product_id").references(() => products.id),
 });
 
 // One row per (routine, session) — the unique index is what actually

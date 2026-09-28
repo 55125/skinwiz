@@ -70,8 +70,8 @@ This matters more than usual for a health product — read before demoing.
 **Real:**
 - All products, brand names, active ingredients, and exact concentrations
   — pulled live from openFDA + DailyMed + Open Beauty Facts + brand-direct
-  scraping (`tools/catalog_pipeline/`), not fabricated. 17,661 as of
-  2026-09-28 (15,255 FDA-sourced across 7 drug concerns; ~3,741 cosmetic
+  scraping (`tools/catalog_pipeline/`), not fabricated. 17,698 as of
+  2026-09-28 (15,255 FDA-sourced across 7 drug concerns; 2,437 cosmetic
   products split between Brightening & Texture and Dry Skin & Eczema based
   on which tracked actives a product actually contains — see "actual-fit
   concern tagging" in `tools/catalog_pipeline/README_cosmetic.md` — across
@@ -81,7 +81,8 @@ This matters more than usual for a health product — read before demoing.
   (`src/db/schema.ts`) is populated from Open Beauty Facts'
   `image_front_url` and each brand-direct page's own product photo (JSON-LD
   for The Ordinary/CeraVe, the Shopify catalog API for Naturium/COSRX/First
-  Aid Beauty) — 1,633+ of 17,661 products as of 2026-09-28. The ~15,255
+  Aid Beauty, Skinfix, Vanicream) — 1,633+ of 17,698 products as of
+  2026-09-28. The ~15,255
   openFDA/DailyMed products have no image field in either source at all and
   render a plain "No photo yet" placeholder (`src/components/product-card.tsx`)
   instead of a broken image or a stock photo standing in for an unverified
@@ -103,8 +104,9 @@ This matters more than usual for a health product — read before demoing.
   (`src/lib/data-source.ts`, `products.dataSource`/`verified` in
   `src/db/schema.ts`): openFDA/DailyMed (a manufacturer's legal FDA
   filing — no badge, the default), brand-direct (scraped from a brand's
-  own published product page — The Ordinary, CeraVe, Naturium, COSRX, and
-  First Aid Beauty, 205 products; blue "Brand-verified" badge), and Open
+  own published product page — The Ordinary, CeraVe, Naturium, COSRX,
+  First Aid Beauty, Skinfix, and Vanicream, 241 products; blue
+  "Brand-verified" badge), and Open
   Beauty Facts (crowd-edited — real junk entries found in it during
   testing, e.g. a `"TESTBRAND"` test product; amber "Community-sourced"
   badge). Every non-default tier renders its badge on both the card and
@@ -131,13 +133,29 @@ This matters more than usual for a health product — read before demoing.
 - Search (`/search`, `src/lib/queries.ts`'s `searchProducts`/`searchActives`)
   is a real substring match against brand name, manufacturer, and the raw
   ingredient text — not FTS5/ranked relevance, but genuinely queries the
-  full catalog, not a canned subset.
+  full catalog, not a canned subset. **Filters added 2026-09-28**: by
+  concern, by trust tier, and by ingredient-based flags (below) — all
+  server-rendered toggle links, no client JS, same query-param approach as
+  the existing active-ingredient chips on `/concern/[slug]`.
+- **"Clean ingredient" and common-contact-allergen filters**
+  (`src/db/ingredient-flags.ts`, `products.freeFromFlags`) — computed
+  directly from each product's own published ingredient list (openFDA's
+  Inactive Ingredients section, included for the first time; OBF's/brand-
+  direct's full INCI list), not from a brand's marketing claims or a
+  certification. `null` means "not enough ingredient text to assess"
+  (short active-only lines, or DailyMed-resolved rows, which have no
+  inactive-ingredient data at all) and is never treated as "assumed
+  clean." v1, not exhaustive — a real dermatologist reviewing/extending
+  the contact-allergen half would be genuinely valuable.
 - "Top Actives" on the homepage is a real signal — an actual count of how
   many catalog products contain each active (`getTopActives`, via SQLite's
   `json_each` over `products.active_ids`), not a guess.
 - Routine vote scores (`routine_votes`) are real, unfaked community votes
-  once someone posts and others vote — see the routines section below for
-  what "real" doesn't cover here (no moderation).
+  once someone posts and others vote. **Routine steps can link to a real
+  catalog product** (`routine_steps.productId`, added 2026-09-28 via
+  `product-picker.tsx`'s search-as-you-type) — optional, additive to the
+  free-text description, never required, and a stale/removed product id
+  just makes the step render as plain text again.
 
 **Demo/placeholder — do not treat as real:**
 - **"Top Products" on the homepage is not a quality ranking.** There's no
@@ -192,12 +210,10 @@ This matters more than usual for a health product — read before demoing.
 - No auth, no user accounts, no first-party outcome-logging UI yet (the
   `audience_outcomes` table exists but nothing writes to it) — that's the
   next real feature once there's something to log against.
-- No moderation/reporting mechanism for routines (see above) — the single
-  biggest content-safety gap on the site right now.
-- No product-linked routine steps — a step is free text (e.g. "Cleanser:
-  CeraVe Hydrating Cleanser"), not a reference to an actual catalog row.
-  Linking would need a product-search picker component this pass didn't
-  build.
+- Routines have a report flow (see above) but still no pre-publish review
+  queue — anyone's routine still goes live immediately.
+- No admin UI for `routine_reports` either — same "query the DB directly"
+  situation as `rater_applications` above.
 - Import pipeline, character-shift logic, etc. from the wizard architecture
   in the *other* project this workspace's CLAUDE.md describes (StoryPlume)
   are unrelated — don't confuse the two codebases.

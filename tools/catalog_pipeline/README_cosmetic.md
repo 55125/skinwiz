@@ -293,8 +293,26 @@ everything else still defaults to Brightening & Texture; ties go to
 Brightening & Texture. `app/src/db/actives.ts` dual-categorized those five
 actives (`["brightening-texture", "skin-protectant"]`) so their evidence
 notes and concern-page filter chips show up correctly in both places. Real
-effect on the already-seeded catalog: Dry Skin & Eczema grew from 1,340 to
-2,593 products; Brightening & Texture dropped from 2,248 to 1,148.
+effect on the already-seeded catalog (final numbers after Skinfix/
+Vanicream below were added too): Dry Skin & Eczema grew from 1,340 to
+2,619 products; Brightening & Texture dropped from 2,248 to 1,159.
+
+## Ingredient-based "clean" and contact-allergen filters (2026-09-28)
+
+Computed in `app/src/db/seed.ts` via `computeFreeFromFlags()`
+(`app/src/db/ingredient-flags.ts`), not in this pipeline directly, but it
+changed what this pipeline stores: openFDA's own **Inactive Ingredients**
+section (`inactive_ingredient_text` — present on 99.8% of
+`acne_sun_catalog.csv` rows, 0% of `dailymed_resolved_catalog.csv`, and
+never previously read by `seed.ts` at all) is now combined with the active
+line to give ~15k FDA products a real full ingredient list for the first
+time, not just the Drug Facts active line. Also fixed the same day: OBF's
+`active_ingredient_text` used to be truncated to 500 chars for display —
+harmless for showing a card blurb, but a real accuracy risk once that same
+field feeds an ingredient-presence check (a truncated list could produce a
+false "fragrance-free" claim if the real mention fell past the cutoff).
+Un-truncated at storage time; truncation now happens only at display time
+via CSS `line-clamp` (already in place on the product card).
 
 ## Image resizing (2026-09-28)
 
@@ -305,8 +323,13 @@ actual file sizes on disk after the run, not assumed. `download_image()`
 now downscales anything over `MAX_IMAGE_DIMENSION` (1000px long edge) via
 Pillow before saving (`requirements.txt`: `pip install -r requirements.txt`
 in a venv); if Pillow isn't installed it's a silent no-op, not a crash —
-images just stay larger than ideal rather than blocking a run. Cut the
-already-downloaded set from 105MB to a fraction of that.
+images just stay larger than ideal rather than blocking a run, but **that
+silence caused a real regression**: the Skinfix/Vanicream crawl ran under
+plain system `python3` (no venv, no Pillow) and quietly re-bloated the
+already-downloaded 41MB image set back to 137MB, caught only by manually
+re-checking file sizes after the fact, not by anything in the run's own
+output. `main()` now prints a loud warning at the top of the run if Pillow
+is missing — still doesn't block, but can't be missed in the log anymore.
 
 ## Buy-direct links (2026-09-28)
 
@@ -317,6 +340,41 @@ exists — honestly labeled as non-affiliate (no commission), since it's
 just the real product page these rows were already pulled from. Not shown
 for `open_beauty_facts` rows (not a place to buy) or `openfda`/`dailymed`
 rows (no single product page to link to).
+
+## Two more brands: Skinfix, Vanicream (2026-09-28)
+
+Checked a longer "big brand" list first — La Roche-Posay, Aveeno, and
+Neutrogena all return 403 on a plain fetch (Akamai-style bot protection,
+same story as CeraVe's owner L'Oreal and J&J generally); Paula's Choice's
+sitemap returns 200 with an empty body to a non-browser request (also
+bot-gated); Eucerin's US site redirects to a separate "select.eucerin.com"
+portal that isn't a normal product catalog. None of these were
+force-bypassed. **Skinfix** turned out to be Shopify (same
+`fetch_shopify_catalog()` path as Naturium/COSRX/First Aid Beauty) — its
+theme has the same "reused wrapper class across sections" trap as
+Naturium's, so the extractor anchors on the "Full Ingredients" modal
+header, not the wrapper class alone. It also renders its own marketing
+"Free From" list (fragrance, essential oils, silicones, phthalates,
+microplastics, parabens, sulfates, PEGs, gluten) right on the page —
+deliberately *not* parsed as an authoritative claim; the app derives its
+own free-from flags from the actual ingredient list instead (see
+`app/src/db/ingredient-flags.ts`), which catches the brand's own page
+being wrong or outdated in either direction. **Vanicream** is not
+Shopify and has no JSON-LD at all — sitemap-discoverable real
+`/product/{slug}` URLs, ingredient list in a `panel-ingredients` div,
+identity from the URL slug (no SKU field anywhere, same as CeraVe), image
+from the first product-gallery `<img>` on the page. Notably, Vanicream's
+own product pages declare a structured set of "free from" icon badges
+(fragrance, dye, paraben, sulfate, lanolin, cocamidopropyl betaine,
+formaldehyde...) — real signal that this brand is an unusually good fit
+for the contact-allergen-avoidance filters, and independent confirmation
+that deriving flags from the actual ingredient list (rather than trusting
+either brand's marketing page) lands on the same answer. Results: 27
+Skinfix, 9 Vanicream (two Skinfix bundle/set pages were caught and dropped
+after the fact — see the extractor's `ingredients/ingrédients` guard, added
+once these were found concatenating multiple products' ingredient lists
+the same way The Ordinary's kit pages do, just without HTML markup between
+them so the existing `<`-based guard didn't catch it).
 
 ## Adding another brand
 
@@ -333,10 +391,12 @@ extractor at scale.
 
 ## Files
 
-- `output/brand_direct_catalog.csv` — 207 rows (44 The Ordinary + 9 CeraVe
-  + 93 Naturium + 52 First Aid Beauty + 7 COSRX + 2 dropped to a SKU
-  collision at seed time, after dropping bundle/kit pages — see above),
-  same schema as `cosmetic_catalog.csv` (`source=brand_direct`,
-  `verified=true`) plus `source_url` (the exact page scraped, also used as
-  the buy-direct link) and `image_url` (each page's own photo, self-hosted
-  — see above) columns.
+- `output/brand_direct_catalog.csv` — 243 rows (44 The Ordinary + 9 CeraVe
+  + 93 Naturium + 52 First Aid Beauty + 7 COSRX + 27 Skinfix + 9 Vanicream
+  + a couple dropped to a SKU collision at seed time, after dropping
+  bundle/kit pages — see above), same schema as `cosmetic_catalog.csv`
+  (`source=brand_direct`, `verified=true`) plus `source_url` (the exact
+  page scraped, also used as the buy-direct link) and `image_url` (each
+  page's own photo, self-hosted — see above) columns.
+- `output/cosmetic_catalog.csv` — 2,196 rows (unchanged count from the
+  un-truncation fix above; only the stored ingredient text length changed).

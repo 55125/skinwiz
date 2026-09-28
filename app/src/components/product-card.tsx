@@ -4,12 +4,19 @@ import { Badge } from "@/components/ui/badge";
 import { DualScoreBadges } from "@/components/score-badge";
 import { getDermScore, getAudienceScore } from "@/lib/scoring";
 import { dataSourceBadge } from "@/lib/data-source";
+import { getFreeFromCheck } from "@/db/ingredient-flags";
 import type { products } from "@/db/schema";
 
 export function ProductCard({ product }: { product: typeof products.$inferSelect }) {
   const dermScore = getDermScore(product.id, product.concernId);
   const audienceScore = getAudienceScore(product.id, product.concernId);
   const sourceBadge = dataSourceBadge(product.dataSource);
+  // Capped at 2 on the card -- a product can match up to a dozen of these,
+  // which would drown out everything else in a small card; the full list
+  // is on the product detail page instead.
+  const freeFromFlags = product.freeFromFlags ?? [];
+  const shownFlags = freeFromFlags.slice(0, 2);
+  const extraFlagCount = freeFromFlags.length - shownFlags.length;
 
   return (
     <Link href={`/product/${encodeURIComponent(product.id)}`}>
@@ -50,6 +57,16 @@ export function ProductCard({ product }: { product: typeof products.$inferSelect
           </div>
           {product.activeIngredientText && (
             <p className="line-clamp-2 text-xs text-muted-foreground">{product.activeIngredientText}</p>
+          )}
+          {shownFlags.length > 0 && (
+            <div className="flex flex-wrap gap-1">
+              {shownFlags.map((id) => (
+                <Badge key={id} variant="outline" className="border-emerald-300 text-emerald-700 dark:border-emerald-900 dark:text-emerald-400">
+                  {getFreeFromCheck(id)?.label ?? id}
+                </Badge>
+              ))}
+              {extraFlagCount > 0 && <Badge variant="outline">+{extraFlagCount} more</Badge>}
+            </div>
           )}
           <DualScoreBadges dermScore={dermScore} audienceScore={audienceScore} />
         </CardContent>

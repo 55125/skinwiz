@@ -132,7 +132,29 @@ BRANDS = {
         "shop_domain": "www.firstaidbeauty.com",
         "parser": "first_aid_beauty",
     },
+    "skinfix": {
+        "brand_name": "Skinfix",
+        "discovery": "shopify",
+        "shop_domain": "skinfix.com",
+        "parser": "skinfix",
+    },
+    "vanicream": {
+        "brand_name": "Vanicream",
+        "discovery": "sitemap",
+        "sitemap_url": "https://www.vanicream.com/sitemap.xml",
+        "url_pattern": re.compile(r"https://www\.vanicream\.com/product/[a-z0-9-]+"),
+        "parser": "vanicream",
+    },
 }
+
+# Checked and skipped 2026-09-28 (see README_cosmetic.md for the per-brand
+# detail): La Roche-Posay, Aveeno, and Neutrogena all return 403 on a plain
+# fetch (Akamai-style bot protection, same as CeraVe's owner L'Oreal and
+# J&J); Paula's Choice's sitemap returns 200 with an empty body to a
+# non-browser request (also bot-gated); Eucerin's US site redirects to a
+# separate "select.eucerin.com" portal that isn't a normal product catalog.
+# None of these were force-bypassed -- robots.txt-allowed-but-blocked in
+# practice is still a stop, not a challenge to defeat.
 
 # Same canonical active ids as app/src/db/actives.ts's cosmetic definitions,
 # plus a few more real actives found in The Ordinary's actual catalog while
@@ -288,6 +310,10 @@ def _finish_shopify_product(raw_ingredients_html: str, url: str, product_json: d
     # first wins; a given page only ever matches one of its own brand's.
     text = re.split(r"the list of ingredients is subject to change|learn more about all our ingredients", text, flags=re.IGNORECASE)[0]
     text = re.sub(r"\s+", " ", text).strip(" ,.")
+    # Skinfix's modal appends a bare 3-6 digit number after the last real
+    # ingredient (e.g. "...Citric Acid. 2416") -- not part of the INCI list
+    # on any page checked, so stripped rather than left as noise.
+    text = re.sub(r"\s+\d{3,6}$", "", text).strip(" ,.")
     if not text:
         return None
     if len(text) > MAX_INGREDIENT_TEXT_LEN:
@@ -296,6 +322,14 @@ def _finish_shopify_product(raw_ingredients_html: str, url: str, product_json: d
     # Same bundle/kit signal as extract_product_the_ordinary: a real
     # single-product ingredient list is plain text with no leftover markup.
     if "&lt;" in text or "<" in text:
+        return None
+    # Skinfix bundle/set pages (e.g. "Winter Hydration Duo") concatenate each
+    # contained product's own "Ingredients/Ingrédients:" sub-heading into one
+    # block with no HTML markup between them, so the "<" check above doesn't
+    # catch it -- caught by reading two real rows before trusting this brand
+    # at scale. A real single-product ingredient list never contains this
+    # literal heading text itself.
+    if "ingredients/ingrédients" in text.lower():
         return None
 
     active_ids = matched_active_ids(text)
@@ -349,6 +383,66 @@ def extract_product_first_aid_beauty(html: str, url: str, product_json: dict) ->
     if not match:
         return None
     return _finish_shopify_product(match.group(1), url, product_json)
+
+
+def extract_product_skinfix(html: str, url: str, product_json: dict) -> dict | None:
+    # The theme also has a marketing "Free From" list (e.g. "x fragrance, x
+    # essential oils, x silicones...") right next to this -- deliberately
+    # not parsed as a separate authoritative claim; the app derives its own
+    # free-from flags from the actual ingredient list instead (see
+    # app/src/db/ingredient-flags.ts), which catches a brand's page being
+    # wrong/outdated in either direction. "Full Ingredients</h2>" (the modal
+    # header, appears twice per page for a responsive-breakpoint duplicate,
+    # both identical) anchors past the reused metafield-rich_text_field
+    # wrapper class the same way Naturium's "INGREDIENTS" label does.
+    match = re.search(r'Full Ingredients</h2>.{0,1500}?metafield-rich_text_field"><p>(.*?)</p>', html, re.DOTALL | re.IGNORECASE)
+    if not match:
+        return None
+    return _finish_shopify_product(match.group(1), url, product_json)
+
+
+def extract_product_vanicream(html: str, url: str) -> dict | None:
+    # No JSON-LD on this site at all (checked) -- identity comes from the
+    # URL slug instead (same principle as CeraVe), and the photo from the
+    # first gallery image on the page, which is consistently the plain
+    # product-bottle shot on every page checked (matches the pattern of
+    # taking image[0] on every other brand here).
+    ingredients_match = re.search(r'panel-ingredients"><p>(.*?)</p>', html, re.DOTALL)
+    if not ingredients_match:
+        return None
+    ingredients_text = re.sub(r"<[^>]+>", " ", ingredients_match.group(1))
+    ingredients_text = html_module.unescape(ingredients_text)
+    ingredients_text = re.sub(r"\s+", " ", ingredients_text).strip(" ,.")
+    if not ingredients_text:
+        return None
+    if len(ingredients_text) > MAX_INGREDIENT_TEXT_LEN:
+        print(f"  skipping {url}: extracted ingredient text implausibly long ({len(ingredients_text)} chars)", file=sys.stderr)
+        return None
+    if "&lt;" in ingredients_text or "<" in ingredients_text:
+        return None
+
+    active_ids = matched_active_ids(ingredients_text)
+    if not active_ids:
+        return None
+
+    title_match = re.search(r"<title>([^<]+)</title>", html)
+    brand_name = html_module.unescape(title_match.group(1)).replace("™", "").strip() if title_match else "(unnamed product)"
+
+    image_match = re.search(r'<img[^>]+src="(https://www\.vanicream\.com/dynamic-media/product/images/[^"]+)"', html)
+    image_url = html_module.unescape(image_match.group(1)) if image_match else ""
+
+    product_id = "vanicream-" + url.rstrip("/").rsplit("/", 1)[-1]
+
+    return {
+        "product_ndc": product_id,
+        "niche": pick_niche(active_ids),
+        "brand_name": brand_name,
+        "manufacturer_name": "Vanicream",
+        "active_ingredient_text": ingredients_text,
+        "active_ingredients_structured": ";".join(active_ids),
+        "source_url": url,
+        "image_url": image_url,
+    }
 
 
 def matched_active_ids(ingredients_text: str) -> list[str]:
@@ -497,6 +591,7 @@ def extract_product_cerave(html: str, url: str) -> dict | None:
 EXTRACTORS = {
     "the_ordinary": extract_product_the_ordinary,
     "cerave": extract_product_cerave,
+    "vanicream": extract_product_vanicream,
 }
 
 # Shopify extractors take (html, url, product_json) -- the product_json from
@@ -506,10 +601,21 @@ SHOPIFY_EXTRACTORS = {
     "naturium": extract_product_naturium,
     "cosrx": extract_product_cosrx,
     "first_aid_beauty": extract_product_first_aid_beauty,
+    "skinfix": extract_product_skinfix,
 }
 
 
 def main() -> None:
+    # Silent-no-op-without-Pillow is deliberate (see the try/import at the
+    # top) so a missing dependency never blocks a crawl -- but that silence
+    # once caused a real regression: a run under plain `python3` (no venv,
+    # no Pillow) quietly skipped every resize and re-bloated the already-
+    # downloaded image set from 41MB back to 137MB, caught only by manually
+    # re-checking file sizes after the fact. This is the "never again"
+    # guard: still doesn't block the run, but it can't be missed in the log.
+    if Image is None:
+        print("WARNING: Pillow not installed -- images will NOT be resized (see requirements.txt). Run `pip install -r requirements.txt` in a venv first.", file=sys.stderr)
+
     rows: list[dict] = []
 
     for key, brand in BRANDS.items():

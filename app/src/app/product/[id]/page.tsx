@@ -18,6 +18,7 @@ import {
 import { getDermScore, getAudienceScore } from "@/lib/scoring";
 import { getVideoSearchLinks } from "@/lib/video-links";
 import { dataSourceBadge } from "@/lib/data-source";
+import { getFreeFromCheck } from "@/db/ingredient-flags";
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
@@ -111,6 +112,29 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
                 : "Ingredients (community-sourced)"}
           </h2>
           <p className="text-sm">{product.activeIngredientText}</p>
+        </div>
+      )}
+
+      {product.freeFromFlags && product.freeFromFlags.length > 0 && (
+        <div>
+          <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide mb-1">
+            Ingredient-based filters this matches
+          </h2>
+          <div className="flex flex-wrap gap-1.5">
+            {product.freeFromFlags.map((id) => (
+              <Badge
+                key={id}
+                variant="outline"
+                className="border-emerald-300 text-emerald-700 dark:border-emerald-900 dark:text-emerald-400"
+              >
+                {getFreeFromCheck(id)?.label ?? id}
+              </Badge>
+            ))}
+          </div>
+          <p className="mt-1 text-xs italic text-muted-foreground">
+            Computed from the published ingredient list above, not a certification — not exhaustive, and not a
+            substitute for checking your own known allergens.
+          </p>
         </div>
       )}
 

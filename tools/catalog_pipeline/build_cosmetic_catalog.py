@@ -187,7 +187,16 @@ def main() -> None:
                 "niche": pick_niche(active_ids),
                 "brand_name": p["product_name"].strip(),
                 "manufacturer_name": p["brands"].strip(),
-                "active_ingredient_text": p.get("ingredients_text", "")[:500],
+                # Un-truncated as of 2026-09-28 -- this used to cut at 500
+                # chars for display, but the app now also runs the
+                # free-from-flags check (app/src/db/ingredient-flags.ts)
+                # against this same field, and a truncated list can produce
+                # a false "fragrance-free" claim if the real mention just
+                # happened to fall past the cutoff. Truncate at display time
+                # instead (product-card.tsx already does via CSS line-clamp),
+                # never at storage time, now that the text feeds a real
+                # ingredient-presence check, not just a card blurb.
+                "active_ingredient_text": p.get("ingredients_text", ""),
                 "active_ingredients_structured": ";".join(active_ids),
                 "dosage_form": "",
                 "route": "",

@@ -48,7 +48,17 @@ export default async function RoutineDetailPage({ params }: { params: Promise<{ 
             <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-medium">
               {i + 1}
             </span>
-            <span className="text-sm">{step.description}</span>
+            <span className="text-sm">
+              {step.description}
+              {step.productId && step.productBrandName && (
+                <>
+                  {" — "}
+                  <Link href={`/product/${encodeURIComponent(step.productId)}`} className="underline">
+                    view {step.productBrandName}
+                  </Link>
+                </>
+              )}
+            </span>
           </li>
         ))}
       </ol>

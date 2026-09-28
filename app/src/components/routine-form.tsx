@@ -8,16 +8,27 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ProductPicker } from "@/components/product-picker";
+
+type ProductResult = { id: string; brandName: string; manufacturer: string | null };
+type StepInput = { description: string; product: ProductResult | null };
 
 export function RoutineForm({ concerns }: { concerns: { id: string; name: string }[] }) {
   const router = useRouter();
   const [concernId, setConcernId] = useState(concerns[0]?.id ?? "");
-  const [steps, setSteps] = useState<string[]>(["", ""]);
+  const [steps, setSteps] = useState<StepInput[]>([
+    { description: "", product: null },
+    { description: "", product: null },
+  ]);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   function updateStep(i: number, value: string) {
-    setSteps((s) => s.map((step, idx) => (idx === i ? value : step)));
+    setSteps((s) => s.map((step, idx) => (idx === i ? { ...step, description: value } : step)));
+  }
+
+  function updateStepProduct(i: number, product: ProductResult | null) {
+    setSteps((s) => s.map((step, idx) => (idx === i ? { ...step, product } : step)));
   }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -29,7 +40,7 @@ export function RoutineForm({ concerns }: { concerns: { id: string; name: string
       authorName: formData.get("authorName"),
       notes: formData.get("notes"),
       concernId,
-      steps,
+      steps: steps.map((s) => ({ description: s.description, productId: s.product?.id ?? null })),
     };
 
     setSubmitting(true);
@@ -73,28 +84,37 @@ export function RoutineForm({ concerns }: { concerns: { id: string; name: string
 
       <div className="space-y-1.5">
         <Label>Steps</Label>
-        <div className="space-y-2">
+        <div className="space-y-3">
           {steps.map((step, i) => (
-            <div key={i} className="flex gap-2">
-              <Input
-                value={step}
-                onChange={(e) => updateStep(i, e.target.value)}
-                placeholder={`Step ${i + 1} — e.g. Cleanser: CeraVe Hydrating Cleanser`}
-              />
-              {steps.length > 1 && (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setSteps((s) => s.filter((_, idx) => idx !== i))}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              )}
+            <div key={i} className="space-y-1 rounded-md border p-2">
+              <div className="flex gap-2">
+                <Input
+                  value={step.description}
+                  onChange={(e) => updateStep(i, e.target.value)}
+                  placeholder={`Step ${i + 1} — e.g. Cleanser: CeraVe Hydrating Cleanser`}
+                  className="border-0 px-1 shadow-none focus-visible:ring-0"
+                />
+                {steps.length > 1 && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setSteps((s) => s.filter((_, idx) => idx !== i))}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+              <ProductPicker selected={step.product} onSelect={(p) => updateStepProduct(i, p)} />
             </div>
           ))}
         </div>
-        <Button type="button" variant="outline" size="sm" onClick={() => setSteps((s) => [...s, ""])}>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => setSteps((s) => [...s, { description: "", product: null }])}
+        >
           <Plus className="h-3.5 w-3.5" /> Add step
         </Button>
       </div>

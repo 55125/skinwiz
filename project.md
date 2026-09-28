@@ -400,15 +400,18 @@ directly licensing the evidence engine.
       (Target/Walmart/CVS/Ulta via Impact, Walgreens + Neutrogena
       brand-direct via CJ). This needs your own site/business info to
       apply — not something to do from here.
-- [ ] **Routines have no moderation** — built 2026-09-27
-      ([app/README.md](app/README.md)): anyone can post a routine to
-      `/routines/new` and it's live immediately, with only a static
-      disclaimer, no review step, and no report mechanism. Every other
-      form of content on the site is either sourced/verified (products) or
-      dermatologist-gated (evidence grades) — this is the one exception,
-      and the biggest content-safety gap on the live site right now. Needs
-      a decision: pre-publish review queue, a report-abuse flow, both, or
-      an accepted risk for this stage — not something to infer.
+- [x] **Routines report-abuse flow shipped 2026-09-28** (picked as the
+      lowest-risk, most reversible of the three options previously listed
+      here, since no one had ruled on which to build): a "Report this
+      routine" link on every routine page writes to the new
+      `routineReports` table (`app/src/db/schema.ts`), one report per
+      session per routine, with an optional free-text reason. **This is
+      collect-signal-only, not enforcement** — no auto-hide threshold, no
+      admin review UI yet (same as `rater_applications`: query the SQLite
+      file directly — `SELECT * FROM routine_reports;`). A pre-publish
+      review queue is a different, bigger decision (it changes the submit-
+      to-live UX itself) and is still open if you want stronger protection
+      than a report flag provides.
 - [ ] **Product images only exist for ~9% of the catalog** — built
       2026-09-27 for the two non-FDA sources (Open Beauty Facts,
       brand-direct); the ~15,255 openFDA/DailyMed products (87% of the

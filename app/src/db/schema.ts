@@ -208,3 +208,24 @@ export const routineVotes = sqliteTable(
   },
   (table) => [uniqueIndex("routine_votes_routine_session_idx").on(table.routineId, table.sessionId)],
 );
+
+// The first piece of the routines moderation gap (see routines' comment
+// above): a report signal, collected but NOT acted on automatically -- no
+// auto-hide threshold, no admin review UI yet. Same pattern as
+// rater_applications: query the DB directly for now. This is a deliberately
+// scoped starting point (lowest-risk, most reversible of the options), not
+// the final word on routines moderation -- a pre-publish review queue is a
+// bigger, different decision that would change the submit-to-live UX itself.
+export const routineReports = sqliteTable(
+  "routine_reports",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    routineId: integer("routine_id").notNull().references(() => routines.id),
+    sessionId: text("session_id").notNull(),
+    reason: text("reason"),
+    createdAt: text("created_at").notNull().default(sql`(current_timestamp)`),
+  },
+  // One report per session per routine -- prevents a single visitor from
+  // inflating the signal by repeat-clicking, same principle as routine_votes.
+  (table) => [uniqueIndex("routine_reports_routine_session_idx").on(table.routineId, table.sessionId)],
+);

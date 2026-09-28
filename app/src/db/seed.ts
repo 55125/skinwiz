@@ -71,12 +71,48 @@ function readCsv<T>(filePath: string): T[] {
   return parse(raw, { columns: true, skip_empty_lines: true }) as T[];
 }
 
+// Common skincare/regulatory acronyms an FDA label brand name might contain
+// — Title Case would otherwise mangle these into "Spf 50", "Cc Cream", etc.
+const PRESERVE_UPPERCASE = new Set([
+  "SPF", "UV", "UVA", "UVB", "UPF", "PA", "CC", "BB", "OTC", "FDA", "USP",
+  "SKU", "LLC", "INC", "USA", "PM", "AM",
+]);
+
+// openFDA/DailyMed brand names come straight from the SPL label text, and
+// ~16% of the catalog is either ALL-CAPS ("PARURE GOLD SKIN MATTE
+// FOUNDATION...") or all-lowercase ("clear days ahead fast-acting salicylic
+// acid acne spot treatment") — a real, measured display-quality problem,
+// not a guess. This only touches capitalization, never rewrites, shortens,
+// or reorders words, so it can't fabricate or lose information the way a
+// "smart" name-shortening pass could. Mixed-case names (the majority,
+// already human-written-looking) are left untouched on purpose. Known
+// limitation: an acronym glued to a number with no space ("SPF50") won't be
+// caught since it doesn't exact-match PRESERVE_UPPERCASE — accepted rather
+// than adding regex splitting for a marginal, currently-unmeasured slice.
+function normalizeBrandName(raw: string): string {
+  const letters = raw.replace(/[^A-Za-z]/g, "");
+  if (!letters) return raw;
+  const isAllUpper = letters === letters.toUpperCase() && letters !== letters.toLowerCase();
+  const isAllLower = letters === letters.toLowerCase();
+  if (!isAllUpper && !isAllLower) return raw; // mixed case -- leave alone
+
+  return raw
+    .split(" ")
+    .map((word) => {
+      if (PRESERVE_UPPERCASE.has(word.toUpperCase())) return word.toUpperCase();
+      if (!word) return word;
+      return word[0].toUpperCase() + word.slice(1).toLowerCase();
+    })
+    .join(" ");
+}
+
 async function main() {
   console.log("Seeding SkinWiz database...");
 
   // Wipe and regenerate reference/catalog data only, in FK-safe order.
   // dermRatings, audienceOutcomes, dermRaters, raterApplications, routines,
-  // routineSteps, and routineVotes are deliberately NOT wiped here -- once
+  // routineSteps, routineVotes, and routineReports are deliberately NOT
+  // wiped here -- once
   // real submissions exist (a clinician's panel application, a real derm
   // rating, a posted routine), this script needs to keep running safely on
   // every deploy (see the repo-root Dockerfile's startup command) without
@@ -156,10 +192,14 @@ async function main() {
         continue;
       }
       seenNdc.add(row.product_ndc);
+      const trimmedBrandName = row.brand_name?.trim() || "(unnamed product)";
+      // Only openfda/dailymed rows get normalized -- brand_direct/OBF brand
+      // names are already human-written product names, not SPL label text.
+      const isPreMatched = row.source && PRE_MATCHED_SOURCES.has(row.source);
       productBatch.push({
         id: row.product_ndc,
         concernId: nicheToConcernId(row.niche),
-        brandName: row.brand_name?.trim() || "(unnamed product)",
+        brandName: isPreMatched ? trimmedBrandName : normalizeBrandName(trimmedBrandName),
         manufacturer: row.manufacturer_name || null,
         dosageForm: row.dosage_form || null,
         // For pre-matched sources, active_ingredients_structured holds
@@ -212,7 +252,7 @@ async function main() {
   }
 
   db.run(sql`PRAGMA foreign_keys = ON`);
-  console.log("Done. dermRaters, dermRatings, audienceOutcomes, and routines are intentionally left untouched.");
+  console.log("Done. dermRaters, dermRatings, audienceOutcomes, and routines (incl. votes/reports) are intentionally left untouched.");
 }
 
 main();

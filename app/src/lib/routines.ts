@@ -1,6 +1,6 @@
 import { and, eq, sql } from "drizzle-orm";
 import { db } from "@/db/client";
-import { routines, routineSteps, routineVotes, concerns } from "@/db/schema";
+import { routines, routineSteps, routineVotes, routineReports, concerns } from "@/db/schema";
 
 // Vote score is computed on read (SUM of routine_votes.value), never
 // stored as a column on routines — see schema.ts's comment on why: a
@@ -129,5 +129,24 @@ export function voteOnRoutine(routineId: number, sessionId: string, value: 1 | -
       target: [routineVotes.routineId, routineVotes.sessionId],
       set: { value },
     })
+    .run();
+}
+
+export function getSessionReported(routineId: number, sessionId: string): boolean {
+  const row = db
+    .select({ id: routineReports.id })
+    .from(routineReports)
+    .where(and(eq(routineReports.routineId, routineId), eq(routineReports.sessionId, sessionId)))
+    .get();
+  return !!row;
+}
+
+// onConflictDoNothing rather than upsert -- a second report from the same
+// session isn't a "changed" report the way a changed vote direction is, so
+// there's nothing to update; the first one already counted.
+export function reportRoutine(routineId: number, sessionId: string, reason: string | null) {
+  db.insert(routineReports)
+    .values({ routineId, sessionId, reason })
+    .onConflictDoNothing({ target: [routineReports.routineId, routineReports.sessionId] })
     .run();
 }

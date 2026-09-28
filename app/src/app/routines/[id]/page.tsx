@@ -4,7 +4,8 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { RoutineDisclaimer } from "@/components/routine-disclaimer";
 import { RoutineVote } from "@/components/routine-vote";
-import { getRoutine, getSessionVote } from "@/lib/routines";
+import { RoutineReport } from "@/components/routine-report";
+import { getRoutine, getSessionVote, getSessionReported } from "@/lib/routines";
 import { readSessionId } from "@/lib/session";
 
 export default async function RoutineDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -14,6 +15,7 @@ export default async function RoutineDetailPage({ params }: { params: Promise<{ 
 
   const sessionId = await readSessionId();
   const myVote = sessionId ? getSessionVote(routine.id, sessionId) : null;
+  const alreadyReported = sessionId ? getSessionReported(routine.id, sessionId) : false;
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-10 space-y-6">
@@ -33,6 +35,8 @@ export default async function RoutineDetailPage({ params }: { params: Promise<{ 
       </div>
 
       <RoutineDisclaimer />
+
+      <RoutineReport routineId={routine.id} initialReported={alreadyReported} />
 
       {routine.notes && <p className="text-sm text-muted-foreground">{routine.notes}</p>}
 

@@ -146,13 +146,14 @@ This matters more than usual for a health product — read before demoing.
   first, then rotates randomly within tier (`getTopProducts`). The UI
   caption says this explicitly — don't remove that caption without
   replacing the underlying logic with a real signal first.
-- **Routines have zero moderation.** Anyone can post a routine and it's
-  live immediately — no review step, no report mechanism, unlike every
-  other form of content on the site (products are sourced/verified,
-  evidence notes are dermatologist-only). Every routines page carries a
-  visible disclaimer (`src/components/routine-disclaimer.tsx`) for this
-  reason. A moderation/reporting flow is a real gap for actual launch, not
-  an oversight — flag it in `project.md` §11 if it isn't already there.
+- **Routines have a report flow, not a review queue.** Anyone can still
+  post a routine and it goes live immediately with no pre-publish check —
+  what changed 2026-09-28 is that every routine page now has a "Report
+  this routine" link (`src/components/routine-report.tsx`) writing to
+  `routine_reports`. This is signal collection only: no auto-hide
+  threshold, no admin view yet (query the DB directly, same as
+  `rater_applications`). A real pre-publish queue is a bigger, different
+  decision still open in `project.md` §11 if stronger protection is wanted.
 - **Affiliate prices and buy links** (27 products total, all acne). No
   affiliate account is approved yet (see
   `../tools/affiliate_feeds/README.md`), so these are synthetic mock-feed
@@ -171,11 +172,17 @@ This matters more than usual for a health product — read before demoing.
 - **The Terms of Service section on `/about`** is explicitly labeled draft,
   pending the attorney review `project.md` §11 still has open. Don't ship
   it as final legal language.
-- **Brand names are FDA label text, unedited.** Some are marketing
-  taglines rather than clean product names (see
-  `tools/catalog_pipeline/README.md`'s known-issues section) — truncated
-  with CSS `line-clamp`, not cleaned up. A normalization pass is still
-  open work.
+- **Brand names are FDA label text, capitalization-normalized only.**
+  ~16% of openFDA/DailyMed brand names came back either ALL-CAPS or
+  all-lowercase straight from the SPL label text — `normalizeBrandName()`
+  in `src/db/seed.ts` now Title-Cases those (preserving known acronyms
+  like SPF/UV/CC so they don't get mangled into "Spf"), but this only
+  fixes capitalization. Some names are still verbose marketing copy or
+  full shade lists concatenated into one string (see
+  `tools/catalog_pipeline/README.md`'s known-issues section) — genuinely
+  shortening those without risking fabricated/wrong product names would
+  need per-brand judgment, not a safe blanket text transform, so it's
+  still open work.
 
 ## What's not built yet
 

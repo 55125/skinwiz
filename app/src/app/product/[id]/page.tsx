@@ -20,6 +20,13 @@ import { getVideoSearchLinks } from "@/lib/video-links";
 import { dataSourceBadge } from "@/lib/data-source";
 import { getFreeFromCheck } from "@/db/ingredient-flags";
 
+// These canonical active ids are deliberately a family of several distinct
+// real compounds grouped under one consumer-facing name (see the comments
+// on each in db/actives.ts) -- a single PubChem CID for one of them isn't
+// "the" structure the way it is for e.g. niacinamide, so the link below is
+// worded as "a representative structure" for these specifically.
+const GROUPED_ACTIVE_IDS = new Set(["peptides", "ceramides", "aluminum-zirconium-complex"]);
+
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
   const product = getProduct(decodeURIComponent(id));
@@ -155,6 +162,25 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
             {note.needsClinicianReview && (
               <p className="text-xs italic text-amber-700 dark:text-amber-400">
                 Clinical evidence grade: pending board-certified dermatologist review.
+              </p>
+            )}
+            {note.pubchemCid && (
+              <p className="text-xs">
+                <a
+                  href={`https://pubchem.ncbi.nlm.nih.gov/compound/${note.pubchemCid}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline text-muted-foreground hover:text-foreground"
+                >
+                  {/* A few active ids here are deliberately a family of several
+                      real compounds (e.g. "Peptides" groups palmitoyl
+                      pentapeptide, copper tripeptide, etc. -- see actives.ts) --
+                      worded as "a representative" rather than "the" structure
+                      for those, so this doesn't overclaim precision it doesn't have. */}
+                  {GROUPED_ACTIVE_IDS.has(note.activeId)
+                    ? `View a representative structure on PubChem${note.molecularFormula ? ` (${note.molecularFormula})` : ""} →`
+                    : `View chemical structure on PubChem${note.molecularFormula ? ` (${note.molecularFormula})` : ""} →`}
+                </a>
               </p>
             )}
           </div>

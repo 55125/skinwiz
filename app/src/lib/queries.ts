@@ -1,6 +1,6 @@
 import { and, eq, inArray, sql, type SQL } from "drizzle-orm";
 import { db } from "@/db/client";
-import { concerns, products, actives, evidenceNotes, affiliateLinks, videoLinks } from "@/db/schema";
+import { concerns, products, actives, evidenceNotes, affiliateLinks, videoLinks, activeChemData } from "@/db/schema";
 import { concernIdToNiche } from "@/db/actives";
 
 // Shared by getProductsForConcern and searchProducts -- one LIKE per
@@ -62,9 +62,16 @@ export function getEvidenceNotesForActives(activeIds: string[], concernId: strin
       typicalConcentrationText: evidenceNotes.typicalConcentrationText,
       evidenceGrade: evidenceNotes.evidenceGrade,
       needsClinicianReview: evidenceNotes.needsClinicianReview,
+      // Purely structural reference data (compound id/formula), not
+      // editorial text -- see db/enrich-pubchem.ts for why this doesn't
+      // need the same clinician-review gate evidenceGrade does, and why
+      // it's null for botanicals/polymers rather than a guess.
+      pubchemCid: activeChemData.pubchemCid,
+      molecularFormula: activeChemData.molecularFormula,
     })
     .from(evidenceNotes)
     .innerJoin(actives, eq(actives.id, evidenceNotes.activeId))
+    .leftJoin(activeChemData, eq(activeChemData.activeId, evidenceNotes.activeId))
     .where(and(inArray(evidenceNotes.activeId, activeIds), eq(evidenceNotes.concernId, concernId)))
     .all();
 }

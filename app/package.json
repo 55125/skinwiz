@@ -9,7 +9,8 @@
     "lint": "eslint",
     "db:push": "drizzle-kit push",
     "db:seed": "tsx src/db/seed.ts",
-    "fetch:youtube-videos": "tsx src/db/fetch-youtube-videos.ts"
+    "fetch:youtube-videos": "tsx src/db/fetch-youtube-videos.ts",
+    "enrich:pubchem": "tsx src/db/enrich-pubchem.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",

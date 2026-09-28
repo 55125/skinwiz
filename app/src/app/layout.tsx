@@ -27,6 +27,18 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
+      <head>
+        {/* Impact affiliate network domain verification -- literal tag as
+            given (note: Impact's snippet uses value=, not the standard
+            content= attribute; Next's metadata API would normalize that
+            away, so this is added as raw JSX instead to preserve it
+            exactly). React's meta-tag typing has no `value` attribute
+            (it's non-standard), hence the cast. Site-wide via the root
+            layout rather than homepage-only since that's a superset of
+            what Impact asked for. */}
+        {/* eslint-disable-next-line react/no-unknown-property */}
+        <meta name="impact-site-verification" {...({ value: "564231ad-1299-4483-8468-d82b52da5637" } as Record<string, string>)} />
+      </head>
       <body className="min-h-full flex flex-col">
         <TooltipProvider>
           <SiteHeader />

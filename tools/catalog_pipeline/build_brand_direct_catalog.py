@@ -107,11 +107,39 @@ BRANDS = {
     },
     "cerave": {
         "brand_name": "CeraVe",
-        "discovery": "sitemap",
-        "sitemap_url": "https://a82962.sitemaphosting.com/4034207/sitemap.xml",
-        # Real product pages are exactly /skincare/{category}/{subcategory}/{slug} —
-        # category hub pages (fewer segments) are excluded by this depth match.
-        "url_pattern": re.compile(r"https://www\.cerave\.com/skincare/[a-z0-9-]+/[a-z0-9-]+/[a-z0-9-]+"),
+        # Sitemap-based discovery only ever found 9 URLs (see the old
+        # comment/README entry) -- assumed to be JS-rendered category grids
+        # with no static discovery path at all. Wrong: the raw (non-JS) HTML
+        # of any category hub page already embeds the full product link set
+        # (confirmed 2026-09-29 -- a plain `curl` on
+        # /skincare/cleansers/facial-cleansers alone surfaced 2x the product
+        # URLs the sitemap ever did), just not on the homepage/sitemap. Real
+        # product pages sit at inconsistent depths under /skincare/ (some
+        # /skincare/{cat}/{slug}, some /skincare/{cat}/{subcat}/{slug}), so
+        # rather than guess a depth pattern, `hub_crawl` fetches every hub
+        # below, extracts every `"/skincare/..."` quoted path with 2+
+        # segments, and lets extract_product_cerave's own JSON-LD+ingredient
+        # requirement reject the handful of sub-category hubs that slip
+        # through (e.g. "/skincare/cleansers/facial-cleansers" itself).
+        "discovery": "hub_crawl",
+        "hub_urls": [
+            "https://www.cerave.com/skincare",
+            "https://www.cerave.com/skincare/cleansers/facial-cleansers",
+            "https://www.cerave.com/skincare/cleansers/body-cleansers",
+            "https://www.cerave.com/skincare/moisturizers/facial-moisturizers",
+            "https://www.cerave.com/skincare/moisturizers/body-moisturizers",
+            "https://www.cerave.com/skincare/moisturizers/eye-creams",
+            "https://www.cerave.com/skincare/facial-serums",
+            "https://www.cerave.com/skincare/baby",
+            "https://www.cerave.com/skincare/ointment",
+            "https://www.cerave.com/skincare/best-sellers",
+            "https://www.cerave.com/skincare/new-products",
+            "https://www.cerave.com/skincare/acne",
+            "https://www.cerave.com/skincare/anti-aging",
+            "https://www.cerave.com/skincare/eczema",
+            "https://www.cerave.com/skincare/dry-skin",
+            "https://www.cerave.com/skincare/makeup-removers",
+        ],
         "parser": "cerave",
     },
     "naturium": {
@@ -144,6 +172,20 @@ BRANDS = {
         "sitemap_url": "https://www.vanicream.com/sitemap.xml",
         "url_pattern": re.compile(r"https://www\.vanicream\.com/product/[a-z0-9-]+"),
         "parser": "vanicream",
+    },
+    "cetaphil": {
+        "brand_name": "Cetaphil",
+        "discovery": "sitemap",
+        "sitemap_url": "https://www.cetaphil.com/us/sitemap_0-product.xml",
+        "url_pattern": re.compile(r"https://www\.cetaphil\.com/us/[a-z0-9/-]+/\d+\.html"),
+        "parser": "cetaphil",
+    },
+    "aquaphor": {
+        "brand_name": "Aquaphor",
+        "discovery": "sitemap",
+        "sitemap_url": "https://www.aquaphorus.com/sitemap",
+        "url_pattern": re.compile(r"https://www\.aquaphorus\.com/products/aquaphor/[^<\s]+"),
+        "parser": "aquaphor",
     },
 }
 
@@ -179,6 +221,12 @@ COSMETIC_ACTIVES = {
     "kojic-acid": ["kojic acid"],
     "mandelic-acid": ["mandelic acid"],
     "lactic-acid": ["lactic acid"],
+    # Added 2026-09-29 while adding Aquaphor (a petrolatum-first brand) --
+    # "petrolatum" already exists as a canonical active id (the FDA
+    # skin-protectant one in app/src/db/actives.ts), reused here rather than
+    # creating a duplicate id, so a cosmetic-sourced petrolatum product joins
+    # the same evidence note and active-filter chip an FDA one would.
+    "petrolatum": ["petrolatum", "petroleum jelly", "white petrolatum"],
 }
 
 
@@ -294,6 +342,34 @@ def fetch_shopify_catalog(shop_domain: str) -> list[dict]:
     return products
 
 
+# Real product paths sit at inconsistent depths under /skincare/ (see
+# CeraVe's BRANDS comment), so this is a depth floor, not a fixed pattern --
+# matches "/skincare/{cat}/{slug}" and deeper, excludes single-segment hub/
+# filter pages like "/skincare/acne" or "/skincare/niacinamide".
+HUB_LINK_PATTERN = re.compile(r'"(/skincare/[a-z0-9-]+/[a-z0-9-]+(?:/[a-z0-9-]+)?)"')
+
+
+def fetch_hub_crawl_urls(hub_urls: list[str], domain: str) -> list[str]:
+    """Fetches each hub page and extracts every quoted /skincare/... path
+    with 2+ segments -- category hub pages embed the full product link set
+    in their raw HTML even though the visible grid itself renders via JS
+    (confirmed by comparing a plain fetch against what the rendered page
+    showed). Some sub-category hubs slip through this depth floor (e.g.
+    "/skincare/cleansers/facial-cleansers" is itself a link on other hub
+    pages) -- harmless, since the per-product extractor rejects anything
+    without a real Product JSON-LD block."""
+    urls: set[str] = set()
+    for hub_url in hub_urls:
+        html = _get(hub_url)
+        if not html:
+            print(f"  failed to fetch hub {hub_url}", file=sys.stderr)
+            continue
+        for path in HUB_LINK_PATTERN.findall(html):
+            urls.add(f"https://{domain}{path}")
+        time.sleep(SLEEP)
+    return sorted(urls)
+
+
 def _finish_shopify_product(raw_ingredients_html: str, url: str, product_json: dict) -> dict | None:
     """Shared tail end of every Shopify extractor once it has isolated the
     raw ingredients HTML fragment -- strip tags/entities, apply the same
@@ -344,10 +420,16 @@ def _finish_shopify_product(raw_ingredients_html: str, url: str, product_json: d
     images = product_json.get("images") or []
     image_url = images[0].get("src", "") if images else ""
 
+    # COSRX titles many of its promo-bundled SKUs with a leading
+    # "($80+ Free Gift)"-style prefix on the *same* underlying product --
+    # real, distinct SKUs (different promo threshold/price point), not a
+    # bug, but the prefix is noise for a product name display.
+    title = re.sub(r"^\(\s*[$£€]?\d+\+?\s*Free\s*Gifts?\s*\)\s*", "", (product_json.get("title") or "").strip(), flags=re.IGNORECASE)
+
     return {
         "product_ndc": sku,
         "niche": pick_niche(active_ids),
-        "brand_name": (product_json.get("title") or "").strip() or "(unnamed product)",
+        "brand_name": title.strip() or "(unnamed product)",
         "manufacturer_name": product_json.get("vendor", ""),
         "active_ingredient_text": text,
         "active_ingredients_structured": ";".join(active_ids),
@@ -369,10 +451,21 @@ def extract_product_naturium(html: str, url: str, product_json: dict) -> dict | 
 
 
 def extract_product_cosrx(html: str, url: str, product_json: dict) -> dict | None:
-    # Same "same wrapper class, different section" trap as Naturium above --
-    # "cb-body" also wraps the "How to Use" accordion earlier in the page,
-    # so this anchors on the "Ingredient List" tab label first.
+    # COSRX runs at least two different product-page templates -- found by
+    # checking why several products whose titles obviously matched a
+    # tracked active (a "Centella Blemish Cream", a niacinamide serum) came
+    # back with zero matches. Template 1: same "same wrapper class,
+    # different section" trap as Naturium above ("cb-body" also wraps the
+    # "How to Use" accordion earlier in the page, so this anchors on the
+    # "Ingredient List" tab label first). Template 2: an older
+    # "Full Ingredients" modal with a differently-named wrapper
+    # ("modal-body" vs "cb-body"). A third template exists too (confirmed
+    # while investigating this) where the ingredient div is populated by
+    # client-side JS only, with no server-rendered fallback -- a real,
+    # accepted gap, same as CeraVe's JS-rendered category grids.
     match = re.search(r'Ingredient List</span>.{0,800}?cb-body">(.*?)</div>', html, re.DOTALL | re.IGNORECASE)
+    if not match:
+        match = re.search(r'Full Ingredients</button>.{0,800}?modal-body">(.*?)</div>', html, re.DOTALL | re.IGNORECASE)
     if not match:
         return None
     return _finish_shopify_product(match.group(1), url, product_json)
@@ -445,6 +538,93 @@ def extract_product_vanicream(html: str, url: str) -> dict | None:
     }
 
 
+def extract_product_cetaphil(html: str, url: str) -> dict | None:
+    # Same schema.org JSON-LD identity pattern as The Ordinary (sku/mpn,
+    # image array, brand.name). Ingredient list sits under a plain
+    # "ALL INGREDIENTS" heading, not an accordion -- no wrapper-class reuse
+    # trap here, checked against a real fetched page before trusting it.
+    ingredients_match = re.search(r"<h2>ALL INGREDIENTS</h2>.{0,300}?<p>(.*?)</p>", html, re.DOTALL | re.IGNORECASE)
+    if not ingredients_match:
+        return None
+    ingredients_text = re.sub(r"<[^>]+>", " ", ingredients_match.group(1))
+    ingredients_text = html_module.unescape(ingredients_text)
+    ingredients_text = re.sub(r"\s+", " ", ingredients_text).strip(" ,.")
+    if not ingredients_text:
+        return None
+    if len(ingredients_text) > MAX_INGREDIENT_TEXT_LEN:
+        print(f"  skipping {url}: extracted ingredient text implausibly long ({len(ingredients_text)} chars)", file=sys.stderr)
+        return None
+    if "&lt;" in ingredients_text or "<" in ingredients_text:
+        return None
+
+    active_ids = matched_active_ids(ingredients_text)
+    if not active_ids:
+        return None
+
+    product_data = find_product_json_ld(html)
+    if not product_data:
+        return None
+    sku = product_data.get("sku") or product_data.get("mpn")
+    if not sku:
+        return None
+    image = product_data.get("image")
+    image_url = image[0] if isinstance(image, list) and image else (image if isinstance(image, str) else "")
+
+    return {
+        "product_ndc": sku,
+        "niche": pick_niche(active_ids),
+        "brand_name": product_data.get("name", "").strip() or "(unnamed product)",
+        "manufacturer_name": "Cetaphil",
+        "active_ingredient_text": ingredients_text,
+        "active_ingredients_structured": ";".join(active_ids),
+        "source_url": url,
+        "image_url": image_url,
+    }
+
+
+def extract_product_aquaphor(html: str, url: str) -> dict | None:
+    # No Product JSON-LD on this site (only an ItemList/breadcrumb block) --
+    # identity comes from a real data-product-id attribute instead (a UPC-
+    # looking code, present on every product page checked), image from
+    # og:image, same "use what's actually there" approach as Vanicream/CeraVe.
+    ingredients_match = re.search(r'class="ingredients-wrapper"><p[^>]*>(.*?)</p>', html, re.DOTALL | re.IGNORECASE)
+    if not ingredients_match:
+        return None
+    ingredients_text = re.sub(r"<[^>]+>", " ", ingredients_match.group(1))
+    ingredients_text = html_module.unescape(ingredients_text)
+    ingredients_text = re.sub(r"\s+", " ", ingredients_text).strip(" ,.")
+    if not ingredients_text:
+        return None
+    if len(ingredients_text) > MAX_INGREDIENT_TEXT_LEN:
+        print(f"  skipping {url}: extracted ingredient text implausibly long ({len(ingredients_text)} chars)", file=sys.stderr)
+        return None
+    if "&lt;" in ingredients_text or "<" in ingredients_text:
+        return None
+
+    active_ids = matched_active_ids(ingredients_text)
+    if not active_ids:
+        return None
+
+    sku_match = re.search(r'data-product-id="([^"]+)"', html)
+    if not sku_match:
+        return None
+    image_match = re.search(r'<meta property="og:image" content="([^"]+)"', html)
+    image_url = html_module.unescape(image_match.group(1)) if image_match else ""
+    title_match = re.search(r"<title>([^<|]+)", html)
+    brand_name = html_module.unescape(title_match.group(1)).strip() if title_match else "(unnamed product)"
+
+    return {
+        "product_ndc": "aquaphor-" + sku_match.group(1),
+        "niche": pick_niche(active_ids),
+        "brand_name": brand_name,
+        "manufacturer_name": "Aquaphor",
+        "active_ingredient_text": ingredients_text,
+        "active_ingredients_structured": ";".join(active_ids),
+        "source_url": url,
+        "image_url": image_url,
+    }
+
+
 def matched_active_ids(ingredients_text: str) -> list[str]:
     lowered = ingredients_text.lower()
     return [aid for aid, needles in COSMETIC_ACTIVES.items() if any(n in lowered for n in needles)]
@@ -456,7 +636,7 @@ def matched_active_ids(ingredients_text: str) -> list[str]:
 # panthenol, centella asiatica, and hyaluronic acid are barrier/hydration
 # ingredients first, not brightening ones -- a CeraVe-style ceramide
 # moisturizer belongs under Dry Skin & Eczema, not Brightening & Texture.
-NICHE_LEANS_SKIN_PROTECTANT = {"ceramides", "squalane", "panthenol", "centella-asiatica", "hyaluronic-acid"}
+NICHE_LEANS_SKIN_PROTECTANT = {"ceramides", "squalane", "panthenol", "centella-asiatica", "hyaluronic-acid", "petrolatum"}
 
 
 def pick_niche(active_ids: list[str]) -> str:
@@ -592,6 +772,8 @@ EXTRACTORS = {
     "the_ordinary": extract_product_the_ordinary,
     "cerave": extract_product_cerave,
     "vanicream": extract_product_vanicream,
+    "cetaphil": extract_product_cetaphil,
+    "aquaphor": extract_product_aquaphor,
 }
 
 # Shopify extractors take (html, url, product_json) -- the product_json from
@@ -651,13 +833,19 @@ def main() -> None:
             continue
 
         extractor = EXTRACTORS[brand["parser"]]
-        print(f"Fetching sitemap for {brand['brand_name']}...", file=sys.stderr)
-        sitemap_xml = _get(brand["sitemap_url"])
-        if not sitemap_xml:
-            print(f"  failed to fetch sitemap for {key}, skipping", file=sys.stderr)
-            continue
-        urls = sorted(set(brand["url_pattern"].findall(sitemap_xml)))
-        print(f"  {len(urls)} product URLs found", file=sys.stderr)
+
+        if brand["discovery"] == "hub_crawl":
+            print(f"Crawling category hubs for {brand['brand_name']}...", file=sys.stderr)
+            domain = brand["hub_urls"][0].split("/")[2]
+            urls = fetch_hub_crawl_urls(brand["hub_urls"], domain)
+        else:
+            print(f"Fetching sitemap for {brand['brand_name']}...", file=sys.stderr)
+            sitemap_xml = _get(brand["sitemap_url"])
+            if not sitemap_xml:
+                print(f"  failed to fetch sitemap for {key}, skipping", file=sys.stderr)
+                continue
+            urls = sorted(set(brand["url_pattern"].findall(sitemap_xml)))
+        print(f"  {len(urls)} candidate product URLs found", file=sys.stderr)
 
         for i, url in enumerate(urls, 1):
             html = _get(url)

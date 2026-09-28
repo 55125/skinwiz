@@ -22,6 +22,26 @@ export const actives = sqliteTable("actives", {
   synonyms: text("synonyms", { mode: "json" }).$type<string[]>().notNull(),
 });
 
+// Structural/chemical reference data from PubChem (src/db/enrich-pubchem.ts)
+// -- purely factual (a compound id and formula), never editorial text, so
+// it doesn't need the clinician-review gate evidenceNotes has. Kept in its
+// own table rather than columns on `actives` because `actives` itself is
+// wiped and reinserted on every `npm run db:seed` (see seed.ts) -- this
+// table isn't, the same way video_links/routine_reports aren't, so the
+// enrichment script only has to run once (or after adding new actives),
+// not on every deploy. Safe against the actives wipe because seed.ts
+// reinserts the exact same static ids every time (suspending FK
+// enforcement for that one block already handles this, see its comment).
+// Not every active resolves on PubChem -- botanical extracts (centella
+// asiatica) and polymers (sodium hyaluronate) aren't single compounds, so
+// this table simply has no row for those, not a null placeholder.
+export const activeChemData = sqliteTable("active_chem_data", {
+  activeId: text("active_id").primaryKey().references(() => actives.id),
+  pubchemCid: integer("pubchem_cid").notNull(),
+  molecularFormula: text("molecular_formula"),
+  fetchedAt: text("fetched_at").notNull().default(sql`(current_timestamp)`),
+});
+
 // Factual/regulatory descriptive text only — NOT a clinical efficacy grade.
 // evidenceGrade stays null until a board-certified dermatologist assigns
 // one; needsClinicianReview defaults true and the UI must respect it.

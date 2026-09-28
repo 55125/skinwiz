@@ -44,4 +44,9 @@ EXPOSE 3000
 # reloads product/concern/active data every start -- fine while
 # dermRatings/audienceOutcomes are still empty; revisit once real user
 # data exists, see seed.ts) before serving.
-CMD npm run db:push -- --force && npm run db:seed && npm start
+# enrich:pubchem is optional metadata (see src/db/enrich-pubchem.ts) --
+# `|| true` so a PubChem outage or network hiccup at boot can never block
+# the app from starting, unlike db:push/db:seed which the app actually
+# needs. Idempotent (skips actives already in active_chem_data), so this
+# is a no-op after the first successful run.
+CMD npm run db:push -- --force && npm run db:seed && (npm run enrich:pubchem || true) && npm start

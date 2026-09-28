@@ -72,6 +72,11 @@ COSMETIC_ACTIVES = {
     "kojic-acid": ("kojic-acid", ["kojic acid"]),
     "mandelic-acid": ("mandelic-acid", ["mandelic acid"]),
     "lactic-acid": ("lactic-acid", ["lactic acid"]),
+    # Added 2026-09-29 while adding Aquaphor (a petrolatum-first brand) --
+    # reuses the existing FDA skin-protectant "petrolatum" active id rather
+    # than creating a duplicate, so cosmetic-sourced rows join the same
+    # evidence note and filter chip an FDA-sourced one would.
+    "petrolatum": ("petrolatum", ["petrolatum", "petroleum jelly", "white petrolatum"]),
 }
 
 JUNK_PATTERN = re.compile(r"\btest\b", re.IGNORECASE)
@@ -140,7 +145,7 @@ def is_junk(product: dict) -> bool:
 # and barrier-repair ingredients first, brightening only incidentally, and a
 # CeraVe-style ceramide moisturizer showing up under "Brightening & Texture"
 # instead of "Dry Skin & Eczema" is a real mistagging, not a rounding error.
-NICHE_LEANS_SKIN_PROTECTANT = {"ceramides", "squalane", "panthenol", "centella-asiatica", "hyaluronic-acid"}
+NICHE_LEANS_SKIN_PROTECTANT = {"ceramides", "squalane", "panthenol", "centella-asiatica", "hyaluronic-acid", "petrolatum"}
 
 
 def pick_niche(active_ids: list[str]) -> str:

@@ -407,7 +407,10 @@ export const ACTIVE_DEFINITIONS: ActiveDefinition[] = [
   {
     id: "hyaluronic-acid",
     canonicalName: "Hyaluronic Acid",
-    categories: ["brightening-texture"],
+    // Dual-categorized 2026-09-28: hydration is this ingredient's dominant
+    // real-world use, not brightening -- see build_cosmetic_catalog.py's
+    // pick_niche() for how a product's concern is now actually decided.
+    categories: ["brightening-texture", "skin-protectant"],
     synonyms: ["hyaluronic acid", "sodium hyaluronate"],
     summary:
       "A humectant that draws moisture into skin, used broadly in cosmetic serums and moisturizers. Not an FDA-regulated drug ingredient — no OTC monograph or FDA efficacy claim applies to it.",
@@ -425,7 +428,7 @@ export const ACTIVE_DEFINITIONS: ActiveDefinition[] = [
   {
     id: "ceramides",
     canonicalName: "Ceramides",
-    categories: ["brightening-texture"],
+    categories: ["brightening-texture", "skin-protectant"],
     synonyms: ["ceramide"],
     summary:
       "Lipids naturally found in skin's barrier, added to cosmetic moisturizers to support barrier function. Not an FDA-regulated drug ingredient — no OTC monograph or FDA efficacy claim applies to it.",
@@ -452,7 +455,7 @@ export const ACTIVE_DEFINITIONS: ActiveDefinition[] = [
   {
     id: "squalane",
     canonicalName: "Squalane",
-    categories: ["brightening-texture"],
+    categories: ["brightening-texture", "skin-protectant"],
     synonyms: ["squalane"],
     summary:
       "A stable, plant- or lab-derived emollient oil used in cosmetic moisturizers and face oils. Not an FDA-regulated drug ingredient — no OTC monograph or FDA efficacy claim applies to it.",
@@ -492,7 +495,7 @@ export const ACTIVE_DEFINITIONS: ActiveDefinition[] = [
   {
     id: "centella-asiatica",
     canonicalName: "Centella Asiatica (Cica)",
-    categories: ["brightening-texture"],
+    categories: ["brightening-texture", "skin-protectant"],
     synonyms: ["centella asiatica"],
     summary:
       "A plant extract widely used in cosmetic moisturizers and serums for soothing/barrier-support marketing claims (often labeled \"cica\"). Not an FDA-regulated drug ingredient — no OTC monograph or FDA efficacy claim applies to it.",
@@ -501,7 +504,7 @@ export const ACTIVE_DEFINITIONS: ActiveDefinition[] = [
   {
     id: "panthenol",
     canonicalName: "Panthenol",
-    categories: ["brightening-texture"],
+    categories: ["brightening-texture", "skin-protectant"],
     synonyms: ["panthenol", "dexpanthenol", "provitamin b5"],
     summary:
       "A provitamin-B5 derivative used broadly in cosmetic moisturizers for hydration and soothing marketing claims. Not an FDA-regulated drug ingredient — no OTC monograph or FDA efficacy claim applies to it.",

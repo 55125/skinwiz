@@ -133,6 +133,26 @@ def is_junk(product: dict) -> bool:
     return False
 
 
+# Which real-world concern a tracked cosmetic active is the better fit for.
+# Every cosmetic active defaulted to Brightening & Texture as a launch-day
+# catch-all, but that's wrong for barrier/hydration ingredients -- ceramides,
+# squalane, panthenol, centella asiatica, and hyaluronic acid are moisturizing
+# and barrier-repair ingredients first, brightening only incidentally, and a
+# CeraVe-style ceramide moisturizer showing up under "Brightening & Texture"
+# instead of "Dry Skin & Eczema" is a real mistagging, not a rounding error.
+NICHE_LEANS_SKIN_PROTECTANT = {"ceramides", "squalane", "panthenol", "centella-asiatica", "hyaluronic-acid"}
+
+
+def pick_niche(active_ids: list[str]) -> str:
+    """A product's niche is decided by which of its matched actives are the
+    majority -- e.g. a niacinamide+ceramide combo (a common real formulation)
+    still reads as brightening if niacinamide-family actives dominate, but
+    dry-skin/eczema if the barrier/hydration actives above dominate. Ties
+    default to Brightening & Texture, the original catch-all niche."""
+    protectant_votes = sum(1 for a in active_ids if a in NICHE_LEANS_SKIN_PROTECTANT)
+    return "skin-protectant" if protectant_votes > len(active_ids) - protectant_votes else "brightening-texture"
+
+
 def matched_active_ids(ingredients_text: str) -> list[str]:
     lowered = ingredients_text.lower()
     seen = set()
@@ -164,7 +184,7 @@ def main() -> None:
                 continue
             by_barcode[code] = {
                 "product_ndc": code,  # same column name as the drug catalog for seed.ts compatibility
-                "niche": "brightening-texture",
+                "niche": pick_niche(active_ids),
                 "brand_name": p["product_name"].strip(),
                 "manufacturer_name": p["brands"].strip(),
                 "active_ingredient_text": p.get("ingredients_text", "")[:500],

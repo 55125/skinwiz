@@ -61,6 +61,14 @@ export const products = sqliteTable("products", {
   // placeholder rather than a broken image or a stock photo standing in for
   // an unverified product.
   imageUrl: text("image_url"),
+  // Only populated for dataSource="brand_direct" -- the exact manufacturer
+  // page a product's ingredient list/photo was scraped from. Surfaced as a
+  // plain "Buy directly from {brand}" link when no affiliate link exists
+  // (the common case today) -- NOT an affiliate link, no commission, just
+  // the real page a user can already reach by searching the brand name.
+  // Never set for openfda/dailymed/open_beauty_facts rows: the first two
+  // have no single product page to link to, and OBF isn't a place to buy.
+  sourceUrl: text("source_url"),
   // "openfda" | "dailymed" | "open_beauty_facts" -- which pipeline produced
   // this row. verified=true only for openfda/dailymed (derived from what a
   // manufacturer legally filed with the FDA); false for open_beauty_facts

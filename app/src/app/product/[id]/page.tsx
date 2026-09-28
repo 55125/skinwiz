@@ -168,6 +168,24 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
               </div>
             ))}
           </div>
+        ) : product.sourceUrl ? (
+          <div className="flex items-center justify-between rounded-md border p-3">
+            <div>
+              <p className="font-medium">Buy directly from {product.manufacturer || "the manufacturer"}</p>
+              <p className="text-xs text-muted-foreground">
+                Not an affiliate link — we don&apos;t earn a commission on this one. This is the exact
+                manufacturer page this listing&apos;s ingredient data came from.
+              </p>
+            </div>
+            <a
+              href={product.sourceUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={buttonVariants({ variant: "outline", size: "sm" })}
+            >
+              Visit page <ExternalLink className="ml-1 h-3.5 w-3.5" />
+            </a>
+          </div>
         ) : (
           <Alert>
             <AlertTitle>Retailer links coming soon</AlertTitle>

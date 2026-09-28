@@ -30,11 +30,33 @@ reachable this way (see README_cosmetic.md for the accepted gap and what
 a full crawl would need). Its ingredient-list markup and product-identity
 field also differ from The Ordinary's, hence the per-brand `parser` key
 and extractor function below rather than one shared extractor.
+
+Added Naturium, COSRX, and First Aid Beauty 2026-09-28, all in one pass --
+all three turned out to run on Shopify, which changes the economics versus
+the two brands above: every Shopify store exposes a public, unauthenticated
+`/products.json` (confirmed allowed by each site's robots.txt; Naturium's
+own published /agents.md explicitly documents it as the sanctioned
+agent-facing catalog endpoint) that gives full catalog discovery AND real
+product images in one paginated call, with no sitemap regex or per-page
+JSON-LD image hunting needed. The one thing still missing from that JSON
+is the actual INCI ingredient list -- every Shopify theme checked renders
+it into the product page as a metafield inside an "Ingredients" accordion/
+tab, but the exact wrapper markup differs per brand's theme, so each still
+needs its own extractor (see `_finish_shopify_product` for the shared tail
+end of that logic, and each `extract_product_*` function for the
+brand-specific boundary regex -- verified against real fetched pages
+before being trusted, same discipline as the CeraVe `<br` bug below).
+Skipped The Inkey List even though it's also Shopify: its only storefront
+is uk.theinkeylist.com (no separate US site), and per-market cosmetic
+formulations can legitimately differ under UK/EU vs. US regulatory limits
+-- not something to quietly blend into a "brand_direct" tier that implies
+this-is-what's-sold-here without flagging the caveat.
 """
 from __future__ import annotations
 
 import csv
 import html as html_module
+import io
 import json
 import os
 import re
@@ -42,6 +64,11 @@ import sys
 import time
 import urllib.error
 import urllib.request
+
+try:
+    from PIL import Image
+except ImportError:
+    Image = None  # resizing becomes a no-op below; see requirements.txt
 
 SLEEP = 0.4
 # A real ingredient list is at most a few hundred words. Guards against the
@@ -64,21 +91,46 @@ MAX_INGREDIENT_TEXT_LEN = 3000
 IMAGE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "app", "public", "product-images", "brand-direct")
 IMAGE_URL_PREFIX = "/product-images/brand-direct"
 MAX_IMAGE_BYTES = 5_000_000
+# Real manufacturer product photos came back at up to 2000x2000px (First Aid
+# Beauty), 2.5-3MB each PNG, for a thumbnail that only ever renders at a few
+# hundred px in a product card -- caught by checking actual file sizes after
+# the first full run before committing 105MB of images to the repo.
+MAX_IMAGE_DIMENSION = 1000
 
 BRANDS = {
     "the_ordinary": {
         "brand_name": "The Ordinary",
+        "discovery": "sitemap",
         "sitemap_url": "https://theordinary.com/sitemap-en_US.xml",
         "url_pattern": re.compile(r"https://theordinary\.com/en-us/[a-z0-9-]+\.html"),
         "parser": "the_ordinary",
     },
     "cerave": {
         "brand_name": "CeraVe",
+        "discovery": "sitemap",
         "sitemap_url": "https://a82962.sitemaphosting.com/4034207/sitemap.xml",
         # Real product pages are exactly /skincare/{category}/{subcategory}/{slug} —
         # category hub pages (fewer segments) are excluded by this depth match.
         "url_pattern": re.compile(r"https://www\.cerave\.com/skincare/[a-z0-9-]+/[a-z0-9-]+/[a-z0-9-]+"),
         "parser": "cerave",
+    },
+    "naturium": {
+        "brand_name": "Naturium",
+        "discovery": "shopify",
+        "shop_domain": "naturium.com",
+        "parser": "naturium",
+    },
+    "cosrx": {
+        "brand_name": "COSRX",
+        "discovery": "shopify",
+        "shop_domain": "www.cosrx.com",
+        "parser": "cosrx",
+    },
+    "first_aid_beauty": {
+        "brand_name": "First Aid Beauty",
+        "discovery": "shopify",
+        "shop_domain": "www.firstaidbeauty.com",
+        "parser": "first_aid_beauty",
     },
 }
 
@@ -167,15 +219,155 @@ def download_image(url: str, product_id: str) -> str:
     if not data:
         print(f"  failed to download image for {product_id}: {url}", file=sys.stderr)
         return ""
+    data = _resize_if_needed(data, ext)
     os.makedirs(IMAGE_DIR, exist_ok=True)
     with open(dest_path, "wb") as f:
         f.write(data)
     return f"{IMAGE_URL_PREFIX}/{filename}"
 
 
+def _resize_if_needed(data: bytes, ext: str) -> bytes:
+    """Downscales an oversized product photo to MAX_IMAGE_DIMENSION on its
+    long edge -- a no-op (returns the original bytes unchanged) if Pillow
+    isn't installed or the image is already small, so this never blocks a
+    run, just leaves some images larger than ideal."""
+    if Image is None:
+        return data
+    try:
+        img = Image.open(io.BytesIO(data))
+        if max(img.size) <= MAX_IMAGE_DIMENSION:
+            return data
+        img.thumbnail((MAX_IMAGE_DIMENSION, MAX_IMAGE_DIMENSION))
+        out = io.BytesIO()
+        save_format = "JPEG" if ext in ("jpg", "jpeg") else img.format or "PNG"
+        if save_format == "JPEG" and img.mode in ("RGBA", "P"):
+            img = img.convert("RGB")
+        img.save(out, format=save_format, optimize=True, quality=85)
+        return out.getvalue()
+    except Exception as exc:
+        print(f"  resize failed, keeping original: {exc}", file=sys.stderr)
+        return data
+
+
+def fetch_shopify_catalog(shop_domain: str) -> list[dict]:
+    """Paginates a Shopify store's public /products.json -- no auth, no
+    sitemap regex needed, and it comes with real product images already
+    attached (product["images"][0]["src"]). Confirmed present and allowed
+    by robots.txt on all three Shopify brands below before relying on it."""
+    products: list[dict] = []
+    page = 1
+    while True:
+        raw = _get(f"https://{shop_domain}/products.json?limit=250&page={page}")
+        if not raw:
+            break
+        try:
+            batch = json.loads(raw).get("products", [])
+        except json.JSONDecodeError:
+            break
+        if not batch:
+            break
+        products.extend(batch)
+        page += 1
+        time.sleep(SLEEP)
+    return products
+
+
+def _finish_shopify_product(raw_ingredients_html: str, url: str, product_json: dict) -> dict | None:
+    """Shared tail end of every Shopify extractor once it has isolated the
+    raw ingredients HTML fragment -- strip tags/entities, apply the same
+    length and bundle guards as the sitemap-based extractors above, then
+    build the row from the Shopify product JSON (which already has a real
+    sku and a real image, unlike the_ordinary/cerave which had to pull both
+    out of page HTML)."""
+    text = re.sub(r"<[^>]+>", " ", raw_ingredients_html)
+    text = html_module.unescape(text)
+    # Both First Aid Beauty and Naturium append a disclaimer inside the same
+    # HTML block as the real ingredient list, separated by nothing more than
+    # a <br> -- confirmed by inspecting a real fetched page for each, same
+    # discipline as CeraVe's "please be aware" cut. Whichever phrase appears
+    # first wins; a given page only ever matches one of its own brand's.
+    text = re.split(r"the list of ingredients is subject to change|learn more about all our ingredients", text, flags=re.IGNORECASE)[0]
+    text = re.sub(r"\s+", " ", text).strip(" ,.")
+    if not text:
+        return None
+    if len(text) > MAX_INGREDIENT_TEXT_LEN:
+        print(f"  skipping {url}: extracted ingredient text implausibly long ({len(text)} chars)", file=sys.stderr)
+        return None
+    # Same bundle/kit signal as extract_product_the_ordinary: a real
+    # single-product ingredient list is plain text with no leftover markup.
+    if "&lt;" in text or "<" in text:
+        return None
+
+    active_ids = matched_active_ids(text)
+    if not active_ids:
+        return None
+
+    variants = product_json.get("variants") or []
+    sku = (variants[0].get("sku") if variants else "") or product_json.get("handle", "")
+    if not sku:
+        return None
+
+    images = product_json.get("images") or []
+    image_url = images[0].get("src", "") if images else ""
+
+    return {
+        "product_ndc": sku,
+        "niche": pick_niche(active_ids),
+        "brand_name": (product_json.get("title") or "").strip() or "(unnamed product)",
+        "manufacturer_name": product_json.get("vendor", ""),
+        "active_ingredient_text": text,
+        "active_ingredients_structured": ";".join(active_ids),
+        "source_url": url,
+        "image_url": image_url,
+    }
+
+
+def extract_product_naturium(html: str, url: str, product_json: dict) -> dict | None:
+    # Verified against a real fetched page before trusting it: the theme
+    # renders several accordions with the *same* "metafield-rich_text_field"
+    # wrapper class (Benefits, How To Use, Ingredients), so anchoring on the
+    # wrapper class alone would silently grab the wrong section depending on
+    # document order -- anchor on the "INGREDIENTS" tab label first instead.
+    match = re.search(r'INGREDIENTS</span>.{0,800}?metafield-rich_text_field"><p>(.*?)</p>', html, re.DOTALL | re.IGNORECASE)
+    if not match:
+        return None
+    return _finish_shopify_product(match.group(1), url, product_json)
+
+
+def extract_product_cosrx(html: str, url: str, product_json: dict) -> dict | None:
+    # Same "same wrapper class, different section" trap as Naturium above --
+    # "cb-body" also wraps the "How to Use" accordion earlier in the page,
+    # so this anchors on the "Ingredient List" tab label first.
+    match = re.search(r'Ingredient List</span>.{0,800}?cb-body">(.*?)</div>', html, re.DOTALL | re.IGNORECASE)
+    if not match:
+        return None
+    return _finish_shopify_product(match.group(1), url, product_json)
+
+
+def extract_product_first_aid_beauty(html: str, url: str, product_json: dict) -> dict | None:
+    match = re.search(r'Full Ingredients</p>.{0,500}?ingredients">(.*?)</div>', html, re.DOTALL | re.IGNORECASE)
+    if not match:
+        return None
+    return _finish_shopify_product(match.group(1), url, product_json)
+
+
 def matched_active_ids(ingredients_text: str) -> list[str]:
     lowered = ingredients_text.lower()
     return [aid for aid, needles in COSMETIC_ACTIVES.items() if any(n in lowered for n in needles)]
+
+
+# Same "actual fit" reasoning as build_cosmetic_catalog.py's identical dict
+# (duplicated here rather than shared, matching how COSMETIC_ACTIVES itself
+# is already duplicated across the two scripts): ceramides, squalane,
+# panthenol, centella asiatica, and hyaluronic acid are barrier/hydration
+# ingredients first, not brightening ones -- a CeraVe-style ceramide
+# moisturizer belongs under Dry Skin & Eczema, not Brightening & Texture.
+NICHE_LEANS_SKIN_PROTECTANT = {"ceramides", "squalane", "panthenol", "centella-asiatica", "hyaluronic-acid"}
+
+
+def pick_niche(active_ids: list[str]) -> str:
+    protectant_votes = sum(1 for a in active_ids if a in NICHE_LEANS_SKIN_PROTECTANT)
+    return "skin-protectant" if protectant_votes > len(active_ids) - protectant_votes else "brightening-texture"
 
 
 def find_product_json_ld(html: str) -> dict | None:
@@ -231,6 +423,7 @@ def extract_product_the_ordinary(html: str, url: str) -> dict | None:
 
     return {
         "product_ndc": sku,
+        "niche": pick_niche(active_ids),
         "brand_name": product_data.get("name", "").strip() or "(unnamed product)",
         "manufacturer_name": (product_data.get("brand") or {}).get("name", ""),
         "active_ingredient_text": ingredients_text,
@@ -291,6 +484,7 @@ def extract_product_cerave(html: str, url: str) -> dict | None:
 
     return {
         "product_ndc": product_id,
+        "niche": pick_niche(active_ids),
         "brand_name": product_data.get("name", "").strip() or "(unnamed product)",
         "manufacturer_name": "CeraVe",
         "active_ingredient_text": ingredients_text,
@@ -305,11 +499,51 @@ EXTRACTORS = {
     "cerave": extract_product_cerave,
 }
 
+# Shopify extractors take (html, url, product_json) -- the product_json from
+# /products.json already supplies identity/image/vendor, unlike the sitemap
+# extractors above which have to parse all of that out of page HTML too.
+SHOPIFY_EXTRACTORS = {
+    "naturium": extract_product_naturium,
+    "cosrx": extract_product_cosrx,
+    "first_aid_beauty": extract_product_first_aid_beauty,
+}
+
 
 def main() -> None:
     rows: list[dict] = []
 
     for key, brand in BRANDS.items():
+        if brand["discovery"] == "shopify":
+            extractor = SHOPIFY_EXTRACTORS[brand["parser"]]
+            print(f"Fetching Shopify catalog for {brand['brand_name']}...", file=sys.stderr)
+            products_json = fetch_shopify_catalog(brand["shop_domain"])
+            print(f"  {len(products_json)} products found", file=sys.stderr)
+
+            for i, product_json in enumerate(products_json, 1):
+                handle = product_json.get("handle")
+                if not handle:
+                    continue
+                url = f"https://{brand['shop_domain']}/products/{handle}"
+                html = _get(url)
+                if html:
+                    product = extractor(html, url, product_json)
+                    if product:
+                        # Always the canonical brand name, not the scraped
+                        # Shopify vendor field -- found COSRX's own vendor
+                        # field inconsistently cased ("COSRX Official" vs.
+                        # "COSRX official") across its own catalog, which
+                        # would otherwise show as two different-looking
+                        # manufacturers on the site for the same real brand.
+                        product["manufacturer_name"] = brand["brand_name"]
+                        remote_image_url = product.get("image_url", "")
+                        product["image_url"] = download_image(remote_image_url, product["product_ndc"])
+                        time.sleep(SLEEP)
+                        rows.append(product)
+                if i % 20 == 0:
+                    print(f"  {i}/{len(products_json)} pages checked, {len(rows)} matched so far", file=sys.stderr)
+                time.sleep(SLEEP)
+            continue
+
         extractor = EXTRACTORS[brand["parser"]]
         print(f"Fetching sitemap for {brand['brand_name']}...", file=sys.stderr)
         sitemap_xml = _get(brand["sitemap_url"])
@@ -344,7 +578,7 @@ def main() -> None:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
         for row in rows:
-            row["niche"] = "brightening-texture"
+            row.setdefault("niche", "brightening-texture")
             row["source"] = "brand_direct"
             row["verified"] = "true"
             for field in fieldnames:

@@ -70,37 +70,48 @@ This matters more than usual for a health product — read before demoing.
 **Real:**
 - All products, brand names, active ingredients, and exact concentrations
   — pulled live from openFDA + DailyMed + Open Beauty Facts + brand-direct
-  scraping (`tools/catalog_pipeline/`), not fabricated. 17,509 as of
-  2026-09-27 (15,255 FDA-sourced across 7 drug concerns; 2,248 in the
-  Brightening & Texture concern across 14 cosmetic actives, split across
-  two trust tiers below) — run `npm run db:seed` and read its printed
-  count for the current total, it grows as the catalog pipeline is re-run.
+  scraping (`tools/catalog_pipeline/`), not fabricated. 17,661 as of
+  2026-09-28 (15,255 FDA-sourced across 7 drug concerns; ~3,741 cosmetic
+  products split between Brightening & Texture and Dry Skin & Eczema based
+  on which tracked actives a product actually contains — see "actual-fit
+  concern tagging" in `tools/catalog_pipeline/README_cosmetic.md` — across
+  two trust tiers below) — run `npm run db:seed` and read its printed count
+  for the current total, it grows as the catalog pipeline is re-run.
 - **Product photos, where a source has one.** `products.imageUrl`
   (`src/db/schema.ts`) is populated from Open Beauty Facts'
-  `image_front_url` and each brand-direct page's own JSON-LD product photo
-  — 1,633 of 17,509 products as of 2026-09-28. The ~15,255 openFDA/DailyMed
-  products have no image field in either source at all and render a plain
-  "No photo yet" placeholder (`src/components/product-card.tsx`) instead of
-  a broken image or a stock photo standing in for an unverified product —
-  a real, disclosed coverage gap, not a bug. OBF photos are hotlinked
-  (an open database built for exactly that kind of reuse); the 53
-  brand-direct photos are downloaded and self-hosted at
+  `image_front_url` and each brand-direct page's own product photo (JSON-LD
+  for The Ordinary/CeraVe, the Shopify catalog API for Naturium/COSRX/First
+  Aid Beauty) — 1,633+ of 17,661 products as of 2026-09-28. The ~15,255
+  openFDA/DailyMed products have no image field in either source at all and
+  render a plain "No photo yet" placeholder (`src/components/product-card.tsx`)
+  instead of a broken image or a stock photo standing in for an unverified
+  product — a real, disclosed coverage gap, not a bug. OBF photos are
+  hotlinked (an open database built for exactly that kind of reuse); all
+  205 brand-direct photos are downloaded and self-hosted at
   `public/product-images/brand-direct/` instead, since those are
   commercial product photography scraped off a retail page with no license
   to embed live from the brand's own CDN — see
   `tools/catalog_pipeline/README_cosmetic.md`.
+- **"Buy directly" links for brand-direct products.** `products.sourceUrl`
+  stores the exact manufacturer page a brand-direct row was scraped from,
+  surfaced on the product page as a plainly-labeled non-affiliate link
+  ("we don't earn a commission on this one") whenever no real affiliate
+  link exists for that product — which today is almost always, since only
+  27 demo affiliate rows exist. Not shown for Open Beauty Facts rows (not a
+  place to buy) or openFDA/DailyMed rows (no single product page to link).
 - **Three distinct trust tiers, never blended silently**
   (`src/lib/data-source.ts`, `products.dataSource`/`verified` in
   `src/db/schema.ts`): openFDA/DailyMed (a manufacturer's legal FDA
   filing — no badge, the default), brand-direct (scraped from a brand's
-  own published product page — The Ordinary and CeraVe, 48 products; blue
-  "Brand-verified" badge), and Open Beauty Facts (crowd-edited — real junk
-  entries found in it during testing, e.g. a `"TESTBRAND"` test product;
-  amber "Community-sourced" badge). Every non-default tier renders its
-  badge on both the card and detail page
-  (`src/components/product-card.tsx`, `src/app/product/[id]/page.tsx`) —
-  see `tools/catalog_pipeline/README_cosmetic.md` and the brand-direct
-  script's docstring for both sources' specifics.
+  own published product page — The Ordinary, CeraVe, Naturium, COSRX, and
+  First Aid Beauty, 205 products; blue "Brand-verified" badge), and Open
+  Beauty Facts (crowd-edited — real junk entries found in it during
+  testing, e.g. a `"TESTBRAND"` test product; amber "Community-sourced"
+  badge). Every non-default tier renders its badge on both the card and
+  detail page (`src/components/product-card.tsx`,
+  `src/app/product/[id]/page.tsx`) — see
+  `tools/catalog_pipeline/README_cosmetic.md` and the brand-direct script's
+  docstring for every source's specifics.
 - **Product identity is barcode/NDC-keyed on purpose.** A repackaged or
   reformulated relaunch gets a new barcode in practice (GS1 convention), so
   it becomes a new catalog row instead of overwriting what an existing

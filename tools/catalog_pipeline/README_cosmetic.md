@@ -245,21 +245,98 @@ looking at a rendered card, not by reasoning about the extraction code.
   extractors (imported as `html_module` since the function parameter is
   already named `html`).
 
+## Three more brands (same day): Naturium, COSRX, First Aid Beauty
+
+All three turned out to run on **Shopify**, which changes the economics
+versus The Ordinary/CeraVe above: every Shopify store exposes a public,
+unauthenticated `/products.json` (confirmed allowed by each site's
+robots.txt; Naturium's own `/agents.md` explicitly documents it as the
+sanctioned agent-facing catalog endpoint) that gives full catalog discovery
+**and** real product images in one paginated call — no sitemap regex, no
+per-page JSON-LD image hunting. `fetch_shopify_catalog()` is the one shared
+piece; each brand still needs its own extractor because the actual INCI
+list isn't in that JSON at all — every theme checked renders it into the
+product page as a metafield inside an "Ingredients" accordion, but the
+exact wrapper markup differs per brand. Caught one real bug before it ran
+at scale by testing against cached real pages first: Naturium's theme
+reuses the *same* `metafield-rich_text_field` wrapper class for its
+Benefits, How-To-Use, and Ingredients accordions (and COSRX reuses `cb-body`
+the same way for How-To-Use and its actual Ingredient List) — anchoring on
+the wrapper class alone would have silently grabbed the wrong section
+depending on document order, so every extractor anchors on the tab's own
+label text first. Also caught: Naturium and First Aid Beauty both append a
+disclaimer sentence inside the *same* HTML block as the real ingredient
+list (no tag boundary between them) — same "please be aware" pattern as
+the original CeraVe bug, split off explicitly rather than left in.
+
+**Skipped The Inkey List** even though it's also Shopify: its only
+storefront is `uk.theinkeylist.com` (no separate US site), and per-market
+cosmetic formulations can legitimately differ under UK/EU vs. US
+regulatory limits — not something to quietly blend into a `brand_direct`
+tier that implies this-is-what's-sold-here without flagging the caveat.
+
+Results: 154 more products (207 total in this file) — Naturium 93, First
+Aid Beauty 52, COSRX 7 (its catalog skews toward actives not yet tracked
+here — snail mucin, propolis — not a bug, just outside `COSMETIC_ACTIVES`'
+current scope).
+
+## Actual-fit concern tagging (2026-09-28)
+
+Every cosmetic-sourced product used to get hardcoded to Brightening &
+Texture regardless of what it actually was — wrong for a CeraVe-style
+ceramide moisturizer or a First Aid Beauty eczema cream. `pick_niche()`
+(duplicated in both `build_cosmetic_catalog.py` and this script, same
+convention as `COSMETIC_ACTIVES`) now decides per-product: ceramides,
+squalane, panthenol, centella asiatica, and hyaluronic acid are
+barrier/hydration ingredients first and vote toward Dry Skin & Eczema;
+everything else still defaults to Brightening & Texture; ties go to
+Brightening & Texture. `app/src/db/actives.ts` dual-categorized those five
+actives (`["brightening-texture", "skin-protectant"]`) so their evidence
+notes and concern-page filter chips show up correctly in both places. Real
+effect on the already-seeded catalog: Dry Skin & Eczema grew from 1,340 to
+2,593 products; Brightening & Texture dropped from 2,248 to 1,148.
+
+## Image resizing (2026-09-28)
+
+First real crawl of the three Shopify brands came back with product photos
+up to 2000x2000px (First Aid Beauty, ~2.5-3MB each PNG) for a thumbnail
+that only ever renders at a few hundred px in a card — caught by checking
+actual file sizes on disk after the run, not assumed. `download_image()`
+now downscales anything over `MAX_IMAGE_DIMENSION` (1000px long edge) via
+Pillow before saving (`requirements.txt`: `pip install -r requirements.txt`
+in a venv); if Pillow isn't installed it's a silent no-op, not a crash —
+images just stay larger than ideal rather than blocking a run. Cut the
+already-downloaded set from 105MB to a fraction of that.
+
+## Buy-direct links (2026-09-28)
+
+Every `brand_direct` row's `source_url` (the exact manufacturer page
+scraped) is now stored on `products.sourceUrl` and surfaced as a "Buy
+directly from {brand}" link on the product page whenever no affiliate link
+exists — honestly labeled as non-affiliate (no commission), since it's
+just the real product page these rows were already pulled from. Not shown
+for `open_beauty_facts` rows (not a place to buy) or `openfda`/`dailymed`
+rows (no single product page to link to).
+
 ## Adding another brand
 
-Add one `BRANDS` entry (sitemap URL + product-URL regex) and a matching
-extractor function in `EXTRACTORS` if the site's JSON-LD/ingredient markup
-differs from the two already handled (it has, both times). Check
-`robots.txt`, confirm pages are server-rendered (no JS needed), and —
-learned the hard way above — **actually look at a rendered product page
-screenshot after seeding**, not just HTTP status codes and grep, before
-trusting a new extractor at scale.
+Add one `BRANDS` entry and a matching extractor. For a sitemap-discoverable
+brand: sitemap URL + product-URL regex, extractor takes `(html, url)`. For
+a Shopify brand: `discovery: "shopify"` + `shop_domain`, extractor takes
+`(html, url, product_json)` and can lean on `_finish_shopify_product()` for
+the shared tail (tag-strip/unescape/length-guard/bundle-guard/active-match/
+niche-pick). Either way: check `robots.txt`, confirm pages are
+server-rendered (no JS needed), and — learned the hard way above, more than
+once — **actually look at a rendered product page screenshot after
+seeding**, not just HTTP status codes and grep, before trusting a new
+extractor at scale.
 
 ## Files
 
-- `output/brand_direct_catalog.csv` — 53 rows (44 The Ordinary + 9 CeraVe,
-  after dropping bundle/kit pages — see above; grew from 48 when the 8
-  actives above were added), same schema as `cosmetic_catalog.csv`
-  (`source=brand_direct`, `verified=true`) plus `source_url` (the exact
-  page scraped) and `image_url` (each page's own JSON-LD product photo)
-  columns.
+- `output/brand_direct_catalog.csv` — 207 rows (44 The Ordinary + 9 CeraVe
+  + 93 Naturium + 52 First Aid Beauty + 7 COSRX + 2 dropped to a SKU
+  collision at seed time, after dropping bundle/kit pages — see above),
+  same schema as `cosmetic_catalog.csv` (`source=brand_direct`,
+  `verified=true`) plus `source_url` (the exact page scraped, also used as
+  the buy-direct link) and `image_url` (each page's own photo, self-hosted
+  — see above) columns.

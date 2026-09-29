@@ -203,6 +203,53 @@ export function searchActives(q: string) {
     .all();
 }
 
+// Autocomplete: matches product/brand names only (not ingredient text, which
+// makes every suggestion for "water" a wall of unrelated products). Name
+// prefix hits rank first, then verified-tier sources, then shorter names.
+// Over-fetches then dedupes on name because a variant (travel vs. full size)
+// or a re-listed product would otherwise fill the dropdown with lookalikes.
+export function suggestProducts(q: string, limit = 6) {
+  const needle = likeContains(q);
+  const prefix = `${needle.slice(1)}`; // drops the leading % -> "q%"
+  const rows = db
+    .select({
+      id: products.id,
+      brandName: products.brandName,
+      manufacturer: products.manufacturer,
+      dataSource: products.dataSource,
+    })
+    .from(products)
+    .where(sql`(${products.brandName} LIKE ${needle} ESCAPE '\\' OR ${products.manufacturer} LIKE ${needle} ESCAPE '\\')`)
+    .orderBy(
+      sql`CASE WHEN ${products.brandName} LIKE ${prefix} ESCAPE '\\' THEN 0 WHEN ${products.manufacturer} LIKE ${prefix} ESCAPE '\\' THEN 1 ELSE 2 END`,
+      sql`CASE ${products.dataSource} WHEN 'brand_direct' THEN 0 WHEN 'openfda' THEN 1 WHEN 'dailymed' THEN 2 ELSE 3 END`,
+      sql`LENGTH(${products.brandName})`,
+    )
+    .limit(limit * 6)
+    .all();
+  const seen = new Set<string>();
+  const out: typeof rows = [];
+  for (const r of rows) {
+    const key = `${r.brandName.toLowerCase()}|${(r.manufacturer ?? "").toLowerCase()}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(r);
+    if (out.length === limit) break;
+  }
+  return out;
+}
+
+export function suggestActives(q: string, limit = 4) {
+  const needle = likeContains(q);
+  return db
+    .select({ id: actives.id, canonicalName: actives.canonicalName })
+    .from(actives)
+    .where(sql`${actives.canonicalName} LIKE ${needle} ESCAPE '\\'`)
+    .orderBy(sql`CASE WHEN ${actives.canonicalName} LIKE ${needle.slice(1)} ESCAPE '\\' THEN 0 ELSE 1 END`, sql`LENGTH(${actives.canonicalName})`)
+    .limit(limit)
+    .all();
+}
+
 // "Top" here means "verified-tier first, then a rotating sample" — there's
 // no real popularity or quality signal yet (Derm Score / Audience Score are
 // still empty for every product, see lib/scoring.ts), so this deliberately

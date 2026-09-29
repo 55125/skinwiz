@@ -57,7 +57,7 @@ export default function Home() {
 
   return (
     <div>
-      <section className="relative overflow-hidden border-b">
+      <section className="relative border-b">
         <div
           aria-hidden
           className="pointer-events-none absolute inset-0 bg-[radial-gradient(60%_60%_at_50%_0%,var(--brand-soft),transparent)]"

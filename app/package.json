@@ -10,7 +10,8 @@
     "db:push": "drizzle-kit push",
     "db:seed": "tsx src/db/seed.ts",
     "fetch:youtube-videos": "tsx src/db/fetch-youtube-videos.ts",
-    "enrich:pubchem": "tsx src/db/enrich-pubchem.ts"
+    "enrich:pubchem": "tsx src/db/enrich-pubchem.ts",
+    "enrich:ewg": "tsx src/db/enrich-ewg.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",

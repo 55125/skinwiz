@@ -42,6 +42,24 @@ export const activeChemData = sqliteTable("active_chem_data", {
   fetchedAt: text("fetched_at").notNull().default(sql`(current_timestamp)`),
 });
 
+// EWG Skin Deep's own 1-10 ingredient hazard score for a product we also
+// carry (src/db/enrich-ewg.ts) -- a genuinely independent, external safety
+// reference, not something we compute ourselves. Same "own table, not
+// wiped on reseed" reasoning as active_chem_data. Fuzzy-matched by brand +
+// product name (same token-Jaccard approach as
+// tools/affiliate_feeds/match_catalog.py), so a wrong/missing match just
+// means no row -- never a guessed score. dataAvailability is EWG's own
+// confidence qualifier on the score ("Good"/"Fair"/"Limited" -- theirs, not
+// invented here) and matters as much as the score itself: a score of 2
+// with "Limited" data means less than a score of 2 with "Good" data.
+export const ewgScores = sqliteTable("ewg_scores", {
+  productId: text("product_id").primaryKey().references(() => products.id),
+  ewgScore: integer("ewg_score").notNull(),
+  dataAvailability: text("data_availability"),
+  ewgProductUrl: text("ewg_product_url").notNull(),
+  fetchedAt: text("fetched_at").notNull().default(sql`(current_timestamp)`),
+});
+
 // Factual/regulatory descriptive text only — NOT a clinical efficacy grade.
 // evidenceGrade stays null until a board-certified dermatologist assigns
 // one; needsClinicianReview defaults true and the UI must respect it.

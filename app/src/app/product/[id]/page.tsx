@@ -15,6 +15,7 @@ import {
   getEwgScoreForProduct,
   getEquivalentProducts,
   getConcern,
+  getIngredientsForProduct,
 } from "@/lib/queries";
 import { getScoresForProducts } from "@/lib/scoring";
 import { getVideoSearchLinks } from "@/lib/video-links";
@@ -29,13 +30,8 @@ import { formatPct } from "@/db/strength";
 import { monographStatus, formatRange } from "@/db/monograph-ranges";
 import { OutcomeForm } from "@/components/outcome-form";
 import { ProductGrid } from "@/components/product-grid";
-
-// These canonical active ids are deliberately a family of several distinct
-// real compounds grouped under one consumer-facing name (see the comments
-// on each in db/actives.ts) -- a single PubChem CID for one of them isn't
-// "the" structure the way it is for e.g. niacinamide, so the link below is
-// worded as "a representative structure" for these specifically.
-const GROUPED_ACTIVE_IDS = new Set(["peptides", "ceramides", "aluminum-zirconium-complex"]);
+import { IngredientList } from "@/components/ingredient-list";
+import { pubchemLinkText } from "@/lib/pubchem";
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
@@ -69,6 +65,10 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
   const sessionId = await readSessionId();
   const myOutcome = sessionId ? getSessionOutcome(product.id, product.concernId, sessionId) : null;
   const equivalents = getEquivalentProducts(product);
+  const ingredientRows = getIngredientsForProduct(product.id);
+  const isDrugLabel = product.dataSource === "openfda" || product.dataSource === "dailymed";
+  const labelActives = ingredientRows.filter((r) => r.position <= 0);
+  const listedIngredients = ingredientRows.filter((r) => r.position > 0);
   const strengthRows = product.strengths
     ? product.activeIds
         .filter((id) => product.strengths && id in product.strengths)
@@ -196,13 +196,37 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
           {product.activeIngredientText && (
             <div className="rounded-xl border bg-card p-4">
               <h2 className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                {product.dataSource === "openfda" || product.dataSource === "dailymed"
+                {isDrugLabel
                   ? "Active ingredient (from FDA label)"
                   : product.dataSource === "brand_direct"
                     ? "Ingredients (from manufacturer)"
                     : "Ingredients (community-sourced)"}
               </h2>
-              <p className="text-sm leading-relaxed">{product.activeIngredientText}</p>
+              {isDrugLabel ? (
+                <>
+                  <p className="text-sm leading-relaxed">{product.activeIngredientText}</p>
+                  {labelActives.length > 0 && <IngredientList items={labelActives} className="mt-2" />}
+                </>
+              ) : ingredientRows.length > 0 ? (
+                <IngredientList items={ingredientRows} />
+              ) : (
+                <p className="text-sm leading-relaxed">{product.activeIngredientText}</p>
+              )}
+              {!isDrugLabel && ingredientRows.length > 0 && (
+                <p className="mt-2 text-xs text-muted-foreground">
+                  Tap any ingredient to see what it is and every product that contains it. Bold items are actives
+                  we track.
+                </p>
+              )}
+            </div>
+          )}
+
+          {isDrugLabel && listedIngredients.length > 0 && (
+            <div className="rounded-xl border bg-card p-4">
+              <h2 className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                Inactive ingredients (from FDA label)
+              </h2>
+              <IngredientList items={listedIngredients} />
             </div>
           )}
 
@@ -291,14 +315,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
                   rel="noopener noreferrer"
                   className="font-medium text-brand hover:underline"
                 >
-                  {/* A few active ids here are deliberately a family of several
-                      real compounds (e.g. "Peptides" groups palmitoyl
-                      pentapeptide, copper tripeptide, etc. -- see actives.ts) --
-                      worded as "a representative" rather than "the" structure
-                      for those, so this doesn't overclaim precision it doesn't have. */}
-                  {GROUPED_ACTIVE_IDS.has(note.activeId)
-                    ? `View a representative structure on PubChem${note.molecularFormula ? ` (${note.molecularFormula})` : ""} →`
-                    : `View chemical structure on PubChem${note.molecularFormula ? ` (${note.molecularFormula})` : ""} →`}
+                  {pubchemLinkText(note.activeId, note.molecularFormula)}
                 <span className="sr-only"> (opens in new tab)</span></a>
               </p>
             )}

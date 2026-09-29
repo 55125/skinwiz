@@ -7,10 +7,10 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-type Suggestion = { key: string; kind: "active" | "product" | "all"; label: string; sub?: string | null; href: string };
+type Suggestion = { key: string; kind: "ingredient" | "product" | "all"; label: string; sub?: string | null; href: string };
 
 type SuggestResponse = {
-  actives: { id: string; canonicalName: string }[];
+  ingredients: { id: string; name: string; productCount: number }[];
   products: { id: string; brandName: string; manufacturer: string | null }[];
 };
 
@@ -59,12 +59,12 @@ export function SearchBar({ defaultValue, large }: { defaultValue?: string; larg
   const current = searchable && data?.q === trimmed ? data.res : null;
   const suggestions: Suggestion[] = current
     ? [
-        ...current.actives.map((a): Suggestion => ({
-          key: `a:${a.id}`,
-          kind: "active",
-          label: a.canonicalName,
-          sub: "Ingredient",
-          href: `/browse?active=${encodeURIComponent(a.id)}`,
+        ...current.ingredients.map((i): Suggestion => ({
+          key: `i:${i.id}`,
+          kind: "ingredient",
+          label: i.name,
+          sub: `Ingredient · ${i.productCount.toLocaleString()} products`,
+          href: `/ingredient/${encodeURIComponent(i.id)}`,
         })),
         ...current.products.map((p): Suggestion => ({
           key: `p:${p.id}`,
@@ -180,7 +180,7 @@ export function SearchBar({ defaultValue, large }: { defaultValue?: string; larg
                 s.kind === "all" && "text-muted-foreground",
               )}
             >
-              {s.kind === "active" ? (
+              {s.kind === "ingredient" ? (
                 <FlaskConical className="h-4 w-4 shrink-0 text-brand" strokeWidth={1.75} />
               ) : (
                 <Search className="h-4 w-4 shrink-0 text-muted-foreground" strokeWidth={1.75} />

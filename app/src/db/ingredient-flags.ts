@@ -127,3 +127,9 @@ export function computeFreeFromFlags(fullIngredientText: string | null | undefin
   const lowered = fullIngredientText.toLowerCase();
   return FREE_FROM_CHECKS.filter((check) => !check.avoidSubstrings.some((s) => lowered.includes(s))).map((c) => c.id);
 }
+
+/** The free-from checks an ingredient name would fail (e.g. "Methylparaben" -> paraben-free). */
+export function checksFailedByIngredient(names: string[]): FreeFromCheck[] {
+  const lowered = names.map((n) => n.toLowerCase());
+  return FREE_FROM_CHECKS.filter((c) => c.avoidSubstrings.some((s) => lowered.some((n) => n.includes(s))));
+}

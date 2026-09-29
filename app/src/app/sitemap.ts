@@ -2,8 +2,9 @@ import type { MetadataRoute } from "next";
 import { db } from "@/db/client";
 import { products, concerns } from "@/db/schema";
 import { siteUrl } from "@/lib/site-url";
+import { getPublicIngredientIds } from "@/lib/queries";
 
-const STATIC_PAGES = ["/browse", "/routines", "/about", "/for-clinicians"];
+const STATIC_PAGES = ["/browse", "/ingredients", "/routines", "/about", "/for-clinicians"];
 
 // Force dynamic (query the DB per-request) rather than the default static
 // generation: a static sitemap would be computed once at build time,
@@ -27,6 +28,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
       url: `${SITE_URL}/concern/${c.id}`,
       changeFrequency: "daily" as const,
       priority: 0.9,
+    })),
+    ...getPublicIngredientIds().map((i) => ({
+      url: `${SITE_URL}/ingredient/${encodeURIComponent(i.id)}`,
+      changeFrequency: "weekly" as const,
+      priority: 0.5,
     })),
     ...productRows.map((p) => ({
       url: `${SITE_URL}/product/${encodeURIComponent(p.id)}`,

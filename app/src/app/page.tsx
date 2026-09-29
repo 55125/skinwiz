@@ -152,7 +152,7 @@ export default function Home() {
               {topActives.map((a) => (
                 <Link
                   key={a.activeId}
-                  href={`/search?q=${encodeURIComponent(a.canonicalName)}`}
+                  href={`/ingredient/${encodeURIComponent(a.activeId)}`}
                   className="inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm transition-colors hover:border-brand/40 hover:bg-brand-soft"
                 >
                   {a.canonicalName}

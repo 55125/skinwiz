@@ -7,6 +7,7 @@ import * as schema from "./schema";
 import { ACTIVE_DEFINITIONS, CONCERN_DEFINITIONS, matchActiveIds, nicheToConcernId } from "./actives";
 import { computeFreeFromFlags } from "./ingredient-flags";
 import { parseStrengths, strengthKey } from "./strength";
+import { aliasesFor, canonicalSlug, parseIngredients, pickDisplayName } from "./ingredient-parse";
 
 const REPO_ROOT = path.resolve(process.cwd(), "..");
 // Four sources: the primary openFDA catalog, the DailyMed resolution pass
@@ -154,6 +155,8 @@ async function main() {
 
 function reseed() {
   db.delete(schema.affiliateLinks).run();
+  db.delete(schema.productIngredients).run();
+  db.delete(schema.ingredients).run();
   db.delete(schema.evidenceNotes).run();
   db.delete(schema.products).run();
   db.delete(schema.actives).run();
@@ -194,6 +197,7 @@ function reseed() {
   let skippedNoActive = 0;
   const productBatch: (typeof schema.products.$inferInsert)[] = [];
   const seenNdc = new Set<string>();
+  const memberships: { productId: string; position: number; slug: string; rawName: string; isActive: boolean }[] = [];
 
   for (const csvPath of CATALOG_CSVS) {
     if (!fs.existsSync(csvPath)) {
@@ -235,6 +239,25 @@ function reseed() {
       const strengths = isPreMatched
         ? null
         : parseStrengths(row.active_ingredients_structured || row.active_ingredient_text);
+      const activeIdSet = new Set(activeIds);
+      // Drug labels: the tracked actives (position 0) plus the SPL's own
+      // inactive list. Cosmetic sources: the single INCI list, in order.
+      if (isPreMatched) {
+        parseIngredients(row.active_ingredient_text).forEach((ing, i) =>
+          memberships.push({ productId: row.product_ndc, position: i + 1, slug: ing.slug, rawName: ing.raw, isActive: activeIdSet.has(ing.slug) }),
+        );
+      } else {
+        const listed = new Set<string>();
+        // Actives sit at 0, -1, -2... so (product, position) stays unique and
+        // they sort ahead of the inactive list (positions 1..n).
+        activeIds.forEach((id, i) => {
+          listed.add(id);
+          memberships.push({ productId: row.product_ndc, position: -i, slug: id, rawName: id, isActive: true });
+        });
+        parseIngredients(row.inactive_ingredient_text).forEach((ing, i) => {
+          if (!listed.has(ing.slug)) memberships.push({ productId: row.product_ndc, position: i + 1, slug: ing.slug, rawName: ing.raw, isActive: false });
+        });
+      }
       productBatch.push({
         id: row.product_ndc,
         concernId: nicheToConcernId(row.niche),
@@ -269,6 +292,8 @@ function reseed() {
   }
   console.log(`  inserted ${inserted} products, skipped ${skippedNoActive} with no recognized active ingredient`);
 
+  insertIngredients(memberships);
+
   console.log(`Reading affiliate demo data from ${AFFILIATE_CSV}...`);
   if (fs.existsSync(AFFILIATE_CSV)) {
     const affiliateRows = readCsv<AffiliateRow>(AFFILIATE_CSV);
@@ -294,6 +319,60 @@ function reseed() {
   }
 
   reconcileOrphans();
+}
+
+function insertIngredients(
+  raw: { productId: string; position: number; slug: string; rawName: string; isActive: boolean }[],
+) {
+  // Misspelled labels link to the correct spelling's page. Their spellings are
+  // kept on the link (rawName) but don't feed the page's name or "also listed as".
+  const seen = new Set<string>();
+  const memberships: typeof raw = [];
+  const typoVariants = new Map<string, Map<string, number>>();
+  const cleanVariants = new Map<string, Map<string, number>>();
+  const add = (into: typeof typoVariants, slug: string, name: string) => {
+    const v = into.get(slug) ?? new Map<string, number>();
+    v.set(name, (v.get(name) ?? 0) + 1);
+    into.set(slug, v);
+  };
+  for (const m of raw) {
+    const slug = canonicalSlug(m.slug);
+    const k = `${m.productId}|${slug}`;
+    if (seen.has(k)) continue; // a product listing both a typo and the correct spelling
+    seen.add(k);
+    memberships.push({ ...m, slug });
+    add(slug === m.slug ? cleanVariants : typoVariants, slug, m.rawName);
+  }
+  const variants = new Map<string, Map<string, number>>();
+  const products = new Map<string, Set<string>>();
+  for (const m of memberships) {
+    variants.set(m.slug, cleanVariants.get(m.slug) ?? typoVariants.get(m.slug)!);
+    const p = products.get(m.slug) ?? new Set<string>();
+    p.add(m.productId);
+    products.set(m.slug, p);
+  }
+  const names = new Map<string, string>();
+  const rows: (typeof schema.ingredients.$inferInsert)[] = [];
+  for (const [slug, v] of variants) {
+    const name = pickDisplayName(slug, v);
+    names.set(slug, name);
+    const aliases = aliasesFor(slug, name, v);
+    rows.push({ id: slug, name, aliases, productCount: products.get(slug)!.size });
+  }
+  const BATCH = 500;
+  for (let i = 0; i < rows.length; i += BATCH) db.insert(schema.ingredients).values(rows.slice(i, i + BATCH)).run();
+
+  const links = memberships.map((m) => ({
+    productId: m.productId,
+    position: m.position,
+    ingredientId: m.slug,
+    // tracked actives on a drug label have no raw spelling of their own
+    rawName: m.rawName === m.slug ? names.get(m.slug)! : m.rawName,
+    isActive: m.isActive,
+  }));
+  const LINK_BATCH = 150; // 5 bound params per row, under better-sqlite3's variable ceiling
+  for (let i = 0; i < links.length; i += LINK_BATCH) db.insert(schema.productIngredients).values(links.slice(i, i + LINK_BATCH)).run();
+  console.log(`  indexed ${rows.length} distinct ingredients across ${links.length} product-ingredient links`);
 }
 
 // Products that dropped out of the catalog CSVs leave rows pointing at ids

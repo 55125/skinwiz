@@ -136,6 +136,40 @@ export const products = sqliteTable("products", {
   verified: integer("verified", { mode: "boolean" }).notNull().default(true),
 }, (table) => [index("products_strength_key_idx").on(table.strengthKey)]);
 
+// One row per distinct normalized ingredient across every product's full
+// ingredient list (db/ingredient-parse.ts), so each gets its own
+// /ingredient/[slug] page. Rebuilt on every seed from the catalog CSVs --
+// never hand-edited. `id` is the active id for tracked actives (so
+// /ingredient/niacinamide and the actives table agree) and a slug of the
+// normalized INCI name for everything else. productCount is denormalized
+// for ordering/suggestions; aliases are the other spellings actually seen.
+export const ingredients = sqliteTable("ingredients", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  aliases: text("aliases", { mode: "json" }).$type<string[]>().notNull().default(sql`'[]'`),
+  productCount: integer("product_count").notNull().default(0),
+});
+
+// Membership + order. `position` is the 1-based place in the product's own
+// list (INCI order is roughly descending concentration, but only for the
+// cosmetic sources -- FDA inactive lists are not guaranteed ordered); 0 is
+// <=0 is used for a drug label's active-ingredient line. rawName is the spelling
+// as listed, so the product page shows the label's own text and links it.
+export const productIngredients = sqliteTable(
+  "product_ingredients",
+  {
+    productId: text("product_id").notNull().references(() => products.id),
+    position: integer("position").notNull(),
+    ingredientId: text("ingredient_id").notNull().references(() => ingredients.id),
+    rawName: text("raw_name").notNull(),
+    isActive: integer("is_active", { mode: "boolean" }).notNull().default(false),
+  },
+  (table) => [
+    uniqueIndex("product_ingredients_pk").on(table.productId, table.position),
+    index("product_ingredients_ingredient_idx").on(table.ingredientId),
+  ],
+);
+
 // Real affiliate integration exists (tools/affiliate_feeds/) but no network
 // account is approved yet (project.md §11 open decision), so this table is
 // seeded from SYNTHETIC mock-feed data for a small demo subset only.

@@ -437,15 +437,32 @@ directly licensing the evidence engine.
       corresponds to a named entry there, not a guess. ACDS CAMP and Mayo's
       CARD (the two clinical patient-matching tools you asked about) turned
       out to be membership/patient-code-gated, not public databases — no
-      way to pull data from either. **SkinSAFE**
-      (skinsafeproducts.com, a Mayo Clinic collaboration, same lineage as
-      CARD) is the interesting one: publicly accessible, 18,000+ allergens/
-      cross-reactors against 15,000+ pre-screened products, updated weekly
-      — no API found, but worth a closer look as either a reference to
-      validate this list against or a future data-partnership conversation,
-      not something built here. Same structural posture as `evidenceNotes`:
-      built without clinical review, explicitly labeled v1/not-exhaustive
-      in the UI, and a real board-certified dermatologist pass on the
-      contact-allergen half specifically would be genuinely valuable, not
-      just a formality — this is closer to your actual specialty than most
-      of what's in this file.
+      way to pull data from either. Same structural posture as
+      `evidenceNotes`: built without clinical review, explicitly labeled
+      v1/not-exhaustive in the UI, and a real board-certified dermatologist
+      pass on the contact-allergen half specifically would be genuinely
+      valuable, not just a formality — this is closer to your actual
+      specialty than most of what's in this file.
+- [ ] **Data sources blocked on access/licensing, not on relevance — worth
+      revisiting if the underlying barrier ever changes:**
+      - **SkinSAFE** (skinsafeproducts.com, Mayo Clinic collaboration,
+        18,000+ allergens/cross-reactors against 15,000+ pre-screened
+        products, updated weekly) — genuinely the closest public analogue to
+        what this product needs. **Ruled out as a scrape target**: its
+        `robots.txt` explicitly disallows `/products/` and
+        `/cross_reactor_groups/`, i.e. the exact pages with the data. No
+        public API. Only path back in is a direct data-partnership /
+        licensing conversation with Mayo/SkinSAFE — not something to attempt
+        silently.
+      - **The Beauty API** (Hugging Face, ~180,000 products with functional
+        classes, full ingredient lists, and dermatological safety data) —
+        closest public equivalent to SkinSAFE in scale. The free sample is
+        CC BY-NC 4.0, which conflicts with this being a commercial,
+        affiliate-monetized product; the full dataset is a ~$1,500
+        commercial license. Unbuilt, pending your call on whether that
+        purchase is worth it — not something to charge without asking.
+      - **Cosmetics Europe Skin Sensitisation Database** (128+ substances,
+        in vivo + non-animal skin-sensitisation reference data) — real and
+        well-curated, but distributed as paywalled academic literature, not
+        a downloadable dataset. Only actionable if you already have
+        institutional journal access to share.

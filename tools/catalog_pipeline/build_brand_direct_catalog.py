@@ -166,6 +166,80 @@ BRANDS = {
         "shop_domain": "skinfix.com",
         "parser": "skinfix",
     },
+    # Korean/US-storefront Shopify brands added 2026-09-29. Every one publishes
+    # a full INCI list in plain server-rendered HTML on its own product pages
+    # (Anua does not -- INCI is image-only there -- so it is deliberately
+    # absent). "skip_bundles" turns on the bundle/gift/duplicate-promo filter
+    # (see _skip_shopify_product), which the older brands above predate.
+    "medicube": {
+        "brand_name": "Medicube",
+        "discovery": "shopify",
+        "shop_domain": "medicube.us",
+        "parser": "medicube",
+        "skip_bundles": True,
+        "sleep": 1.5,
+    },
+    "round_lab": {
+        "brand_name": "Round Lab",
+        "discovery": "shopify",
+        "shop_domain": "roundlab.com",
+        "parser": "round_lab",
+        "skip_bundles": True,
+        "sleep": 1.5,
+    },
+    "skin1004": {
+        "brand_name": "SKIN1004",
+        "discovery": "shopify",
+        "shop_domain": "www.skin1004.com",
+        "parser": "skin1004",
+        "skip_bundles": True,
+        "sleep": 1.5,
+    },
+    "innisfree": {
+        "brand_name": "Innisfree",
+        "discovery": "shopify",
+        "shop_domain": "us.innisfree.com",
+        "parser": "innisfree",
+        "skip_bundles": True,
+        "sleep": 1.5,
+    },
+    "laneige": {
+        "brand_name": "Laneige",
+        "discovery": "shopify",
+        "shop_domain": "us.laneige.com",
+        "parser": "laneige",
+        "skip_bundles": True,
+        "sleep": 1.5,
+    },
+    "tatcha": {
+        "brand_name": "Tatcha",
+        "discovery": "shopify",
+        "shop_domain": "tatcha.com",
+        "parser": "tatcha",
+        "skip_bundles": True,
+        "sleep": 1.5,
+    },
+    "torriden": {
+        "brand_name": "Torriden",
+        "discovery": "shopify",
+        "shop_domain": "torriden.us",
+        "parser": "torriden",
+        "skip_bundles": True,
+        "sleep": 1.5,
+    },
+    # Kao's Curel (Japan-made line). Only /japanskincare/products/{category}/
+    # {product}/ pages -- the US body-care pages under /en-us/products/ carry
+    # no ingredient text at all (checked), so they're out of reach, and the
+    # two-segment pattern also excludes the category hubs and the trial kit.
+    # robots.txt (fetched 2026-09-29) disallows only error/thank-you/
+    # unsubscribe pages.
+    "curel_japan": {
+        "brand_name": "Curél",
+        "discovery": "sitemap",
+        "sitemap_url": "https://www.curel.com/en-us/sitemap.xml",
+        "url_pattern": re.compile(r"https://www\.curel\.com/en-us/japanskincare/products/[a-z0-9-]+/[a-z0-9-]+/"),
+        "parser": "curel_japan",
+    },
     "vanicream": {
         "brand_name": "Vanicream",
         "discovery": "sitemap",
@@ -241,7 +315,13 @@ def _get(url: str, retries: int = 3) -> str | None:
                 return None
             if attempt == retries - 1:
                 return None
-            time.sleep(1.5 * (attempt + 1))
+            if exc.code == 429:
+                # Rate-limited (Skin1004 does this after a short burst): back
+                # off for real, honouring Retry-After when it's a plain number.
+                retry_after = exc.headers.get("Retry-After", "") if exc.headers else ""
+                time.sleep(max(float(retry_after) if retry_after.isdigit() else 0, 20 * (attempt + 1)))
+            else:
+                time.sleep(1.5 * (attempt + 1))
         except Exception:
             if attempt == retries - 1:
                 return None
@@ -407,6 +487,8 @@ def _finish_shopify_product(raw_ingredients_html: str, url: str, product_json: d
     # literal heading text itself.
     if "ingredients/ingrédients" in text.lower():
         return None
+    if _looks_like_multi_formula(text):
+        return None
 
     active_ids = matched_active_ids(text)
     if not active_ids:
@@ -495,6 +577,159 @@ def extract_product_skinfix(html: str, url: str, product_json: dict) -> dict | N
     if not match:
         return None
     return _finish_shopify_product(match.group(1), url, product_json)
+
+
+_BUNDLE_TITLE_WORDS = re.compile(
+    r"\b(sets?|bundles?|kits?|duos?|trios?|gifts?|samples?|minis?|pouch|routine|collection|box|refills?|packette)\b",
+    re.IGNORECASE,
+)
+_BUNDLE_TYPE_WORDS = re.compile(r"gift|gioft|bundle|\bsets?\b|gwp|merch|sample|packette|hidden|\bkit", re.IGNORECASE)
+# Medicube wraps many real products in promo-listing copies titled e.g.
+# "[Exclusive Deal] Amazon's #1 Beauty Brand | PDRN Pink Gel Cleanser" --
+# same product, so stripped down to the real name rather than shown as-is.
+_PROMO_TITLE_PREFIX = re.compile(r"^\s*(?:\[[^\]]*\]\s*)?(?:Amazon['’]s\s*#1\s*Beauty\s*Brand\s*\|\s*)?", re.IGNORECASE)
+
+
+def _clean_promo_title(title: str) -> str:
+    return _PROMO_TITLE_PREFIX.sub("", title).strip()
+
+
+def _skip_shopify_product(product_json: dict) -> bool:
+    """True for bundles, gift-with-purchase items, samples and merch. A kit's
+    ingredient block concatenates several formulas (or is absent), so it can't
+    be attributed to one product -- confirmed on Laneige's "#1. Radiance
+    Serum ... #2 ..." kit blocks while building this."""
+    title = _clean_promo_title(product_json.get("title") or "")
+    if _BUNDLE_TITLE_WORDS.search(title):
+        return True
+    return bool(_BUNDLE_TYPE_WORDS.search(product_json.get("product_type") or ""))
+
+
+def _looks_like_multi_formula(text: str) -> bool:
+    """A leading Water/Aqua right after sentence punctuation more than once
+    means several formulas were concatenated (a kit). Anchored to the start
+    or a ./:/; so an ingredient like "Cocos Nucifera (Coconut) Water" inside a
+    normal list doesn't trip it."""
+    return len(re.findall(r"(?:^|[.:;#]\s*\d*\.?\s*)(?:water|aqua)\b", text, flags=re.IGNORECASE)) > 1
+
+
+def _search_group(pattern: str, html: str, flags: int = re.DOTALL | re.IGNORECASE) -> str | None:
+    match = re.search(pattern, html, flags)
+    return match.group(1) if match else None
+
+
+def _labelled_list_from_html(fragment: str) -> str | None:
+    """Text of the first comma-heavy line following a "Full INCI" / "Full
+    Ingredients" label. Block-level tags become line breaks first, so a label
+    and its list can sit in adjacent <p>s, be split by <br>, or share one <p>
+    with inline <strong>s inside the list."""
+    text = re.sub(r"(?i)<\s*(?:br|/p|/div|/li|/h\d|/tr)\b[^>]*>", "\n", fragment)
+    text = html_module.unescape(re.sub(r"<[^>]+>", " ", text))
+    for label in re.finditer(r"(?i)full\s+(?:inci|ingredients?)\s*:?", text):
+        for line in text[label.end():].split("\n")[:4]:
+            line = re.sub(r"\s+", " ", line).strip()
+            if line.count(",") >= 4:
+                return re.sub(r"\s+,", ",", line)
+    return None
+
+
+def extract_product_medicube(html: str, url: str, product_json: dict) -> dict | None:
+    # The full list lives in a hidden "full-ingredient-popup" dialog, a
+    # single <p class="desc"> -- the page's other <p class="desc"> nodes
+    # are marketing copy, hence anchoring on the dialog id first.
+    raw = _search_group(r'id="full-ingredient-popup".{0,1500}?<p class="desc">(.*?)</p>', html)
+    return _finish_shopify_product(raw, url, product_json) if raw else None
+
+
+def extract_product_round_lab(html: str, url: str, product_json: dict) -> dict | None:
+    # Read from the Shopify product JSON's own body_html rather than the
+    # page: the same "<strong>Full Ingredients:</strong>" block is there,
+    # without the page's JSON-escaped duplicates. body_html also carries an
+    # "Active Ingredients:" line just above it, which the anchor skips.
+    # Round Lab runs many description templates (found by checking why 46 of
+    # 84 products came back empty on the first pass): the label is "Full
+    # Ingredients:" or "Full INCI", as a <strong>, <h2> or plain text, with
+    # attributes and inline <strong> tags scattered through the list itself,
+    # and a few products only have a page-level tab with
+    # class="full_ingredients". So: read the text after an explicit "Full
+    # ..." label (never the "Active Ingredients" summary beside it), falling
+    # back to that tab.
+    raw = _labelled_list_from_html(product_json.get("body_html") or "") or _search_group(r'class="full_ingredients">(.*?)</p>', html)
+    return _finish_shopify_product(raw, url, product_json) if raw else None
+
+
+def extract_product_skin1004(html: str, url: str, product_json: dict) -> dict | None:
+    # "Key Ingredients:" marketing copy is elsewhere on the page and
+    # is not the INCI list -- the "FULL INGREDIENTS" tab label anchors past it.
+    raw = _search_group(r'FULL INGREDIENTS</div>.{0,600}?metafield-rich_text_field"><p>(.*?)</p>', html)
+    return _finish_shopify_product(raw, url, product_json) if raw else None
+
+
+def extract_product_innisfree(html: str, url: str, product_json: dict) -> dict | None:
+    raw = _search_group(r"Full Ingredient List:\s*</strong>\s*<br\s*/?>(.*?)</p>", html)
+    return _finish_shopify_product(raw, url, product_json) if raw else None
+
+
+def extract_product_tatcha(html: str, url: str, product_json: dict) -> dict | None:
+    raw = _search_group(r'slot="header">Ingredients</span>.{0,300}?metafield-rich_text_field"><p>(.*?)</p>', html)
+    return _finish_shopify_product(raw, url, product_json) if raw else None
+
+
+def extract_product_torriden(html: str, url: str, product_json: dict) -> dict | None:
+    raw = _search_group(r"Full Ingredient List:\s*<br\s*/?>\s*</strong>\s*<span[^>]*>(.*?)</span>", html)
+    return _finish_shopify_product(raw, url, product_json) if raw else None
+
+
+def extract_product_laneige(html: str, url: str, product_json: dict) -> dict | None:
+    # Laneige's pages inline a JS object per product (the viewed one plus
+    # every related/quick-view product), each with its own `handle:` and
+    # `ingredients:` string -- so the list is anchored to THIS product's
+    # handle, not just "the first ingredients string on the page", which
+    # would silently attribute a neighbour's formula. The string is JSON-
+    # escaped (\/, <), hence json.loads to decode it.
+    handle = re.escape(product_json.get("handle", ""))
+    raw = _search_group(rf'handle: "{handle}",(?:(?!\n\s*handle: ").)*?\bingredients: "((?:[^"\\]|\\.)*)"', html)
+    if not raw:
+        return None
+    try:
+        decoded = json.loads(f'"{raw}"')
+    except json.JSONDecodeError:
+        return None
+    return _finish_shopify_product(decoded, url, product_json)
+
+
+def extract_product_curel_japan(html: str, url: str) -> dict | None:
+    # The list is a bare text node inside the "Ingredients" accordion panel,
+    # lowercase INCI with no markup -- anchoring on the accordion button
+    # label skips the FAQ accordion's "ingredients" question just below it.
+    match = re.search(r'>Ingredients<span[^>]*>.*?</button></div><div[^>]*><div[^>]*class="br-accordion-item__content">(.*?)</div>', html, re.DOTALL)
+    if not match:
+        return None
+    text = re.sub(r"<[^>]+>", " ", match.group(1))
+    text = html_module.unescape(text)
+    text = re.sub(r"\s+", " ", text).strip(" ,.")
+    if not text or len(text) > MAX_INGREDIENT_TEXT_LEN:
+        return None
+
+    active_ids = matched_active_ids(text)
+    if not active_ids:
+        return None
+
+    title_match = re.search(r"<title>([^<|]+)", html)
+    brand_name = html_module.unescape(title_match.group(1)).strip() if title_match else "(unnamed product)"
+    image_match = re.search(r'<img[^>]+src="(https://cdn\.shopify\.com/[^"]+)"', html)
+    image_url = html_module.unescape(image_match.group(1)) if image_match else ""
+
+    return {
+        "product_ndc": "curel-jp-" + url.rstrip("/").rsplit("/", 1)[-1],
+        "niche": pick_niche(active_ids),
+        "brand_name": brand_name,
+        "manufacturer_name": "Curél",
+        "active_ingredient_text": text,
+        "active_ingredients_structured": ";".join(active_ids),
+        "source_url": url,
+        "image_url": image_url,
+    }
 
 
 def extract_product_vanicream(html: str, url: str) -> dict | None:
@@ -777,6 +1012,7 @@ EXTRACTORS = {
     "vanicream": extract_product_vanicream,
     "cetaphil": extract_product_cetaphil,
     "aquaphor": extract_product_aquaphor,
+    "curel_japan": extract_product_curel_japan,
 }
 
 # Shopify extractors take (html, url, product_json) -- the product_json from
@@ -787,6 +1023,13 @@ SHOPIFY_EXTRACTORS = {
     "cosrx": extract_product_cosrx,
     "first_aid_beauty": extract_product_first_aid_beauty,
     "skinfix": extract_product_skinfix,
+    "medicube": extract_product_medicube,
+    "round_lab": extract_product_round_lab,
+    "skin1004": extract_product_skin1004,
+    "innisfree": extract_product_innisfree,
+    "laneige": extract_product_laneige,
+    "tatcha": extract_product_tatcha,
+    "torriden": extract_product_torriden,
 }
 
 
@@ -810,6 +1053,26 @@ def main() -> None:
             products_json = fetch_shopify_catalog(brand["shop_domain"])
             print(f"  {len(products_json)} products found", file=sys.stderr)
 
+            if brand.get("skip_bundles"):
+                # Real (non-promo-wrapped) listings first, so when the same
+                # product appears under several promo handles the plain one is
+                # the copy that survives the title-dedupe below.
+                products_json.sort(key=lambda p: _clean_promo_title(p.get("title") or "") != (p.get("title") or "").strip())
+                seen_titles: set[str] = set()
+                kept = []
+                for p in products_json:
+                    if _skip_shopify_product(p):
+                        continue
+                    p["title"] = _clean_promo_title(p.get("title") or "")
+                    key_title = re.sub(r"\W+", " ", p["title"].lower()).strip()
+                    if key_title in seen_titles:
+                        continue
+                    seen_titles.add(key_title)
+                    kept.append(p)
+                print(f"  {len(kept)} after dropping bundles/gifts/duplicate promo listings", file=sys.stderr)
+                products_json = kept
+
+            pause = brand.get("sleep", SLEEP)
             for i, product_json in enumerate(products_json, 1):
                 handle = product_json.get("handle")
                 if not handle:
@@ -832,7 +1095,7 @@ def main() -> None:
                         rows.append(product)
                 if i % 20 == 0:
                     print(f"  {i}/{len(products_json)} pages checked, {len(rows)} matched so far", file=sys.stderr)
-                time.sleep(SLEEP)
+                time.sleep(pause)
             continue
 
         extractor = EXTRACTORS[brand["parser"]]

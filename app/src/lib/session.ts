@@ -13,7 +13,12 @@ export async function getOrCreateSessionId(): Promise<string> {
   const existing = store.get(COOKIE_NAME)?.value;
   if (existing) return existing;
   const id = randomUUID();
-  store.set(COOKIE_NAME, id, { httpOnly: true, sameSite: "lax", maxAge: ONE_YEAR });
+  store.set(COOKIE_NAME, id, {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    maxAge: ONE_YEAR,
+  });
   return id;
 }
 

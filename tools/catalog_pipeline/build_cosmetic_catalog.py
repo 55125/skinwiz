@@ -82,17 +82,20 @@ COSMETIC_ACTIVES = {
 JUNK_PATTERN = re.compile(r"\btest\b", re.IGNORECASE)
 
 
-def _get(url: str, retries: int = 3) -> dict | None:
+def _get(url: str, retries: int = 3) -> dict:
+    """Raises after the last retry (like build_acne_sun_catalog._get): a
+    swallowed failure here used to end a tag's pagination early and
+    silently write a shorter catalog."""
     for attempt in range(retries):
         try:
             req = urllib.request.Request(url, headers={"User-Agent": "skinwiz-catalog-pipeline/0.1"})
             with urllib.request.urlopen(req, timeout=20) as resp:
                 return json.loads(resp.read())
-        except Exception:
+        except Exception as exc:
             if attempt == retries - 1:
-                return None
+                raise RuntimeError(f"Open Beauty Facts request failed after {retries} attempts: {url}") from exc
             time.sleep(1.5 * (attempt + 1))
-    return None
+    raise AssertionError("unreachable")
 
 
 def fetch_tag(tag: str) -> list[dict]:
@@ -106,8 +109,6 @@ def fetch_tag(tag: str) -> list[dict]:
             "fields": "code,product_name,brands,ingredients_text,completeness,image_front_url",
         }
         data = _get(f"{OBF_BASE}?{urllib.parse.urlencode(params)}")
-        if not data:
-            break
         batch = data.get("products", [])
         if not batch:
             break

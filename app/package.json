@@ -2,12 +2,16 @@
   "name": "skinwiz-app",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start -H 0.0.0.0 -p ${PORT:-3000}",
     "lint": "eslint",
-    "db:push": "drizzle-kit push",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "tsx src/db/migrate.ts",
     "db:seed": "tsx src/db/seed.ts",
     "fetch:youtube-videos": "tsx src/db/fetch-youtube-videos.ts",
     "enrich:pubchem": "tsx src/db/enrich-pubchem.ts",

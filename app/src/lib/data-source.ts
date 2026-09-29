@@ -4,7 +4,7 @@ export function dataSourceBadge(dataSource: string): { label: string; className:
   switch (dataSource) {
     case "brand_direct":
       return {
-        label: "Brand-verified",
+        label: "Brand-sourced",
         className: "border-sky-300 text-sky-700 dark:border-sky-800 dark:text-sky-400",
       };
     case "open_beauty_facts":

@@ -42,6 +42,7 @@ from __future__ import annotations
 
 import csv
 import json
+import os
 import sys
 import time
 import urllib.error
@@ -67,6 +68,10 @@ PURPOSES = {
 
 
 def _get(url: str, retries: int = 3) -> dict:
+    # Optional: an openFDA key raises the limit from 240 to 1000+ requests/min.
+    api_key = os.environ.get("OPENFDA_API_KEY")
+    if api_key:
+        url = f"{url}{'&' if '?' in url else '?'}api_key={urllib.parse.quote(api_key)}"
     for attempt in range(retries):
         try:
             req = urllib.request.Request(url, headers={"User-Agent": "skinwiz-catalog-pipeline/0.1"})
@@ -86,7 +91,8 @@ def _get(url: str, retries: int = 3) -> dict:
 
 
 def fetch_all_labels(purpose: str) -> list[dict]:
-    first = _get(f"{LABEL_BASE}?{urllib.parse.urlencode({'search': f'purpose:\"{purpose}\"', 'limit': 1})}")
+    search = f'purpose:"{purpose}"'
+    first = _get(f"{LABEL_BASE}?{urllib.parse.urlencode({'search': search, 'limit': 1})}")
     total = first.get("meta", {}).get("results", {}).get("total", 0)
     print(f"  {purpose}: {total} total label records", file=sys.stderr)
 

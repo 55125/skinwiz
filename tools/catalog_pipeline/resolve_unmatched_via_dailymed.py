@@ -39,7 +39,10 @@ DAILYMED_BASE = "https://dailymed.nlm.nih.gov/dailymed/services/v2/spls"
 UNMATCHED_CSV = "output/acne_sun_unmatched.csv"
 EXISTING_CATALOG_CSV = "output/acne_sun_catalog.csv"
 OUTPUT_CSV = "output/dailymed_resolved_catalog.csv"
-WORKERS = 8
+# NLM publishes no rate limit for DailyMed; 4 workers with a per-request
+# pause keeps this to a few requests/second instead of an unthrottled burst.
+WORKERS = 4
+REQUEST_PAUSE = 0.25
 
 # Same synonym list as tools/affiliate_feeds/match_catalog.py and
 # app/src/db/actives.ts — kept as an independent copy per this repo's
@@ -86,6 +89,7 @@ def parse_manufacturer(title: str) -> str | None:
 
 def resolve_one(row: dict) -> list[dict]:
     setid = row["spl_set_id"]
+    time.sleep(REQUEST_PAUSE)
     data = _get(f"{DAILYMED_BASE}/{setid}/packaging.json")
     if not data:
         return []

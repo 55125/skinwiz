@@ -115,7 +115,15 @@ product page silently breaks the moment the brand adds referrer-based
 hotlink protection or reshuffles a URL. `app/src/db/seed.ts` stores
 whatever string is in the CSV's `image_url` column as-is, so the
 root-relative local path works identically to the old full URL with zero
-app-side changes. 53 images, ~6.4MB total.
+app-side changes. 53 images, ~6.4MB total at the time of that pass (the
+brand-direct set has since grown to 425 images, ~54MB, across nine brands).
+
+**Open licensing question:** self-hosting fixes the reliability problem,
+not the rights problem. These are the brands' copyrighted product photos,
+and copying them onto our own server is still reproduction without a
+license. Resolve this (brand permission, affiliate-network image feeds
+that come with usage rights, or dropping brand-direct photos) before
+treating the image set as launch-ready.
 
 ## Known limitations
 

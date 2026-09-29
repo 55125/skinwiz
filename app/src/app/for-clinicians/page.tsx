@@ -1,5 +1,11 @@
 import { RaterApplicationForm } from "@/components/rater-application-form";
 import { Separator } from "@/components/ui/separator";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "For dermatologists — SkinWiz",
+  description: "Request to join the SkinWiz dermatologist rating panel.",
+};
 
 export default function ForCliniciansPage() {
   return (
@@ -14,16 +20,16 @@ export default function ForCliniciansPage() {
       </div>
 
       <section className="space-y-2 text-sm">
-        <h2 className="text-base font-medium text-foreground">How the panel works</h2>
+        <h2 className="text-base font-medium text-foreground">How the panel will work</h2>
         <ul className="list-disc pl-5 space-y-1 text-muted-foreground">
-          <li>Board certification (ABD/AOBD) and NPI are verified before any rating is accepted.</li>
-          <li>Scores are per concern (e.g. &quot;for acne-prone skin&quot;), never one blended number.</li>
+          <li>Board certification (ABD/AOBD) and NPI will be verified before any rating is accepted.</li>
+          <li>Scores will be per concern (e.g. &quot;for acne-prone skin&quot;), never one blended number.</li>
           <li>Rubric-based, not stars: evidence for the claimed benefit, formulation quality, irritation risk, value.</li>
           <li>
-            Conflict-of-interest disclosure is pulled automatically from CMS Open Payments, and raters are
-            recused from products made by companies that pay them.
+            Conflict-of-interest disclosures will be checked against CMS Open Payments, and raters recused
+            from products made by companies that pay them.
           </li>
-          <li>Compensation, if any, is disclosed and never tied to the score given.</li>
+          <li>Compensation, if any, will be disclosed and never tied to the score given.</li>
         </ul>
       </section>
 

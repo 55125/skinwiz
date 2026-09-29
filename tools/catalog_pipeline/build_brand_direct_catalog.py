@@ -468,8 +468,10 @@ def _finish_shopify_product(raw_ingredients_html: str, url: str, product_json: d
     text = re.sub(r"\s+", " ", text).strip(" ,.")
     # Skinfix's modal appends a bare 3-6 digit number after the last real
     # ingredient (e.g. "...Citric Acid. 2416") -- not part of the INCI list
-    # on any page checked, so stripped rather than left as noise.
-    text = re.sub(r"\s+\d{3,6}$", "", text).strip(" ,.")
+    # on any page checked, so stripped rather than left as noise. Anchored
+    # to a preceding period: a list ending in a colorant ("..., CI 77491")
+    # must keep its number.
+    text = re.sub(r"\.\s+\d{3,6}$", "", text).strip(" ,.")
     if not text:
         return None
     if len(text) > MAX_INGREDIENT_TEXT_LEN:

@@ -14,28 +14,35 @@ export function Pagination({
 }) {
   if (totalPages <= 1) return null;
   const button = cn(buttonVariants({ variant: "outline", size: "lg" }), "rounded-full px-4");
-  const disabled = "pointer-events-none opacity-40";
+  const edge = (enabled: boolean, target: number, content: React.ReactNode) =>
+    enabled ? (
+      <Link href={hrefFor(target)} className={button}>
+        {content}
+      </Link>
+    ) : (
+      <span aria-disabled="true" className={cn(button, "pointer-events-none opacity-40")}>
+        {content}
+      </span>
+    );
   return (
     <nav aria-label="Pagination" className="flex items-center justify-center gap-3 pt-6 text-sm">
-      <Link
-        href={hrefFor(page - 1)}
-        aria-disabled={page <= 1}
-        tabIndex={page <= 1 ? -1 : undefined}
-        className={cn(button, page <= 1 && disabled)}
-      >
-        <ChevronLeft className="h-4 w-4" /> Previous
-      </Link>
+      {edge(
+        page > 1,
+        page - 1,
+        <>
+          <ChevronLeft className="h-4 w-4" /> Previous
+        </>,
+      )}
       <span className="min-w-28 text-center tabular-nums text-muted-foreground">
         Page {page.toLocaleString()} of {totalPages.toLocaleString()}
       </span>
-      <Link
-        href={hrefFor(page + 1)}
-        aria-disabled={page >= totalPages}
-        tabIndex={page >= totalPages ? -1 : undefined}
-        className={cn(button, page >= totalPages && disabled)}
-      >
-        Next <ChevronRight className="h-4 w-4" />
-      </Link>
+      {edge(
+        page < totalPages,
+        page + 1,
+        <>
+          Next <ChevronRight className="h-4 w-4" />
+        </>,
+      )}
     </nav>
   );
 }

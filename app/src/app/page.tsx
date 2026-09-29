@@ -15,10 +15,10 @@ import {
   Wind,
   type LucideIcon,
 } from "lucide-react";
-import { ProductCard } from "@/components/product-card";
+import { ProductGrid } from "@/components/product-grid";
 import { SearchBar } from "@/components/search-bar";
 import { SectionHeader } from "@/components/section-header";
-import { browseProducts, getAllActives, getConcerns, getTopProducts, getTopActives } from "@/lib/queries";
+import { countProducts, getAllActives, getConcerns, getTopProducts, getTopActives } from "@/lib/queries";
 import { getTopRoutines } from "@/lib/routines";
 
 // Force dynamic: without this, Next.js statically prerenders "/" once at
@@ -39,14 +39,14 @@ const CONCERN_ICONS: Record<string, LucideIcon> = {
   "brightening-texture": Sparkles,
 };
 
-const POPULAR_SEARCHES = ["Niacinamide", "Sunscreen", "Salicylic acid", "Ceramides", "CeraVe"];
+const SUGGESTED_SEARCHES = ["Niacinamide", "Sunscreen", "Salicylic acid", "Ceramides", "CeraVe"];
 
 export default function Home() {
   const concerns = getConcerns();
   const topProducts = getTopProducts(6);
   const topActives = getTopActives(10);
   const topRoutines = getTopRoutines(5);
-  const productCount = browseProducts({}, 1).total;
+  const productCount = countProducts();
   const activeCount = getAllActives().length;
 
   const stats = [
@@ -79,8 +79,8 @@ export default function Home() {
             <SearchBar large />
           </div>
           <div className="mt-4 flex flex-wrap items-center justify-center gap-2 text-sm">
-            <span className="text-muted-foreground">Popular:</span>
-            {POPULAR_SEARCHES.map((term) => (
+            <span className="text-muted-foreground">Try:</span>
+            {SUGGESTED_SEARCHES.map((term) => (
               <Link
                 key={term}
                 href={`/search?q=${encodeURIComponent(term)}`}
@@ -142,11 +142,7 @@ export default function Home() {
             description="No Derm or Audience scores exist yet — featured by data quality, not popularity."
             action={{ href: "/browse", label: "Browse all" }}
           />
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {topProducts.map((p) => (
-              <ProductCard key={p.id} product={p} />
-            ))}
-          </div>
+          <ProductGrid products={topProducts} />
         </section>
 
         <section className="grid gap-6 lg:grid-cols-2">
@@ -207,7 +203,7 @@ export default function Home() {
               {
                 icon: <Stethoscope className="h-5 w-5 text-sky-600" />,
                 title: "Derm Score",
-                body: "From a verified panel of board-certified dermatologists — never shown until at least 5 have rated it.",
+                body: "Will come from a panel of board-certified dermatologists once it launches — never shown until at least 5 have rated a product.",
               },
               {
                 icon: <Users className="h-5 w-5 text-violet-600" />,

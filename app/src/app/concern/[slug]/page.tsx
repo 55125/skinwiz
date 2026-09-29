@@ -6,7 +6,8 @@ import { PageHeader } from "@/components/page-header";
 import { Pagination } from "@/components/pagination";
 import { RedFlagBanner } from "@/components/red-flag-banner";
 import { FreeFromFilters } from "@/components/free-from-filters";
-import { getConcern, getActivesForConcern, getProductsForConcern } from "@/lib/queries";
+import { getConcern, getActivesForConcern, getProductsForConcern, getStrengthOptionsForActive } from "@/lib/queries";
+import { formatPct } from "@/db/strength";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
@@ -23,19 +24,28 @@ export default async function ConcernPage({
   searchParams,
 }: {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ page?: string; active?: string; free?: string }>;
+  searchParams: Promise<{ page?: string; active?: string; free?: string; strength?: string }>;
 }) {
   const { slug } = await params;
-  const { page: pageParam, active, free } = await searchParams;
+  const { page: pageParam, active, free, strength } = await searchParams;
   const concern = getConcern(slug);
   if (!concern) notFound();
 
   const page = Math.max(1, parseInt(pageParam ?? "1", 10) || 1);
   const freeFromIds = free ? free.split(",").filter(Boolean) : [];
   const activesList = getActivesForConcern(slug);
-  const { rows, total, pageSize } = getProductsForConcern(slug, page, active, freeFromIds);
+  const allStrengthOptions = active ? getStrengthOptionsForActive(slug, active) : [];
+  // Labels carry one-off values (3.69%, 5.25%) that are almost always a
+  // filing quirk of a single product; a chip per singleton would drown the
+  // real strengths (2.5 / 5 / 10 for benzoyl peroxide). Rare values stay
+  // reachable via the URL and "All strengths", just not as chips.
+  const strengthOptions = allStrengthOptions.filter((o) => o.count >= 3);
+  const strengthPct = strength !== undefined && allStrengthOptions.some((o) => String(o.pct) === strength) ? Number(strength) : undefined;
+  const { rows, total, pageSize } = getProductsForConcern(slug, page, active, freeFromIds, strengthPct);
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
-  const pageLinkSuffix = `${active ? `&active=${active}` : ""}${free ? `&free=${free}` : ""}`;
+  const pageLinkSuffix = `${active ? `&active=${active}` : ""}${free ? `&free=${free}` : ""}${strengthPct !== undefined ? `&strength=${strengthPct}` : ""}`;
+  const strengthHref = (pct?: number) =>
+    `/concern/${slug}?active=${active}${free ? `&free=${free}` : ""}${pct !== undefined ? `&strength=${pct}` : ""}`;
 
   return (
     <div className="mx-auto max-w-6xl space-y-8 px-4 py-10">
@@ -60,6 +70,24 @@ export default async function ConcernPage({
           ))}
         </div>
       </div>
+
+      {active && strengthOptions.length > 1 && (
+        <div className="space-y-3">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+            Strength <span className="font-normal normal-case tracking-normal">(from the FDA label)</span>
+          </p>
+          <div className="flex flex-wrap gap-1.5">
+            <FilterChip href={strengthHref()} selected={strengthPct === undefined}>
+              All strengths
+            </FilterChip>
+            {strengthOptions.map((o) => (
+              <FilterChip key={o.pct} href={strengthHref(o.pct)} selected={strengthPct === o.pct}>
+                {formatPct(o.pct)} <span className="ml-1 opacity-70">{o.count}</span>
+              </FilterChip>
+            ))}
+          </div>
+        </div>
+      )}
 
       <FreeFromFilters basePath={`/concern/${slug}`} searchParams={{ active, free }} selected={freeFromIds} />
 

@@ -6,6 +6,7 @@ import { db } from "./client";
 import * as schema from "./schema";
 import { ACTIVE_DEFINITIONS, CONCERN_DEFINITIONS, matchActiveIds, nicheToConcernId } from "./actives";
 import { computeFreeFromFlags } from "./ingredient-flags";
+import { parseStrengths, strengthKey } from "./strength";
 
 const REPO_ROOT = path.resolve(process.cwd(), "..");
 // Four sources: the primary openFDA catalog, the DailyMed resolution pass
@@ -214,6 +215,11 @@ async function main() {
         : row.inactive_ingredient_text
           ? `${row.active_ingredient_text || ""} ${row.inactive_ingredient_text}`
           : null; // dailymed-resolved rows and any acne_sun row missing it: unknown, not "clean"
+      // Cosmetic sources never disclose concentrations, so only the FDA
+      // label line is parsed -- see db/strength.ts.
+      const strengths = isPreMatched
+        ? null
+        : parseStrengths(row.active_ingredients_structured || row.active_ingredient_text);
       productBatch.push({
         id: row.product_ndc,
         concernId: nicheToConcernId(row.niche),
@@ -234,6 +240,8 @@ async function main() {
         imageUrl: row.image_url || null,
         sourceUrl: row.source === "brand_direct" ? row.source_url || null : null,
         freeFromFlags: computeFreeFromFlags(fullIngredientText),
+        strengths,
+        strengthKey: strengthKey(strengths, activeIds),
       });
     }
   }

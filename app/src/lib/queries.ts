@@ -32,10 +32,25 @@ export function getActivesForConcern(concernId: string) {
 
 const PAGE_SIZE = 24;
 
-export function getProductsForConcern(concernId: string, page: number, activeId?: string, freeFromIds: string[] = []) {
+// json_extract path for one active's parsed strength; the id goes in as a
+// bound parameter (inside the path string), never spliced into SQL.
+function strengthExpr(activeId: string): SQL {
+  return sql`json_extract(${products.strengths}, ${'$."' + activeId + '"'})`;
+}
+
+export function getProductsForConcern(
+  concernId: string,
+  page: number,
+  activeId?: string,
+  freeFromIds: string[] = [],
+  strengthPct?: number,
+) {
   const offset = (page - 1) * PAGE_SIZE;
   const clauses = [eq(products.concernId, concernId), ...freeFromWhereClauses(freeFromIds)];
-  if (activeId) clauses.push(sql`${products.activeIds} LIKE ${"%\"" + activeId + "\"%"}`);
+  if (activeId) {
+    clauses.push(sql`${products.activeIds} LIKE ${"%\"" + activeId + "\"%"}`);
+    if (strengthPct !== undefined) clauses.push(sql`${strengthExpr(activeId)} = ${strengthPct}`);
+  }
   const whereClause = and(...clauses);
 
   const rows = db.select().from(products).where(whereClause).limit(PAGE_SIZE).offset(offset).all();
@@ -73,6 +88,36 @@ export function getAllActives() {
 
 export function getProduct(id: string) {
   return db.select().from(products).where(eq(products.id, id)).get();
+}
+
+// Distinct parsed strengths one active appears at within a concern, for the
+// strength chips on /concern/[slug]. Only rows with a parsed value count --
+// cosmetic and unparsed rows aren't "0%", they're unknown.
+export function getStrengthOptionsForActive(concernId: string, activeId: string): { pct: number; count: number }[] {
+  const expr = strengthExpr(activeId);
+  return db
+    .select({ pct: sql<number>`${expr}`, count: sql<number>`count(*)` })
+    .from(products)
+    .where(and(eq(products.concernId, concernId), sql`${expr} IS NOT NULL`))
+    .groupBy(expr)
+    .orderBy(expr)
+    .all();
+}
+
+// "Same actives at the same strengths, same form" -- the store-brand /
+// generic-equivalent list. Exact-key equality (see schema.ts strengthKey),
+// so only rows whose every active has a parsed strength can match. Other
+// manufacturers first: the point is finding an alternative, not the same
+// brand's other package sizes.
+export function getEquivalentProducts(product: typeof products.$inferSelect, limit = 8) {
+  if (!product.strengthKey) return { rows: [], total: 0 };
+  const clauses = [eq(products.strengthKey, product.strengthKey), sql`${products.id} != ${product.id}`];
+  if (product.dosageForm) clauses.push(eq(products.dosageForm, product.dosageForm));
+  const whereClause = and(...clauses);
+  const sameMaker = sql`CASE WHEN ${products.manufacturer} = ${product.manufacturer ?? ""} THEN 1 ELSE 0 END`;
+  const rows = db.select().from(products).where(whereClause).orderBy(sameMaker, products.brandName).limit(limit).all();
+  const [{ count }] = db.select({ count: sql<number>`count(*)` }).from(products).where(whereClause).all();
+  return { rows, total: count };
 }
 
 // concernId is required, not just activeIds — some actives (e.g. salicylic

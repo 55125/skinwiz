@@ -443,6 +443,37 @@ directly licensing the evidence engine.
       pass on the contact-allergen half specifically would be genuinely
       valuable, not just a formality — this is closer to your actual
       specialty than most of what's in this file.
+- [x] **Three "combine what's already here" features shipped 2026-09-29**,
+      picked from an audit for easy wins over new engineering:
+      1. **Outcome logging** — the "Did this help?" form on every product
+         page (`components/outcome-form.tsx`, `api/products/[id]/outcome`)
+         is the first-ever write path into `audience_outcomes`; before this
+         the Audience Score could never display. One answer per session per
+         (product, concern), enforced by a unique index, re-answering
+         upserts. `db:seed` already preserves this table across deploys.
+      2. **Personal avoid list** (`/avoid`, `lib/avoid.ts`, cookie
+         `sw_avoid`) — the 16 ingredient-flag checks, chosen once, then
+         flagged on every card ("Contains fragrance") and product page, with
+         a one-click "Hide what I avoid" filter on listing pages. Never
+         applied silently. A product with no full ingredient list reads
+         "couldn't check," not "clear." Directly answers SkinSort's
+         acknowledged "avoided ingredients still recommended" complaint.
+      3. **Parsed label strengths** (`db/strength.ts`, `products.strengths`
+         + `strength_key`) — the exact-concentration line openFDA/DailyMed
+         carry ("BENZOYL PEROXIDE 50 mg/mL") converted to a percent for
+         14,727 of 15,261 drug rows (the rest are per-package amounts with
+         no denominator, left unparsed rather than guessed). Powers: a
+         strength line on cards ("Benzoyl Peroxide 2.5%"), strength chips
+         on `/concern/[slug]` when an active is selected, a "within/above/
+         below FDA OTC monograph range" badge, and a **"Same active, same
+         strength"** section listing store-brand/generic equivalents
+         (Differin → 36 adapalene 0.1% gels). Cosmetic sources never
+         disclose concentrations, so those rows have none.
+      **Needs your review:** `db/monograph-ranges.ts` — the permitted-
+      concentration table per 21 CFR part (333/347/348/350/352/358), written
+      from the regulations, not clinically checked. Displayed as a
+      regulatory fact only. Also the four-bucket "how long did you use it"
+      options in the outcome form, if you'd rather capture exact weeks.
 - [ ] **Data sources blocked on access/licensing, not on relevance — worth
       revisiting if the underlying barrier ever changes:**
       - **SkinSAFE** (skinsafeproducts.com, Mayo Clinic collaboration,

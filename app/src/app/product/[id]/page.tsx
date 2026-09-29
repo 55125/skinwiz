@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { ChevronLeft, ExternalLink, FlaskConical, PlaySquare, Music2, Camera } from "lucide-react";
+import { AlertTriangle, ChevronLeft, ExternalLink, FlaskConical, PlaySquare, Music2, Camera, ShieldCheck } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -13,6 +13,7 @@ import {
   getAffiliateLinksForProduct,
   getVideoLinksForProduct,
   getEwgScoreForProduct,
+  getEquivalentProducts,
   getConcern,
 } from "@/lib/queries";
 import { getDermScore, getAudienceScore } from "@/lib/scoring";
@@ -20,6 +21,14 @@ import { getVideoSearchLinks } from "@/lib/video-links";
 import { dataSourceBadge } from "@/lib/data-source";
 import { getFreeFromCheck } from "@/db/ingredient-flags";
 import { ewgHazardBadge } from "@/lib/ewg";
+import { readSessionId } from "@/lib/session";
+import { getSessionOutcome } from "@/lib/outcomes";
+import { readAvoidIds, avoidVerdict, avoidedIngredientName } from "@/lib/avoid";
+import { activeName } from "@/lib/strength-display";
+import { formatPct } from "@/db/strength";
+import { monographStatus, formatRange } from "@/db/monograph-ranges";
+import { OutcomeForm } from "@/components/outcome-form";
+import { ProductCard } from "@/components/product-card";
 
 // These canonical active ids are deliberately a family of several distinct
 // real compounds grouped under one consumer-facing name (see the comments
@@ -55,6 +64,15 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
   const audienceScore = getAudienceScore(product.id, product.concernId);
   const sourceBadge = dataSourceBadge(product.dataSource);
   const ewgScore = getEwgScoreForProduct(product.id);
+  const avoid = avoidVerdict(product.freeFromFlags, await readAvoidIds());
+  const sessionId = await readSessionId();
+  const myOutcome = sessionId ? getSessionOutcome(product.id, product.concernId, sessionId) : null;
+  const equivalents = getEquivalentProducts(product);
+  const strengthRows = product.strengths
+    ? product.activeIds
+        .filter((id) => product.strengths && id in product.strengths)
+        .map((id) => ({ id, pct: product.strengths![id], monograph: monographStatus(id, product.strengths![id]) }))
+    : [];
 
   return (
     <div className="mx-auto max-w-5xl space-y-10 px-4 py-8 sm:py-10">
@@ -93,6 +111,69 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
           </div>
 
           <DualScoreBadges dermScore={dermScore} audienceScore={audienceScore} />
+
+          {avoid?.status === "conflicts" && (
+            <Alert className="border-red-300 bg-red-50 dark:border-red-900 dark:bg-red-950/40">
+              <AlertTriangle className="h-4 w-4 text-red-600" />
+              <AlertTitle>Contains {avoid.conflicts.length === 1 ? "something" : `${avoid.conflicts.length} things`} on your avoid list</AlertTitle>
+              <AlertDescription>
+                {avoid.conflicts.map(avoidedIngredientName).join(", ")}. Based on the published ingredient list —{" "}
+                <Link href="/avoid" className="underline">
+                  edit your list
+                </Link>
+                .
+              </AlertDescription>
+            </Alert>
+          )}
+          {avoid?.status === "clear" && (
+            <p className="flex items-center gap-2 rounded-xl border border-emerald-300 bg-emerald-50 px-3.5 py-2.5 text-sm text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-300">
+              <ShieldCheck className="h-4 w-4 shrink-0" />
+              Clear of all {avoid.checked} ingredients on your avoid list, per the published ingredient list.
+            </p>
+          )}
+          {avoid?.status === "unassessed" && (
+            <p className="rounded-xl border border-dashed px-3.5 py-2.5 text-sm text-muted-foreground">
+              Couldn&apos;t check this product against your avoid list — no full ingredient list is available for
+              it, so it&apos;s unknown, not clear.
+            </p>
+          )}
+
+          {strengthRows.length > 0 && (
+            <div className="rounded-xl border bg-card p-4">
+              <h2 className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                Strength (from the FDA label)
+              </h2>
+              <ul className="space-y-2">
+                {strengthRows.map((row) => (
+                  <li key={row.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
+                    <span className="font-semibold tabular-nums">
+                      {activeName(row.id)} {formatPct(row.pct)}
+                    </span>
+                    {row.monograph && (
+                      <Badge
+                        variant="outline"
+                        title={`${row.monograph.range.cfr}: ${formatRange(row.monograph.range)}`}
+                        className={
+                          row.monograph.status === "within"
+                            ? "border-emerald-300 text-emerald-700 dark:border-emerald-900 dark:text-emerald-400"
+                            : "border-amber-300 text-amber-700 dark:border-amber-900 dark:text-amber-400"
+                        }
+                      >
+                        {row.monograph.status === "within"
+                          ? `Within FDA OTC monograph range (${formatRange(row.monograph.range)})`
+                          : `${row.monograph.status === "above" ? "Above" : "Below"} FDA OTC monograph range (${formatRange(row.monograph.range)})`}
+                      </Badge>
+                    )}
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-2 text-xs text-muted-foreground">
+                The monograph range is what the FDA permits for this active in an OTC product — a regulatory fact,
+                not a rating. A strength outside it may reflect how the label was filed rather than the product
+                itself; check the label on the package.
+              </p>
+            </div>
+          )}
 
           {ewgScore && (
             <a
@@ -181,6 +262,8 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
       <RedFlagBanner />
       </div>
 
+      <OutcomeForm productId={product.id} concernName={concern?.name ?? "this concern"} initial={myOutcome} />
+
       <section className="space-y-4">
         <h2 className="flex items-center gap-2 text-xl font-semibold">
           <FlaskConical className="h-5 w-5 text-brand" />
@@ -222,6 +305,25 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
         ))}
         </div>
       </section>
+
+      {equivalents.total > 0 && (
+        <section className="space-y-4">
+          <div className="space-y-1">
+            <h2 className="text-xl font-semibold">Same active, same strength</h2>
+            <p className="text-sm text-muted-foreground">
+              {equivalents.total.toLocaleString()} other {equivalents.total === 1 ? "product lists" : "products list"} the
+              identical active ingredient{product.activeIds.length > 1 ? "s" : ""} at the identical strength
+              {product.dosageForm ? ` in the same form (${product.dosageForm.toLowerCase()})` : ""} on the FDA label — often a
+              store brand or generic. Inactive ingredients, texture, and price can still differ.
+            </p>
+          </div>
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            {equivalents.rows.map((p) => (
+              <ProductCard key={p.id} product={p} />
+            ))}
+          </div>
+        </section>
+      )}
 
       <section className="space-y-4">
         <h2 className="text-xl font-semibold">Where to buy</h2>

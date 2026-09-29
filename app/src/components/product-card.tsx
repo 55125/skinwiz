@@ -7,13 +7,18 @@ import { dataSourceBadge } from "@/lib/data-source";
 import { getFreeFromCheck } from "@/db/ingredient-flags";
 import { getEwgScoreForProduct } from "@/lib/queries";
 import { ewgHazardBadge } from "@/lib/ewg";
+import { readAvoidIds, avoidVerdict, avoidedIngredientName } from "@/lib/avoid";
+import { describeStrengths } from "@/lib/strength-display";
 import type { products } from "@/db/schema";
 
-export function ProductCard({ product }: { product: typeof products.$inferSelect }) {
+export async function ProductCard({ product }: { product: typeof products.$inferSelect }) {
   const dermScore = getDermScore(product.id, product.concernId);
   const audienceScore = getAudienceScore(product.id, product.concernId);
   const sourceBadge = dataSourceBadge(product.dataSource);
   const ewgScore = getEwgScoreForProduct(product.id);
+  const avoid = avoidVerdict(product.freeFromFlags, await readAvoidIds());
+  const avoidConflicts = avoid?.status === "conflicts" ? avoid.conflicts : [];
+  const strengthLine = describeStrengths(product.strengths, product.activeIds);
   // Capped at 2 on the card -- a product can match up to a dozen of these,
   // which would drown out everything else in a small card; the full list
   // is on the product detail page instead.
@@ -64,10 +69,34 @@ export function ProductCard({ product }: { product: typeof products.$inferSelect
           <h3 className="line-clamp-2 text-[15px] font-semibold leading-snug" title={product.brandName}>
             {product.brandName}
           </h3>
-          {product.activeIngredientText && (
-            <p className="line-clamp-2 text-xs text-muted-foreground">{product.activeIngredientText}</p>
+          {strengthLine ? (
+            <p className="line-clamp-2 text-xs font-medium text-foreground/80">{strengthLine}</p>
+          ) : (
+            product.activeIngredientText && (
+              <p className="line-clamp-2 text-xs text-muted-foreground">{product.activeIngredientText}</p>
+            )
           )}
         </div>
+
+        {(avoidConflicts.length > 0 || avoid?.status === "clear") && (
+          <div className="flex flex-wrap gap-1">
+            {avoidConflicts.slice(0, 2).map((id) => (
+              <Badge key={id} variant="outline" className="border-red-300 bg-red-50 text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-400">
+                Contains {avoidedIngredientName(id)}
+              </Badge>
+            ))}
+            {avoidConflicts.length > 2 && (
+              <Badge variant="outline" className="border-red-300 text-red-700 dark:border-red-900 dark:text-red-400">
+                +{avoidConflicts.length - 2} more you avoid
+              </Badge>
+            )}
+            {avoid?.status === "clear" && (
+              <Badge variant="outline" className="border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-400">
+                Clear of your avoid list
+              </Badge>
+            )}
+          </div>
+        )}
 
         {(shownFlags.length > 0 || ewgScore || (product.dosageForm && product.imageUrl)) && (
           <div className="flex flex-wrap gap-1">

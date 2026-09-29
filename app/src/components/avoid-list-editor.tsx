@@ -40,6 +40,7 @@ export function AvoidListEditor({ initialIds }: { initialIds: string[] }) {
   const groups = [
     { title: "Common preferences", items: FREE_FROM_CHECKS.filter((c) => c.category === "clean") },
     { title: "Common contact-dermatitis allergens", items: FREE_FROM_CHECKS.filter((c) => c.category === "contact-allergen") },
+    { title: "Skin type & lifestyle", items: FREE_FROM_CHECKS.filter((c) => c.category === "skin") },
   ];
 
   return (

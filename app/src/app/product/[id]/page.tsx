@@ -20,7 +20,8 @@ import {
 import { getScoresForProducts } from "@/lib/scoring";
 import { getVideoSearchLinks } from "@/lib/video-links";
 import { dataSourceBadge } from "@/lib/data-source";
-import { getFreeFromCheck } from "@/db/ingredient-flags";
+import { FREE_FROM_CHECKS, getFreeFromCheck, ingredientFailsCheck } from "@/db/ingredient-flags";
+import { findSimilarProducts } from "@/lib/similar";
 import { ewgHazardBadge } from "@/lib/ewg";
 import { readSessionId } from "@/lib/session";
 import { getSessionOutcome } from "@/lib/outcomes";
@@ -69,6 +70,15 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
   const isDrugLabel = product.dataSource === "openfda" || product.dataSource === "dailymed";
   const labelActives = ingredientRows.filter((r) => r.position <= 0);
   const listedIngredients = ingredientRows.filter((r) => r.position > 0);
+  const similar = isDrugLabel
+    ? []
+    : findSimilarProducts(listedIngredients.map((r) => r.ingredientId), { excludeId: product.id, limit: 4 });
+  const flaggedSkin = product.freeFromFlags
+    ? FREE_FROM_CHECKS.filter((c) => c.category === "skin" && !product.freeFromFlags!.includes(c.id)).map((c) => ({
+        check: c,
+        hits: listedIngredients.filter((r) => ingredientFailsCheck(c, r.rawName)).map((r) => r.rawName),
+      }))
+    : [];
   const strengthRows = product.strengths
     ? product.activeIds
         .filter((id) => product.strengths && id in product.strengths)
@@ -246,6 +256,19 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
                   </Badge>
                 ))}
               </div>
+              {flaggedSkin.some((f) => f.hits.length > 0) && (
+                <div className="mt-3 space-y-1.5 text-xs text-muted-foreground">
+                  {flaggedSkin
+                    .filter((f) => f.hits.length > 0)
+                    .map(({ check, hits }) => (
+                      <p key={check.id}>
+                        <span className="font-medium text-foreground">Not {check.label.toLowerCase()}:</span>{" "}
+                        {hits.slice(0, 6).join(", ")}
+                        {hits.length > 6 ? ` +${hits.length - 6} more` : ""}
+                      </p>
+                    ))}
+                </div>
+              )}
               <p className="mt-2 text-xs text-muted-foreground">
                 Computed from the published ingredient list above, not a certification — not exhaustive, and not a
                 substitute for checking your own known allergens.
@@ -336,6 +359,40 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
             </p>
           </div>
           <ProductGrid products={equivalents.rows} columns="sm:grid-cols-2 lg:grid-cols-4" />
+        </section>
+      )}
+
+      {similar.length > 0 && (
+        <section className="space-y-4">
+          <div className="space-y-1">
+            <h2 className="text-xl font-semibold">Similar formulas</h2>
+            <p className="text-sm text-muted-foreground">
+              Products whose ingredient lists overlap most with this one, weighting distinctive ingredients over
+              common ones like water and glycerin. Similar lists are not identical formulas — concentrations,
+              texture and price differ.
+            </p>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {similar.map((s) => (
+              <div key={s.product.id} className="flex items-center justify-between gap-3 rounded-xl border bg-card p-4">
+                <div className="min-w-0">
+                  <Link href={`/product/${encodeURIComponent(s.product.id)}`} className="block truncate font-medium hover:underline">
+                    {s.product.brandName}
+                  </Link>
+                  <p className="text-xs text-muted-foreground">
+                    {Math.round(s.score * 100)}% match · {s.shared} shared ingredients
+                    {s.product.manufacturer ? ` · ${s.product.manufacturer}` : ""}
+                  </p>
+                </div>
+                <Link
+                  href={`/compare?a=${encodeURIComponent(product.id)}&b=${encodeURIComponent(s.product.id)}`}
+                  className={buttonVariants({ variant: "outline", size: "sm" })}
+                >
+                  Compare
+                </Link>
+              </div>
+            ))}
+          </div>
         </section>
       )}
 

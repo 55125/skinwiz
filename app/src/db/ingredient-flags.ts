@@ -19,8 +19,15 @@
 export type FreeFromCheck = {
   id: string;
   label: string; // "Fragrance-free"
-  category: "clean" | "contact-allergen";
+  category: "clean" | "contact-allergen" | "skin";
   avoidSubstrings: string[]; // lowercase; presence of ANY of these means the claim does NOT hold
+  // For terms a substring can't express (plain "alcohol" INCI vs. cetyl
+  // alcohol). Tested against each single ingredient name, lowercase.
+  avoidPatterns?: RegExp[];
+  // How to word a conflict ("Contains {avoidName}"); defaults to the label minus "-free".
+  avoidName?: string;
+  // One line on what the check looks for, shown on the checker and product pages.
+  explain?: string;
 };
 
 export const FREE_FROM_CHECKS: FreeFromCheck[] = [
@@ -103,6 +110,78 @@ export const FREE_FROM_CHECKS: FreeFromCheck[] = [
   { id: "cocamidopropyl-betaine-free", label: "Cocamidopropyl betaine-free", category: "contact-allergen", avoidSubstrings: ["cocamidopropyl betaine"] },
   { id: "balsam-of-peru-free", label: "Balsam of Peru-free", category: "contact-allergen", avoidSubstrings: ["myroxylon pereirae", "balsam of peru", "balsam peru"] },
   { id: "propylene-glycol-free", label: "Propylene glycol-free", category: "contact-allergen", avoidSubstrings: ["propylene glycol"] },
+
+  // Skin-type / lifestyle filters. Same mechanism, but these encode
+  // widely-repeated community and clinical rules of thumb rather than
+  // allergen data -- treat them as a screening aid, not a guarantee.
+  {
+    id: "fungal-acne-safe",
+    label: "Fungal-acne-safe",
+    category: "skin",
+    avoidName: "fungal-acne triggers",
+    explain:
+      "Malassezia yeast (behind fungal acne / pityrosporum folliculitis) feeds on fatty acids and their esters, polysorbates, most plant oils and butters, and fermented ingredients. Flags any of those; medium-chain caprylic/capric triglyceride, squalane and fatty alcohols are not flagged.",
+    avoidSubstrings: [
+      // polysorbates and sorbitan esters
+      "polysorbate", "sorbitan",
+      // fatty-acid esters and salts (C12-C24 chains)
+      "laurate", "myristate", "palmitate", "stearate", "oleate", "isostearate", "linoleate", "linolenate", "behenate", "arachidate", "erucate",
+      // free fatty acids
+      "lauric acid", "myristic acid", "palmitic acid", "stearic acid", "oleic acid", "linoleic acid", "linolenic acid", "behenic acid",
+      // plant oils and butters
+      "olea europaea", "olive oil", "cocos nucifera", "coconut oil", "helianthus annuus", "sunflower", "simmondsia", "jojoba", "argania", "argan",
+      "prunus amygdalus", "almond oil", "persea gratissima", "avocado", "butyrospermum", "shea", "theobroma", "cocoa", "ricinus", "castor",
+      "vitis vinifera", "grape seed", "rosa canina", "rosehip", "sesamum", "sesame", "glycine soja", "soybean", "brassica campestris", "canola",
+      "carthamus", "safflower", "linum usitatissimum", "flax", "oenothera", "evening primrose", "borago", "borage", "cannabis sativa", "hemp seed",
+      "macadamia", "arachis", "peanut", "zea mays", "corn oil", "elaeis guineensis", "palm oil", "palm kernel", "camellia oleifera", "camellia japonica", "camellia sinensis seed", "meadowfoam", "limnanthes",
+      // fermented / cultured ingredients
+      "ferment", "lactobacillus", "saccharomyces", "galactomyces", "bifida",
+      // animal fats
+      "tallow", "lanolin",
+    ],
+  },
+  {
+    id: "alcohol-free",
+    label: "Alcohol-free",
+    category: "skin",
+    avoidName: "drying alcohol",
+    explain: "Flags ethanol-type alcohols (alcohol, alcohol denat., SD alcohol, isopropyl alcohol). Fatty alcohols such as cetyl or stearyl alcohol are emollients and are not flagged.",
+    // "ethanol" as a bare substring would flag phenoxyethanol and ethanolamines
+    avoidSubstrings: ["alcohol denat", "sd alcohol", "denatured alcohol", "isopropyl alcohol"],
+    avoidPatterns: [/^alcohol(\s*\(.*\))?$/, /(^|[^a-z])(eth|meth)anol(?!amine)/],
+  },
+  {
+    id: "essential-oil-free",
+    label: "Essential oil-free",
+    category: "skin",
+    avoidName: "essential oils",
+    explain: "Flags common essential oils, citrus-derived ingredients and named aromatic constituents, a frequent irritant and sensitiser on reactive skin.",
+    avoidSubstrings: [
+      "essential oil", "lavandula", "lavender", "mentha", "peppermint", "spearmint", "menthol", "camphor", "eucalyptus", "melaleuca", "tea tree",
+      "citrus aurantium", "citrus limon", "citrus paradisi", "citrus grandis", "citrus sinensis", "citrus reticulata", "citrus medica", "bergamot", "orange peel oil",
+      "rosmarinus", "rosemary leaf oil", "cymbopogon", "lemongrass", "pelargonium", "rosa damascena flower oil", "jasminum", "ylang", "cananga", "santalum", "sandalwood",
+      "cinnamomum", "clove", "eugenia caryophyllus", "thymus", "thyme", "salvia sclarea", "cedarwood",
+    ],
+  },
+  {
+    id: "reef-safe",
+    label: "Reef-safer",
+    category: "skin",
+    avoidName: "reef-harming UV filters",
+    explain: "Free of oxybenzone and octinoxate, the two UV filters banned in Hawaii and Key West over coral-bleaching concerns. Other filters are not evaluated.",
+    avoidSubstrings: ["oxybenzone", "benzophenone-3", "octinoxate", "ethylhexyl methoxycinnamate", "octyl methoxycinnamate"],
+  },
+  {
+    id: "animal-derived-free",
+    label: "No animal-derived ingredients",
+    category: "skin",
+    avoidName: "animal-derived ingredients",
+    explain: "Flags ingredients commonly sourced from animals (beeswax, honey, lanolin, carmine, collagen, gelatin, keratin, tallow, silk, guanine, milk proteins). An ingredient list can't show cruelty-free testing or a vegan certification, and some listed items have plant-based versions.",
+    avoidSubstrings: [
+      "beeswax", "cera alba", "honey", "propolis", "royal jelly", "lanolin", "carmine", "cochineal", "collagen", "gelatin", "keratin", "elastin",
+      "tallow", "silk", "sericin", "guanine", "pearl", "snail", "placenta", "casein", "lactoferrin", "whey", "milk protein", "goat milk", "donkey milk", "shellac",
+    ],
+  },
 ];
 
 export function getFreeFromCheck(id: string): FreeFromCheck | undefined {
@@ -124,12 +203,25 @@ const MIN_FULL_INGREDIENT_TEXT_LENGTH = 60;
  */
 export function computeFreeFromFlags(fullIngredientText: string | null | undefined): string[] | null {
   if (!fullIngredientText || fullIngredientText.trim().length < MIN_FULL_INGREDIENT_TEXT_LENGTH) return null;
+  // Pattern checks need individual names, so the list is split for those only.
   const lowered = fullIngredientText.toLowerCase();
-  return FREE_FROM_CHECKS.filter((check) => !check.avoidSubstrings.some((s) => lowered.includes(s))).map((c) => c.id);
+  const names = lowered.split(/[,;\n]/).map((n) => n.trim()).filter(Boolean);
+  return FREE_FROM_CHECKS.filter(
+    (check) => !check.avoidSubstrings.some((s) => lowered.includes(s)) && !failsByPattern(check, names),
+  ).map((c) => c.id);
+}
+
+function failsByPattern(check: FreeFromCheck, loweredNames: string[]): boolean {
+  return !!check.avoidPatterns?.some((re) => loweredNames.some((n) => re.test(n)));
+}
+
+/** True if a single ingredient name (any case) trips this check. */
+export function ingredientFailsCheck(check: FreeFromCheck, name: string): boolean {
+  const n = name.toLowerCase().trim();
+  return check.avoidSubstrings.some((s) => n.includes(s)) || failsByPattern(check, [n]);
 }
 
 /** The free-from checks an ingredient name would fail (e.g. "Methylparaben" -> paraben-free). */
 export function checksFailedByIngredient(names: string[]): FreeFromCheck[] {
-  const lowered = names.map((n) => n.toLowerCase());
-  return FREE_FROM_CHECKS.filter((c) => c.avoidSubstrings.some((s) => lowered.some((n) => n.includes(s))));
+  return FREE_FROM_CHECKS.filter((c) => names.some((n) => ingredientFailsCheck(c, n)));
 }

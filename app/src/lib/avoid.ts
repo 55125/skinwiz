@@ -24,8 +24,9 @@ export async function readAvoidIds(): Promise<string[]> {
 
 // "Fragrance-free" -> "fragrance", for "Contains fragrance" wording.
 export function avoidedIngredientName(checkId: string): string {
-  const label = getFreeFromCheck(checkId)?.label ?? checkId;
-  return label.replace(/-free$/i, "").toLowerCase();
+  const check = getFreeFromCheck(checkId);
+  if (check?.avoidName) return check.avoidName;
+  return (check?.label ?? checkId).replace(/-free$/i, "").toLowerCase();
 }
 
 export type AvoidVerdict =

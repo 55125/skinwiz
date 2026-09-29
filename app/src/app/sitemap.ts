@@ -3,8 +3,9 @@ import { db } from "@/db/client";
 import { products, concerns } from "@/db/schema";
 import { siteUrl } from "@/lib/site-url";
 import { getPublicIngredientIds } from "@/lib/queries";
+import { FREE_FROM_CHECKS } from "@/db/ingredient-flags";
 
-const STATIC_PAGES = ["/browse", "/ingredients", "/routines", "/about", "/for-clinicians"];
+const STATIC_PAGES = ["/browse", "/ingredients", "/routines", "/check", "/about", "/for-clinicians"];
 
 // Force dynamic (query the DB per-request) rather than the default static
 // generation: a static sitemap would be computed once at build time,
@@ -28,6 +29,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
       url: `${SITE_URL}/concern/${c.id}`,
       changeFrequency: "daily" as const,
       priority: 0.9,
+    })),
+    ...FREE_FROM_CHECKS.map((c) => ({
+      url: `${SITE_URL}/guide/${c.id}`,
+      changeFrequency: "weekly" as const,
+      priority: 0.8,
     })),
     ...getPublicIngredientIds().map((i) => ({
       url: `${SITE_URL}/ingredient/${encodeURIComponent(i.id)}`,

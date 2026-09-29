@@ -38,6 +38,7 @@ export async function FreeFromFilters({
 
   const clean = FREE_FROM_CHECKS.filter((c) => c.category === "clean");
   const contactAllergen = FREE_FROM_CHECKS.filter((c) => c.category === "contact-allergen");
+  const skin = FREE_FROM_CHECKS.filter((c) => c.category === "skin");
 
   return (
     <div className="space-y-4 rounded-2xl border bg-card p-4">
@@ -69,6 +70,18 @@ export async function FreeFromFilters({
         </p>
         <div className="flex flex-wrap gap-1.5">
           {contactAllergen.map((c) => (
+            <FilterChip key={c.id} href={hrefToggling(c.id)} selected={selected.includes(c.id)} showCheck>
+              {c.label}
+            </FilterChip>
+          ))}
+        </div>
+      </div>
+      <div>
+        <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+          Skin type &amp; lifestyle
+        </p>
+        <div className="flex flex-wrap gap-1.5">
+          {skin.map((c) => (
             <FilterChip key={c.id} href={hrefToggling(c.id)} selected={selected.includes(c.id)} showCheck>
               {c.label}
             </FilterChip>

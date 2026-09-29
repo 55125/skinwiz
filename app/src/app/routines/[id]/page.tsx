@@ -25,7 +25,7 @@ export default async function RoutineDetailPage({ params }: { params: Promise<{ 
 
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">{routine.title}</h1>
+          <h1 className="text-3xl font-semibold sm:text-4xl">{routine.title}</h1>
           <p className="text-muted-foreground">
             <Badge variant="secondary">{routine.concernName}</Badge>
             {routine.authorName && <span className="ml-2">by {routine.authorName}</span>}

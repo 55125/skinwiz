@@ -14,7 +14,7 @@ export default function NewRoutinePage() {
   return (
     <div className="mx-auto max-w-2xl px-4 py-10 space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Post a routine</h1>
+        <h1 className="text-3xl font-semibold sm:text-4xl">Post a routine</h1>
         <p className="text-muted-foreground">Share what you use, step by step. Anyone can vote on it.</p>
       </div>
       <RoutineDisclaimer />

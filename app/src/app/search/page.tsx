@@ -3,6 +3,8 @@ import { SearchBar } from "@/components/search-bar";
 import { ProductCard } from "@/components/product-card";
 import { FreeFromFilters } from "@/components/free-from-filters";
 import { Badge } from "@/components/ui/badge";
+import { FilterChip } from "@/components/filter-chip";
+import { PageHeader } from "@/components/page-header";
 import { searchProducts, searchProductsCount, searchActives, getConcerns } from "@/lib/queries";
 import { TRUST_TIERS } from "@/lib/trust-tiers";
 
@@ -30,44 +32,44 @@ export default async function SearchPage({
   }
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-10 space-y-8">
-      <div className="space-y-4">
-        <h1 className="text-2xl font-semibold tracking-tight">Search</h1>
-        <SearchBar defaultValue={query} large />
+    <div className="mx-auto max-w-6xl space-y-8 px-4 py-10">
+      <div className="space-y-5">
+        <PageHeader
+          eyebrow="Search"
+          title={query ? `Results for “${query}”` : "Search the catalog"}
+          description={query ? undefined : "Search by product name, brand, or active ingredient."}
+        />
+        <div className="max-w-2xl">
+          <SearchBar defaultValue={query} large />
+        </div>
       </div>
 
-      {!query && <p className="text-muted-foreground">Search by product name, brand, or active ingredient.</p>}
-
       {query && (
-        <div className="space-y-3">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Concern</span>
-            <Link href={hrefWith({ concern: undefined })}>
-              <Badge variant={!concern ? "default" : "outline"} className="cursor-pointer">
-                All
-              </Badge>
-            </Link>
+        <div className="space-y-4">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="mr-1 w-16 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+              Concern
+            </span>
+            <FilterChip href={hrefWith({ concern: undefined })} selected={!concern}>
+              All
+            </FilterChip>
             {concerns.map((c) => (
-              <Link key={c.id} href={hrefWith({ concern: c.id })}>
-                <Badge variant={concern === c.id ? "default" : "outline"} className="cursor-pointer">
-                  {c.name}
-                </Badge>
-              </Link>
+              <FilterChip key={c.id} href={hrefWith({ concern: c.id })} selected={concern === c.id}>
+                {c.name}
+              </FilterChip>
             ))}
           </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Source</span>
-            <Link href={hrefWith({ tier: undefined })}>
-              <Badge variant={!tier ? "default" : "outline"} className="cursor-pointer">
-                All
-              </Badge>
-            </Link>
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="mr-1 w-16 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+              Source
+            </span>
+            <FilterChip href={hrefWith({ tier: undefined })} selected={!tier}>
+              All
+            </FilterChip>
             {TRUST_TIERS.map((t) => (
-              <Link key={t.label} href={hrefWith({ tier: t.label })}>
-                <Badge variant={tier === t.label ? "default" : "outline"} className="cursor-pointer">
-                  {t.label}
-                </Badge>
-              </Link>
+              <FilterChip key={t.label} href={hrefWith({ tier: t.label })} selected={tier === t.label}>
+                {t.label}
+              </FilterChip>
             ))}
           </div>
           <FreeFromFilters basePath="/search" searchParams={{ q, concern, tier, free }} selected={freeFromIds} />
@@ -75,15 +77,17 @@ export default async function SearchPage({
       )}
 
       {query && activeResults.length === 0 && productResults.length === 0 && (
-        <p className="text-muted-foreground">No results for &quot;{query}&quot;.</p>
+        <div className="rounded-2xl border border-dashed p-10 text-center text-muted-foreground">
+          No results for &quot;{query}&quot;.
+        </div>
       )}
 
       {activeResults.length > 0 && (
         <div className="space-y-3">
-          <h2 className="text-sm font-medium uppercase tracking-wide text-muted-foreground">Ingredients</h2>
+          <h2 className="text-xl font-semibold">Ingredients</h2>
           <div className="flex flex-wrap gap-2">
             {activeResults.map((a) => (
-              <Badge key={a.id} variant="outline" className="text-sm">
+              <Badge key={a.id} variant="outline" className="h-7 bg-card px-3 text-sm">
                 {a.canonicalName}
               </Badge>
             ))}
@@ -92,9 +96,12 @@ export default async function SearchPage({
       )}
 
       {productResults.length > 0 && (
-        <div className="space-y-3">
-          <h2 className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
-            Products ({productTotal.toLocaleString()})
+        <div className="space-y-4">
+          <h2 className="text-xl font-semibold">
+            Products{" "}
+            <span className="text-base font-normal tabular-nums text-muted-foreground">
+              {productTotal.toLocaleString()}
+            </span>
           </h2>
           {productTotal > productResults.length && (
             <p className="text-xs text-muted-foreground">

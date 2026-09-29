@@ -1,10 +1,9 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { ExternalLink, FlaskConical, PlaySquare, Music2, Camera } from "lucide-react";
+import { ChevronLeft, ExternalLink, FlaskConical, PlaySquare, Music2, Camera } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { DualScoreBadges } from "@/components/score-badge";
 import { RedFlagBanner } from "@/components/red-flag-banner";
@@ -58,52 +57,105 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
   const ewgScore = getEwgScoreForProduct(product.id);
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-10 space-y-8">
-      <div>
-        {concern && (
-          <Link href={`/concern/${concern.id}`} className="text-sm text-muted-foreground underline">
-            ← Back to {concern.name}
-          </Link>
+    <div className="mx-auto max-w-5xl space-y-10 px-4 py-8 sm:py-10">
+      {concern && (
+        <Link
+          href={`/concern/${concern.id}`}
+          className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+        >
+          <ChevronLeft className="h-4 w-4" />
+          {concern.name}
+        </Link>
+      )}
+
+      <div className={product.imageUrl ? "grid gap-8 md:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] md:items-start" : ""}>
+        {product.imageUrl && (
+          <div className="flex aspect-[4/3] items-center justify-center overflow-hidden rounded-3xl border bg-gradient-to-br from-muted to-secondary md:sticky md:top-24 md:aspect-square">
+            {/* eslint-disable-next-line @next/next/no-img-element -- mix of same-origin (brand-direct, self-hosted) and external OBF-hosted photos; not worth a next/image remotePatterns allowlist for the OBF case alone */}
+            <img src={product.imageUrl} alt={product.brandName} className="h-full w-full object-contain p-8" />
+          </div>
         )}
-        <h1 className="mt-2 text-2xl font-semibold tracking-tight">{product.brandName}</h1>
-        {product.manufacturer && <p className="text-muted-foreground">{product.manufacturer}</p>}
-        <div className="mt-3 flex flex-wrap gap-2">
-          {product.dosageForm && <Badge variant="secondary">{product.dosageForm}</Badge>}
-          {sourceBadge && (
-            <Badge variant="outline" className={sourceBadge.className}>
-              {sourceBadge.label}
-            </Badge>
+
+        <div className="space-y-6">
+          <div className="space-y-3">
+            {product.manufacturer && (
+              <p className="text-xs font-semibold uppercase tracking-wider text-brand">{product.manufacturer}</p>
+            )}
+            <h1 className="text-3xl font-semibold leading-tight sm:text-4xl">{product.brandName}</h1>
+            <div className="flex flex-wrap gap-2">
+              {product.dosageForm && <Badge variant="secondary">{product.dosageForm}</Badge>}
+              {sourceBadge && (
+                <Badge variant="outline" className={sourceBadge.className}>
+                  {sourceBadge.label}
+                </Badge>
+              )}
+            </div>
+          </div>
+
+          <DualScoreBadges dermScore={dermScore} audienceScore={audienceScore} />
+
+          {ewgScore && (
+            <a
+              href={ewgScore.ewgProductUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex w-full items-center gap-3 rounded-xl border bg-card px-3.5 py-3 text-sm transition-colors hover:border-brand/40"
+            >
+              <Badge variant="outline" className={ewgHazardBadge(ewgScore.ewgScore).className}>
+                {ewgHazardBadge(ewgScore.ewgScore).label}
+              </Badge>
+              <span className="flex-1 text-muted-foreground">
+                EWG Skin Deep hazard score{ewgScore.dataAvailability ? ` · ${ewgScore.dataAvailability} data` : ""}
+              </span>
+              <ExternalLink className="h-3.5 w-3.5 text-muted-foreground" />
+            </a>
+          )}
+
+          {product.activeIngredientText && (
+            <div className="rounded-xl border bg-card p-4">
+              <h2 className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                {product.dataSource === "openfda" || product.dataSource === "dailymed"
+                  ? "Active ingredient (from FDA label)"
+                  : product.dataSource === "brand_direct"
+                    ? "Ingredients (from manufacturer)"
+                    : "Ingredients (community-sourced)"}
+              </h2>
+              <p className="text-sm leading-relaxed">{product.activeIngredientText}</p>
+            </div>
+          )}
+
+          {product.freeFromFlags && product.freeFromFlags.length > 0 && (
+            <div>
+              <h2 className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                Ingredient-based filters this matches
+              </h2>
+              <div className="flex flex-wrap gap-1.5">
+                {product.freeFromFlags.map((id) => (
+                  <Badge
+                    key={id}
+                    variant="outline"
+                    className="border-emerald-300 text-emerald-700 dark:border-emerald-900 dark:text-emerald-400"
+                  >
+                    {getFreeFromCheck(id)?.label ?? id}
+                  </Badge>
+                ))}
+              </div>
+              <p className="mt-2 text-xs text-muted-foreground">
+                Computed from the published ingredient list above, not a certification — not exhaustive, and not a
+                substitute for checking your own known allergens.
+              </p>
+            </div>
           )}
         </div>
       </div>
 
-      {product.imageUrl && (
-        // eslint-disable-next-line @next/next/no-img-element -- mix of same-origin (brand-direct, self-hosted) and external OBF-hosted photos; not worth a next/image remotePatterns allowlist for the OBF case alone
-        <img
-          src={product.imageUrl}
-          alt={product.brandName}
-          className="mx-auto aspect-square w-full max-w-xs rounded-lg bg-muted object-contain p-4"
-        />
-      )}
-
-      <DualScoreBadges dermScore={dermScore} audienceScore={audienceScore} />
-
-      {ewgScore && (
-        <a
-          href={ewgScore.ewgProductUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex w-fit items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs hover:bg-muted"
-        >
-          <Badge variant="outline" className={ewgHazardBadge(ewgScore.ewgScore).className}>
-            {ewgHazardBadge(ewgScore.ewgScore).label}
-          </Badge>
-          <span className="text-muted-foreground">
-            EWG Skin Deep hazard score{ewgScore.dataAvailability ? ` · ${ewgScore.dataAvailability} data` : ""} →
-          </span>
-        </a>
-      )}
-
+      <div
+        className={
+          product.dataSource === "open_beauty_facts" || product.dataSource === "brand_direct"
+            ? "grid gap-4 md:grid-cols-2"
+            : undefined
+        }
+      >
       {product.dataSource === "open_beauty_facts" && (
         <Alert className="border-amber-300 bg-amber-50 dark:border-amber-900 dark:bg-amber-950/40">
           <AlertTitle>Community-sourced listing, not FDA-verified</AlertTitle>
@@ -127,54 +179,18 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
       )}
 
       <RedFlagBanner />
+      </div>
 
-      {product.activeIngredientText && (
-        <div>
-          <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide mb-1">
-            {product.dataSource === "openfda" || product.dataSource === "dailymed"
-              ? "Active ingredient (from FDA label)"
-              : product.dataSource === "brand_direct"
-                ? "Ingredients (from manufacturer)"
-                : "Ingredients (community-sourced)"}
-          </h2>
-          <p className="text-sm">{product.activeIngredientText}</p>
-        </div>
-      )}
-
-      {product.freeFromFlags && product.freeFromFlags.length > 0 && (
-        <div>
-          <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide mb-1">
-            Ingredient-based filters this matches
-          </h2>
-          <div className="flex flex-wrap gap-1.5">
-            {product.freeFromFlags.map((id) => (
-              <Badge
-                key={id}
-                variant="outline"
-                className="border-emerald-300 text-emerald-700 dark:border-emerald-900 dark:text-emerald-400"
-              >
-                {getFreeFromCheck(id)?.label ?? id}
-              </Badge>
-            ))}
-          </div>
-          <p className="mt-1 text-xs italic text-muted-foreground">
-            Computed from the published ingredient list above, not a certification — not exhaustive, and not a
-            substitute for checking your own known allergens.
-          </p>
-        </div>
-      )}
-
-      <Separator />
-
-      <div className="space-y-4">
-        <h2 className="text-lg font-medium flex items-center gap-2">
-          <FlaskConical className="h-5 w-5 text-sky-600" />
+      <section className="space-y-4">
+        <h2 className="flex items-center gap-2 text-xl font-semibold">
+          <FlaskConical className="h-5 w-5 text-brand" />
           Why this active
         </h2>
+        <div className={evidenceNotes.length > 1 ? "grid gap-4 md:grid-cols-2" : undefined}>
         {evidenceNotes.map((note) => (
-          <div key={note.activeId} className="space-y-1 rounded-md border p-4">
-            <h3 className="font-medium">{note.activeName}</h3>
-            <p className="text-sm text-muted-foreground">{note.summary}</p>
+          <div key={note.activeId} className="space-y-2 rounded-2xl border bg-card p-5">
+            <h3 className="font-semibold">{note.activeName}</h3>
+            <p className="text-sm leading-relaxed text-muted-foreground">{note.summary}</p>
             {note.typicalConcentrationText && (
               <p className="text-xs text-muted-foreground">{note.typicalConcentrationText}</p>
             )}
@@ -189,7 +205,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
                   href={`https://pubchem.ncbi.nlm.nih.gov/compound/${note.pubchemCid}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="underline text-muted-foreground hover:text-foreground"
+                  className="font-medium text-brand hover:underline"
                 >
                   {/* A few active ids here are deliberately a family of several
                       real compounds (e.g. "Peptides" groups palmitoyl
@@ -204,16 +220,15 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
             )}
           </div>
         ))}
-      </div>
+        </div>
+      </section>
 
-      <Separator />
-
-      <div className="space-y-3">
-        <h2 className="text-lg font-medium">Where to buy</h2>
+      <section className="space-y-4">
+        <h2 className="text-xl font-semibold">Where to buy</h2>
         {affiliateLinks.length > 0 ? (
           <div className="space-y-2">
             {affiliateLinks.map((link) => (
-              <div key={link.id} className="flex items-center justify-between rounded-md border p-3">
+              <div key={link.id} className="flex items-center justify-between gap-4 rounded-xl border bg-card p-4">
                 <div>
                   <p className="font-medium">
                     {link.price ? `$${link.price.toFixed(2)}` : "See retailer"}{" "}
@@ -238,7 +253,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
             ))}
           </div>
         ) : product.sourceUrl ? (
-          <div className="flex items-center justify-between rounded-md border p-3">
+          <div className="flex items-center justify-between gap-4 rounded-xl border bg-card p-4">
             <div>
               <p className="font-medium">Buy directly from {product.manufacturer || "the manufacturer"}</p>
               <p className="text-xs text-muted-foreground">
@@ -264,12 +279,10 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
             </AlertDescription>
           </Alert>
         )}
-      </div>
+      </section>
 
-      <Separator />
-
-      <div className="space-y-3">
-        <h2 className="text-lg font-medium">Video reviews</h2>
+      <section className="space-y-4">
+        <h2 className="text-xl font-semibold">Video reviews</h2>
         {videoLinks.length > 0 ? (
           <div className="grid gap-3 sm:grid-cols-3">
             {videoLinks.map((v) => (
@@ -278,7 +291,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
                 href={`https://www.youtube.com/watch?v=${v.videoId}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="block overflow-hidden rounded-md border hover:shadow-md"
+                className="block overflow-hidden rounded-xl border bg-card transition-shadow hover:shadow-md"
               >
                 {v.thumbnailUrl && (
                   // eslint-disable-next-line @next/next/no-img-element -- external thumbnails, no fixed domain worth configuring for a rarely-populated field
@@ -328,7 +341,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
           These are search links, not vetted reviews — SkinWiz doesn&apos;t screen or endorse social
           content. Only Derm Score and Audience Score above reflect verified feedback.
         </p>
-      </div>
+      </section>
 
       {product.splSetId && (
         <p className="text-xs text-muted-foreground">

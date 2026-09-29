@@ -1,15 +1,45 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import { ChevronDown, SlidersHorizontal } from "lucide-react";
 import { ProductCard } from "@/components/product-card";
 import { FreeFromFilters } from "@/components/free-from-filters";
 import { RedFlagBanner } from "@/components/red-flag-banner";
+import { PageHeader } from "@/components/page-header";
+import { Pagination } from "@/components/pagination";
 import { browseProducts, getConcerns, getAllActives } from "@/lib/queries";
 import { TRUST_TIERS } from "@/lib/trust-tiers";
+import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = {
   title: "Browse all products — SkinWiz",
   description: "Browse the full SkinWiz catalog by concern, trust tier, active ingredient, or ingredient-based filters.",
 };
+
+function SidebarLink({ href, selected, children }: { href: string; selected: boolean; children: React.ReactNode }) {
+  return (
+    <Link
+      href={href}
+      aria-current={selected ? "true" : undefined}
+      className={cn(
+        "block rounded-lg px-2.5 py-1.5 transition-colors",
+        selected
+          ? "bg-brand-soft font-medium text-brand-foreground"
+          : "text-muted-foreground hover:bg-muted hover:text-foreground",
+      )}
+    >
+      {children}
+    </Link>
+  );
+}
+
+function SidebarGroup({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <h2 className="mb-2 px-2.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{title}</h2>
+      {children}
+    </div>
+  );
+}
 
 // The general catalog browser -- unlike /concern/[slug] (one concern, top
 // filter chips) or /search (requires a query), this is every product,
@@ -33,6 +63,7 @@ export default async function BrowsePage({
     page,
   );
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const activeFilterCount = [concern, selectedTier, active].filter(Boolean).length + freeFromIds.length;
 
   function hrefWith(overrides: Record<string, string | undefined>) {
     const params = new URLSearchParams();
@@ -46,113 +77,113 @@ export default async function BrowsePage({
     return hrefWith({ page: p > 1 ? String(p) : undefined });
   }
 
+  const filters = (
+    <div className="space-y-6 text-sm">
+      <SidebarGroup title="Concern">
+        <ul className="space-y-0.5">
+          <li>
+            <SidebarLink href={hrefWith({ concern: undefined })} selected={!concern}>
+              All concerns
+            </SidebarLink>
+          </li>
+          {concerns.map((c) => (
+            <li key={c.id}>
+              <SidebarLink href={hrefWith({ concern: c.id })} selected={concern === c.id}>
+                {c.name}
+              </SidebarLink>
+            </li>
+          ))}
+        </ul>
+      </SidebarGroup>
+
+      <SidebarGroup title="Source">
+        <ul className="space-y-0.5">
+          <li>
+            <SidebarLink href={hrefWith({ tier: undefined })} selected={!tier}>
+              All sources
+            </SidebarLink>
+          </li>
+          {TRUST_TIERS.map((t) => (
+            <li key={t.label}>
+              <SidebarLink href={hrefWith({ tier: t.label })} selected={tier === t.label}>
+                {t.label}
+              </SidebarLink>
+            </li>
+          ))}
+        </ul>
+      </SidebarGroup>
+
+      <SidebarGroup title="Active ingredient">
+        <ul className="max-h-64 space-y-0.5 overflow-y-auto pr-1">
+          <li>
+            <SidebarLink href={hrefWith({ active: undefined })} selected={!active}>
+              All actives
+            </SidebarLink>
+          </li>
+          {allActives.map((a) => (
+            <li key={a.id}>
+              <SidebarLink href={hrefWith({ active: a.id })} selected={active === a.id}>
+                {a.canonicalName}
+              </SidebarLink>
+            </li>
+          ))}
+        </ul>
+      </SidebarGroup>
+
+      <FreeFromFilters basePath="/browse" searchParams={{ concern, tier, active, free }} selected={freeFromIds} />
+    </div>
+  );
+
   return (
-    <div className="mx-auto max-w-6xl px-4 py-10">
-      <div className="mb-6">
-        <h1 className="text-2xl font-semibold tracking-tight">Browse all products</h1>
-        <p className="text-muted-foreground">Filter the full catalog by concern, source, active ingredient, or ingredient-based flags.</p>
-      </div>
+    <div className="mx-auto max-w-6xl space-y-8 px-4 py-10">
+      <PageHeader
+        eyebrow="Catalog"
+        title="Browse all products"
+        description="Filter the full catalog by concern, source, active ingredient, or ingredient-based flags."
+      />
 
-      <div className="grid gap-8 lg:grid-cols-[240px_1fr]">
-        <aside className="space-y-6">
-          <div>
-            <h2 className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">Concern</h2>
-            <ul className="space-y-1 text-sm">
-              <li>
-                <Link href={hrefWith({ concern: undefined })} className={!concern ? "font-medium" : "text-muted-foreground hover:text-foreground"}>
-                  All concerns
-                </Link>
-              </li>
-              {concerns.map((c) => (
-                <li key={c.id}>
-                  <Link
-                    href={hrefWith({ concern: c.id })}
-                    className={concern === c.id ? "font-medium" : "text-muted-foreground hover:text-foreground"}
-                  >
-                    {c.name}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
+      <div className="grid gap-8 lg:grid-cols-[250px_1fr]">
+        {/* Rendered twice (collapsed on mobile, always-open sidebar on
+            desktop) since <details> can't be forced open per breakpoint
+            and this page stays server-rendered with no client JS. */}
+        <details className="group rounded-2xl border bg-card lg:hidden">
+          <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-3 text-sm font-medium [&::-webkit-details-marker]:hidden">
+            <span className="flex items-center gap-2">
+              <SlidersHorizontal className="h-4 w-4 text-brand" />
+              Filters
+              {activeFilterCount > 0 && (
+                <span className="rounded-full bg-primary px-2 py-0.5 text-xs text-primary-foreground">
+                  {activeFilterCount}
+                </span>
+              )}
+            </span>
+            <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform group-open:rotate-180" />
+          </summary>
+          <div className="border-t p-3">{filters}</div>
+        </details>
+        <aside className="hidden lg:block">{filters}</aside>
 
-          <div>
-            <h2 className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">Source</h2>
-            <ul className="space-y-1 text-sm">
-              <li>
-                <Link href={hrefWith({ tier: undefined })} className={!tier ? "font-medium" : "text-muted-foreground hover:text-foreground"}>
-                  All sources
-                </Link>
-              </li>
-              {TRUST_TIERS.map((t) => (
-                <li key={t.label}>
-                  <Link
-                    href={hrefWith({ tier: t.label })}
-                    className={tier === t.label ? "font-medium" : "text-muted-foreground hover:text-foreground"}
-                  >
-                    {t.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div>
-            <h2 className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">Active ingredient</h2>
-            <ul className="max-h-64 space-y-1 overflow-y-auto pr-2 text-sm">
-              <li>
-                <Link href={hrefWith({ active: undefined })} className={!active ? "font-medium" : "text-muted-foreground hover:text-foreground"}>
-                  All actives
-                </Link>
-              </li>
-              {allActives.map((a) => (
-                <li key={a.id}>
-                  <Link
-                    href={hrefWith({ active: a.id })}
-                    className={active === a.id ? "font-medium" : "text-muted-foreground hover:text-foreground"}
-                  >
-                    {a.canonicalName}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <FreeFromFilters basePath="/browse" searchParams={{ concern, tier, active, free }} selected={freeFromIds} />
-        </aside>
-
-        <div className="space-y-4">
+        <div className="min-w-0 space-y-5">
           <RedFlagBanner />
 
-          <p className="text-sm text-muted-foreground">{total.toLocaleString()} product{total === 1 ? "" : "s"}</p>
+          <p className="text-sm text-muted-foreground">
+            <span className="font-semibold text-foreground tabular-nums">{total.toLocaleString()}</span> product
+            {total === 1 ? "" : "s"}
+          </p>
 
           {rows.length === 0 ? (
-            <p className="text-muted-foreground">No products match this combination of filters.</p>
+            <div className="rounded-2xl border border-dashed p-10 text-center text-muted-foreground">
+              No products match this combination of filters.
+            </div>
           ) : (
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
               {rows.map((product) => (
                 <ProductCard key={product.id} product={product} />
               ))}
             </div>
           )}
 
-          {totalPages > 1 && (
-            <div className="flex items-center justify-center gap-4 pt-4 text-sm">
-              {page > 1 && (
-                <Link className="underline" href={pageHref(page - 1)}>
-                  ← Previous
-                </Link>
-              )}
-              <span className="text-muted-foreground">
-                Page {page} of {totalPages}
-              </span>
-              {page < totalPages && (
-                <Link className="underline" href={pageHref(page + 1)}>
-                  Next →
-                </Link>
-              )}
-            </div>
-          )}
+          <Pagination page={page} totalPages={totalPages} hrefFor={pageHref} />
         </div>
       </div>
     </div>

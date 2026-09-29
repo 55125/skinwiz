@@ -1,5 +1,4 @@
-import Link from "next/link";
-import { Badge } from "@/components/ui/badge";
+import { FilterChip } from "@/components/filter-chip";
 import { FREE_FROM_CHECKS } from "@/db/ingredient-flags";
 
 // Server-rendered toggle links, no client JS -- same philosophy as the
@@ -32,36 +31,32 @@ export function FreeFromFilters({
   const contactAllergen = FREE_FROM_CHECKS.filter((c) => c.category === "contact-allergen");
 
   return (
-    <div className="space-y-3 rounded-md border p-3">
+    <div className="space-y-4 rounded-2xl border bg-card p-4">
       <div>
-        <p className="mb-1.5 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+        <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
           Clean ingredient filters
         </p>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-1.5">
           {clean.map((c) => (
-            <Link key={c.id} href={hrefToggling(c.id)}>
-              <Badge variant={selected.includes(c.id) ? "default" : "outline"} className="cursor-pointer">
-                {c.label}
-              </Badge>
-            </Link>
+            <FilterChip key={c.id} href={hrefToggling(c.id)} selected={selected.includes(c.id)} showCheck>
+              {c.label}
+            </FilterChip>
           ))}
         </div>
       </div>
       <div>
-        <p className="mb-1.5 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+        <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
           Avoid common contact-dermatitis allergens
         </p>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-1.5">
           {contactAllergen.map((c) => (
-            <Link key={c.id} href={hrefToggling(c.id)}>
-              <Badge variant={selected.includes(c.id) ? "default" : "outline"} className="cursor-pointer">
-                {c.label}
-              </Badge>
-            </Link>
+            <FilterChip key={c.id} href={hrefToggling(c.id)} selected={selected.includes(c.id)} showCheck>
+              {c.label}
+            </FilterChip>
           ))}
         </div>
       </div>
-      <p className="text-xs italic text-muted-foreground">
+      <p className="text-xs leading-relaxed text-muted-foreground">
         Computed from each product&apos;s published ingredient list, not a brand&apos;s marketing claim or a
         certification, and not exhaustive — see a board-certified dermatologist about your own known allergens.
         Products we don&apos;t have a full ingredient list for (most openFDA-only listings) won&apos;t match any

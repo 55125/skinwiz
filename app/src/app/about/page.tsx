@@ -5,7 +5,7 @@ export default function AboutPage() {
   return (
     <div className="mx-auto max-w-2xl px-4 py-10 space-y-8">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">About SkinWiz</h1>
+        <h1 className="text-3xl font-semibold sm:text-4xl">About SkinWiz</h1>
         <p className="mt-2 text-muted-foreground">
           SkinWiz matches self-reported skin concerns to evidence-graded active ingredients and specific
           OTC products. It is built for education and product matching — not diagnosis or individualized

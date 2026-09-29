@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { FlaskConical } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { DualScoreBadges } from "@/components/score-badge";
 import { getDermScore, getAudienceScore } from "@/lib/scoring";
@@ -22,63 +22,74 @@ export function ProductCard({ product }: { product: typeof products.$inferSelect
   const extraFlagCount = freeFromFlags.length - shownFlags.length;
 
   return (
-    <Link href={`/product/${encodeURIComponent(product.id)}`}>
-      <Card className="h-full pt-0 transition-shadow hover:shadow-md">
-        {/* Only openBeautyFacts/brand_direct rows have a real photo (see
-            schema.ts's products.imageUrl comment) -- FDA-sourced products,
-            the large majority, fall through to the plain placeholder below
-            rather than showing a broken image or a stock photo. */}
-        <div className="flex aspect-square w-full items-center justify-center bg-muted">
-          {product.imageUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element -- mix of same-origin (brand-direct, self-hosted -- see tools/catalog_pipeline/build_brand_direct_catalog.py) and external OBF-hosted photos; not worth a next/image remotePatterns allowlist for the OBF case alone
-            <img
-              src={product.imageUrl}
-              alt={product.brandName}
-              className="h-full w-full object-contain p-2"
-              loading="lazy"
-            />
-          ) : (
-            <span className="text-xs text-muted-foreground">No photo yet</span>
+    <Link
+      href={`/product/${encodeURIComponent(product.id)}`}
+      className="group flex h-full flex-col overflow-hidden rounded-2xl border bg-card transition-all hover:-translate-y-0.5 hover:border-brand/40 hover:shadow-lg hover:shadow-brand/5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+    >
+      {/* Only openBeautyFacts/brand_direct rows have a real photo (see
+          schema.ts's products.imageUrl comment) -- FDA-sourced products,
+          the large majority, fall through to the placeholder below
+          rather than showing a broken image or a stock photo. */}
+      <div
+        className={`relative flex w-full items-center justify-center overflow-hidden bg-gradient-to-br from-muted to-secondary ${product.imageUrl ? "aspect-[4/3]" : "h-24"}`}
+      >
+        {product.imageUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element -- mix of same-origin (brand-direct, self-hosted -- see tools/catalog_pipeline/build_brand_direct_catalog.py) and external OBF-hosted photos; not worth a next/image remotePatterns allowlist for the OBF case alone
+          <img
+            src={product.imageUrl}
+            alt={product.brandName}
+            className="h-full w-full object-contain p-4 transition-transform duration-300 group-hover:scale-[1.03]"
+            loading="lazy"
+          />
+        ) : (
+          <div className="flex items-center gap-2 text-muted-foreground/70">
+            <FlaskConical className="h-5 w-5" strokeWidth={1.5} />
+            <span className="text-xs capitalize">{product.dosageForm ? product.dosageForm.toLowerCase() : "No photo yet"}</span>
+          </div>
+        )}
+        {sourceBadge && (
+          <Badge variant="outline" className={`absolute left-3 top-3 bg-card/90 backdrop-blur ${sourceBadge.className}`}>
+            {sourceBadge.label}
+          </Badge>
+        )}
+      </div>
+
+      <div className="flex flex-1 flex-col gap-3 p-4">
+        <div className="space-y-1">
+          {product.manufacturer && (
+            <p className="truncate text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+              {product.manufacturer}
+            </p>
           )}
-        </div>
-        <CardHeader className="pb-2">
-          <h3 className="line-clamp-2 text-sm font-medium leading-snug" title={product.brandName}>
+          <h3 className="line-clamp-2 text-[15px] font-semibold leading-snug" title={product.brandName}>
             {product.brandName}
           </h3>
-          {product.manufacturer && (
-            <p className="text-xs text-muted-foreground">{product.manufacturer}</p>
-          )}
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="flex flex-wrap gap-1">
-            {product.dosageForm && <Badge variant="secondary">{product.dosageForm}</Badge>}
-            {sourceBadge && (
-              <Badge variant="outline" className={sourceBadge.className}>
-                {sourceBadge.label}
-              </Badge>
-            )}
-          </div>
           {product.activeIngredientText && (
             <p className="line-clamp-2 text-xs text-muted-foreground">{product.activeIngredientText}</p>
           )}
-          {shownFlags.length > 0 && (
-            <div className="flex flex-wrap gap-1">
-              {shownFlags.map((id) => (
-                <Badge key={id} variant="outline" className="border-emerald-300 text-emerald-700 dark:border-emerald-900 dark:text-emerald-400">
-                  {getFreeFromCheck(id)?.label ?? id}
-                </Badge>
-              ))}
-              {extraFlagCount > 0 && <Badge variant="outline">+{extraFlagCount} more</Badge>}
-            </div>
-          )}
-          {ewgScore && (
-            <Badge variant="outline" className={ewgHazardBadge(ewgScore.ewgScore).className}>
-              {ewgHazardBadge(ewgScore.ewgScore).label}
-            </Badge>
-          )}
-          <DualScoreBadges dermScore={dermScore} audienceScore={audienceScore} />
-        </CardContent>
-      </Card>
+        </div>
+
+        {(shownFlags.length > 0 || ewgScore || (product.dosageForm && product.imageUrl)) && (
+          <div className="flex flex-wrap gap-1">
+            {product.dosageForm && product.imageUrl && <Badge variant="secondary">{product.dosageForm}</Badge>}
+            {ewgScore && (
+              <Badge variant="outline" className={ewgHazardBadge(ewgScore.ewgScore).className}>
+                {ewgHazardBadge(ewgScore.ewgScore).label}
+              </Badge>
+            )}
+            {shownFlags.map((id) => (
+              <Badge key={id} variant="outline" className="border-emerald-300 text-emerald-700 dark:border-emerald-900 dark:text-emerald-400">
+                {getFreeFromCheck(id)?.label ?? id}
+              </Badge>
+            ))}
+            {extraFlagCount > 0 && <Badge variant="outline">+{extraFlagCount} more</Badge>}
+          </div>
+        )}
+
+        <div className="mt-auto border-t pt-3">
+          <DualScoreBadges dermScore={dermScore} audienceScore={audienceScore} compact />
+        </div>
+      </div>
     </Link>
   );
 }

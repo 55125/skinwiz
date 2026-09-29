@@ -1,8 +1,9 @@
-import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { Badge } from "@/components/ui/badge";
 import { ProductCard } from "@/components/product-card";
+import { FilterChip } from "@/components/filter-chip";
+import { PageHeader } from "@/components/page-header";
+import { Pagination } from "@/components/pagination";
 import { RedFlagBanner } from "@/components/red-flag-banner";
 import { FreeFromFilters } from "@/components/free-from-filters";
 import { getConcern, getActivesForConcern, getProductsForConcern } from "@/lib/queries";
@@ -37,58 +38,47 @@ export default async function ConcernPage({
   const pageLinkSuffix = `${active ? `&active=${active}` : ""}${free ? `&free=${free}` : ""}`;
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-10 space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">{concern.name}</h1>
-        <p className="text-muted-foreground">{concern.description}</p>
-      </div>
+    <div className="mx-auto max-w-6xl space-y-8 px-4 py-10">
+      <PageHeader eyebrow="Concern" title={concern.name} description={concern.description} />
 
       <RedFlagBanner />
 
-      <div className="flex flex-wrap gap-2">
-        <Link href={`/concern/${slug}${free ? `?free=${free}` : ""}`}>
-          <Badge variant={!active ? "default" : "outline"} className="cursor-pointer">
+      <div className="space-y-3">
+        <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Active ingredient</p>
+        <div className="flex flex-wrap gap-1.5">
+          <FilterChip href={`/concern/${slug}${free ? `?free=${free}` : ""}`} selected={!active}>
             All actives
-          </Badge>
-        </Link>
-        {activesList.map((a) => (
-          <Link key={a.id} href={`/concern/${slug}?active=${a.id}${free ? `&free=${free}` : ""}`}>
-            <Badge variant={active === a.id ? "default" : "outline"} className="cursor-pointer">
+          </FilterChip>
+          {activesList.map((a) => (
+            <FilterChip
+              key={a.id}
+              href={`/concern/${slug}?active=${a.id}${free ? `&free=${free}` : ""}`}
+              selected={active === a.id}
+            >
               {a.canonicalName}
-            </Badge>
-          </Link>
-        ))}
+            </FilterChip>
+          ))}
+        </div>
       </div>
 
       <FreeFromFilters basePath={`/concern/${slug}`} searchParams={{ active, free }} selected={freeFromIds} />
 
-      <p className="text-sm text-muted-foreground">
-        {total.toLocaleString()} product{total === 1 ? "" : "s"}
-      </p>
-
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {rows.map((product) => (
-          <ProductCard key={product.id} product={product} />
-        ))}
-      </div>
-
-      {totalPages > 1 && (
-        <div className="flex items-center justify-center gap-4 pt-4 text-sm">
-          {page > 1 && (
-            <Link className="underline" href={`/concern/${slug}?page=${page - 1}${pageLinkSuffix}`}>
-              ← Previous
-            </Link>
-          )}
-          <span className="text-muted-foreground">
-            Page {page} of {totalPages}
-          </span>
-          {page < totalPages && (
-            <Link className="underline" href={`/concern/${slug}?page=${page + 1}${pageLinkSuffix}`}>
-              Next →
-            </Link>
-          )}
+      <div className="space-y-4">
+        <p className="text-sm text-muted-foreground">
+          <span className="font-semibold text-foreground tabular-nums">{total.toLocaleString()}</span> product
+          {total === 1 ? "" : "s"}
+        </p>
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          {rows.map((product) => (
+            <ProductCard key={product.id} product={product} />
+          ))}
         </div>
-      )}
+        <Pagination
+          page={page}
+          totalPages={totalPages}
+          hrefFor={(p) => `/concern/${slug}?page=${p}${pageLinkSuffix}`}
+        />
+      </div>
     </div>
   );
 }

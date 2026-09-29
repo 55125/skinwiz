@@ -5,7 +5,7 @@ export default function ForCliniciansPage() {
   return (
     <div className="mx-auto max-w-2xl px-4 py-10 space-y-8">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">For dermatologists</h1>
+        <h1 className="text-3xl font-semibold sm:text-4xl">For dermatologists</h1>
         <p className="mt-2 text-muted-foreground">
           SkinWiz&apos;s Derm Score exists because every other tool in this space runs on ingredient-list
           heuristics with no clinical authority behind them. We&apos;re building a verified panel of

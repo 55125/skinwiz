@@ -1,10 +1,24 @@
 import Link from "next/link";
-import { Stethoscope, Users, ShieldCheck } from "lucide-react";
-import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import {
+  ArrowRight,
+  CircleDot,
+  Droplets,
+  FlaskConical,
+  Hand,
+  ShieldCheck,
+  ShieldPlus,
+  Sparkles,
+  Stethoscope,
+  Sun,
+  ThermometerSun,
+  Users,
+  Wind,
+  type LucideIcon,
+} from "lucide-react";
 import { ProductCard } from "@/components/product-card";
 import { SearchBar } from "@/components/search-bar";
-import { getConcerns, getTopProducts, getTopActives } from "@/lib/queries";
+import { SectionHeader } from "@/components/section-header";
+import { browseProducts, getAllActives, getConcerns, getTopProducts, getTopActives } from "@/lib/queries";
 import { getTopRoutines } from "@/lib/routines";
 
 // Force dynamic: without this, Next.js statically prerenders "/" once at
@@ -14,132 +28,209 @@ import { getTopRoutines } from "@/lib/routines";
 // until the next deploy. Same reasoning as sitemap.ts.
 export const dynamic = "force-dynamic";
 
+const CONCERN_ICONS: Record<string, LucideIcon> = {
+  acne: CircleDot,
+  "sun-protection": Sun,
+  antifungal: ShieldPlus,
+  "dandruff-seb-derm": Wind,
+  "itch-relief": Hand,
+  "dry-skin-eczema": Droplets,
+  "excessive-sweating": ThermometerSun,
+  "brightening-texture": Sparkles,
+};
+
+const POPULAR_SEARCHES = ["Niacinamide", "Sunscreen", "Salicylic acid", "Ceramides", "CeraVe"];
+
 export default function Home() {
   const concerns = getConcerns();
   const topProducts = getTopProducts(6);
   const topActives = getTopActives(10);
   const topRoutines = getTopRoutines(5);
+  const productCount = browseProducts({}, 1).total;
+  const activeCount = getAllActives().length;
+
+  const stats = [
+    { value: productCount.toLocaleString(), label: "products indexed" },
+    { value: String(activeCount), label: "active ingredients tracked" },
+    { value: String(concerns.length), label: "skin concerns covered" },
+  ];
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-12 space-y-16">
-      <section className="space-y-6 text-center max-w-2xl mx-auto">
-        <div className="space-y-4">
-          <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-            Skincare, scored two ways.
+    <div>
+      <section className="relative overflow-hidden border-b">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 bg-[radial-gradient(60%_60%_at_50%_0%,var(--brand-soft),transparent)]"
+        />
+        <div className="relative mx-auto max-w-3xl px-4 pb-16 pt-16 text-center sm:pt-24">
+          <span className="inline-flex items-center gap-1.5 rounded-full border bg-card/80 px-3 py-1 text-xs font-medium text-muted-foreground backdrop-blur">
+            <FlaskConical className="h-3.5 w-3.5 text-brand" />
+            OTC skincare, ingredient by ingredient
+          </span>
+          <h1 className="mt-6 text-4xl font-semibold leading-[1.1] sm:text-6xl">
+            Skincare, scored <span className="text-brand">two ways.</span>
           </h1>
-          <p className="text-muted-foreground text-lg">
-            A <strong className="text-foreground">Derm Score</strong> from board-certified dermatologists,
-            and an <strong className="text-foreground">Audience Score</strong> from real reported outcomes —
-            not a guess from an ingredient list.
+          <p className="mx-auto mt-5 max-w-xl text-lg text-muted-foreground">
+            A <strong className="font-medium text-foreground">Derm Score</strong> from board-certified
+            dermatologists and an <strong className="font-medium text-foreground">Audience Score</strong> from
+            real reported outcomes — not a guess from an ingredient list.
           </p>
-        </div>
-        <SearchBar large />
-      </section>
-
-      <section className="space-y-3">
-        <div className="flex items-baseline justify-between">
-          <h2 className="text-lg font-medium">Top Products</h2>
-          <p className="text-xs text-muted-foreground">
-            No Derm/Audience scores exist yet — featured by data quality, not popularity
-          </p>
-        </div>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {topProducts.map((p) => (
-            <ProductCard key={p.id} product={p} />
-          ))}
-        </div>
-      </section>
-
-      <section className="grid gap-10 sm:grid-cols-2">
-        <div className="space-y-3">
-          <h2 className="text-lg font-medium">Top Actives</h2>
-          <p className="text-xs text-muted-foreground">Most common ingredients across the catalog</p>
-          <div className="flex flex-wrap gap-2">
-            {topActives.map((a) => (
-              <Link key={a.activeId} href={`/search?q=${encodeURIComponent(a.canonicalName)}`}>
-                <Badge variant="outline" className="cursor-pointer">
-                  {a.canonicalName} <span className="ml-1 text-muted-foreground">{a.productCount}</span>
-                </Badge>
+          <div className="mx-auto mt-8 max-w-2xl">
+            <SearchBar large />
+          </div>
+          <div className="mt-4 flex flex-wrap items-center justify-center gap-2 text-sm">
+            <span className="text-muted-foreground">Popular:</span>
+            {POPULAR_SEARCHES.map((term) => (
+              <Link
+                key={term}
+                href={`/search?q=${encodeURIComponent(term)}`}
+                className="rounded-full border bg-card px-3 py-1 text-foreground/80 transition-colors hover:border-brand/40 hover:text-foreground"
+              >
+                {term}
               </Link>
             ))}
           </div>
         </div>
+        <div className="relative border-t bg-card/60 backdrop-blur">
+          <dl className="mx-auto grid max-w-4xl grid-cols-3 divide-x px-4">
+            {stats.map((s) => (
+              <div key={s.label} className="px-2 py-5 text-center">
+                <dt className="sr-only">{s.label}</dt>
+                <dd className="text-2xl font-semibold tabular-nums sm:text-3xl">{s.value}</dd>
+                <dd className="mt-1 text-xs text-muted-foreground sm:text-sm">{s.label}</dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+      </section>
 
-        <div className="space-y-3">
-          <div className="flex items-baseline justify-between">
-            <h2 className="text-lg font-medium">Top Routines</h2>
-            <Link href="/routines" className="text-xs text-muted-foreground underline">
-              See all
-            </Link>
+      <div className="mx-auto max-w-6xl space-y-20 px-4 py-16">
+        <section className="space-y-6">
+          <SectionHeader
+            title="Browse by concern"
+            description="Start from what you're treating — every concern maps to evidence-recognized actives."
+          />
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+            {concerns.map((c) => {
+              const Icon = CONCERN_ICONS[c.id] ?? Sparkles;
+              return (
+                <Link
+                  key={c.id}
+                  href={`/concern/${c.id}`}
+                  className="group flex flex-col gap-3 rounded-2xl border bg-card p-4 transition-all hover:-translate-y-0.5 hover:border-brand/40 hover:shadow-lg hover:shadow-brand/5 sm:p-5"
+                >
+                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-soft text-brand-foreground">
+                    <Icon className="h-5 w-5" />
+                  </span>
+                  <div className="space-y-1">
+                    <h3 className="text-sm font-semibold sm:text-base">{c.name}</h3>
+                    <p className="line-clamp-2 hidden text-sm text-muted-foreground sm:block">{c.description}</p>
+                  </div>
+                  <span className="mt-auto hidden items-center gap-1 text-sm font-medium text-brand sm:flex">
+                    Explore
+                    <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+                  </span>
+                </Link>
+              );
+            })}
           </div>
-          {topRoutines.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              No routines yet —{" "}
-              <Link href="/routines/new" className="underline">
-                post the first one
-              </Link>
-              .
-            </p>
-          ) : (
-            <ul className="space-y-2">
-              {topRoutines.map((r) => (
-                <li key={r.id}>
-                  <Link
-                    href={`/routines/${r.id}`}
-                    className="flex items-center justify-between gap-2 rounded-md border px-3 py-2 text-sm hover:bg-muted"
-                  >
-                    <span className="truncate">{r.title}</span>
-                    <span className="shrink-0 text-xs text-muted-foreground">
-                      {r.concernName} · {r.score > 0 ? "+" : ""}
-                      {r.score}
-                    </span>
-                  </Link>
-                </li>
+        </section>
+
+        <section className="space-y-6">
+          <SectionHeader
+            title="Featured products"
+            description="No Derm or Audience scores exist yet — featured by data quality, not popularity."
+            action={{ href: "/browse", label: "Browse all" }}
+          />
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {topProducts.map((p) => (
+              <ProductCard key={p.id} product={p} />
+            ))}
+          </div>
+        </section>
+
+        <section className="grid gap-6 lg:grid-cols-2">
+          <div className="space-y-5 rounded-2xl border bg-card p-6">
+            <SectionHeader title="Top actives" description="Most common ingredients across the catalog." />
+            <div className="flex flex-wrap gap-2">
+              {topActives.map((a) => (
+                <Link
+                  key={a.activeId}
+                  href={`/search?q=${encodeURIComponent(a.canonicalName)}`}
+                  className="inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm transition-colors hover:border-brand/40 hover:bg-brand-soft"
+                >
+                  {a.canonicalName}
+                  <span className="text-xs tabular-nums text-muted-foreground">{a.productCount.toLocaleString()}</span>
+                </Link>
               ))}
-            </ul>
-          )}
-        </div>
-      </section>
+            </div>
+          </div>
 
-      <section className="space-y-3">
-        <h2 className="text-lg font-medium">Browse by concern</h2>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {concerns.map((c) => (
-            <Link key={c.id} href={`/concern/${c.id}`}>
-              <Card className="h-full transition-shadow hover:shadow-md">
-                <CardHeader>
-                  <CardTitle className="text-xl">{c.name}</CardTitle>
-                  <CardDescription>{c.description}</CardDescription>
-                </CardHeader>
-              </Card>
-            </Link>
-          ))}
-        </div>
-      </section>
+          <div className="space-y-5 rounded-2xl border bg-card p-6">
+            <SectionHeader title="Top routines" action={{ href: "/routines", label: "See all" }} />
+            {topRoutines.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                No routines yet —{" "}
+                <Link href="/routines/new" className="font-medium text-brand hover:underline">
+                  post the first one
+                </Link>
+                .
+              </p>
+            ) : (
+              <ul className="divide-y">
+                {topRoutines.map((r) => (
+                  <li key={r.id} className="py-3 first:pt-0 last:pb-0">
+                    <Link
+                      href={`/routines/${r.id}`}
+                      className="flex items-center justify-between gap-3 text-sm hover:text-brand"
+                    >
+                      <span className="truncate font-medium">{r.title}</span>
+                      <span className="flex shrink-0 items-center gap-2 text-xs text-muted-foreground">
+                        <span className="rounded-full bg-muted px-2 py-0.5">{r.concernName}</span>
+                        <span className="tabular-nums">
+                          {r.score > 0 ? "+" : ""}
+                          {r.score}
+                        </span>
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </section>
 
-      <section className="grid gap-6 sm:grid-cols-3 text-sm">
-        <div className="flex gap-3">
-          <Stethoscope className="h-5 w-5 shrink-0 text-sky-600" />
-          <p>
-            <strong className="text-foreground block">Derm Score</strong>
-            From a verified panel of board-certified dermatologists — never shown until at least 5 have rated it.
-          </p>
-        </div>
-        <div className="flex gap-3">
-          <Users className="h-5 w-5 shrink-0 text-violet-600" />
-          <p>
-            <strong className="text-foreground block">Audience Score</strong>
-            Real reported outcomes from people who used the product, not scraped store reviews.
-          </p>
-        </div>
-        <div className="flex gap-3">
-          <ShieldCheck className="h-5 w-5 shrink-0 text-emerald-600" />
-          <p>
-            <strong className="text-foreground block">Not medical advice</strong>
-            Education and product matching only — see a dermatologist for diagnosis or treatment.
-          </p>
-        </div>
-      </section>
+        <section className="rounded-3xl border bg-gradient-to-br from-brand-soft/70 via-card to-card p-8 sm:p-10">
+          <h2 className="text-2xl font-semibold">How scoring works</h2>
+          <div className="mt-8 grid gap-8 sm:grid-cols-3">
+            {[
+              {
+                icon: <Stethoscope className="h-5 w-5 text-sky-600" />,
+                title: "Derm Score",
+                body: "From a verified panel of board-certified dermatologists — never shown until at least 5 have rated it.",
+              },
+              {
+                icon: <Users className="h-5 w-5 text-violet-600" />,
+                title: "Audience Score",
+                body: "Real reported outcomes from people who used the product, not scraped store reviews.",
+              },
+              {
+                icon: <ShieldCheck className="h-5 w-5 text-emerald-600" />,
+                title: "Not medical advice",
+                body: "Education and product matching only — see a dermatologist for diagnosis or treatment.",
+              },
+            ].map((item) => (
+              <div key={item.title} className="space-y-3">
+                <span className="flex h-10 w-10 items-center justify-center rounded-xl border bg-card shadow-sm">
+                  {item.icon}
+                </span>
+                <h3 className="font-semibold">{item.title}</h3>
+                <p className="text-sm leading-relaxed text-muted-foreground">{item.body}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+      </div>
     </div>
   );
 }

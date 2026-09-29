@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { buttonVariants } from "@/components/ui/button";
+import { FilterChip } from "@/components/filter-chip";
+import { PageHeader } from "@/components/page-header";
+import { cn } from "@/lib/utils";
 import { RoutineDisclaimer } from "@/components/routine-disclaimer";
 import { getConcerns } from "@/lib/queries";
 import { getRoutinesForConcern } from "@/lib/routines";
@@ -17,53 +18,49 @@ export default async function RoutinesPage({
   const routines = activeConcernId ? getRoutinesForConcern(activeConcernId) : [];
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-10 space-y-6">
-      <div className="flex items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Routines</h1>
-          <p className="text-muted-foreground">Community-submitted routines, ranked by vote.</p>
-        </div>
-        <Link href="/routines/new" className={buttonVariants({ variant: "default" })}>
+    <div className="mx-auto max-w-4xl space-y-8 px-4 py-10">
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <PageHeader eyebrow="Community" title="Routines" description="Community-submitted routines, ranked by vote." />
+        <Link href="/routines/new" className={cn(buttonVariants({ variant: "default", size: "lg" }), "rounded-full px-5")}>
           Post a routine
         </Link>
       </div>
 
       <RoutineDisclaimer />
 
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-1.5">
         {concerns.map((c) => (
-          <Link key={c.id} href={`/routines?concern=${c.id}`}>
-            <Badge variant={activeConcernId === c.id ? "default" : "outline"} className="cursor-pointer">
-              {c.name}
-            </Badge>
-          </Link>
+          <FilterChip key={c.id} href={`/routines?concern=${c.id}`} selected={activeConcernId === c.id}>
+            {c.name}
+          </FilterChip>
         ))}
       </div>
 
       {routines.length === 0 ? (
         <p className="text-muted-foreground">No routines for this concern yet — be the first to post one.</p>
       ) : (
-        <div className="space-y-3">
+        <ul className="space-y-3">
           {routines.map((r) => (
-            <Link key={r.id} href={`/routines/${r.id}`}>
-              <Card className="transition-shadow hover:shadow-md">
-                <CardHeader className="flex-row items-center justify-between gap-4">
-                  <div>
-                    <CardTitle className="text-base">{r.title}</CardTitle>
-                    <CardDescription>
-                      {r.stepCount} step{r.stepCount === 1 ? "" : "s"}
-                      {r.authorName ? ` · by ${r.authorName}` : ""}
-                    </CardDescription>
-                  </div>
-                  <span className="shrink-0 text-sm font-medium tabular-nums text-muted-foreground">
-                    {r.score > 0 ? "+" : ""}
-                    {r.score}
-                  </span>
-                </CardHeader>
-              </Card>
-            </Link>
+            <li key={r.id}>
+              <Link
+                href={`/routines/${r.id}`}
+                className="flex items-center justify-between gap-4 rounded-2xl border bg-card p-5 transition-all hover:-translate-y-0.5 hover:border-brand/40 hover:shadow-lg hover:shadow-brand/5"
+              >
+                <div className="min-w-0 space-y-1">
+                  <h2 className="truncate font-semibold">{r.title}</h2>
+                  <p className="text-sm text-muted-foreground">
+                    {r.stepCount} step{r.stepCount === 1 ? "" : "s"}
+                    {r.authorName ? ` · by ${r.authorName}` : ""}
+                  </p>
+                </div>
+                <span className="flex h-10 min-w-12 shrink-0 items-center justify-center rounded-xl bg-muted px-3 text-sm font-semibold tabular-nums">
+                  {r.score > 0 ? "+" : ""}
+                  {r.score}
+                </span>
+              </Link>
+            </li>
           ))}
-        </div>
+        </ul>
       )}
     </div>
   );

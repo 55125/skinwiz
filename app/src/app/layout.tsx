@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { TooltipProvider } from "@/components/ui/tooltip";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 
@@ -16,9 +15,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "SkinWiz — Derm-verified skincare, ingredient by ingredient",
+  title: "SkinWiz — OTC skincare, ingredient by ingredient",
   description:
-    "Find OTC skincare products by active ingredient, with a board-certified dermatologist score and a real-outcome audience score — not guesses from an ingredient list.",
+    "Find OTC skincare products by active ingredient, scored separately by dermatologists and by real reported outcomes — not guesses from an ingredient list.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
@@ -36,15 +35,12 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             (it's non-standard), hence the cast. Site-wide via the root
             layout rather than homepage-only since that's a superset of
             what Impact asked for. */}
-        {/* eslint-disable-next-line react/no-unknown-property */}
         <meta name="impact-site-verification" {...({ value: "564231ad-1299-4483-8468-d82b52da5637" } as Record<string, string>)} />
       </head>
       <body className="min-h-full flex flex-col">
-        <TooltipProvider>
-          <SiteHeader />
-          <main className="flex-1">{children}</main>
-          <SiteFooter />
-        </TooltipProvider>
+        <SiteHeader />
+        <main className="flex-1">{children}</main>
+        <SiteFooter />
       </body>
     </html>
   );

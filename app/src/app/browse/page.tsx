@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { ChevronDown, SlidersHorizontal } from "lucide-react";
-import { ProductCard } from "@/components/product-card";
+import { ProductGrid } from "@/components/product-grid";
 import { FreeFromFilters } from "@/components/free-from-filters";
 import { RedFlagBanner } from "@/components/red-flag-banner";
 import { PageHeader } from "@/components/page-header";
@@ -176,11 +176,10 @@ export default async function BrowsePage({
               No products match this combination of filters.
             </div>
           ) : (
-            <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
-              {rows.map((product) => (
-                <ProductCard key={product.id} product={product} />
-              ))}
-            </div>
+            <>
+              <h2 className="sr-only">Products</h2>
+              <ProductGrid products={rows} columns="sm:grid-cols-2 xl:grid-cols-3" />
+            </>
           )}
 
           <Pagination page={page} totalPages={totalPages} hrefFor={pageHref} />

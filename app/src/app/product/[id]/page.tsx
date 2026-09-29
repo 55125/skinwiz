@@ -16,7 +16,7 @@ import {
   getEquivalentProducts,
   getConcern,
 } from "@/lib/queries";
-import { getDermScore, getAudienceScore } from "@/lib/scoring";
+import { getScoresForProducts } from "@/lib/scoring";
 import { getVideoSearchLinks } from "@/lib/video-links";
 import { dataSourceBadge } from "@/lib/data-source";
 import { getFreeFromCheck } from "@/db/ingredient-flags";
@@ -28,7 +28,7 @@ import { activeName } from "@/lib/strength-display";
 import { formatPct } from "@/db/strength";
 import { monographStatus, formatRange } from "@/db/monograph-ranges";
 import { OutcomeForm } from "@/components/outcome-form";
-import { ProductCard } from "@/components/product-card";
+import { ProductGrid } from "@/components/product-grid";
 
 // These canonical active ids are deliberately a family of several distinct
 // real compounds grouped under one consumer-facing name (see the comments
@@ -60,8 +60,9 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
   const affiliateLinks = getAffiliateLinksForProduct(product.id);
   const videoLinks = getVideoLinksForProduct(product.id);
   const videoSearchLinks = getVideoSearchLinks(product.brandName);
-  const dermScore = getDermScore(product.id, product.concernId);
-  const audienceScore = getAudienceScore(product.id, product.concernId);
+  const { derm: dermScore, audience: audienceScore } = getScoresForProducts([
+    { productId: product.id, concernId: product.concernId },
+  ]).get(product.id)!;
   const sourceBadge = dataSourceBadge(product.dataSource);
   const ewgScore = getEwgScoreForProduct(product.id);
   const avoid = avoidVerdict(product.freeFromFlags, await readAvoidIds());
@@ -189,7 +190,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
                 EWG Skin Deep hazard score{ewgScore.dataAvailability ? ` · ${ewgScore.dataAvailability} data` : ""}
               </span>
               <ExternalLink className="h-3.5 w-3.5 text-muted-foreground" />
-            </a>
+            <span className="sr-only"> (opens in new tab)</span></a>
           )}
 
           {product.activeIngredientText && (
@@ -298,7 +299,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
                   {GROUPED_ACTIVE_IDS.has(note.activeId)
                     ? `View a representative structure on PubChem${note.molecularFormula ? ` (${note.molecularFormula})` : ""} →`
                     : `View chemical structure on PubChem${note.molecularFormula ? ` (${note.molecularFormula})` : ""} →`}
-                </a>
+                <span className="sr-only"> (opens in new tab)</span></a>
               </p>
             )}
           </div>
@@ -317,11 +318,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
               store brand or generic. Inactive ingredients, texture, and price can still differ.
             </p>
           </div>
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            {equivalents.rows.map((p) => (
-              <ProductCard key={p.id} product={p} />
-            ))}
-          </div>
+          <ProductGrid products={equivalents.rows} columns="sm:grid-cols-2 lg:grid-cols-4" />
         </section>
       )}
 
@@ -350,7 +347,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
                   className={buttonVariants({ variant: "outline", size: "sm" })}
                 >
                   Buy <ExternalLink className="ml-1 h-3.5 w-3.5" />
-                </a>
+                <span className="sr-only"> (opens in new tab)</span></a>
               </div>
             ))}
           </div>
@@ -370,7 +367,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
               className={buttonVariants({ variant: "outline", size: "sm" })}
             >
               Visit page <ExternalLink className="ml-1 h-3.5 w-3.5" />
-            </a>
+            <span className="sr-only"> (opens in new tab)</span></a>
           </div>
         ) : (
           <Alert>
@@ -403,7 +400,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
                   <p className="line-clamp-2 text-xs font-medium">{v.title}</p>
                   <p className="text-xs text-muted-foreground">{v.channelTitle}</p>
                 </div>
-              </a>
+              <span className="sr-only"> (opens in new tab)</span></a>
             ))}
           </div>
         ) : (
@@ -420,7 +417,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
               className={buttonVariants({ variant: "outline", size: "sm" })}
             >
               <PlaySquare className="h-3.5 w-3.5" /> YouTube
-            </a>
+            <span className="sr-only"> (opens in new tab)</span></a>
           )}
           <a
             href={videoSearchLinks.tiktok}
@@ -429,7 +426,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
             className={buttonVariants({ variant: "outline", size: "sm" })}
           >
             <Music2 className="h-3.5 w-3.5" /> TikTok
-          </a>
+          <span className="sr-only"> (opens in new tab)</span></a>
           <a
             href={videoSearchLinks.instagram}
             target="_blank"
@@ -437,7 +434,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
             className={buttonVariants({ variant: "outline", size: "sm" })}
           >
             <Camera className="h-3.5 w-3.5" /> Instagram
-          </a>
+          <span className="sr-only"> (opens in new tab)</span></a>
         </div>
         <p className="text-xs italic text-muted-foreground">
           These are search links, not vetted reviews — SkinWiz doesn&apos;t screen or endorse social
@@ -454,7 +451,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
             rel="noopener noreferrer"
           >
             View full FDA label on DailyMed
-          </a>
+          <span className="sr-only"> (opens in new tab)</span></a>
         </p>
       )}
     </div>

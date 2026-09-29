@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getOrCreateSessionId } from "@/lib/session";
 import { getProduct } from "@/lib/queries";
 import { logOutcome } from "@/lib/outcomes";
-import { getAudienceScore } from "@/lib/scoring";
+import { getScoresForProducts } from "@/lib/scoring";
 
 const MAX_WEEKS = 104;
 
@@ -29,5 +29,6 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const sessionId = await getOrCreateSessionId();
   logOutcome(product.id, product.concernId, sessionId, { improved: body.improved, weeksUsed });
 
-  return NextResponse.json({ ok: true, audienceScore: getAudienceScore(product.id, product.concernId) });
+  const scores = getScoresForProducts([{ productId: product.id, concernId: product.concernId }]).get(product.id);
+  return NextResponse.json({ ok: true, audienceScore: scores?.audience ?? null });
 }

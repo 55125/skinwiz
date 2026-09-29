@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { ProductCard } from "@/components/product-card";
+import { ProductGrid } from "@/components/product-grid";
 import { FilterChip } from "@/components/filter-chip";
 import { PageHeader } from "@/components/page-header";
 import { Pagination } from "@/components/pagination";
@@ -96,11 +96,8 @@ export default async function ConcernPage({
           <span className="font-semibold text-foreground tabular-nums">{total.toLocaleString()}</span> product
           {total === 1 ? "" : "s"}
         </p>
-        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {rows.map((product) => (
-            <ProductCard key={product.id} product={product} />
-          ))}
-        </div>
+        <h2 className="sr-only">Products</h2>
+        <ProductGrid products={rows} />
         <Pagination
           page={page}
           totalPages={totalPages}

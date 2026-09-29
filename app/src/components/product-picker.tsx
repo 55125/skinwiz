@@ -21,31 +21,41 @@ export function ProductPicker({
   const [open, setOpen] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const searchable = query.trim().length >= 2;
+  const visibleResults = searchable ? results : [];
+
   useEffect(() => {
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    if (query.trim().length < 2) {
-      setResults([]);
-      return;
-    }
+    if (!searchable) return;
+    const controller = new AbortController();
     debounceRef.current = setTimeout(async () => {
-      const res = await fetch(`/api/products/search?q=${encodeURIComponent(query)}`);
-      if (res.ok) {
-        const data = await res.json();
-        setResults(data.products);
-        setOpen(true);
+      try {
+        const res = await fetch(`/api/products/search?q=${encodeURIComponent(query)}`, { signal: controller.signal });
+        if (res.ok) {
+          const data = await res.json();
+          setResults(data.products);
+          setOpen(true);
+        }
+      } catch {
+        // aborted by a newer keystroke, or a network error: keep prior results
       }
     }, 300);
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
+      controller.abort();
     };
-  }, [query]);
+  }, [query, searchable]);
 
   if (selected) {
     return (
       <div className="flex items-center gap-1 text-xs">
         <Check className="h-3 w-3 text-emerald-600" />
         <span className="text-muted-foreground">Linked: {selected.brandName}</span>
-        <button type="button" onClick={() => onSelect(null)} className="text-muted-foreground hover:text-foreground">
+        <button
+          type="button"
+          onClick={() => onSelect(null)}
+          aria-label={`Unlink ${selected.brandName}`}
+          className="text-muted-foreground hover:text-foreground"
+        >
           <X className="h-3 w-3" />
         </button>
       </div>
@@ -59,15 +69,16 @@ export function ProductPicker({
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          onFocus={() => results.length > 0 && setOpen(true)}
+          onFocus={() => visibleResults.length > 0 && setOpen(true)}
           onBlur={() => setTimeout(() => setOpen(false), 150)}
           placeholder="Link a product from our catalog (optional)"
+          aria-label="Link a product from our catalog (optional)"
           className="w-full border-0 border-b border-dashed bg-transparent p-0 text-xs outline-none focus:border-foreground"
         />
       </div>
-      {open && results.length > 0 && (
+      {open && visibleResults.length > 0 && (
         <ul className="absolute z-10 mt-1 w-full max-w-sm rounded-md border bg-popover shadow-md">
-          {results.map((p) => (
+          {visibleResults.map((p) => (
             <li key={p.id}>
               <button
                 type="button"

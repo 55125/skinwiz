@@ -6,6 +6,12 @@ import { cn } from "@/lib/utils";
 import { RoutineDisclaimer } from "@/components/routine-disclaimer";
 import { getConcerns } from "@/lib/queries";
 import { getRoutinesForConcern } from "@/lib/routines";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Community routines — SkinWiz",
+  description: "Skincare routines posted and voted on by the SkinWiz community, grouped by skin concern.",
+};
 
 export default async function RoutinesPage({
   searchParams,

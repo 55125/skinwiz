@@ -115,7 +115,15 @@ product page silently breaks the moment the brand adds referrer-based
 hotlink protection or reshuffles a URL. `app/src/db/seed.ts` stores
 whatever string is in the CSV's `image_url` column as-is, so the
 root-relative local path works identically to the old full URL with zero
-app-side changes. 53 images, ~6.4MB total.
+app-side changes. 53 images, ~6.4MB total at the time of that pass (the
+brand-direct set has since grown to 425 images, ~54MB, across nine brands).
+
+**Open licensing question:** self-hosting fixes the reliability problem,
+not the rights problem. These are the brands' copyrighted product photos,
+and copying them onto our own server is still reproduction without a
+license. Resolve this (brand permission, affiliate-network image feeds
+that come with usage rights, or dropping brand-direct photos) before
+treating the image set as launch-ready.
 
 ## Known limitations
 
@@ -376,6 +384,44 @@ once these were found concatenating multiple products' ingredient lists
 the same way The Ordinary's kit pages do, just without HTML markup between
 them so the existing `<`-based guard didn't catch it).
 
+## Korean and Japanese brands (2026-09-29)
+
+No licensable K/J ingredient database was free to use, so this extends the
+brand-direct scrape instead. Seven Shopify brands (`/products.json`
+discovery, per-brand extractors that funnel into `_finish_shopify_product`)
+plus one sitemap brand: **Medicube** (108 rows), **Round Lab** (75),
+**SKIN1004** (56), **Torriden** (48), **Tatcha** (32), **Laneige** (24),
+**Innisfree** (14), **Curél Japan line** (1). Brand-direct total: 781 rows.
+
+- **Full INCI, not marketing lists.** Each theme buries the real list
+  somewhere different (Medicube's `full-ingredient-popup`, Round Lab's
+  "Full INCI" label or a page-level `full_ingredients` tab, SKIN1004's
+  "FULL INGREDIENTS" metafield, Laneige's per-product inline JS object —
+  anchored to the product's own handle, since related products are inlined
+  too). Medicube lists each premix's water separately, so bare "Water" repeats
+  many times in one list; that is the printed label, not a scrape error.
+- **Bundles and kits are dropped** (`skip_bundles`): title/type heuristics,
+  Medicube's promo-title wrapper is stripped and duplicate promo listings are
+  de-duplicated. `_looks_like_multi_formula()` rejects any text with more than
+  one leading Water/Aqua after sentence punctuation. It runs for **all**
+  Shopify brands, so it also removed eight First Aid Beauty bundles/routines
+  whose rows had been concatenating several formulas (54 to 46).
+- **Not extractable, so absent:** Anua (INCI only exists inside images);
+  Curél's US body-care pages have no ingredient text at all — only the
+  `/en-us/japanskincare/` pages carry server-rendered INCI, and just one of
+  those has a tracked active. Beauty of Joseon's product pages 404.
+- **Rate limiting:** these stores return HTTP 429 to Python `urllib` after a
+  few hundred rapid requests. The pipeline treats that as a real slow-down
+  request rather than something to evade: `_get` backs off on 429 (the
+  larger of `Retry-After` and 20s x attempt) and K/J brands use a 1.5s
+  per-page pause. It clears after a few minutes.
+- **Guards that fired:** four pages skipped for implausibly long ingredient
+  text (8-13k chars, i.e. a page's whole ingredient section, not one list); images over 5 MB are skipped
+  and the product keeps a placeholder.
+- **Deferred:** Cafe24 brands (Some By Mi, Numbuzin, Isntree, Illiyoon) are
+  Korean-only; they need the MFDS ingredient API (data.go.kr 15111774) to
+  map Korean names to INCI.
+
 ## Adding another brand
 
 Add one `BRANDS` entry and a matching extractor. For a sitemap-discoverable
@@ -391,10 +437,11 @@ extractor at scale.
 
 ## Files
 
-- `output/brand_direct_catalog.csv` — 243 rows (44 The Ordinary + 9 CeraVe
-  + 93 Naturium + 52 First Aid Beauty + 7 COSRX + 27 Skinfix + 9 Vanicream
-  + a couple dropped to a SKU collision at seed time, after dropping
-  bundle/kit pages — see above), same schema as `cosmetic_catalog.csv`
+- `output/brand_direct_catalog.csv` — 781 rows as of 2026-09-29 (44 The
+  Ordinary, 67 CeraVe, 93 Naturium, 84 COSRX, 46 First Aid Beauty, 28
+  Skinfix, 12 Vanicream, 40 Cetaphil, 9 Aquaphor, plus the K/J brands above;
+  769 land in the DB — a few rows carry no active the seeder recognises, and
+  a few share a SKU across size variants), same schema as `cosmetic_catalog.csv`
   (`source=brand_direct`, `verified=true`) plus `source_url` (the exact
   page scraped, also used as the buy-direct link) and `image_url` (each
   page's own photo, self-hosted — see above) columns.

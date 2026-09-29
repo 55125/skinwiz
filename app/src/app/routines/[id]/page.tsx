@@ -7,6 +7,17 @@ import { RoutineVote } from "@/components/routine-vote";
 import { RoutineReport } from "@/components/routine-report";
 import { getRoutine, getSessionVote, getSessionReported } from "@/lib/routines";
 import { readSessionId } from "@/lib/session";
+import type { Metadata } from "next";
+
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const { id } = await params;
+  const routine = getRoutine(parseInt(id, 10));
+  if (!routine) return {};
+  return {
+    title: `${routine.title} — ${routine.concernName} routine — SkinWiz`,
+    description: `A community-submitted ${routine.concernName.toLowerCase()} routine on SkinWiz. User-posted and not reviewed by dermatologists.`,
+  };
+}
 
 export default async function RoutineDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;

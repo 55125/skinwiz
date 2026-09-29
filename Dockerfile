@@ -26,10 +26,9 @@ ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
 RUN npm ci
 RUN npm run build
 
+# Same base image as the build stage, so the better-sqlite3 addon compiled
+# there loads here without a toolchain.
 FROM node:22-bookworm-slim
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    python3 make g++ \
-    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /repo
 COPY --from=build /repo /repo
@@ -40,13 +39,12 @@ WORKDIR /repo/app
 ENV NODE_ENV=production
 EXPOSE 3000
 
-# db:push (idempotent, creates tables if missing) + db:seed (wipes and
-# reloads product/concern/active data every start -- fine while
-# dermRatings/audienceOutcomes are still empty; revisit once real user
-# data exists, see seed.ts) before serving.
+# db:migrate applies reviewed drizzle/ migrations (never auto-accepts
+# destructive changes). db:seed reloads catalog/reference data in one
+# transaction and never touches user tables (see seed.ts).
 # enrich:pubchem is optional metadata (see src/db/enrich-pubchem.ts) --
 # `|| true` so a PubChem outage or network hiccup at boot can never block
-# the app from starting, unlike db:push/db:seed which the app actually
+# the app from starting, unlike db:migrate/db:seed which the app actually
 # needs. Idempotent (skips actives already in active_chem_data), so this
 # is a no-op after the first successful run.
-CMD npm run db:push -- --force && npm run db:seed && (npm run enrich:pubchem || true) && npm start
+CMD npm run db:migrate && npm run db:seed && (npm run enrich:pubchem || true) && npm start

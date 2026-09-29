@@ -137,7 +137,22 @@ async function main() {
   // reinserted identically a few lines down. Re-enabled before returning
   // so runtime inserts (a new routine, a new vote) still get real
   // integrity checking.
+  // PRAGMA foreign_keys is a no-op inside a transaction, so it's toggled
+  // outside and always restored in the finally below.
   db.run(sql`PRAGMA foreign_keys = OFF`);
+  try {
+    // One transaction: a crash mid-seed (bad CSV row, disk full) rolls back
+    // to the previous catalog instead of leaving the volume DB with no
+    // products, and concurrent readers keep seeing the old catalog until
+    // commit.
+    db.transaction(() => reseed());
+  } finally {
+    db.run(sql`PRAGMA foreign_keys = ON`);
+  }
+  console.log("Done. dermRaters, dermRatings, audienceOutcomes, and routines (incl. votes/reports) are intentionally left untouched.");
+}
+
+function reseed() {
   db.delete(schema.affiliateLinks).run();
   db.delete(schema.evidenceNotes).run();
   db.delete(schema.products).run();
@@ -193,7 +208,7 @@ async function main() {
       if (!row.product_ndc || seenNdc.has(row.product_ndc)) continue;
 
       const activeIds = row.source && PRE_MATCHED_SOURCES.has(row.source)
-        ? row.active_ingredients_structured.split(";").filter(Boolean)
+        ? (row.active_ingredients_structured ?? "").split(";").filter(Boolean)
         : matchActiveIds([row.active_ingredients_structured, row.substance_name, row.active_ingredient_text].join(" "));
 
       if (activeIds.length === 0) {
@@ -278,8 +293,36 @@ async function main() {
     console.log("  no affiliate output found, skipping (run tools/affiliate_feeds/match_catalog.py first)");
   }
 
-  db.run(sql`PRAGMA foreign_keys = ON`);
-  console.log("Done. dermRaters, dermRatings, audienceOutcomes, and routines (incl. votes/reports) are intentionally left untouched.");
+  reconcileOrphans();
+}
+
+// Products that dropped out of the catalog CSVs leave rows pointing at ids
+// that no longer exist. Derived tables are regenerable, so their orphans are
+// deleted; user-written routine steps keep their text and just lose the
+// product link. Ratings/outcomes are user data with a NOT NULL product id,
+// so they're reported rather than deleted -- anything else still dangling
+// aborts the transaction.
+function reconcileOrphans() {
+  const missing = (table: string) =>
+    sql.raw(`${table}.product_id IS NOT NULL AND ${table}.product_id NOT IN (SELECT id FROM products)`);
+  for (const table of ["ewg_scores", "video_links"]) {
+    const { changes } = db.run(sql`DELETE FROM ${sql.raw(table)} WHERE ${missing(table)}`);
+    if (changes) console.log(`  removed ${changes} orphaned ${table} rows`);
+  }
+  const unlinked = db.run(sql`UPDATE routine_steps SET product_id = NULL WHERE ${missing("routine_steps")}`).changes;
+  if (unlinked) console.log(`  unlinked ${unlinked} routine steps from products no longer in the catalog`);
+
+  const violations = db.all<{ table: string }>(sql`PRAGMA foreign_key_check`);
+  const userData = new Set(["derm_ratings", "audience_outcomes"]);
+  const kept = violations.filter((v) => userData.has(v.table));
+  if (kept.length) {
+    console.warn(`  WARNING: ${kept.length} rating/outcome rows reference products no longer in the catalog (kept)`);
+  }
+  const fatal = violations.filter((v) => !userData.has(v.table));
+  if (fatal.length) {
+    const tables = [...new Set(fatal.map((v) => v.table))].join(", ");
+    throw new Error(`Seed aborted: ${fatal.length} foreign-key violations in ${tables}; rolled back.`);
+  }
 }
 
 main();

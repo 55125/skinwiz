@@ -1,16 +1,27 @@
-import { and, eq, inArray, sql, type SQL } from "drizzle-orm";
+import { and, eq, inArray, sql, type SQL, type SQLWrapper } from "drizzle-orm";
 import { db } from "@/db/client";
 import { concerns, products, actives, evidenceNotes, affiliateLinks, videoLinks, activeChemData, ewgScores } from "@/db/schema";
 import { concernIdToNiche } from "@/db/actives";
 
-// Shared by getProductsForConcern and searchProducts -- one LIKE per
-// selected free-from id, ANDed together, so a product must satisfy every
+// Shared by getProductsForConcern and searchProducts -- one membership
+// check per selected free-from id, ANDed together, so a product must satisfy every
 // checked filter (e.g. "fragrance-free" AND "paraben-free"), not just one.
 // freeFromFlags is null for unassessed products (see ingredient-flags.ts),
 // so those simply never match any filter here -- they're not silently
 // treated as passing.
 function freeFromWhereClauses(freeFromIds: string[]): SQL[] {
-  return freeFromIds.map((id) => sql`${products.freeFromFlags} LIKE ${"%\"" + id + "\"%"}`);
+  return freeFromIds.map((id) => jsonArrayContains(products.freeFromFlags, id));
+}
+
+// Exact membership test on a JSON-array text column, so URL-supplied ids
+// can't act as LIKE wildcards. json_each(NULL) yields no rows, which keeps
+// unassessed products out of every filter.
+function jsonArrayContains(column: SQLWrapper, value: string): SQL {
+  return sql`EXISTS (SELECT 1 FROM json_each(${column}) WHERE json_each.value = ${value})`;
+}
+
+function likeContains(q: string): string {
+  return `%${q.replace(/[\\%_]/g, (c) => `\\${c}`)}%`;
 }
 
 export function getConcerns() {
@@ -26,7 +37,7 @@ export function getActivesForConcern(concernId: string) {
   return db
     .select()
     .from(actives)
-    .where(sql`${actives.categories} LIKE ${"%\"" + niche + "\"%"}`)
+    .where(jsonArrayContains(actives.categories, niche))
     .all();
 }
 
@@ -48,7 +59,7 @@ export function getProductsForConcern(
   const offset = (page - 1) * PAGE_SIZE;
   const clauses = [eq(products.concernId, concernId), ...freeFromWhereClauses(freeFromIds)];
   if (activeId) {
-    clauses.push(sql`${products.activeIds} LIKE ${"%\"" + activeId + "\"%"}`);
+    clauses.push(jsonArrayContains(products.activeIds, activeId));
     if (strengthPct !== undefined) clauses.push(sql`${strengthExpr(activeId)} = ${strengthPct}`);
   }
   const whereClause = and(...clauses);
@@ -70,7 +81,7 @@ export function browseProducts(
   const clauses = [...freeFromWhereClauses(filters.freeFromIds ?? [])];
   if (filters.concernId) clauses.push(eq(products.concernId, filters.concernId));
   if (filters.dataSources && filters.dataSources.length > 0) clauses.push(inArray(products.dataSource, filters.dataSources));
-  if (filters.activeId) clauses.push(sql`${products.activeIds} LIKE ${"%\"" + filters.activeId + "\"%"}`);
+  if (filters.activeId) clauses.push(jsonArrayContains(products.activeIds, filters.activeId));
   const whereClause = clauses.length > 0 ? and(...clauses) : undefined;
 
   const rows = db.select().from(products).where(whereClause).limit(PAGE_SIZE).offset(offset).all();
@@ -84,6 +95,10 @@ export function browseProducts(
 // anchored to one concern the way /concern/[slug]'s chips are.
 export function getAllActives() {
   return db.select().from(actives).orderBy(actives.canonicalName).all();
+}
+
+export function countProducts(): number {
+  return db.select({ count: sql<number>`count(*)` }).from(products).get()!.count;
 }
 
 export function getProduct(id: string) {
@@ -155,6 +170,14 @@ export function getEwgScoreForProduct(productId: string) {
   return db.select().from(ewgScores).where(eq(ewgScores.productId, productId)).get();
 }
 
+export type EwgScore = typeof ewgScores.$inferSelect;
+
+export function getEwgScoresForProducts(productIds: string[]): Map<string, EwgScore> {
+  if (productIds.length === 0) return new Map();
+  const rows = db.select().from(ewgScores).where(inArray(ewgScores.productId, productIds)).all();
+  return new Map(rows.map((r) => [r.productId, r]));
+}
+
 export function getAffiliateLinksForProduct(productId: string) {
   return db.select().from(affiliateLinks).where(eq(affiliateLinks.productId, productId)).all();
 }
@@ -172,14 +195,14 @@ export function getVideoLinksForProduct(productId: string) {
 const SEARCH_LIMIT = 40;
 
 function buildSearchWhere(q: string, filters: { concernId?: string; dataSources?: string[]; freeFromIds?: string[] }) {
-  const needle = `%${q}%`;
+  const needle = likeContains(q);
   // Also matches activeIngredientText (the raw FDA/manufacturer ingredient
   // list) -- without this, searching "niacinamide" found the active-
   // ingredient badge but zero products, since most product names don't
   // literally contain the ingredient name. Caught by testing the search
   // page with a real ingredient query before considering this done.
   const clauses = [
-    sql`(${products.brandName} LIKE ${needle} OR ${products.manufacturer} LIKE ${needle} OR ${products.activeIngredientText} LIKE ${needle})`,
+    sql`(${products.brandName} LIKE ${needle} ESCAPE '\\' OR ${products.manufacturer} LIKE ${needle} ESCAPE '\\' OR ${products.activeIngredientText} LIKE ${needle} ESCAPE '\\')`,
     ...freeFromWhereClauses(filters.freeFromIds ?? []),
   ];
   if (filters.concernId) clauses.push(eq(products.concernId, filters.concernId));
@@ -218,8 +241,11 @@ export function searchProductsCount(
 }
 
 export function searchActives(q: string) {
-  const needle = `%${q}%`;
-  return db.select().from(actives).where(sql`${actives.canonicalName} LIKE ${needle}`).all();
+  return db
+    .select()
+    .from(actives)
+    .where(sql`${actives.canonicalName} LIKE ${likeContains(q)} ESCAPE '\\'`)
+    .all();
 }
 
 // "Top" here means "verified-tier first, then a rotating sample" — there's

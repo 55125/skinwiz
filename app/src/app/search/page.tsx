@@ -1,12 +1,24 @@
 import Link from "next/link";
 import { SearchBar } from "@/components/search-bar";
-import { ProductCard } from "@/components/product-card";
+import { ProductGrid } from "@/components/product-grid";
 import { FreeFromFilters } from "@/components/free-from-filters";
-import { Badge } from "@/components/ui/badge";
 import { FilterChip } from "@/components/filter-chip";
 import { PageHeader } from "@/components/page-header";
 import { searchProducts, searchProductsCount, searchActives, getConcerns } from "@/lib/queries";
 import { TRUST_TIERS } from "@/lib/trust-tiers";
+import type { Metadata } from "next";
+
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string }>;
+}): Promise<Metadata> {
+  const q = (await searchParams).q?.trim();
+  return {
+    title: q ? `“${q.slice(0, 60)}” — Search — SkinWiz` : "Search — SkinWiz",
+    robots: { index: false },
+  };
+}
 
 export default async function SearchPage({
   searchParams,
@@ -87,9 +99,13 @@ export default async function SearchPage({
           <h2 className="text-xl font-semibold">Ingredients</h2>
           <div className="flex flex-wrap gap-2">
             {activeResults.map((a) => (
-              <Badge key={a.id} variant="outline" className="h-7 bg-card px-3 text-sm">
+              <Link
+                key={a.id}
+                href={`/browse?active=${encodeURIComponent(a.id)}`}
+                className="inline-flex h-8 items-center rounded-full border bg-card px-3 text-sm transition-colors hover:border-brand/40 hover:bg-brand-soft"
+              >
                 {a.canonicalName}
-              </Badge>
+              </Link>
             ))}
           </div>
         </div>
@@ -109,11 +125,7 @@ export default async function SearchPage({
               others.
             </p>
           )}
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {productResults.map((p) => (
-              <ProductCard key={p.id} product={p} />
-            ))}
-          </div>
+          <ProductGrid products={productResults} />
         </div>
       )}
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { LIMITS } from "@/lib/limits";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -47,19 +48,19 @@ export function RaterApplicationForm() {
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-1.5">
         <Label htmlFor="name">Name</Label>
-        <Input id="name" name="name" required />
+        <Input id="name" name="name" required maxLength={LIMITS.name} />
       </div>
       <div className="space-y-1.5">
         <Label htmlFor="email">Email</Label>
-        <Input id="email" name="email" type="email" required />
+        <Input id="email" name="email" type="email" required maxLength={LIMITS.email} />
       </div>
       <div className="space-y-1.5">
         <Label htmlFor="credential">Board certification (ABD/AOBD) and NPI</Label>
-        <Input id="credential" name="credential" placeholder="e.g. ABD-certified, NPI 1234567890" />
+        <Input id="credential" name="credential" maxLength={LIMITS.credential} placeholder="e.g. ABD-certified, NPI 1234567890" />
       </div>
       <div className="space-y-1.5">
         <Label htmlFor="message">Anything else</Label>
-        <Textarea id="message" name="message" rows={3} />
+        <Textarea id="message" name="message" rows={3} maxLength={LIMITS.message} />
       </div>
       {error && <p className="text-sm text-red-600">{error}</p>}
       <Button type="submit" disabled={status === "submitting"}>

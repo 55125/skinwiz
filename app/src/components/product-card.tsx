@@ -2,21 +2,28 @@ import Link from "next/link";
 import { FlaskConical } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { DualScoreBadges } from "@/components/score-badge";
-import { getDermScore, getAudienceScore } from "@/lib/scoring";
+import type { ProductScores } from "@/lib/scoring";
 import { dataSourceBadge } from "@/lib/data-source";
 import { getFreeFromCheck } from "@/db/ingredient-flags";
-import { getEwgScoreForProduct } from "@/lib/queries";
+import type { EwgScore } from "@/lib/queries";
 import { ewgHazardBadge } from "@/lib/ewg";
-import { readAvoidIds, avoidVerdict, avoidedIngredientName } from "@/lib/avoid";
+import { avoidVerdict, avoidedIngredientName } from "@/lib/avoid";
 import { describeStrengths } from "@/lib/strength-display";
 import type { products } from "@/db/schema";
 
-export async function ProductCard({ product }: { product: typeof products.$inferSelect }) {
-  const dermScore = getDermScore(product.id, product.concernId);
-  const audienceScore = getAudienceScore(product.id, product.concernId);
+export function ProductCard({
+  product,
+  scores,
+  ewgScore,
+  avoidIds,
+}: {
+  product: typeof products.$inferSelect;
+  scores: ProductScores;
+  ewgScore: EwgScore | null;
+  avoidIds: string[];
+}) {
   const sourceBadge = dataSourceBadge(product.dataSource);
-  const ewgScore = getEwgScoreForProduct(product.id);
-  const avoid = avoidVerdict(product.freeFromFlags, await readAvoidIds());
+  const avoid = avoidVerdict(product.freeFromFlags, avoidIds);
   const avoidConflicts = avoid?.status === "conflicts" ? avoid.conflicts : [];
   const strengthLine = describeStrengths(product.strengths, product.activeIds);
   // Capped at 2 on the card -- a product can match up to a dozen of these,
@@ -47,7 +54,7 @@ export async function ProductCard({ product }: { product: typeof products.$infer
             loading="lazy"
           />
         ) : (
-          <div className="flex items-center gap-2 text-muted-foreground/70">
+          <div className="flex items-center gap-2 text-muted-foreground">
             <FlaskConical className="h-5 w-5" strokeWidth={1.5} />
             <span className="text-xs capitalize">{product.dosageForm ? product.dosageForm.toLowerCase() : "No photo yet"}</span>
           </div>
@@ -116,7 +123,7 @@ export async function ProductCard({ product }: { product: typeof products.$infer
         )}
 
         <div className="mt-auto border-t pt-3">
-          <DualScoreBadges dermScore={dermScore} audienceScore={audienceScore} compact />
+          <DualScoreBadges dermScore={scores.derm} audienceScore={scores.audience} compact />
         </div>
       </div>
     </Link>

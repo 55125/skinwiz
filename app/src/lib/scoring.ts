@@ -1,4 +1,4 @@
-import { and, eq } from "drizzle-orm";
+import { and, inArray, sql } from "drizzle-orm";
 import { db } from "@/db/client";
 import { dermRatings, audienceOutcomes } from "@/db/schema";
 
@@ -12,37 +12,67 @@ export type ScoreResult =
   | { status: "scored"; score: number; count: number }
   | { status: "pending"; count: number; needed: number };
 
-export function getDermScore(productId: string, concernId: string): ScoreResult {
-  const rows = db
-    .select({ score: dermRatings.score })
-    .from(dermRatings)
-    .where(and(eq(dermRatings.productId, productId), eq(dermRatings.concernId, concernId)))
-    .all();
+export type ProductScores = { derm: ScoreResult; audience: ScoreResult };
 
-  if (rows.length < MIN_DERM_RATERS) {
-    return { status: "pending", count: rows.length, needed: MIN_DERM_RATERS - rows.length };
-  }
-  const avg = rows.reduce((sum, r) => sum + r.score, 0) / rows.length;
-  return { status: "scored", score: Math.round(avg), count: rows.length };
+type ScoreKey = { productId: string; concernId: string };
+const keyOf = (productId: string, concernId: string) => `${productId}\u0000${concernId}`;
+
+function toResult(count: number, min: number, score: number | null): ScoreResult {
+  if (count < min || score === null) return { status: "pending", count, needed: min - count };
+  return { status: "scored", score: Math.round(score), count };
 }
 
-export function getAudienceScore(productId: string, concernId: string): ScoreResult {
-  const rows = db
-    .select({ improved: audienceOutcomes.improved })
-    .from(audienceOutcomes)
-    .where(and(eq(audienceOutcomes.productId, productId), eq(audienceOutcomes.concernId, concernId)))
-    .all();
+// One query per score type for a whole page of products. Derm scores count
+// distinct raters (the unique index enforces one row per rater, this keeps
+// the rule if it's ever relaxed) and ignore out-of-range scores.
+export function getScoresForProducts(items: ScoreKey[]): Map<string, ProductScores> {
+  const productIds = [...new Set(items.map((i) => i.productId))];
+  const derm = new Map<string, { raters: number; avg: number | null }>();
+  const audience = new Map<string, { n: number; improved: number }>();
 
-  if (rows.length < MIN_AUDIENCE_OUTCOMES) {
-    return { status: "pending", count: rows.length, needed: MIN_AUDIENCE_OUTCOMES - rows.length };
+  if (productIds.length > 0) {
+    const dermRows = db
+      .select({
+        productId: dermRatings.productId,
+        concernId: dermRatings.concernId,
+        raters: sql<number>`count(distinct ${dermRatings.raterId})`,
+        avg: sql<number | null>`avg(${dermRatings.score})`,
+      })
+      .from(dermRatings)
+      .where(and(inArray(dermRatings.productId, productIds), sql`${dermRatings.score} between 0 and 100`))
+      .groupBy(dermRatings.productId, dermRatings.concernId)
+      .all();
+    for (const r of dermRows) derm.set(keyOf(r.productId, r.concernId), { raters: r.raters, avg: r.avg });
+
+    const audienceRows = db
+      .select({
+        productId: audienceOutcomes.productId,
+        concernId: audienceOutcomes.concernId,
+        n: sql<number>`count(*)`,
+        improved: sql<number>`sum(${audienceOutcomes.improved})`,
+      })
+      .from(audienceOutcomes)
+      .where(inArray(audienceOutcomes.productId, productIds))
+      .groupBy(audienceOutcomes.productId, audienceOutcomes.concernId)
+      .all();
+    for (const r of audienceRows) audience.set(keyOf(r.productId, r.concernId), { n: r.n, improved: r.improved });
   }
-  const improvedCount = rows.filter((r) => r.improved).length;
-  const pct = Math.round((improvedCount / rows.length) * 100);
-  return { status: "scored", score: pct, count: rows.length };
+
+  const result = new Map<string, ProductScores>();
+  for (const { productId, concernId } of items) {
+    const d = derm.get(keyOf(productId, concernId));
+    const a = audience.get(keyOf(productId, concernId));
+    result.set(productId, {
+      derm: toResult(d?.raters ?? 0, MIN_DERM_RATERS, d?.avg ?? null),
+      audience: toResult(a?.n ?? 0, MIN_AUDIENCE_OUTCOMES, a && a.n > 0 ? (a.improved / a.n) * 100 : null),
+    });
+  }
+  return result;
 }
 
+// amber-700, not 600: 600 measured ~3.2:1 on white, below WCAG AA.
 export function scoreColorClass(score: number): string {
-  if (score >= 75) return "text-emerald-600 dark:text-emerald-400";
-  if (score >= 50) return "text-amber-600 dark:text-amber-400";
-  return "text-red-600 dark:text-red-400";
+  if (score >= 75) return "text-emerald-700 dark:text-emerald-400";
+  if (score >= 50) return "text-amber-700 dark:text-amber-400";
+  return "text-red-700 dark:text-red-400";
 }

@@ -39,7 +39,7 @@ function CompactScore({ icon, label, result }: { icon: React.ReactNode; label: s
       {result.status === "scored" ? (
         <span className={cn("font-semibold tabular-nums", scoreColorClass(result.score))}>{result.score}%</span>
       ) : (
-        <span className="text-muted-foreground/70">—</span>
+        <span className="text-muted-foreground" aria-label="not yet rated">—</span>
       )}
     </span>
   );

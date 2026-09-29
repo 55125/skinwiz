@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { sqliteTable, text, integer, real, uniqueIndex } from "drizzle-orm/sqlite-core";
+import { sqliteTable, text, integer, real, index, uniqueIndex } from "drizzle-orm/sqlite-core";
 
 // A "concern" is a launch niche slice (acne, sun protection) — see project.md
 // §11's data-driven niche decision. Kept as a table, not an enum, so a third
@@ -115,6 +115,16 @@ export const products = sqliteTable("products", {
   // "assumed clean." A non-null value is computed from the actual published
   // ingredient list, not a brand's own marketing claim.
   freeFromFlags: text("free_from_flags", { mode: "json" }).$type<string[] | null>(),
+  // Percent strength per active id, parsed from the FDA label's exact
+  // active-ingredient line (db/strength.ts) -- only openfda/dailymed rows
+  // carry concentrations, so this is null for cosmetic sources and for the
+  // ~5% of drug rows whose line can't be converted (a per-package amount
+  // with no denominator). strengthKey is the same data flattened to a
+  // sortable "active:pct|active:pct" string, set only when every active on
+  // the row has a parsed strength, so "same actives at the same strengths"
+  // (store-brand equivalents) is a plain indexed equality match.
+  strengths: text("strengths", { mode: "json" }).$type<Record<string, number> | null>(),
+  strengthKey: text("strength_key"),
   // "openfda" | "dailymed" | "open_beauty_facts" -- which pipeline produced
   // this row. verified=true only for openfda/dailymed (derived from what a
   // manufacturer legally filed with the FDA); false for open_beauty_facts
@@ -124,7 +134,7 @@ export const products = sqliteTable("products", {
   // the FDA-sourced rows without a visible distinction.
   dataSource: text("data_source").notNull().default("openfda"),
   verified: integer("verified", { mode: "boolean" }).notNull().default(true),
-});
+}, (table) => [index("products_strength_key_idx").on(table.strengthKey)]);
 
 // Real affiliate integration exists (tools/affiliate_feeds/) but no network
 // account is approved yet (project.md §11 open decision), so this table is
@@ -192,7 +202,11 @@ export const dermRatings = sqliteTable(
 );
 
 // First-party outcome logging (project.md §5: "audience side = outcome
-// score ... not scraped stars"). Empty at seed time — no users yet.
+// score ... not scraped stars"). Written by the "Did this help?" form on
+// each product page (api/products/[id]/outcome). One row per session per
+// (product, concern) -- enforced by the unique index, same as routine
+// votes, so a repeat submission updates the earlier answer instead of
+// counting twice.
 export const audienceOutcomes = sqliteTable(
   "audience_outcomes",
   {

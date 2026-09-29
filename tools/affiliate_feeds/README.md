@@ -95,8 +95,10 @@ product title + brand, with an active-ingredient cross-check, landing
 low-confidence matches in a manual-review queue rather than auto-linking
 them. This mirrors how affiliate/product matching is done in practice at
 this scale (text/brand matching plus human QA), not a barcode shortcut.
-If real feeds do provide clean GTINs for some products, the code already
-prefers an exact GTIN match first — it just can't be the primary strategy.
+There is no exact-GTIN path today: the catalog it matches against is keyed
+by NDC, so a feed's GTIN has nothing to join to. Adding one would need a
+catalog source that carries real retail barcodes (Open Beauty Facts rows
+do, but the matcher doesn't load that catalog yet).
 
 ## A real matching bug found and fixed while building this
 

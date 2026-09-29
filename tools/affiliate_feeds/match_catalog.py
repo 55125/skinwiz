@@ -67,11 +67,9 @@ def mentioned_actives(text: str) -> set[str]:
 
 
 def best_catalog_match(product: affiliate_schema.NormalizedProduct, catalog: list[dict]) -> tuple[dict | None, float]:
-    if product.gtin_or_upc:
-        exact = next((c for c in catalog if c.get("upc") == product.gtin_or_upc), None)
-        if exact:
-            return exact, 1.0
-
+    # No exact GTIN/UPC join: the catalog is keyed by FDA NDC, which can't be
+    # converted to a retail UPC (see README's NDC<->UPC correction).
+    #
     # First-pass title matching alone produced real wrong matches in testing
     # (e.g. one CeraVe salicylic-acid cleanser matched to a different CeraVe
     # benzoyl-peroxide product just on title overlap) — different brand SKUs

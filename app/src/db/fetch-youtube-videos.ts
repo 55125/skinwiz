@@ -14,7 +14,7 @@
 // TikTok and Instagram have no equivalent here — see
 // src/lib/video-links.ts's comment for why (no accessible free search API
 // for a small/solo site for either).
-import { eq, notInArray, sql } from "drizzle-orm";
+import { notInArray, sql } from "drizzle-orm";
 import { db } from "./client";
 import { products, videoLinks } from "./schema";
 

@@ -25,8 +25,16 @@ export function getVideoSearchLinks(brandName: string) {
     tiktok: `https://www.tiktok.com/search?q=${query}`,
     // Instagram has no general keyword-search URL for logged-out users;
     // a hashtag page is the closest honest equivalent.
-    instagram: `https://www.instagram.com/explore/tags/${encodeURIComponent(
-      brandName.split(/\s+/)[0]?.toLowerCase().replace(/[^a-z0-9]/g, "") || "skincare",
-    )}/`,
+    instagram: `https://www.instagram.com/explore/tags/${instagramTag(brandName)}/`,
   };
+}
+
+// First real word of the name: skips numbers and fragments like "100%" or
+// "5", which produced meaningless tags such as #100.
+function instagramTag(brandName: string): string {
+  const word = brandName
+    .toLowerCase()
+    .split(/[^a-z]+/)
+    .find((w) => w.length >= 3);
+  return word ?? "skincare";
 }

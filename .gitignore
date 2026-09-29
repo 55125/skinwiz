@@ -1,6 +1,10 @@
 node_modules/
 .env
-.env.local
+.env.*
+# Also listed in app/.gitignore; repeated at the root so `railway up`
+# (which reads ignore files) can never upload a local database with user data.
+app/data/*.db
+app/data/*.db-*
 __pycache__/
 *.pyc
 .DS_Store

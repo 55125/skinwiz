@@ -1,7 +1,8 @@
 // Populates active_chem_data with a PubChem CID + molecular formula per
-// active, via PubChem's free, no-auth PUG REST API. Opt-in and manual --
-// not run automatically, since this is enrichment metadata, not reference
-// data that needs to exist before the app can function.
+// active, via PubChem's free, no-auth PUG REST API. Runs on every boot
+// (Dockerfile CMD) but is allowed to fail -- this is enrichment metadata,
+// not reference data the app needs to function -- and skips actives it
+// has already resolved.
 //
 // Deliberately doesn't pull PubChem's "Record Description" text (PUG
 // View) -- that's someone else's written prose, often toxicology-report

@@ -1,11 +1,9 @@
 import type { MetadataRoute } from "next";
 import { db } from "@/db/client";
 import { products, concerns } from "@/db/schema";
+import { siteUrl } from "@/lib/site-url";
 
-// NEXT_PUBLIC_SITE_URL isn't set anywhere yet — there's no deployed domain
-// (project.md §11 open decision). Falls back to localhost so this doesn't
-// crash in dev; set the env var once a real domain exists.
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+const STATIC_PAGES = ["/browse", "/routines", "/about", "/for-clinicians"];
 
 // Force dynamic (query the DB per-request) rather than the default static
 // generation: a static sitemap would be computed once at build time,
@@ -20,9 +18,11 @@ export const dynamic = "force-dynamic";
 export default function sitemap(): MetadataRoute.Sitemap {
   const concernRows = db.select({ id: concerns.id }).from(concerns).all();
   const productRows = db.select({ id: products.id }).from(products).all();
+  const SITE_URL = siteUrl();
 
   return [
     { url: SITE_URL, changeFrequency: "weekly", priority: 1 },
+    ...STATIC_PAGES.map((path) => ({ url: `${SITE_URL}${path}`, changeFrequency: "weekly" as const, priority: 0.7 })),
     ...concernRows.map((c) => ({
       url: `${SITE_URL}/concern/${c.id}`,
       changeFrequency: "daily" as const,

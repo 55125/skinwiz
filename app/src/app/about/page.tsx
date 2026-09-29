@@ -1,5 +1,11 @@
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "About & methodology — SkinWiz",
+  description: "How SkinWiz scores skincare products, where its data comes from, and what it is not.",
+};
 
 export default function AboutPage() {
   return (
@@ -21,9 +27,10 @@ export default function AboutPage() {
         </p>
         <ul className="list-disc pl-5 text-sm text-muted-foreground space-y-1">
           <li>
-            <strong className="text-foreground">Derm Score</strong> — from a verified panel of
-            board-certified dermatologists (ABD/AOBD certification and NPI confirmed before anyone can
-            rate). Not shown until at least 5 dermatologists have rated a product for a given concern.
+            <strong className="text-foreground">Derm Score</strong> — from a panel of board-certified
+            dermatologists whose ABD/AOBD certification and NPI will be verified before they can rate.
+            The panel hasn&apos;t launched yet, so no product has a Derm Score today. Once it does, a score
+            is only shown after at least 5 dermatologists have rated a product for a given concern.
           </li>
           <li>
             <strong className="text-foreground">Audience Score</strong> — the percentage of people who

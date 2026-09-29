@@ -23,13 +23,22 @@ for `drizzle-orm/postgres-js` in `src/db/client.ts`, nothing else changes.
 
 ```bash
 npm install
-npm run db:push    # creates data/skinwiz.db from src/db/schema.ts
+npm run db:migrate # creates/upgrades data/skinwiz.db from drizzle/ migrations
 npm run db:seed    # loads the real openFDA catalog + demo affiliate data
 npm run dev
 ```
 
-Re-run `db:seed` any time — it wipes and reloads catalog/reference data
-(concerns, actives, products, affiliate links), but **not** `dermRatings`,
+**Schema changes:** edit `src/db/schema.ts`, run `npm run db:generate`,
+and review the SQL it writes to `drizzle/` before committing — that file
+is exactly what runs against production on the next boot. Don't use
+`drizzle-kit push`: it bypasses the migration history.
+
+Re-run `db:seed` any time — it reloads catalog/reference data (concerns,
+actives, products, affiliate links) inside one transaction, so a failure
+rolls back to the previous catalog. Rows in derived tables (`ewg_scores`,
+`video_links`) for products that left the catalog are deleted, and
+routine steps linked to them keep their text but lose the link. It does
+**not** touch `dermRatings`,
 `audienceOutcomes`, `dermRaters`, or `rater_applications` — those are real
 user-submitted data once they exist, and this script runs on every deploy
 (see the repo-root `Dockerfile`), so wiping them there would mean losing
@@ -46,8 +55,10 @@ needs `tools/` alongside `app/` for that to keep working unchanged.
 - **Persistent volume** mounted at `/data`; `DATABASE_PATH=/data/skinwiz.db`
   env var (see `src/db/client.ts`) points SQLite at it instead of the
   container's ephemeral filesystem, which is wiped on every redeploy.
-- **Startup command** runs `db:push` (idempotent schema sync) then
-  `db:seed` then `next start` on every boot — see the note above on why
+- **Startup command** runs `db:migrate` (applies pending `drizzle/`
+  migrations; a database created by the old `db:push` flow is adopted by
+  marking the baseline as applied) then `db:seed` then `next start` on
+  every boot — see the note above on why
   that's safe for catalog data but must never touch the user-data tables.
 - **`/` and `/sitemap.xml` are forced dynamic** (`export const dynamic =
   "force-dynamic"`) rather than statically generated. The Docker build

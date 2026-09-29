@@ -1,0 +1,2 @@
+CREATE UNIQUE INDEX IF NOT EXISTS `audience_outcomes_product_concern_session_idx` ON `audience_outcomes` (`product_id`,`concern_id`,`session_id`);--> statement-breakpoint
+CREATE UNIQUE INDEX IF NOT EXISTS `derm_ratings_product_concern_rater_idx` ON `derm_ratings` (`product_id`,`concern_id`,`rater_id`);

@@ -1,6 +1,6 @@
 import { defineConfig } from "drizzle-kit";
 
-// Same DATABASE_PATH env var as src/db/client.ts, so `db:push` targets the
+// Same DATABASE_PATH env var as src/db/client.ts, so drizzle-kit targets the
 // same file the app actually reads/writes -- a mounted volume in
 // production, ./data/skinwiz.db locally.
 export default defineConfig({

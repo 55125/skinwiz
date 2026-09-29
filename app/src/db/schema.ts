@@ -175,27 +175,39 @@ export const dermRaters = sqliteTable("derm_raters", {
 });
 
 // Per-concern, per-product derm score submissions. Empty at seed time.
-export const dermRatings = sqliteTable("derm_ratings", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
-  productId: text("product_id").notNull().references(() => products.id),
-  concernId: text("concern_id").notNull().references(() => concerns.id),
-  raterId: integer("rater_id").notNull().references(() => dermRaters.id),
-  score: integer("score").notNull(), // 0-100
-  rubricJson: text("rubric_json", { mode: "json" }).$type<Record<string, number>>(),
-  createdAt: text("created_at").notNull().default(sql`(current_timestamp)`),
-});
+// One row per rater per (product, concern), so MIN_DERM_RATERS counts
+// distinct dermatologists rather than submissions.
+export const dermRatings = sqliteTable(
+  "derm_ratings",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    productId: text("product_id").notNull().references(() => products.id),
+    concernId: text("concern_id").notNull().references(() => concerns.id),
+    raterId: integer("rater_id").notNull().references(() => dermRaters.id),
+    score: integer("score").notNull(), // 0-100
+    rubricJson: text("rubric_json", { mode: "json" }).$type<Record<string, number>>(),
+    createdAt: text("created_at").notNull().default(sql`(current_timestamp)`),
+  },
+  (table) => [uniqueIndex("derm_ratings_product_concern_rater_idx").on(table.productId, table.concernId, table.raterId)],
+);
 
 // First-party outcome logging (project.md §5: "audience side = outcome
 // score ... not scraped stars"). Empty at seed time — no users yet.
-export const audienceOutcomes = sqliteTable("audience_outcomes", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
-  productId: text("product_id").notNull().references(() => products.id),
-  concernId: text("concern_id").notNull().references(() => concerns.id),
-  sessionId: text("session_id").notNull(),
-  improved: integer("improved", { mode: "boolean" }).notNull(),
-  weeksUsed: integer("weeks_used"),
-  createdAt: text("created_at").notNull().default(sql`(current_timestamp)`),
-});
+export const audienceOutcomes = sqliteTable(
+  "audience_outcomes",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    productId: text("product_id").notNull().references(() => products.id),
+    concernId: text("concern_id").notNull().references(() => concerns.id),
+    sessionId: text("session_id").notNull(),
+    improved: integer("improved", { mode: "boolean" }).notNull(),
+    weeksUsed: integer("weeks_used"),
+    createdAt: text("created_at").notNull().default(sql`(current_timestamp)`),
+  },
+  (table) => [
+    uniqueIndex("audience_outcomes_product_concern_session_idx").on(table.productId, table.concernId, table.sessionId),
+  ],
+);
 
 // Interest submissions from the /for-clinicians page — reviewed manually
 // before anyone is added to dermRaters (NPI/ABD verification is a manual

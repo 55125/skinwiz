@@ -1,6 +1,12 @@
 import { RoutineForm } from "@/components/routine-form";
 import { RoutineDisclaimer } from "@/components/routine-disclaimer";
 import { getConcerns } from "@/lib/queries";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Post a routine — SkinWiz",
+  robots: { index: false },
+};
 
 // Force dynamic for the same reason as "/" and "/sitemap.xml" — this
 // reads getConcerns() from the DB, and the Docker build runs before

@@ -1,6 +1,6 @@
 import { and, eq, inArray, sql, type SQL } from "drizzle-orm";
 import { db } from "@/db/client";
-import { concerns, products, actives, evidenceNotes, affiliateLinks, videoLinks, activeChemData } from "@/db/schema";
+import { concerns, products, actives, evidenceNotes, affiliateLinks, videoLinks, activeChemData, ewgScores } from "@/db/schema";
 import { concernIdToNiche } from "@/db/actives";
 
 // Shared by getProductsForConcern and searchProducts -- one LIKE per
@@ -101,6 +101,13 @@ export function getEvidenceNotesForActives(activeIds: string[], concernId: strin
     .leftJoin(activeChemData, eq(activeChemData.activeId, evidenceNotes.activeId))
     .where(and(inArray(evidenceNotes.activeId, activeIds), eq(evidenceNotes.concernId, concernId)))
     .all();
+}
+
+// EWG Skin Deep's own hazard score, keyed 1:1 by productId (unlike
+// activeChemData, which is per-active) -- see db/enrich-ewg.ts. Missing
+// row means unmatched/unassessed, not a guessed score.
+export function getEwgScoreForProduct(productId: string) {
+  return db.select().from(ewgScores).where(eq(ewgScores.productId, productId)).get();
 }
 
 export function getAffiliateLinksForProduct(productId: string) {

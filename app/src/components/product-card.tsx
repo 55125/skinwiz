@@ -5,12 +5,15 @@ import { DualScoreBadges } from "@/components/score-badge";
 import { getDermScore, getAudienceScore } from "@/lib/scoring";
 import { dataSourceBadge } from "@/lib/data-source";
 import { getFreeFromCheck } from "@/db/ingredient-flags";
+import { getEwgScoreForProduct } from "@/lib/queries";
+import { ewgHazardBadge } from "@/lib/ewg";
 import type { products } from "@/db/schema";
 
 export function ProductCard({ product }: { product: typeof products.$inferSelect }) {
   const dermScore = getDermScore(product.id, product.concernId);
   const audienceScore = getAudienceScore(product.id, product.concernId);
   const sourceBadge = dataSourceBadge(product.dataSource);
+  const ewgScore = getEwgScoreForProduct(product.id);
   // Capped at 2 on the card -- a product can match up to a dozen of these,
   // which would drown out everything else in a small card; the full list
   // is on the product detail page instead.
@@ -67,6 +70,11 @@ export function ProductCard({ product }: { product: typeof products.$inferSelect
               ))}
               {extraFlagCount > 0 && <Badge variant="outline">+{extraFlagCount} more</Badge>}
             </div>
+          )}
+          {ewgScore && (
+            <Badge variant="outline" className={ewgHazardBadge(ewgScore.ewgScore).className}>
+              {ewgHazardBadge(ewgScore.ewgScore).label}
+            </Badge>
           )}
           <DualScoreBadges dermScore={dermScore} audienceScore={audienceScore} />
         </CardContent>

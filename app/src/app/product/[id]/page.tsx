@@ -13,12 +13,14 @@ import {
   getEvidenceNotesForActives,
   getAffiliateLinksForProduct,
   getVideoLinksForProduct,
+  getEwgScoreForProduct,
   getConcern,
 } from "@/lib/queries";
 import { getDermScore, getAudienceScore } from "@/lib/scoring";
 import { getVideoSearchLinks } from "@/lib/video-links";
 import { dataSourceBadge } from "@/lib/data-source";
 import { getFreeFromCheck } from "@/db/ingredient-flags";
+import { ewgHazardBadge } from "@/lib/ewg";
 
 // These canonical active ids are deliberately a family of several distinct
 // real compounds grouped under one consumer-facing name (see the comments
@@ -53,6 +55,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
   const dermScore = getDermScore(product.id, product.concernId);
   const audienceScore = getAudienceScore(product.id, product.concernId);
   const sourceBadge = dataSourceBadge(product.dataSource);
+  const ewgScore = getEwgScoreForProduct(product.id);
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-10 space-y-8">
@@ -84,6 +87,22 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
       )}
 
       <DualScoreBadges dermScore={dermScore} audienceScore={audienceScore} />
+
+      {ewgScore && (
+        <a
+          href={ewgScore.ewgProductUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex w-fit items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs hover:bg-muted"
+        >
+          <Badge variant="outline" className={ewgHazardBadge(ewgScore.ewgScore).className}>
+            {ewgHazardBadge(ewgScore.ewgScore).label}
+          </Badge>
+          <span className="text-muted-foreground">
+            EWG Skin Deep hazard score{ewgScore.dataAvailability ? ` · ${ewgScore.dataAvailability} data` : ""} →
+          </span>
+        </a>
+      )}
 
       {product.dataSource === "open_beauty_facts" && (
         <Alert className="border-amber-300 bg-amber-50 dark:border-amber-900 dark:bg-amber-950/40">

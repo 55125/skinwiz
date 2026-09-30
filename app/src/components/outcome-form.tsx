@@ -71,7 +71,7 @@ export function OutcomeForm({
       <div className="space-y-1">
         <h2 className="font-semibold">Used this for {concernName.toLowerCase()}? Log your result</h2>
         <p className="text-sm text-muted-foreground">
-          Anonymous, one answer per visitor. Your answer feeds the Audience Score once 10 people have logged
+          Anonymous, one answer per visitor. Your answer feeds the User Score once 10 people have logged
           an outcome — real reported results, not store reviews.
         </p>
       </div>
@@ -106,8 +106,11 @@ export function OutcomeForm({
         </div>
       )}
 
+      {/* Hidden until an answer is picked -- a disabled pale button read as
+          broken rather than "choose first". */}
+      {improved !== null && (
       <div className="flex items-center gap-3">
-        <Button type="button" onClick={submit} disabled={improved === null || isPending || saved} className="rounded-full px-5">
+        <Button type="button" onClick={submit} disabled={isPending || saved} className="rounded-full px-5">
           {saved ? (
             <>
               <Check className="h-4 w-4" /> Saved
@@ -120,6 +123,7 @@ export function OutcomeForm({
         </Button>
         {error && <p className="text-sm text-destructive">{error}</p>}
       </div>
+      )}
       <p className="text-xs text-muted-foreground">
         Not medical advice and not a review of your skin — an outcome you report about a product you chose to
         use. Stop and see a board-certified dermatologist if anything gets worse.

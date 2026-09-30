@@ -33,7 +33,7 @@ export default function AboutPage() {
             is only shown after at least 5 dermatologists have rated a product for a given concern.
           </li>
           <li>
-            <strong className="text-foreground">Audience Score</strong> — the percentage of people who
+            <strong className="text-foreground">User Score</strong> — the percentage of people who
             reported improvement after using the product, logged directly on SkinWiz rather than pulled
             from retailer star ratings. Not shown until at least 10 people have logged an outcome.
           </li>
@@ -66,7 +66,7 @@ export default function AboutPage() {
         <p className="text-sm text-muted-foreground">
           Some product links are affiliate links, and we may earn a commission if you buy through them, at
           no extra cost to you. This is disclosed next to every such link, not just here. Commercial
-          relationships never influence Derm Score or Audience Score.
+          relationships never influence Derm Score or User Score.
         </p>
       </section>
 

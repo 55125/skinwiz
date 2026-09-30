@@ -85,6 +85,35 @@ export default async function CheckPage({ searchParams }: { searchParams: Promis
         </div>
       </form>
 
+      {!text && (
+        <section aria-labelledby="what-we-check" className="space-y-4">
+          <h2 id="what-we-check" className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+            What we check
+          </h2>
+          <div className="grid gap-3 sm:grid-cols-3">
+            {GROUPS.map((g) => {
+              const checks = FREE_FROM_CHECKS.filter((c) => c.category === g.category);
+              return (
+                <div key={g.category} className="space-y-2 rounded-2xl border bg-card p-4">
+                  <h3 className="text-sm font-semibold">{g.title}</h3>
+                  <p className="text-xs text-muted-foreground">{checks.length} checks, including</p>
+                  <ul className="flex flex-wrap gap-1">
+                    {checks.slice(0, 4).map((c) => (
+                      <li key={c.id}>
+                        <Badge variant="secondary">{c.label}</Badge>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              );
+            })}
+          </div>
+          <p className="text-sm text-muted-foreground">
+            You&apos;ll also see which products in the catalog share the most ingredients with your list.
+          </p>
+        </section>
+      )}
+
       {text && !enough && (
         <p className="rounded-xl border border-dashed p-4 text-sm text-muted-foreground">
           We could only read {items.length} ingredient{items.length === 1 ? "" : "s"} from that. Paste the full list,

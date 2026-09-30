@@ -11,6 +11,7 @@ import { avoidVerdict, avoidedIngredientName } from "@/lib/avoid";
 import { MatchBadge } from "@/components/match-badge";
 import type { Match } from "@/lib/profile-shared";
 import { describeStrengths } from "@/lib/strength-display";
+import { displayManufacturer } from "@/lib/format";
 import type { products } from "@/db/schema";
 
 export function ProductCard({
@@ -30,11 +31,11 @@ export function ProductCard({
   const avoid = avoidVerdict(product.freeFromFlags, avoidIds);
   const avoidConflicts = avoid?.status === "conflicts" ? avoid.conflicts : [];
   const strengthLine = describeStrengths(product.strengths, product.activeIds);
-  // Capped at 2 on the card -- a product can match up to a dozen of these,
+  // Capped at 1 on the card -- a product can match up to a dozen of these,
   // which would drown out everything else in a small card; the full list
   // is on the product detail page instead.
   const freeFromFlags = product.freeFromFlags ?? [];
-  const shownFlags = freeFromFlags.slice(0, 2);
+  const shownFlags = freeFromFlags.slice(0, 1);
   const extraFlagCount = freeFromFlags.length - shownFlags.length;
 
   return (
@@ -43,38 +44,45 @@ export function ProductCard({
       className="group flex h-full flex-col overflow-hidden rounded-2xl border bg-card transition-all hover:-translate-y-0.5 hover:border-brand/40 hover:shadow-lg hover:shadow-brand/5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
     >
       {/* Only openBeautyFacts/brand_direct rows have a real photo (see
-          schema.ts's products.imageUrl comment) -- FDA-sourced products,
-          the large majority, fall through to the placeholder below
-          rather than showing a broken image or a stock photo. */}
-      <div
-        className={`relative flex w-full items-center justify-center overflow-hidden bg-gradient-to-br from-muted to-secondary ${product.imageUrl ? "aspect-[4/3]" : "h-24"}`}
-      >
-        {product.imageUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element -- mix of same-origin (brand-direct, self-hosted -- see tools/catalog_pipeline/build_brand_direct_catalog.py) and external OBF-hosted photos; not worth a next/image remotePatterns allowlist for the OBF case alone
+          schema.ts's products.imageUrl comment). FDA-sourced products, the
+          large majority, get no image band at all -- a grid of identical
+          grey placeholders reads as missing content, so the dosage form
+          moves into the text block instead. */}
+      {product.imageUrl && (
+        <div className="relative flex aspect-[4/3] w-full items-center justify-center overflow-hidden bg-gradient-to-br from-muted to-secondary">
+          {/* eslint-disable-next-line @next/next/no-img-element -- mix of same-origin (brand-direct, self-hosted -- see tools/catalog_pipeline/build_brand_direct_catalog.py) and external OBF-hosted photos; not worth a next/image remotePatterns allowlist for the OBF case alone */}
           <img
             src={product.imageUrl}
             alt={product.brandName}
             className="h-full w-full object-contain p-4 transition-transform duration-300 group-hover:scale-[1.03]"
             loading="lazy"
           />
-        ) : (
-          <div className="flex items-center gap-2 text-muted-foreground">
-            <FlaskConical className="h-5 w-5" strokeWidth={1.5} />
-            <span className="text-xs capitalize">{product.dosageForm ? product.dosageForm.toLowerCase() : "No photo yet"}</span>
-          </div>
-        )}
-        {sourceBadge && (
-          <Badge variant="outline" className={`absolute left-3 top-3 bg-card/90 backdrop-blur ${sourceBadge.className}`}>
-            {sourceBadge.label}
-          </Badge>
-        )}
-      </div>
+          {sourceBadge && (
+            <Badge variant="outline" className={`absolute left-3 top-3 bg-card/90 backdrop-blur ${sourceBadge.className}`}>
+              {sourceBadge.label}
+            </Badge>
+          )}
+        </div>
+      )}
 
       <div className="flex flex-1 flex-col gap-3 p-4">
         <div className="space-y-1">
+          {!product.imageUrl && (
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-soft px-2 py-0.5 text-[11px] font-medium capitalize text-brand-foreground">
+                <FlaskConical className="h-3 w-3" strokeWidth={2} />
+                {product.dosageForm ? product.dosageForm.toLowerCase() : "OTC product"}
+              </span>
+              {sourceBadge && (
+                <Badge variant="outline" className={sourceBadge.className}>
+                  {sourceBadge.label}
+                </Badge>
+              )}
+            </div>
+          )}
           {product.manufacturer && (
             <p className="truncate text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-              {product.manufacturer}
+              {displayManufacturer(product.manufacturer)}
             </p>
           )}
           <h3 className="line-clamp-2 text-[15px] font-semibold leading-snug" title={product.brandName}>
@@ -117,6 +125,8 @@ export function ProductCard({
 
         {(shownFlags.length > 0 || ewgScore || (product.dosageForm && product.imageUrl)) && (
           <div className="flex flex-wrap gap-1">
+            {/* Kept to one line: one named flag plus a count, so the count
+                never wraps onto a row of its own in a 3-column grid. */}
             {product.dosageForm && product.imageUrl && <Badge variant="secondary">{product.dosageForm}</Badge>}
             {ewgScore && (
               <Badge variant="outline" className={ewgHazardBadge(ewgScore.ewgScore).className}>
@@ -128,13 +138,22 @@ export function ProductCard({
                 {getFreeFromCheck(id)?.label ?? id}
               </Badge>
             ))}
-            {extraFlagCount > 0 && <Badge variant="outline">+{extraFlagCount} more</Badge>}
+            {extraFlagCount > 0 && (
+              <Badge variant="outline" className="text-muted-foreground" title={`${extraFlagCount} more ingredient-based filters`}>
+                +{extraFlagCount} more
+              </Badge>
+            )}
           </div>
         )}
 
-        <div className="mt-auto border-t pt-3">
-          <DualScoreBadges dermScore={scores.derm} audienceScore={scores.audience} compact />
-        </div>
+        {/* Hidden until at least one score exists -- a row of dashes on
+            every card is noise; the product page still explains what's
+            needed before a score appears. */}
+        {(scores.derm.status === "scored" || scores.audience.status === "scored") && (
+          <div className="mt-auto border-t pt-3">
+            <DualScoreBadges dermScore={scores.derm} audienceScore={scores.audience} compact />
+          </div>
+        )}
       </div>
     </Link>
   );

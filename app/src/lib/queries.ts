@@ -336,7 +336,7 @@ export function suggestIngredients(q: string, limit = 4) {
 }
 
 // "Top" here means "verified-tier first, then a rotating sample" — there's
-// no real popularity or quality signal yet (Derm Score / Audience Score are
+// no real popularity or quality signal yet (Derm Score / User Score are
 // still empty for every product, see lib/scoring.ts), so this deliberately
 // does NOT claim to be a quality ranking. The UI must caption it honestly.
 // RANDOM() within each tier gives a rotating showcase rather than the same

@@ -58,14 +58,14 @@ export function DualScoreBadges({
     return (
       <div className="flex items-center gap-4 text-xs">
         <CompactScore icon={<Stethoscope className="h-3.5 w-3.5 text-sky-600" />} label="Derm" result={dermScore} />
-        <CompactScore icon={<Users className="h-3.5 w-3.5 text-violet-600" />} label="Audience" result={audienceScore} />
+        <CompactScore icon={<Users className="h-3.5 w-3.5 text-violet-600" />} label="User" result={audienceScore} />
       </div>
     );
   }
   return (
     <div className="flex flex-wrap gap-3">
       <ScoreBadge icon={<Stethoscope className="h-4 w-4 text-sky-600" />} label="Derm Score" result={dermScore} />
-      <ScoreBadge icon={<Users className="h-4 w-4 text-violet-600" />} label="Audience Score" result={audienceScore} />
+      <ScoreBadge icon={<Users className="h-4 w-4 text-violet-600" />} label="User Score" result={audienceScore} />
     </div>
   );
 }

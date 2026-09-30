@@ -11,6 +11,22 @@ const FOOTER_LINKS = [
     ],
   },
   {
+    heading: "Tools",
+    links: [
+      { href: "/check", label: "Ingredient checker" },
+      { href: "/ingredients", label: "Ingredient library" },
+      { href: "/compare", label: "Compare products" },
+    ],
+  },
+  {
+    heading: "You",
+    links: [
+      { href: "/profile", label: "My skin" },
+      { href: "/shelf", label: "My shelf" },
+      { href: "/avoid", label: "My avoid list" },
+    ],
+  },
+  {
     heading: "SkinWiz",
     links: [
       { href: "/about", label: "About & methodology" },
@@ -23,8 +39,8 @@ export function SiteFooter() {
   return (
     <footer className="mt-24 border-t bg-muted/40">
       <div className="mx-auto max-w-6xl px-4 py-12">
-        <div className="grid gap-10 md:grid-cols-[1.4fr_1fr_1fr]">
-          <div className="space-y-3">
+        <div className="grid gap-10 grid-cols-2 md:grid-cols-[1.6fr_1fr_1fr_1fr_1fr]">
+          <div className="col-span-2 space-y-3 md:col-span-1">
             <SiteLogo />
             <p className="max-w-sm text-sm text-muted-foreground">
               OTC skincare, matched ingredient by ingredient — scored by dermatologists and by real
@@ -59,7 +75,7 @@ export function SiteFooter() {
           <p>
             <strong className="text-foreground">Affiliate disclosure.</strong> Some product links on this site
             are affiliate links — we may earn a commission if you buy through them, at no extra cost to you.
-            This never affects Derm Score or Audience Score, which are independent of any commercial
+            This never affects Derm Score or User Score, which are independent of any commercial
             relationship.
           </p>
         </div>

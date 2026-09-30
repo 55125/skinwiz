@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { AlertTriangle, ChevronLeft, ExternalLink, FlaskConical, PlaySquare, Music2, Camera, ShieldCheck } from "lucide-react";
+import { AlertTriangle, ChevronLeft, ExternalLink, FlaskConical, Info, PlaySquare, Music2, Camera, ShieldCheck } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -37,13 +37,16 @@ import { getShelfEntry } from "@/lib/shelf";
 import { MatchBadge } from "@/components/match-badge";
 import { avoidLabelsFor, hasProfile, matchProduct, readProfile } from "@/lib/profile";
 import { pubchemLinkText } from "@/lib/pubchem";
+import { displayManufacturer, tidyIngredientName } from "@/lib/format";
+
+const FREE_FROM_BADGE = "border-emerald-300 text-emerald-700 dark:border-emerald-900 dark:text-emerald-400";
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
   const product = getProduct(decodeURIComponent(id));
   if (!product) return {};
   const description = product.activeIngredientText
-    ? `${product.brandName} — ${product.activeIngredientText}. Derm Score and Audience Score on SkinWiz.`
+    ? `${product.brandName} — ${product.activeIngredientText}. Derm Score and User Score on SkinWiz.`
     : `${product.brandName} on SkinWiz.`;
   return {
     title: `${product.brandName} — SkinWiz`,
@@ -122,7 +125,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
         <div className="space-y-6">
           <div className="space-y-3">
             {product.manufacturer && (
-              <p className="text-xs font-semibold uppercase tracking-wider text-brand">{product.manufacturer}</p>
+              <p className="text-xs font-semibold uppercase tracking-wider text-brand">{displayManufacturer(product.manufacturer)}</p>
             )}
             <h1 className="text-3xl font-semibold leading-tight sm:text-4xl">{product.brandName}</h1>
             <div className="flex flex-wrap gap-2">
@@ -294,17 +297,29 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
               <h2 className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                 Ingredient-based filters this matches
               </h2>
-              <div className="flex flex-wrap gap-1.5">
-                {product.freeFromFlags.map((id) => (
-                  <Badge
-                    key={id}
-                    variant="outline"
-                    className="border-emerald-300 text-emerald-700 dark:border-emerald-900 dark:text-emerald-400"
-                  >
-                    {getFreeFromCheck(id)?.label ?? id}
-                  </Badge>
-                ))}
-              </div>
+              {/* First 6 inline, the rest behind a native disclosure -- 20+
+                  chips in a block buried the ingredient list above. */}
+              <details className="group/ff">
+                <summary className="flex cursor-pointer list-none flex-wrap gap-1.5 [&::-webkit-details-marker]:hidden">
+                  {product.freeFromFlags.slice(0, 6).map((id) => (
+                    <Badge key={id} variant="outline" className={FREE_FROM_BADGE}>
+                      {getFreeFromCheck(id)?.label ?? id}
+                    </Badge>
+                  ))}
+                  {product.freeFromFlags.length > 6 && (
+                    <span className="text-xs font-medium text-brand group-open/ff:hidden">
+                      Show all {product.freeFromFlags.length} →
+                    </span>
+                  )}
+                </summary>
+                <div className="mt-1.5 flex flex-wrap gap-1.5">
+                  {product.freeFromFlags.slice(6).map((id) => (
+                    <Badge key={id} variant="outline" className={FREE_FROM_BADGE}>
+                      {getFreeFromCheck(id)?.label ?? id}
+                    </Badge>
+                  ))}
+                </div>
+              </details>
               {flaggedSkin.some((f) => f.hits.length > 0) && (
                 <div className="mt-3 space-y-1.5 text-xs text-muted-foreground">
                   {flaggedSkin
@@ -312,7 +327,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
                     .map(({ check, hits }) => (
                       <p key={check.id}>
                         <span className="font-medium text-foreground">Not {check.label.toLowerCase()}:</span>{" "}
-                        {hits.slice(0, 6).join(", ")}
+                        {hits.slice(0, 6).map(tidyIngredientName).join(", ")}
                         {hits.length > 6 ? ` +${hits.length - 6} more` : ""}
                       </p>
                     ))}
@@ -330,14 +345,15 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
       <div
         className={
           product.dataSource === "open_beauty_facts" || product.dataSource === "brand_direct"
-            ? "grid gap-4 md:grid-cols-2"
+            ? "grid gap-3 md:grid-cols-2 md:items-start"
             : undefined
         }
       >
       {product.dataSource === "open_beauty_facts" && (
-        <Alert className="border-amber-300 bg-amber-50 dark:border-amber-900 dark:bg-amber-950/40">
+        <Alert className="border-dashed bg-transparent">
+          <Info className="h-4 w-4 text-amber-600" />
           <AlertTitle>Community-sourced listing, not FDA-verified</AlertTitle>
-          <AlertDescription>
+          <AlertDescription className="text-[13px]">
             This product&apos;s data comes from Open Beauty Facts, a crowd-edited database — anyone can
             submit or edit an entry. Unlike the rest of the catalog, this listing hasn&apos;t been
             independently verified. Ingredient names and amounts may be incomplete or inaccurate.
@@ -346,10 +362,11 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
       )}
 
       {product.dataSource === "brand_direct" && (
-        <Alert className="border-sky-300 bg-sky-50 dark:border-sky-900 dark:bg-sky-950/40">
+        <Alert className="bg-transparent">
+          <Info className="h-4 w-4 text-sky-600" />
           <AlertTitle>Sourced directly from the manufacturer</AlertTitle>
-          <AlertDescription>
-            This ingredient list comes from {product.manufacturer || "the brand"}&apos;s own published
+          <AlertDescription className="text-[13px]">
+            This ingredient list comes from {product.manufacturer ? displayManufacturer(product.manufacturer) : "the brand"}&apos;s own published
             product page, not a crowd-edited database. It isn&apos;t an FDA drug filing (this active has
             no OTC monograph status), but it is the manufacturer&apos;s own disclosed claim.
           </AlertDescription>
@@ -423,14 +440,14 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
             {similar.map((s) => (
-              <div key={s.product.id} className="flex items-center justify-between gap-3 rounded-xl border bg-card p-4">
+              <div key={s.product.id} className="flex min-w-0 items-center justify-between gap-3 rounded-xl border bg-card p-4">
                 <div className="min-w-0">
                   <Link href={`/product/${encodeURIComponent(s.product.id)}`} className="block truncate font-medium hover:underline">
                     {s.product.brandName}
                   </Link>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="truncate text-xs text-muted-foreground">
                     {Math.round(s.score * 100)}% match · {s.shared} shared ingredients
-                    {s.product.manufacturer ? ` · ${s.product.manufacturer}` : ""}
+                    {s.product.manufacturer ? ` · ${displayManufacturer(s.product.manufacturer)}` : ""}
                   </p>
                 </div>
                 <Link
@@ -561,7 +578,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
         </div>
         <p className="text-xs italic text-muted-foreground">
           These are search links, not vetted reviews — SkinWiz doesn&apos;t screen or endorse social
-          content. Only Derm Score and Audience Score above reflect verified feedback.
+          content. Only Derm Score and User Score above reflect verified feedback.
         </p>
       </section>
 

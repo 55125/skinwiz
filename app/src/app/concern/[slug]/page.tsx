@@ -15,7 +15,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   if (!concern) return {};
   return {
     title: `${concern.name} — SkinWiz`,
-    description: `${concern.description} Derm Score and Audience Score for every product.`,
+    description: `${concern.description} Derm Score and User Score for every product.`,
   };
 }
 

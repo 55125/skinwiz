@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { tidyIngredientName } from "@/lib/format";
 
 export type IngredientLink = {
   ingredientId: string;
@@ -8,7 +9,8 @@ export type IngredientLink = {
 };
 
 // Every ingredient links to its own page. Tracked actives are set in bold so
-// the eye finds them in a 30-item INCI list; the label's own spelling is kept.
+// the eye finds them in a 30-item INCI list. ALL-CAPS labels are shown in
+// title case for readability; mixed-case spellings are kept as printed.
 export function IngredientList({
   items,
   className,
@@ -33,7 +35,7 @@ export function IngredientList({
               dislikes.includes(item.ingredientId) && "bg-red-100 text-red-900 decoration-red-400 dark:bg-red-950/50 dark:text-red-300",
             )}
           >
-            {item.rawName}
+            {tidyIngredientName(item.rawName)}
           </Link>
           {i < items.length - 1 && <span aria-hidden className="text-muted-foreground">,</span>}
         </li>

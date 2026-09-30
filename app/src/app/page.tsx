@@ -72,7 +72,7 @@ export default function Home() {
           </h1>
           <p className="mx-auto mt-5 max-w-xl text-lg text-muted-foreground">
             A <strong className="font-medium text-foreground">Derm Score</strong> from board-certified
-            dermatologists and an <strong className="font-medium text-foreground">Audience Score</strong> from
+            dermatologists and an <strong className="font-medium text-foreground">User Score</strong> from
             real reported outcomes — not a guess from an ingredient list.
           </p>
           <div className="mx-auto mt-8 max-w-2xl">
@@ -139,14 +139,14 @@ export default function Home() {
         <section className="space-y-6">
           <SectionHeader
             title="Featured products"
-            description="No Derm or Audience scores exist yet — featured by data quality, not popularity."
+            description="A rotating selection of brand-sourced listings — a showcase, not a ranking."
             action={{ href: "/browse", label: "Browse all" }}
           />
           <ProductGrid products={topProducts} />
         </section>
 
         <section className="grid gap-6 lg:grid-cols-2">
-          <div className="space-y-5 rounded-2xl border bg-card p-6">
+          <div className="min-w-0 space-y-5 rounded-2xl border bg-card p-6">
             <SectionHeader title="Top actives" description="Most common ingredients across the catalog." />
             <div className="flex flex-wrap gap-2">
               {topActives.map((a) => (
@@ -162,7 +162,7 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="space-y-5 rounded-2xl border bg-card p-6">
+          <div className="min-w-0 space-y-5 rounded-2xl border bg-card p-6">
             <SectionHeader title="Top routines" action={{ href: "/routines", label: "See all" }} />
             {topRoutines.length === 0 ? (
               <p className="text-sm text-muted-foreground">
@@ -203,12 +203,12 @@ export default function Home() {
               {
                 icon: <Stethoscope className="h-5 w-5 text-sky-600" />,
                 title: "Derm Score",
-                body: "Will come from a panel of board-certified dermatologists once it launches — never shown until at least 5 have rated a product.",
+                body: "From a panel of verified, board-certified dermatologists. Shown only once at least 5 have rated a product for a concern.",
               },
               {
                 icon: <Users className="h-5 w-5 text-violet-600" />,
-                title: "Audience Score",
-                body: "Real reported outcomes from people who used the product, not scraped store reviews.",
+                title: "User Score",
+                body: "The share of people who logged that a product actually helped — outcomes reported on SkinWiz, not scraped store reviews.",
               },
               {
                 icon: <ShieldCheck className="h-5 w-5 text-emerald-600" />,

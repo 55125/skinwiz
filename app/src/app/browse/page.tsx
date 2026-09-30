@@ -48,6 +48,8 @@ function SidebarGroup({ title, children }: { title: string; children: React.Reac
 // every filter, all at once, with the filters in a left sidebar -- the
 // conventional e-commerce-catalog layout, requested explicitly rather than
 // reusing the top-chip pattern the other two pages use.
+const ACTIVES_SHOWN = 8;
+
 export default async function BrowsePage({
   searchParams,
 }: {
@@ -122,13 +124,16 @@ export default async function BrowsePage({
       </SidebarGroup>
 
       <SidebarGroup title="Active ingredient">
-        <ul className="max-h-64 space-y-0.5 overflow-y-auto pr-1">
+        {/* First few inline, the rest behind a disclosure (opened when the
+            selected active is in it) -- a short scroll box inside the
+            sidebar cut the list off mid-word. */}
+        <ul className="space-y-0.5">
           <li>
             <SidebarLink href={hrefWith({ active: undefined })} selected={!active}>
               All actives
             </SidebarLink>
           </li>
-          {allActives.map((a) => (
+          {allActives.slice(0, ACTIVES_SHOWN).map((a) => (
             <li key={a.id}>
               <SidebarLink href={hrefWith({ active: a.id })} selected={active === a.id}>
                 {a.canonicalName}
@@ -136,6 +141,24 @@ export default async function BrowsePage({
             </li>
           ))}
         </ul>
+        {allActives.length > ACTIVES_SHOWN && (
+          <details className="group/actives" open={allActives.slice(ACTIVES_SHOWN).some((a) => a.id === active)}>
+            <summary className="mt-1 flex cursor-pointer list-none items-center gap-1 px-3 py-1.5 text-xs font-medium text-brand [&::-webkit-details-marker]:hidden">
+              <span className="group-open/actives:hidden">Show all {allActives.length} actives</span>
+              <span className="hidden group-open/actives:inline">Show fewer</span>
+              <ChevronDown className="h-3.5 w-3.5 transition-transform group-open/actives:rotate-180" />
+            </summary>
+            <ul className="space-y-0.5">
+              {allActives.slice(ACTIVES_SHOWN).map((a) => (
+                <li key={a.id}>
+                  <SidebarLink href={hrefWith({ active: a.id })} selected={active === a.id}>
+                    {a.canonicalName}
+                  </SidebarLink>
+                </li>
+              ))}
+            </ul>
+          </details>
+        )}
       </SidebarGroup>
 
       <FreeFromFilters basePath="/browse" searchParams={{ concern, tier, active, free, sort }} selected={freeFromIds} />

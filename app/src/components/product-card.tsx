@@ -8,6 +8,8 @@ import { getFreeFromCheck } from "@/db/ingredient-flags";
 import type { EwgScore } from "@/lib/queries";
 import { ewgHazardBadge } from "@/lib/ewg";
 import { avoidVerdict, avoidedIngredientName } from "@/lib/avoid";
+import { MatchBadge } from "@/components/match-badge";
+import type { Match } from "@/lib/profile-shared";
 import { describeStrengths } from "@/lib/strength-display";
 import type { products } from "@/db/schema";
 
@@ -16,11 +18,13 @@ export function ProductCard({
   scores,
   ewgScore,
   avoidIds,
+  match = null,
 }: {
   product: typeof products.$inferSelect;
   scores: ProductScores;
   ewgScore: EwgScore | null;
   avoidIds: string[];
+  match?: Match | null;
 }) {
   const sourceBadge = dataSourceBadge(product.dataSource);
   const avoid = avoidVerdict(product.freeFromFlags, avoidIds);
@@ -84,6 +88,12 @@ export function ProductCard({
             )
           )}
         </div>
+
+        {match && (
+          <div className="flex flex-wrap gap-1">
+            <MatchBadge match={match} />
+          </div>
+        )}
 
         {(avoidConflicts.length > 0 || avoid?.status === "clear") && (
           <div className="flex flex-wrap gap-1">

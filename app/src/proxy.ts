@@ -4,6 +4,10 @@ import { clientIp, judge } from "@/lib/anti-scrape";
 
 export function proxy(request: NextRequest) {
   if (process.env.ANTI_SCRAPE === "off") return NextResponse.next();
+  // Owner-only escape hatch for our own automated testing: set the secret in
+  // the environment and send it as this header. Unset (the default) = disabled.
+  const bypass = process.env.ANTI_SCRAPE_BYPASS_TOKEN;
+  if (bypass && bypass.length >= 16 && request.headers.get("x-skinwiz-bypass") === bypass) return NextResponse.next();
   const verdict = judge({
     pathname: request.nextUrl.pathname,
     method: request.method,

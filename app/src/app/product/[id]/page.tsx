@@ -32,6 +32,8 @@ import { monographStatus, formatRange } from "@/db/monograph-ranges";
 import { OutcomeForm } from "@/components/outcome-form";
 import { ProductGrid } from "@/components/product-grid";
 import { IngredientList } from "@/components/ingredient-list";
+import { MatchBadge } from "@/components/match-badge";
+import { avoidLabelsFor, hasProfile, matchProduct, readProfile } from "@/lib/profile";
 import { pubchemLinkText } from "@/lib/pubchem";
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
@@ -62,7 +64,9 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
   ]).get(product.id)!;
   const sourceBadge = dataSourceBadge(product.dataSource);
   const ewgScore = getEwgScoreForProduct(product.id);
-  const avoid = avoidVerdict(product.freeFromFlags, await readAvoidIds());
+  const avoidIds = await readAvoidIds();
+  const avoid = avoidVerdict(product.freeFromFlags, avoidIds);
+  const profile = await readProfile();
   const sessionId = await readSessionId();
   const myOutcome = sessionId ? getSessionOutcome(product.id, product.concernId, sessionId) : null;
   const equivalents = getEquivalentProducts(product);
@@ -73,6 +77,12 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
   const similar = isDrugLabel
     ? []
     : findSimilarProducts(listedIngredients.map((r) => r.ingredientId), { excludeId: product.id, limit: 4 });
+  const match = matchProduct(
+    product,
+    ingredientRows.map((r) => ({ id: r.ingredientId, position: r.position, isActive: r.isActive })),
+    profile,
+    avoidLabelsFor(avoidIds),
+  );
   const flaggedSkin = product.freeFromFlags
     ? FREE_FROM_CHECKS.filter((c) => c.category === "skin" && !product.freeFromFlags!.includes(c.id)).map((c) => ({
         check: c,
@@ -149,6 +159,39 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
             </p>
           )}
 
+          {match ? (
+            <div className="space-y-2.5 rounded-xl border bg-card p-4">
+              <div className="flex flex-wrap items-center gap-2">
+                <h2 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Match for your skin</h2>
+                <MatchBadge match={match} />
+              </div>
+              {match.reasons.length > 0 ? (
+                <ul className="space-y-1 text-sm">
+                  {match.reasons.map((r, i) => (
+                    <li key={i} className={r.tone === "good" ? "text-emerald-700 dark:text-emerald-400" : "text-red-700 dark:text-red-400"}>
+                      {r.tone === "good" ? "+" : "−"} {r.text}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-sm text-muted-foreground">Nothing in this ingredient list stands out for or against your profile.</p>
+              )}
+              <p className="text-xs text-muted-foreground">
+                A rule-based estimate from the published ingredient list and your{" "}
+                <Link href="/profile" className="underline">
+                  profile
+                </Link>
+                , not a prediction of how your skin will react.
+              </p>
+            </div>
+          ) : (
+            !hasProfile(profile) && (
+              <Link href="/profile" className="block rounded-xl border border-dashed px-3.5 py-2.5 text-sm text-muted-foreground hover:bg-muted">
+                Tell us your skin type and concerns to see how well this product matches you →
+              </Link>
+            )
+          )}
+
           {strengthRows.length > 0 && (
             <div className="rounded-xl border bg-card p-4">
               <h2 className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
@@ -215,10 +258,10 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
               {isDrugLabel ? (
                 <>
                   <p className="text-sm leading-relaxed">{product.activeIngredientText}</p>
-                  {labelActives.length > 0 && <IngredientList items={labelActives} className="mt-2" />}
+                  {labelActives.length > 0 && <IngredientList items={labelActives} className="mt-2" likes={profile.likes} dislikes={profile.dislikes} />}
                 </>
               ) : ingredientRows.length > 0 ? (
-                <IngredientList items={ingredientRows} />
+                <IngredientList items={ingredientRows} likes={profile.likes} dislikes={profile.dislikes} />
               ) : (
                 <p className="text-sm leading-relaxed">{product.activeIngredientText}</p>
               )}
@@ -236,7 +279,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
               <h2 className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                 Inactive ingredients (from FDA label)
               </h2>
-              <IngredientList items={listedIngredients} />
+              <IngredientList items={listedIngredients} likes={profile.likes} dislikes={profile.dislikes} />
             </div>
           )}
 

@@ -24,6 +24,8 @@ import { checksFailedByIngredient } from "@/db/ingredient-flags";
 import { MONOGRAPH_RANGES, formatRange } from "@/db/monograph-ranges";
 import { formatPct } from "@/db/strength";
 import { readAvoidIds } from "@/lib/avoid";
+import { readProfile } from "@/lib/profile";
+import { IngredientPreference } from "@/components/ingredient-preference";
 import { pubchemLinkText } from "@/lib/pubchem";
 import { canonicalSlug } from "@/db/ingredient-parse";
 import { ewgHazardBadge } from "@/lib/ewg";
@@ -86,6 +88,8 @@ export default async function IngredientPage({
   const failedChecks = checksFailedByIngredient([ingredient.name, ...ingredient.aliases]);
   const avoidIds = await readAvoidIds();
   const onAvoidList = failedChecks.filter((c) => avoidIds.includes(c.id));
+  const profile = await readProfile();
+  const preference = profile.likes.includes(id) ? "like" : profile.dislikes.includes(id) ? "dislike" : null;
 
   const inciShare = stats.inciLists >= 10 ? Math.round((stats.topFive / stats.inciLists) * 100) : null;
   const avgPos = stats.inciLists >= 10 && stats.avgPosition ? Math.round(stats.avgPosition) : null;
@@ -117,6 +121,7 @@ export default async function IngredientPage({
             <span className="font-medium text-foreground">Also listed as:</span> {ingredient.aliases.join(" · ")}
           </p>
         )}
+        <IngredientPreference id={id} initial={preference} />
       </header>
 
       <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">

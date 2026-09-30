@@ -1,5 +1,4 @@
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Separator } from "@/components/ui/separator";
+import Link from "next/link";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -70,23 +69,16 @@ export default function AboutPage() {
         </p>
       </section>
 
-      <Separator />
-
-      <Alert>
-        <AlertTitle>Terms of Service — draft, pending attorney review</AlertTitle>
-        <AlertDescription>
-          <p className="mt-2">
-            This section is a placeholder. SkinWiz has not yet completed a healthcare regulatory attorney
-            review of its terms, and nothing here should be read as finalized legal language. In the
-            meantime, the substantive commitments below hold:
-          </p>
-          <ul className="mt-2 list-disc pl-5 space-y-1">
-            <li>SkinWiz does not diagnose any medical condition.</li>
-            <li>Using SkinWiz does not create a doctor-patient relationship with any dermatologist on our panel or otherwise affiliated with the site.</li>
-            <li>Nothing on this site should delay or replace seeking care from a board-certified dermatologist.</li>
-          </ul>
-        </AlertDescription>
-      </Alert>
+      <section className="space-y-2">
+        <h2 className="text-lg font-medium">Not medical advice</h2>
+        <p className="text-sm text-muted-foreground">
+          SkinWiz does not diagnose any condition, and using it does not create a doctor-patient relationship
+          with any dermatologist on our panel or otherwise affiliated with the site. Nothing here should delay
+          or replace care from a board-certified dermatologist. See our{" "}
+          <Link href="/terms" className="underline underline-offset-2">Terms of Service</Link> and{" "}
+          <Link href="/privacy" className="underline underline-offset-2">Privacy Policy</Link>.
+        </p>
+      </section>
     </div>
   );
 }

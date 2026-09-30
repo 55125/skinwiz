@@ -5,7 +5,7 @@ import { siteUrl } from "@/lib/site-url";
 import { getPublicIngredientIds } from "@/lib/queries";
 import { FREE_FROM_CHECKS } from "@/db/ingredient-flags";
 
-const STATIC_PAGES = ["/browse", "/ingredients", "/routines", "/check", "/about", "/for-clinicians"];
+const STATIC_PAGES = ["/browse", "/ingredients", "/routines", "/check", "/about", "/for-clinicians", "/privacy", "/terms"];
 
 // Force dynamic (query the DB per-request) rather than the default static
 // generation: a static sitemap would be computed once at build time,

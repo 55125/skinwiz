@@ -19,7 +19,7 @@ export default function robots(): MetadataRoute.Robots {
         ],
         disallow: "/",
       },
-      { userAgent: "*", allow: "/", disallow: ["/api/", "/search"] },
+      { userAgent: "*", allow: "/", disallow: ["/api/", "/search", "/shelf", "/profile", "/avoid"] },
     ],
     sitemap: `${siteUrl()}/sitemap.xml`,
   };

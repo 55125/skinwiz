@@ -7,6 +7,7 @@ import { getIngredientNames, readProfile } from "@/lib/profile";
 export const metadata: Metadata = {
   title: "My skin profile — SkinWiz",
   description: "Set your skin type, concerns and the ingredients you like or dislike, and SkinWiz scores every product against them.",
+  robots: { index: false },
 };
 
 export default async function ProfilePage() {

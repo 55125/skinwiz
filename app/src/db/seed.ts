@@ -384,7 +384,7 @@ function insertIngredients(
 function reconcileOrphans() {
   const missing = (table: string) =>
     sql.raw(`${table}.product_id IS NOT NULL AND ${table}.product_id NOT IN (SELECT id FROM products)`);
-  for (const table of ["ewg_scores", "video_links"]) {
+  for (const table of ["ewg_scores", "video_links", "shelf_items"]) {
     const { changes } = db.run(sql`DELETE FROM ${sql.raw(table)} WHERE ${missing(table)}`);
     if (changes) console.log(`  removed ${changes} orphaned ${table} rows`);
   }

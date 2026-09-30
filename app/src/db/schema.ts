@@ -338,3 +338,23 @@ export const routineReports = sqliteTable(
   // inflating the signal by repeat-clicking, same principle as routine_votes.
   (table) => [uniqueIndex("routine_reports_routine_session_idx").on(table.routineId, table.sessionId)],
 );
+
+// A visitor's personal shelf (no account -- keyed by the anonymous session
+// cookie, like routine votes). One row per (session, product): a product is
+// either something they own, something they want, or a finished "empty".
+// `opened` only means something for status = "own" (sealed vs in use).
+export const shelfItems = sqliteTable(
+  "shelf_items",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    sessionId: text("session_id").notNull(),
+    productId: text("product_id").notNull().references(() => products.id),
+    status: text("status").notNull(), // "own" | "want" | "empty"
+    opened: integer("opened", { mode: "boolean" }).notNull().default(false),
+    updatedAt: text("updated_at").notNull().default(sql`(current_timestamp)`),
+  },
+  (table) => [
+    uniqueIndex("shelf_items_session_product_idx").on(table.sessionId, table.productId),
+    index("shelf_items_session_idx").on(table.sessionId),
+  ],
+);

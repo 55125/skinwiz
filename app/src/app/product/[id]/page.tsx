@@ -32,6 +32,8 @@ import { monographStatus, formatRange } from "@/db/monograph-ranges";
 import { OutcomeForm } from "@/components/outcome-form";
 import { ProductGrid } from "@/components/product-grid";
 import { IngredientList } from "@/components/ingredient-list";
+import { ShelfButton } from "@/components/shelf-button";
+import { getShelfEntry } from "@/lib/shelf";
 import { MatchBadge } from "@/components/match-badge";
 import { avoidLabelsFor, hasProfile, matchProduct, readProfile } from "@/lib/profile";
 import { pubchemLinkText } from "@/lib/pubchem";
@@ -67,6 +69,8 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
   const avoidIds = await readAvoidIds();
   const avoid = avoidVerdict(product.freeFromFlags, avoidIds);
   const profile = await readProfile();
+  const shelfSession = await readSessionId();
+  const shelfEntry = shelfSession ? getShelfEntry(shelfSession, product.id) : undefined;
   const sessionId = await readSessionId();
   const myOutcome = sessionId ? getSessionOutcome(product.id, product.concernId, sessionId) : null;
   const equivalents = getEquivalentProducts(product);
@@ -132,6 +136,8 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
           </div>
 
           <DualScoreBadges dermScore={dermScore} audienceScore={audienceScore} />
+
+          <ShelfButton productId={product.id} initialStatus={shelfEntry?.status ?? null} initialOpened={shelfEntry?.opened ?? false} />
 
           {avoid?.status === "conflicts" && (
             <Alert className="border-red-300 bg-red-50 dark:border-red-900 dark:bg-red-950/40">

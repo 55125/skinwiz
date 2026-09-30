@@ -10,6 +10,7 @@ const NAV_ITEMS = [
   { href: "/check", label: "Checker" },
   { href: "/routines", label: "Routines" },
   { href: "/profile", label: "My skin" },
+  { href: "/shelf", label: "My shelf" },
   { href: "/avoid", label: "My avoid list" },
   { href: "/for-clinicians", label: "For clinicians" },
   { href: "/about", label: "About" },

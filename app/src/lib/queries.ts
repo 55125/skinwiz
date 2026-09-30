@@ -84,21 +84,44 @@ export function getProductsForConcern(
 // The general catalog browser (/browse) -- every filter here is optional,
 // unlike getProductsForConcern where concernId is required. Same query
 // shape otherwise (paginated rows + a real COUNT(*), not a capped length).
-export function browseProducts(
-  filters: { concernId?: string; dataSources?: string[]; activeId?: string; freeFromIds?: string[] },
-  page: number,
-) {
-  const offset = (page - 1) * PAGE_SIZE;
+export type BrowseFilters = { concernId?: string; dataSources?: string[]; activeId?: string; freeFromIds?: string[] };
+
+export function browseWhere(filters: BrowseFilters): SQL | undefined {
   const clauses = [...freeFromWhereClauses(filters.freeFromIds ?? [])];
   if (filters.concernId) clauses.push(eq(products.concernId, filters.concernId));
   if (filters.dataSources && filters.dataSources.length > 0) clauses.push(inArray(products.dataSource, filters.dataSources));
   if (filters.activeId) clauses.push(jsonArrayContains(products.activeIds, filters.activeId));
-  const whereClause = clauses.length > 0 ? and(...clauses) : undefined;
+  return clauses.length > 0 ? and(...clauses) : undefined;
+}
 
-  const rows = db.select().from(products).where(whereClause).limit(PAGE_SIZE).offset(offset).all();
+export function browseProducts(filters: BrowseFilters, page: number, sort?: "name") {
+  const offset = (page - 1) * PAGE_SIZE;
+  const whereClause = browseWhere(filters);
+
+  const q = db.select().from(products).where(whereClause);
+  const rows = (sort === "name" ? q.orderBy(products.brandName) : q).limit(PAGE_SIZE).offset(offset).all();
   const [{ count }] = db.select({ count: sql<number>`count(*)` }).from(products).where(whereClause).all();
 
   return { rows, total: count, pageSize: PAGE_SIZE, page };
+}
+
+// Sorting by profile match needs a score per product, so this scores every
+// assessed (full-ingredient-list) product in the filtered set, then pages
+// the sorted result. Unassessed products have no score and are left out --
+// the caller says so rather than ranking them as if they were middling.
+export function browseProductsByMatch(
+  filters: BrowseFilters,
+  page: number,
+  score: (rows: (typeof products.$inferSelect)[]) => Map<string, number>,
+) {
+  const base = browseWhere(filters);
+  const whereClause = base ? and(base, sql`${products.freeFromFlags} IS NOT NULL`) : sql`${products.freeFromFlags} IS NOT NULL`;
+  const all = db.select().from(products).where(whereClause).limit(20000).all();
+  const scores = score(all);
+  const ranked = all
+    .filter((p) => scores.has(p.id))
+    .sort((a, b) => scores.get(b.id)! - scores.get(a.id)! || a.brandName.localeCompare(b.brandName));
+  return { rows: ranked.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE), total: ranked.length, pageSize: PAGE_SIZE, page };
 }
 
 // Top actives across the WHOLE catalog (no concern scoping) -- the browse

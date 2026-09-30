@@ -2,7 +2,7 @@ import { cookies } from "next/headers";
 import { db } from "@/db/client";
 import { sql } from "drizzle-orm";
 import { avoidedIngredientName } from "@/lib/avoid";
-import { PROFILE_COOKIE, parseProfile, type Profile, type ProductIngredient } from "@/lib/profile-shared";
+import { PROFILE_COOKIE, matchProduct, parseProfile, type Profile, type ProductIngredient } from "@/lib/profile-shared";
 
 export * from "@/lib/profile-shared";
 
@@ -35,4 +35,23 @@ export function getIngredientNames(ids: string[]): Record<string, string> {
     SELECT id, name FROM ingredients WHERE id IN (${sql.join(ids.map((i) => sql`${i}`), sql`, `)})
   `);
   return Object.fromEntries(rows.map((r) => [r.id, r.name]));
+}
+
+/** Score many products at once (chunked ingredient lookups); products with no score are omitted. */
+export function scoreProducts(
+  rows: { id: string; freeFromFlags: string[] | null }[],
+  profile: Profile,
+  avoidIds: string[],
+): Map<string, number> {
+  const labels = avoidLabelsFor(avoidIds);
+  const out = new Map<string, number>();
+  for (let i = 0; i < rows.length; i += 500) {
+    const chunk = rows.slice(i, i + 500);
+    const membership = getIngredientMembership(chunk.map((r) => r.id));
+    for (const r of chunk) {
+      const m = matchProduct(r, membership.get(r.id), profile, labels);
+      if (m) out.set(r.id, m.score);
+    }
+  }
+  return out;
 }

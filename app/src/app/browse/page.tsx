@@ -6,7 +6,9 @@ import { FreeFromFilters } from "@/components/free-from-filters";
 import { RedFlagBanner } from "@/components/red-flag-banner";
 import { PageHeader } from "@/components/page-header";
 import { Pagination } from "@/components/pagination";
-import { browseProducts, getConcerns, getAllActives } from "@/lib/queries";
+import { browseProducts, browseProductsByMatch, getConcerns, getAllActives } from "@/lib/queries";
+import { hasProfile, readProfile, scoreProducts } from "@/lib/profile";
+import { readAvoidIds } from "@/lib/avoid";
 import { TRUST_TIERS } from "@/lib/trust-tiers";
 import { cn } from "@/lib/utils";
 
@@ -49,25 +51,31 @@ function SidebarGroup({ title, children }: { title: string; children: React.Reac
 export default async function BrowsePage({
   searchParams,
 }: {
-  searchParams: Promise<{ concern?: string; tier?: string; active?: string; free?: string; page?: string }>;
+  searchParams: Promise<{ concern?: string; tier?: string; active?: string; free?: string; sort?: string; page?: string }>;
 }) {
-  const { concern, tier, active, free, page: pageParam } = await searchParams;
+  const { concern, tier, active, free, sort: sortParam, page: pageParam } = await searchParams;
   const page = Math.max(1, parseInt(pageParam ?? "1", 10) || 1);
   const freeFromIds = free ? free.split(",").filter(Boolean) : [];
   const selectedTier = TRUST_TIERS.find((t) => t.label === tier);
   const concerns = getConcerns();
   const allActives = getAllActives();
 
-  const { rows, total, pageSize } = browseProducts(
-    { concernId: concern, dataSources: selectedTier?.dataSources, activeId: active, freeFromIds },
-    page,
-  );
+  const profile = await readProfile();
+  const avoidIds = await readAvoidIds();
+  const canMatch = hasProfile(profile) || avoidIds.length > 0;
+  const sort = sortParam === "match" && canMatch ? "match" : sortParam === "name" ? "name" : undefined;
+  const queryFilters = { concernId: concern, dataSources: selectedTier?.dataSources, activeId: active, freeFromIds };
+
+  const { rows, total, pageSize } =
+    sort === "match"
+      ? browseProductsByMatch(queryFilters, page, (all) => scoreProducts(all, profile, avoidIds))
+      : browseProducts(queryFilters, page, sort);
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
   const activeFilterCount = [concern, selectedTier, active].filter(Boolean).length + freeFromIds.length;
 
   function hrefWith(overrides: Record<string, string | undefined>) {
     const params = new URLSearchParams();
-    const merged = { concern, tier, active, free, page: undefined as string | undefined, ...overrides };
+    const merged = { concern, tier, active, free, sort, page: undefined as string | undefined, ...overrides };
     for (const [k, v] of Object.entries(merged)) if (v) params.set(k, v);
     const qs = params.toString();
     return `/browse${qs ? `?${qs}` : ""}`;
@@ -130,7 +138,7 @@ export default async function BrowsePage({
         </ul>
       </SidebarGroup>
 
-      <FreeFromFilters basePath="/browse" searchParams={{ concern, tier, active, free }} selected={freeFromIds} />
+      <FreeFromFilters basePath="/browse" searchParams={{ concern, tier, active, free, sort }} selected={freeFromIds} />
     </div>
   );
 
@@ -166,10 +174,38 @@ export default async function BrowsePage({
         <div className="min-w-0 space-y-5">
           <RedFlagBanner />
 
-          <p className="text-sm text-muted-foreground">
-            <span className="font-semibold text-foreground tabular-nums">{total.toLocaleString()}</span> product
-            {total === 1 ? "" : "s"}
-          </p>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p className="text-sm text-muted-foreground">
+              <span className="font-semibold text-foreground tabular-nums">{total.toLocaleString()}</span> product
+              {total === 1 ? "" : "s"}
+            </p>
+            <div className="flex items-center gap-1 text-sm">
+              <span className="mr-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">Sort</span>
+              {[
+                { id: undefined, label: "Default" },
+                { id: "name", label: "A–Z" },
+                ...(canMatch ? [{ id: "match", label: "Best match" }] : []),
+              ].map((o) => (
+                <Link
+                  key={o.label}
+                  href={hrefWith({ sort: o.id })}
+                  aria-current={sort === o.id ? "true" : undefined}
+                  className={cn(
+                    "rounded-full border px-3 py-1 text-xs font-medium transition-colors",
+                    sort === o.id ? "border-brand/50 bg-brand-soft text-brand-foreground" : "hover:bg-muted",
+                  )}
+                >
+                  {o.label}
+                </Link>
+              ))}
+            </div>
+          </div>
+          {sort === "match" && (
+            <p className="text-xs text-muted-foreground">
+              Ranked by your <Link href="/profile" className="underline">profile</Link> and avoid list. Products
+              without a full ingredient list can&apos;t be scored and are left out of this view.
+            </p>
+          )}
 
           {rows.length === 0 ? (
             <div className="rounded-2xl border border-dashed p-10 text-center text-muted-foreground">

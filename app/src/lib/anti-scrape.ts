@@ -32,13 +32,16 @@ const ALLOWED_UA = /railwayhealthcheck|googlebot|bingbot|duckduckbot|applebot(?!
 export type Verdict = { action: "allow" } | { action: "block"; status: number; reason: string; retryAfter?: number };
 
 type Window = { start: number; count: number };
-type Client = { minute: Window; hour: Window; apiMinute: Window; bannedUntil: number };
+type Client = { minute: Window; hour: Window; apiMinute: Window; routerMinute: Window; bannedUntil: number };
 
 const clients = new Map<string, Client>();
 const MAX_CLIENTS = 50_000;
 
 export const LIMITS = {
   pagesPerMinute: 100,
+  // Client-side router fetches (link prefetches and navigations). One product
+  // page can prefetch 40+ ingredient links as they scroll into view.
+  routerFetchesPerMinute: 600,
   detailPagesPerHour: 500,
   apiPerMinute: 40,
   banMs: 15 * 60_000,
@@ -111,21 +114,27 @@ export function judge(req: RequestInfo): Verdict {
 
   let c = clients.get(ip);
   if (!c) {
-    c = { minute: { start: now, count: 0 }, hour: { start: now, count: 0 }, apiMinute: { start: now, count: 0 }, bannedUntil: 0 };
+    c = { minute: { start: now, count: 0 }, hour: { start: now, count: 0 }, apiMinute: { start: now, count: 0 }, routerMinute: { start: now, count: 0 }, bannedUntil: 0 };
     clients.set(ip, c);
   }
   if (c.bannedUntil > now) {
     return { action: "block", status: 429, reason: "temporarily blocked", retryAfter: Math.ceil((c.bannedUntil - now) / 1000) };
   }
 
-  // Link prefetches return only a shell, so they don't count as page views.
-  if (req.headers.has("next-router-prefetch")) return { action: "allow" };
-
   const isApi = DATA_API.test(path);
-  const over =
-    (isApi && bump(c.apiMinute, now, 60_000) > LIMITS.apiPerMinute) ||
-    (!isApi && bump(c.minute, now, 60_000) > LIMITS.pagesPerMinute) ||
-    (DETAIL_PATH.test(path) && bump(c.hour, now, 3_600_000) > LIMITS.detailPagesPerHour);
+  // Next strips its own router headers (rsc, next-router-prefetch) before the
+  // proxy runs, so spot router fetches by the browser's Sec-Fetch headers:
+  // fetch() is dest "empty", a real page load is "document". They get their
+  // own generous budget and don't count toward the per-page limits.
+  const isRouterFetch =
+    !isApi &&
+    req.headers.get("sec-fetch-dest") === "empty" &&
+    req.headers.get("sec-fetch-site") === "same-origin";
+  const over = isRouterFetch
+    ? bump(c.routerMinute, now, 60_000) > LIMITS.routerFetchesPerMinute
+    : (isApi && bump(c.apiMinute, now, 60_000) > LIMITS.apiPerMinute) ||
+      (!isApi && bump(c.minute, now, 60_000) > LIMITS.pagesPerMinute) ||
+      (DETAIL_PATH.test(path) && bump(c.hour, now, 3_600_000) > LIMITS.detailPagesPerHour);
   if (!over) return { action: "allow" };
 
   const s = (strikes.get(ip) ?? 0) + 1;

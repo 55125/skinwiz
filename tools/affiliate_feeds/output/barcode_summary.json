@@ -1,0 +1,10 @@
+{
+  "fda_products": 15384,
+  "products_with_any_barcode": 12880,
+  "products_by_source": {
+    "ndc_derived": 10685,
+    "obf_id": 2195,
+    "openfda_upc": 3579
+  },
+  "barcode_rows": 22742
+}

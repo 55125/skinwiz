@@ -139,3 +139,14 @@ python3 match_catalog.py         # writes output/matched_catalog.csv, output/nee
 - `output/matched_catalog.csv` — feed rows that auto-matched (score ≥ threshold)
 - `output/needs_review.csv` — feed rows that didn't clear the threshold, for manual QA
 - `output/match_summary.json` — counts
+
+## Barcodes for product-API lookups
+
+`fetch_barcodes.py` writes `output/product_barcodes.csv` (product_id, spl_set_id,
+barcode, source) for a barcode-keyed lookup such as Sovrn Commerce's
+price-comparison API. Sources and their reliability are documented in the
+script header: `openfda_upc` and `obf_id` are real retail barcodes;
+`ndc_derived` is a last-resort candidate (matched the real UPC on only 3 of 40
+sampled OTC labels). Brand-direct products are looked up by their source URL
+instead. Run from this directory: `python3 fetch_barcodes.py` (~10 minutes,
+openFDA, no key needed).

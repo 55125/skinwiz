@@ -47,7 +47,6 @@ const CONCERN_ICONS: Record<string, LucideIcon> = {
   "brightening-texture": Sparkles,
 };
 
-const SUGGESTED_SEARCHES = ["Niacinamide", "Sunscreen", "Salicylic acid", "Ceramides", "CeraVe"];
 
 export default function Home() {
   const concerns = getConcerns();
@@ -104,7 +103,7 @@ export default function Home() {
           aria-hidden
           className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_70%_26%_at_50%_45%,color-mix(in_oklch,var(--hero-glow)_42%,transparent)_0%,color-mix(in_oklch,var(--hero-glow)_18%,transparent)_60%,transparent_100%)] sm:bg-[radial-gradient(ellipse_27%_22%_at_50%_52%,color-mix(in_oklch,var(--hero-glow)_42%,transparent)_0%,color-mix(in_oklch,var(--hero-glow)_18%,transparent)_60%,transparent_100%)]"
         />
-        <div className="hero-glow relative mx-auto max-w-3xl px-4 pb-16 pt-12 text-center sm:pb-20 sm:pt-24">
+        <div className="hero-glow relative mx-auto max-w-3xl px-4 pb-28 pt-12 text-center sm:pb-28 sm:pt-24">
           <span className="inline-flex items-center rounded-full border bg-card px-3 py-1 text-xs font-medium text-muted-foreground [text-shadow:none] sm:-translate-y-[64px]">
             Built by a board-certified dermatologist
           </span>
@@ -116,18 +115,6 @@ export default function Home() {
           </p>
           <div className="mx-auto mt-8 max-w-2xl [text-shadow:none]">
             <SearchBar large />
-          </div>
-          <div className="mt-4 flex flex-wrap items-center justify-center gap-2 text-sm">
-            <span className="text-foreground/80">Try:</span>
-            {SUGGESTED_SEARCHES.map((term) => (
-              <Link
-                key={term}
-                href={`/search?q=${encodeURIComponent(term)}`}
-                className="rounded-full border bg-card px-3 py-1 text-foreground/80 transition-colors [text-shadow:none] hover:border-brand/40 hover:text-foreground"
-              >
-                {term}
-              </Link>
-            ))}
           </div>
         </div>
         <div className="relative border-t bg-card/60 backdrop-blur">

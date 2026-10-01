@@ -98,7 +98,7 @@ export default function Home() {
           width={1024}
           height={623}
           fetchPriority="high"
-          className="hero-photo pointer-events-none absolute left-1/2 top-6 w-[210vw] max-w-none -translate-x-1/2 select-none sm:-top-7 sm:w-[1100px]"
+          className="hero-photo pointer-events-none absolute left-1/2 top-6 w-[190vw] max-w-none -translate-x-[32%] select-none sm:-top-7 sm:w-[1100px] sm:-translate-x-1/2"
         />
         <div
           aria-hidden

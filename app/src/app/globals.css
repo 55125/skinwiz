@@ -166,6 +166,14 @@
   -webkit-mask-image: radial-gradient(ellipse 50% 50% at 50% 50%, #000 62%, transparent 100%);
   mask-image: radial-gradient(ellipse 50% 50% at 50% 50%, #000 62%, transparent 100%);
 }
+/* On phones the photo overflows the screen sideways, so only its top and
+   bottom need feathering -- a full ellipse would fade out the gel's head. */
+@media (max-width: 639px) {
+  .hero-photo {
+    -webkit-mask-image: radial-gradient(ellipse 75% 50% at 50% 50%, #000 70%, transparent 100%);
+    mask-image: radial-gradient(ellipse 75% 50% at 50% 50%, #000 70%, transparent 100%);
+  }
+}
 
 /* Display serif for page and section titles only; h3 (card titles) and the
    small uppercase eyebrow labels some h2s use stay sans. Deliberately outside

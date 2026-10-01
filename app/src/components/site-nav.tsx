@@ -17,6 +17,7 @@ const PRIMARY_ITEMS = [
 // clinicians" and "About" are in the footer (and in the mobile menu).
 const YOU_ITEMS = [
   { href: "/profile", label: "My skin", hint: "Skin type, concerns, likes" },
+  { href: "/regimen", label: "My regimen", hint: "Your morning and night steps" },
   { href: "/shelf", label: "My shelf", hint: "What you own, want, finished" },
   { href: "/avoid", label: "My avoid list", hint: "Ingredients to screen out" },
 ];

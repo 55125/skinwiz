@@ -358,3 +358,39 @@ export const shelfItems = sqliteTable(
     index("shelf_items_session_idx").on(table.sessionId),
   ],
 );
+
+// A visitor's personal AM/PM regimen (anonymous session cookie, like the
+// shelf). One row per (session, product). `slot` is where the visitor put
+// it -- "am", "pm" or "both"; the order within a slot isn't stored, it's
+// derived from the product's formulation (lib/regimen.ts) so steps always
+// layer thinnest to thickest with sunscreen last in the morning.
+export const regimenItems = sqliteTable(
+  "regimen_items",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    sessionId: text("session_id").notNull(),
+    productId: text("product_id").notNull().references(() => products.id),
+    slot: text("slot").notNull(), // "am" | "pm" | "both"
+    createdAt: text("created_at").notNull().default(sql`(current_timestamp)`),
+  },
+  (table) => [
+    uniqueIndex("regimen_items_session_product_idx").on(table.sessionId, table.productId),
+    index("regimen_items_session_idx").on(table.sessionId),
+  ],
+);
+
+// The Drug Facts "how to use" sections of each product's FDA label, keyed by
+// SPL set id (products.splSetId), fetched by
+// tools/catalog_pipeline/fetch_label_sections.py. Verbatim label text --
+// shown as "From the FDA label", never paraphrased. Catalog data: wiped and
+// reloaded by every seed.
+export const labelSections = sqliteTable("label_sections", {
+  splSetId: text("spl_set_id").primaryKey(),
+  effectiveTime: text("effective_time"),
+  directions: text("directions"),
+  warnings: text("warnings"),
+  doNotUse: text("do_not_use"),
+  whenUsing: text("when_using"),
+  stopUse: text("stop_use"),
+  askDoctor: text("ask_doctor"),
+});

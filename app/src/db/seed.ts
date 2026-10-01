@@ -25,6 +25,7 @@ const CATALOG_CSVS = [
   path.join(REPO_ROOT, "tools/catalog_pipeline/output/brand_direct_catalog.csv"),
 ];
 const AFFILIATE_CSV = path.join(REPO_ROOT, "tools/affiliate_feeds/output/matched_catalog.csv");
+const LABEL_SECTIONS_CSV = path.join(REPO_ROOT, "tools/catalog_pipeline/output/label_sections.csv");
 
 type CatalogRow = {
   product_ndc: string;
@@ -151,7 +152,7 @@ async function main() {
   } finally {
     db.run(sql`PRAGMA foreign_keys = ON`);
   }
-  console.log("Done. dermRaters, dermRatings, audienceOutcomes, and routines (incl. votes/reports) are intentionally left untouched.");
+  console.log("Done. dermRaters, dermRatings, audienceOutcomes, routines (incl. votes/reports), shelves and regimens are intentionally left untouched.");
 }
 
 function reseed() {
@@ -319,7 +320,43 @@ function reseed() {
     console.log("  no affiliate output found, skipping (run tools/affiliate_feeds/match_catalog.py first)");
   }
 
+  insertLabelSections();
   reconcileOrphans();
+}
+
+type LabelSectionRow = {
+  spl_set_id: string;
+  effective_time: string;
+  directions: string;
+  warnings: string;
+  do_not_use: string;
+  when_using: string;
+  stop_use: string;
+  ask_doctor: string;
+};
+
+// Drug Facts directions/warnings per SPL set id (fetch_label_sections.py).
+// Keyed by set id rather than product id: several NDCs share one label.
+function insertLabelSections() {
+  db.delete(schema.labelSections).run();
+  if (!fs.existsSync(LABEL_SECTIONS_CSV)) {
+    console.log("  no label_sections.csv, skipping (run tools/catalog_pipeline/fetch_label_sections.py)");
+    return;
+  }
+  const orNull = (v: string) => (v && v.trim() ? v : null);
+  const rows = readCsv<LabelSectionRow>(LABEL_SECTIONS_CSV).map((r) => ({
+    splSetId: r.spl_set_id,
+    effectiveTime: orNull(r.effective_time),
+    directions: orNull(r.directions),
+    warnings: orNull(r.warnings),
+    doNotUse: orNull(r.do_not_use),
+    whenUsing: orNull(r.when_using),
+    stopUse: orNull(r.stop_use),
+    askDoctor: orNull(r.ask_doctor),
+  }));
+  const BATCH = 200;
+  for (let i = 0; i < rows.length; i += BATCH) db.insert(schema.labelSections).values(rows.slice(i, i + BATCH)).run();
+  console.log(`  inserted ${rows.length} FDA label sections`);
 }
 
 function insertIngredients(
@@ -385,7 +422,7 @@ function insertIngredients(
 function reconcileOrphans() {
   const missing = (table: string) =>
     sql.raw(`${table}.product_id IS NOT NULL AND ${table}.product_id NOT IN (SELECT id FROM products)`);
-  for (const table of ["ewg_scores", "video_links", "shelf_items"]) {
+  for (const table of ["ewg_scores", "video_links", "shelf_items", "regimen_items"]) {
     const { changes } = db.run(sql`DELETE FROM ${sql.raw(table)} WHERE ${missing(table)}`);
     if (changes) console.log(`  removed ${changes} orphaned ${table} rows`);
   }

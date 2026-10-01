@@ -5,9 +5,9 @@ import { getIngredientsForProduct } from "@/lib/queries";
 // dermatology patient guidance -- worded as "consider," never as a verdict,
 // and only ever computed from products a step actually links to (free-text
 // steps can't be assessed). Not medical advice.
-type ClassId = "retinoid" | "exfoliant" | "benzoyl-peroxide" | "vitamin-c";
+export type ClassId = "retinoid" | "exfoliant" | "benzoyl-peroxide" | "vitamin-c";
 
-const CLASS_IDS: Record<ClassId, string[]> = {
+export const CLASS_IDS: Record<ClassId, string[]> = {
   retinoid: ["retinol-cosmetic", "retinal", "adapalene", "hydroxypinacolone-retinoate", "tretinoin", "tazarotene", "trifarotene"],
   exfoliant: ["glycolic-acid", "lactic-acid", "mandelic-acid", "salicylic-acid", "lactobionic-acid", "gluconolactone"],
   "benzoyl-peroxide": ["benzoyl-peroxide"],
@@ -50,7 +50,7 @@ export type RoutineConflict = { a: { productId: string; brand: string; cls: stri
 // actives (position <= 0) always count.
 const MAX_COSMETIC_POSITION = 12;
 
-function classesOf(productId: string): Set<ClassId> {
+export function classesOf(productId: string): Set<ClassId> {
   const out = new Set<ClassId>();
   for (const r of getIngredientsForProduct(productId)) {
     if (r.position > MAX_COSMETIC_POSITION) continue;

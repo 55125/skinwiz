@@ -24,6 +24,7 @@ const FOOTER_LINKS = [
     heading: "You",
     links: [
       { href: "/profile", label: "My skin" },
+      { href: "/regimen", label: "My regimen" },
       { href: "/shelf", label: "My shelf" },
       { href: "/avoid", label: "My avoid list" },
     ],

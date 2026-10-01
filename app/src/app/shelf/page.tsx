@@ -57,6 +57,10 @@ export default async function ShelfPage() {
         description="Track what you own, what you want and what you've finished. Saved against an anonymous cookie in this browser — no account, and clearing your cookies clears your shelf."
       />
 
+      <Link href="/regimen" className="inline-flex items-center gap-1 text-sm font-medium text-brand hover:underline">
+        See your morning and night order on My regimen →
+      </Link>
+
       {items.length === 0 ? (
         <div className="rounded-2xl border border-dashed p-10 text-center text-muted-foreground">
           Nothing on your shelf yet. Open any product and use &ldquo;I own this&rdquo;, &ldquo;Want it&rdquo; or

@@ -35,6 +35,9 @@ import { ProductGrid } from "@/components/product-grid";
 import { IngredientList } from "@/components/ingredient-list";
 import { ShelfButton } from "@/components/shelf-button";
 import { getShelfEntry } from "@/lib/shelf";
+import { RegimenButton } from "@/components/regimen-button";
+import { HowToUse } from "@/components/how-to-use";
+import { getLabelSections, getRegimenSlot, guidanceForActives, guidanceForStep, stepTypeOf, suggestSlot } from "@/lib/regimen";
 import { MatchBadge } from "@/components/match-badge";
 import { avoidLabelsFor, hasProfile, matchProduct, readProfile } from "@/lib/profile";
 import { pubchemLinkText } from "@/lib/pubchem";
@@ -93,6 +96,11 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
   const shelfSession = await readSessionId();
   const shelfEntry = shelfSession ? getShelfEntry(shelfSession, product.id) : undefined;
   const sessionId = await readSessionId();
+  const regimenSlot = sessionId ? getRegimenSlot(sessionId, product.id) : null;
+  const slotSuggestion = suggestSlot(product);
+  const labelSection = getLabelSections(product.splSetId);
+  const activeGuidance = guidanceForActives(product.activeIds ?? []);
+  const formulationGuidance = guidanceForStep(stepTypeOf(product));
   const myOutcome = sessionId ? getSessionOutcome(product.id, product.concernId, sessionId) : null;
   const equivalents = getEquivalentProducts(product);
   const ingredientRows = getIngredientsForProduct(product.id);
@@ -165,7 +173,17 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
 
           <DualScoreBadges dermScore={dermScore} audienceScore={audienceScore} />
 
-          <ShelfButton productId={product.id} initialStatus={shelfEntry?.status ?? null} initialOpened={shelfEntry?.opened ?? false} />
+          <RegimenButton
+            productId={product.id}
+            initialSlot={regimenSlot}
+            suggestedSlot={slotSuggestion.slot}
+            suggestedReason={slotSuggestion.reason}
+          />
+
+          <ShelfButton
+            key={`${shelfEntry?.status ?? "none"}-${shelfEntry?.opened ?? false}`}
+            productId={product.id}
+            initialStatus={shelfEntry?.status ?? null} initialOpened={shelfEntry?.opened ?? false} />
 
           {avoid?.status === "conflicts" && (
             <Alert className="border-red-300 bg-red-50 dark:border-red-900 dark:bg-red-950/40">
@@ -307,6 +325,8 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
               )}
             </div>
           )}
+
+          <HowToUse label={labelSection} activeGuidance={activeGuidance} formulation={formulationGuidance} />
 
           {isDrugLabel && listedIngredients.length > 0 && (
             <div className="rounded-xl border bg-card p-4">

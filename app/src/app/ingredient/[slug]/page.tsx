@@ -21,6 +21,7 @@ import {
   getProductsForIngredient,
 } from "@/lib/queries";
 import { checksFailedByIngredient } from "@/db/ingredient-flags";
+import { allergenMembers, allergensInIngredient, getAllergen, groupsContaining, type ContactAllergen } from "@/db/contact-allergens";
 import { MONOGRAPH_RANGES, formatRange } from "@/db/monograph-ranges";
 import { formatPct } from "@/db/strength";
 import { readAvoidIds } from "@/lib/avoid";
@@ -100,6 +101,11 @@ export default async function IngredientPage({
   const failedChecks = checksFailedByIngredient([ingredient.name, ...ingredient.aliases]);
   const avoidIds = await readAvoidIds();
   const onAvoidList = failedChecks.filter((c) => avoidIds.includes(c.id));
+  const allergens = [...new Set([ingredient.name, ...ingredient.aliases].flatMap(allergensInIngredient))]
+    .map(getAllergen)
+    .filter((a): a is ContactAllergen => !!a);
+  const avoidedAllergens = new Set(avoidIds.flatMap(allergenMembers));
+  const allergensAvoided = allergens.filter((a) => avoidedAllergens.has(a.id));
   const profile = await readProfile();
   const preference = profile.likes.includes(id) ? "like" : profile.dislikes.includes(id) ? "dislike" : null;
 
@@ -157,6 +163,20 @@ export default async function IngredientPage({
           <Stat value="—" label="position data needs 10+ full ingredient lists" />
         )}
       </dl>
+
+      {allergensAvoided.length > 0 && onAvoidList.length === 0 && (
+        <Alert className="border-red-300 bg-red-50 dark:border-red-900 dark:bg-red-950/40">
+          <AlertTriangle className="h-4 w-4 text-red-600" />
+          <AlertTitle>On your avoid list</AlertTitle>
+          <AlertDescription>
+            {ingredient.name} is a label name for {allergensAvoided.map((a) => a.name).join(" and ")}.{" "}
+            <Link href="/avoid" className="underline">
+              Edit your list
+            </Link>
+            .
+          </AlertDescription>
+        </Alert>
+      )}
 
       {onAvoidList.length > 0 && (
         <Alert className="border-red-300 bg-red-50 dark:border-red-900 dark:bg-red-950/40">
@@ -246,6 +266,41 @@ export default async function IngredientPage({
               {SITE_NAME} doesn&apos;t track {ingredient.name} as an active, so there&apos;s no evidence summary for it here —
               this page shows exactly where it appears in the catalog. Names are grouped from the published
               ingredient lists, so a misspelling on one label can appear as its own entry.
+            </section>
+          )}
+
+          {allergens.length > 0 && (
+            <section className="rounded-2xl border bg-card p-5 sm:p-6">
+              <h2 className="mb-2 text-lg font-semibold">Known contact allergen</h2>
+              <ul className="space-y-2 text-sm">
+                {allergens.map((a) => {
+                  const families = groupsContaining(a.id);
+                  return (
+                    <li key={a.id}>
+                      <Link href={`/allergens/${a.id}`} className="font-medium text-brand hover:underline">
+                        {a.name}
+                      </Link>
+                      {a.note && <span className="text-muted-foreground"> — {a.note}</span>}
+                      {families.length > 0 && (
+                        <span className="block text-xs text-muted-foreground">
+                          Part of {families.map((g) => g.name).join(", ")}.
+                        </span>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+              <p className="mt-3 text-sm">
+                Allergic to it?{" "}
+                <Link href={`/browse?free=${allergens[0].id}`} className="font-medium text-brand hover:underline">
+                  Browse products without it
+                </Link>{" "}
+                or add it to{" "}
+                <Link href="/avoid" className="font-medium text-brand hover:underline">
+                  your avoid list
+                </Link>
+                .
+              </p>
             </section>
           )}
 

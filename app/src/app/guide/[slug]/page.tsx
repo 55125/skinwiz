@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import { sql } from "drizzle-orm";
 import { PageHeader } from "@/components/page-header";
 import { ProductGrid } from "@/components/product-grid";
 import { FilterChip } from "@/components/filter-chip";
 import { db } from "@/db/client";
 import { FREE_FROM_CHECKS, getFreeFromCheck } from "@/db/ingredient-flags";
+import { LEGACY_ALLERGEN_IDS } from "@/db/contact-allergens";
 import { browseProducts } from "@/lib/queries";
 import { breadcrumbLd } from "@/lib/seo";
 import { JsonLd } from "@/components/json-ld";
@@ -14,10 +15,8 @@ import { siteUrl } from "@/lib/site-url";
 
 export const dynamic = "force-dynamic";
 
-function blurb(label: string, category: string): string {
-  return category === "contact-allergen"
-    ? `Products whose published ingredient lists contain none of the ingredients behind this check. It is one of the common contact-dermatitis allergen checks — computed from the actual list, not a brand's marketing claim.`
-    : `Products whose published ingredient lists pass the ${label.toLowerCase()} check — computed from the actual list, not a brand's marketing claim.`;
+function blurb(label: string): string {
+  return `Products whose published ingredient lists pass the ${label.toLowerCase()} check — computed from the actual list, not a brand's marketing claim.`;
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
@@ -33,6 +32,9 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function GuidePage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
+  // The contact-allergen checks moved to /allergens.
+  const allergenId = LEGACY_ALLERGEN_IDS[slug];
+  if (allergenId) permanentRedirect(`/allergens/${allergenId}`);
   const check = getFreeFromCheck(slug);
   if (!check) notFound();
 
@@ -51,7 +53,7 @@ export default async function GuidePage({ params }: { params: Promise<{ slug: st
       <PageHeader
         eyebrow="Ingredient filter"
         title={check.label}
-        description={`${total.toLocaleString()} products in our catalog pass this check. ${blurb(check.label, check.category)}`}
+        description={`${total.toLocaleString()} products in our catalog pass this check. ${blurb(check.label)}`}
       />
 
       {check.explain && (
@@ -104,6 +106,8 @@ export default async function GuidePage({ params }: { params: Promise<{ slug: st
           ))}
         </div>
         <p className="text-sm text-muted-foreground">
+          Avoiding a contact allergen? See the{" "}
+          <Link href="/allergens" className="font-medium text-brand hover:underline">contact allergen guide →</Link>{" "}
           Have a product&apos;s ingredient list handy?{" "}
           <Link href="/check" className="font-medium text-brand hover:underline">Paste it into the checker →</Link>
         </p>

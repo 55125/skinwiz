@@ -1,0 +1,1 @@
+ALTER TABLE `products` ADD `allergen_hits` text;

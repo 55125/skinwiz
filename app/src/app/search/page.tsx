@@ -7,6 +7,7 @@ import { PageHeader } from "@/components/page-header";
 import { searchProducts, searchProductsCount, searchActives, getConcerns } from "@/lib/queries";
 import { TRUST_TIERS } from "@/lib/trust-tiers";
 import type { Metadata } from "next";
+import { parseFreeParam } from "@/lib/avoid-shared";
 
 export async function generateMetadata({
   searchParams,
@@ -27,7 +28,7 @@ export default async function SearchPage({
 }) {
   const { q, concern, tier, free } = await searchParams;
   const query = (q ?? "").trim();
-  const freeFromIds = free ? free.split(",").filter(Boolean) : [];
+  const freeFromIds = parseFreeParam(free);
   const selectedTier = TRUST_TIERS.find((t) => t.label === tier);
   const concerns = getConcerns();
 

@@ -6,7 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { ProductGrid } from "@/components/product-grid";
-import { FREE_FROM_CHECKS, ingredientFailsCheck, type FreeFromCheck } from "@/db/ingredient-flags";
+import { FREE_FROM_CHECKS, computeFreeFromFlags, ingredientFailsCheck, type FreeFromCheck } from "@/db/ingredient-flags";
+import { CONTACT_ALLERGENS, allergensInIngredient, computeAllergenHits, getAllergen } from "@/db/contact-allergens";
+import { avoidConflicts } from "@/lib/avoid-shared";
 import { canonicalSlug, ingredientKey, slugFor, splitIngredientList } from "@/db/ingredient-parse";
 import { getIngredient, MIN_PUBLIC_PRODUCTS } from "@/lib/queries";
 import { findSimilarProducts } from "@/lib/similar";
@@ -28,7 +30,6 @@ export async function generateMetadata({ searchParams }: { searchParams: Promise
 const GROUPS: { title: string; category: FreeFromCheck["category"] }[] = [
   { title: "Skin type & lifestyle", category: "skin" },
   { title: "Clean-beauty preferences", category: "clean" },
-  { title: "Common contact-dermatitis allergens", category: "contact-allergen" },
 ];
 
 export default async function CheckPage({ searchParams }: { searchParams: Promise<{ list?: string }> }) {
@@ -51,8 +52,15 @@ export default async function CheckPage({ searchParams }: { searchParams: Promis
     check,
     hits: items.filter((i) => ingredientFailsCheck(check, i.raw)).map((i) => i.raw),
   }));
-  const flaggedNames = new Set(results.flatMap((r) => r.hits));
-  const avoided = results.filter((r) => avoidIds.includes(r.check.id) && r.hits.length > 0);
+  // Allergens: matched per name for the "listed as" mapping, and on the
+  // whole text for presence (chemical names with commas survive that way).
+  const allergenHits = enough ? (computeAllergenHits(text) ?? []) : [];
+  const allergenRows = allergenHits.flatMap((id) => {
+    const a = getAllergen(id);
+    return a ? [{ allergen: a, names: items.filter((i) => allergensInIngredient(i.raw).includes(id)).map((i) => i.raw) }] : [];
+  });
+  const flaggedNames = new Set([...results.flatMap((r) => r.hits), ...allergenRows.flatMap((r) => r.names)]);
+  const found = enough ? avoidConflicts({ freeFromFlags: computeFreeFromFlags(text) ?? [], allergenHits }, avoidIds) : null;
   const similar = enough ? findSimilarProducts(items.map((i) => i.slug), { limit: 6, minScore: 0.3 }) : [];
 
   return (
@@ -91,6 +99,17 @@ export default async function CheckPage({ searchParams }: { searchParams: Promis
             What we check
           </h2>
           <div className="grid gap-3 sm:grid-cols-3">
+            <div className="space-y-2 rounded-2xl border bg-card p-4">
+              <h3 className="text-sm font-semibold">Contact-dermatitis allergens</h3>
+              <p className="text-xs text-muted-foreground">{CONTACT_ALLERGENS.length} allergens and their label synonyms, including</p>
+              <ul className="flex flex-wrap gap-1">
+                {["Fragrance mix", "Formaldehyde releasers", "Methylisothiazolinone", "Lanolin"].map((n) => (
+                  <li key={n}>
+                    <Badge variant="secondary">{n}</Badge>
+                  </li>
+                ))}
+              </ul>
+            </div>
             {GROUPS.map((g) => {
               const checks = FREE_FROM_CHECKS.filter((c) => c.category === g.category);
               return (
@@ -124,10 +143,18 @@ export default async function CheckPage({ searchParams }: { searchParams: Promis
 
       {enough && (
         <>
-          {avoided.length > 0 && (
+          {found && found.conflicts.length > 0 && (
             <div className="rounded-2xl border border-rose-300 bg-rose-50 p-4 text-sm dark:border-rose-900 dark:bg-rose-950/40">
               <p className="font-medium text-rose-800 dark:text-rose-300">
-                Conflicts with your avoid list: {avoided.map((a) => avoidedIngredientName(a.check.id)).join(", ")}
+                Conflicts with your avoid list: {found.conflicts.map(avoidedIngredientName).join(", ")}
+              </p>
+            </div>
+          )}
+          {found && found.possible.length > 0 && (
+            <div className="rounded-2xl border border-amber-300 bg-amber-50 p-4 text-sm dark:border-amber-900 dark:bg-amber-950/40">
+              <p className="font-medium text-amber-900 dark:text-amber-200">
+                The undisclosed fragrance may contain {found.possible.map(avoidedIngredientName).join(", ")}, which you
+                avoid.
               </p>
             </div>
           )}
@@ -203,6 +230,42 @@ export default async function CheckPage({ searchParams }: { searchParams: Promis
               </section>
             );
           })}
+
+          <section className="space-y-3">
+            <h2 className="text-xl font-semibold">Contact-dermatitis allergens</h2>
+            {allergenRows.length === 0 ? (
+              <p className="rounded-xl border bg-card p-3.5 text-sm">
+                <Check className="mr-1.5 inline h-4 w-4 text-emerald-600" aria-hidden />
+                None of the {CONTACT_ALLERGENS.length} contact allergens we track are on this list.
+              </p>
+            ) : (
+              <div className="grid gap-2 sm:grid-cols-2">
+                {allergenRows.map(({ allergen, names }) => (
+                  <div key={allergen.id} className="rounded-xl border border-amber-300 bg-amber-50/60 p-3.5 text-sm dark:border-amber-900 dark:bg-amber-950/20">
+                    <p className="flex items-center gap-2 font-medium">
+                      <X className="h-4 w-4 shrink-0 text-amber-600" aria-hidden />
+                      <Link href={`/allergens/${allergen.id}`} className="hover:underline">
+                        {allergen.name}
+                      </Link>
+                    </p>
+                    {names.length > 0 && <p className="mt-1.5 text-xs text-muted-foreground">Listed as {names.slice(0, 4).join(", ")}</p>}
+                    {allergen.id === "fragrance" && (
+                      <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">
+                        May contain any fragrance allergen without naming it.
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+            <p className="text-xs text-muted-foreground">
+              Matched on every label name and synonym in our{" "}
+              <Link href="/allergens" className="font-medium text-brand hover:underline">
+                contact allergen guide
+              </Link>
+              .
+            </p>
+          </section>
 
           {similar.length > 0 && (
             <section className="space-y-3">

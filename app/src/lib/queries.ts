@@ -13,6 +13,8 @@ import {
   productIngredients,
 } from "@/db/schema";
 import { concernIdToNiche } from "@/db/actives";
+import { getFreeFromCheck } from "@/db/ingredient-flags";
+import { allergenBlockers, resolveAllergenId } from "@/db/contact-allergens";
 
 // Shared by getProductsForConcern and searchProducts -- one membership
 // check per selected free-from id, ANDed together, so a product must satisfy every
@@ -20,8 +22,42 @@ import { concernIdToNiche } from "@/db/actives";
 // freeFromFlags is null for unassessed products (see ingredient-flags.ts),
 // so those simply never match any filter here -- they're not silently
 // treated as passing.
+// Contact allergen ids (db/contact-allergens.ts) take the inverse route: the
+// product must have been assessed and contain none of the allergen's
+// blockers -- its group members, plus an undisclosed fragrance when one of
+// them is a fragrance allergen.
 function freeFromWhereClauses(freeFromIds: string[]): SQL[] {
-  return freeFromIds.map((id) => jsonArrayContains(products.freeFromFlags, id));
+  return freeFromIds.map((id) => {
+    const allergenId = getFreeFromCheck(id) ? undefined : resolveAllergenId(id);
+    if (!allergenId) return jsonArrayContains(products.freeFromFlags, id);
+    const blockers = allergenBlockers(allergenId);
+    return sql`(${products.allergenHits} IS NOT NULL AND NOT EXISTS (SELECT 1 FROM json_each(${products.allergenHits}) WHERE json_each.value IN (${sql.join(
+      blockers.map((b) => sql`${b}`),
+      sql`, `,
+    )})))`;
+  });
+}
+
+/** How many assessed products list each contact allergen. */
+export function getAllergenProductCounts(): Map<string, number> {
+  const rows = db.all<{ id: string; n: number }>(sql`
+    SELECT json_each.value AS id, COUNT(*) AS n FROM products, json_each(products.allergen_hits) GROUP BY json_each.value
+  `);
+  return new Map(rows.map((r) => [r.id, r.n]));
+}
+
+/** Products free of an allergen or group, counted per concern. */
+export function getFreeOfAllergenByConcern(id: string): { id: string; name: string; n: number }[] {
+  return db.all<{ id: string; name: string; n: number }>(sql`
+    SELECT c.id AS id, c.name AS name, COUNT(*) AS n
+    FROM products JOIN concerns c ON c.id = products.concern_id
+    WHERE ${and(...freeFromWhereClauses([id]))}
+    GROUP BY c.id ORDER BY n DESC
+  `);
+}
+
+export function getAssessedProductCount(): number {
+  return db.get<{ n: number }>(sql`SELECT COUNT(*) AS n FROM products WHERE allergen_hits IS NOT NULL`)!.n;
 }
 
 // Exact membership test on a JSON-array text column, so URL-supplied ids

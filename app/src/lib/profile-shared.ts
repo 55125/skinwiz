@@ -1,4 +1,6 @@
 // Pure profile logic shared by server and client components (no DB / cookies).
+import { avoidConflicts, type AvoidableProduct } from "@/lib/avoid-shared";
+
 export const PROFILE_COOKIE = "sw_profile";
 export const PROFILE_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
 const MAX_LIST = 30;
@@ -100,7 +102,7 @@ const BOOSTER_MAX_POSITION = 15;
  * treated as a middling score).
  */
 export function matchProduct(
-  product: { freeFromFlags: string[] | null },
+  product: AvoidableProduct,
   ingredients: ProductIngredient[] | undefined,
   profile: Profile,
   avoidLabels: { id: string; name: string }[],
@@ -119,10 +121,17 @@ export function matchProduct(
     reasons.push({ tone: points >= 0 ? "good" : "bad", text, points });
   };
 
-  if (flags) {
-    const conflicts = avoidLabels.filter((a) => !flags.includes(a.id));
+  const avoidFound = avoidConflicts(product, avoidLabels.map((a) => a.id));
+  if (avoidFound) {
+    const named = (ids: string[]) => avoidLabels.filter((a) => ids.includes(a.id));
+    const conflicts = named(avoidFound.conflicts);
     for (const c of conflicts.slice(0, 3)) add(-25, `Contains ${c.name}, which you avoid`);
     if (conflicts.length > 0) cap = Math.min(cap, 35);
+    const possible = named(avoidFound.possible);
+    if (possible.length > 0) {
+      add(-10, `Undisclosed fragrance may contain ${possible[0].name}${possible.length > 1 ? ` and ${possible.length - 1} more` : ""}, which you avoid`);
+      cap = Math.min(cap, 60);
+    }
   }
 
   const dislikeHits = profile.dislikes.filter((d) => present.has(d));

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { SiteLogo } from "@/components/site-header";
 import { FREE_FROM_CHECKS } from "@/db/ingredient-flags";
+import { ALLERGEN_GROUPS } from "@/db/contact-allergens";
 import { SITE_NAME } from "@/lib/brand";
 
 const FOOTER_LINKS = [
@@ -16,6 +17,7 @@ const FOOTER_LINKS = [
     heading: "Tools",
     links: [
       { href: "/check", label: "Ingredient checker" },
+      { href: "/allergens", label: "Contact allergen guide" },
       { href: "/ingredients", label: "Ingredient library" },
       { href: "/compare", label: "Compare products" },
     ],
@@ -77,6 +79,13 @@ export function SiteFooter() {
               <li key={c.id}>
                 <Link href={`/guide/${c.id}`} className="text-foreground/70 hover:text-foreground">
                   {c.label}
+                </Link>
+              </li>
+            ))}
+            {ALLERGEN_GROUPS.map((g) => (
+              <li key={g.id}>
+                <Link href={`/allergens/${g.id}`} className="text-foreground/70 hover:text-foreground">
+                  {g.name}
                 </Link>
               </li>
             ))}

@@ -28,8 +28,9 @@ export function ProductCard({
   match?: Match | null;
 }) {
   const sourceBadge = dataSourceBadge(product.dataSource);
-  const avoid = avoidVerdict(product.freeFromFlags, avoidIds);
+  const avoid = avoidVerdict(product, avoidIds);
   const avoidConflicts = avoid?.status === "conflicts" ? avoid.conflicts : [];
+  const avoidPossible = avoid?.status === "conflicts" || avoid?.status === "possible" ? avoid.possible : [];
   const strengthLine = describeStrengths(product.strengths, product.activeIds);
   // Capped at 1 on the card -- a product can match up to a dozen of these,
   // which would drown out everything else in a small card; the full list
@@ -103,7 +104,7 @@ export function ProductCard({
           </div>
         )}
 
-        {(avoidConflicts.length > 0 || avoid?.status === "clear") && (
+        {(avoidConflicts.length > 0 || avoidPossible.length > 0 || avoid?.status === "clear") && (
           <div className="flex flex-wrap gap-1">
             {avoidConflicts.slice(0, 2).map((id) => (
               <Badge key={id} variant="outline" className="border-red-300 bg-red-50 text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-400">
@@ -113,6 +114,11 @@ export function ProductCard({
             {avoidConflicts.length > 2 && (
               <Badge variant="outline" className="border-red-300 text-red-700 dark:border-red-900 dark:text-red-400">
                 +{avoidConflicts.length - 2} more you avoid
+              </Badge>
+            )}
+            {avoidConflicts.length === 0 && avoidPossible.length > 0 && (
+              <Badge variant="outline" className="border-amber-300 bg-amber-50 text-amber-800 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-300">
+                Fragrance may hide {avoidPossible.length === 1 ? avoidedIngredientName(avoidPossible[0]) : `${avoidPossible.length} you avoid`}
               </Badge>
             )}
             {avoid?.status === "clear" && (

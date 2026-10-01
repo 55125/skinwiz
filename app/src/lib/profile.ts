@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import { db } from "@/db/client";
 import { sql } from "drizzle-orm";
-import { avoidedIngredientName } from "@/lib/avoid";
+import { avoidedIngredientName, type AvoidableProduct } from "@/lib/avoid-shared";
 import { PROFILE_COOKIE, matchProduct, parseProfile, type Profile, type ProductIngredient } from "@/lib/profile-shared";
 
 export * from "@/lib/profile-shared";
@@ -39,7 +39,7 @@ export function getIngredientNames(ids: string[]): Record<string, string> {
 
 /** Score many products at once (chunked ingredient lookups); products with no score are omitted. */
 export function scoreProducts(
-  rows: { id: string; freeFromFlags: string[] | null }[],
+  rows: ({ id: string } & AvoidableProduct)[],
   profile: Profile,
   avoidIds: string[],
 ): Map<string, number> {

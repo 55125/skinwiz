@@ -10,6 +10,7 @@ const PRIMARY_ITEMS = [
   { href: "/browse", label: "Browse" },
   { href: "/ingredients", label: "Ingredients" },
   { href: "/check", label: "Checker" },
+  { href: "/allergens", label: "Allergens" },
   { href: "/routines", label: "Routines" },
 ];
 

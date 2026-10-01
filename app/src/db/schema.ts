@@ -115,6 +115,12 @@ export const products = sqliteTable("products", {
   // "assumed clean." A non-null value is computed from the actual published
   // ingredient list, not a brand's own marketing claim.
   freeFromFlags: text("free_from_flags", { mode: "json" }).$type<string[] | null>(),
+  // Contact allergens (db/contact-allergens.ts) the full ingredient list
+  // CONTAINS -- the inverse of freeFromFlags, since a product holds only a
+  // few of ~100 allergens. "fragrance" here means an undisclosed fragrance,
+  // which may hide any fragrance allergen. null exactly when freeFromFlags
+  // is null: unknown, never "free of everything."
+  allergenHits: text("allergen_hits", { mode: "json" }).$type<string[] | null>(),
   // Percent strength per active id, parsed from the FDA label's exact
   // active-ingredient line (db/strength.ts) -- only openfda/dailymed rows
   // carry concentrations, so this is null for cosmetic sources and for the

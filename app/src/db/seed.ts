@@ -6,6 +6,7 @@ import { db } from "./client";
 import * as schema from "./schema";
 import { ACTIVE_DEFINITIONS, CONCERN_DEFINITIONS, matchActiveIds, nicheToConcernId } from "./actives";
 import { computeFreeFromFlags } from "./ingredient-flags";
+import { computeAllergenHits } from "./contact-allergens";
 import { parseStrengths, strengthKey } from "./strength";
 import { aliasesFor, canonicalSlug, parseIngredients, pickDisplayName } from "./ingredient-parse";
 import { SITE_NAME } from "@/lib/brand";
@@ -280,6 +281,7 @@ function reseed() {
         imageUrl: row.image_url || null,
         sourceUrl: row.source === "brand_direct" ? row.source_url || null : null,
         freeFromFlags: computeFreeFromFlags(fullIngredientText),
+        allergenHits: computeAllergenHits(fullIngredientText),
         strengths,
         strengthKey: strengthKey(strengths, activeIds),
       });

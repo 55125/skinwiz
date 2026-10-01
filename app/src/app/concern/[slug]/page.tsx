@@ -11,6 +11,7 @@ import { formatPct } from "@/db/strength";
 import { variantRobots, breadcrumbLd } from "@/lib/seo";
 import { JsonLd } from "@/components/json-ld";
 import { siteUrl } from "@/lib/site-url";
+import { parseFreeParam } from "@/lib/avoid-shared";
 
 type ConcernParams = { page?: string; active?: string; free?: string; strength?: string };
 
@@ -45,7 +46,7 @@ export default async function ConcernPage({
   if (!concern) notFound();
 
   const page = Math.max(1, parseInt(pageParam ?? "1", 10) || 1);
-  const freeFromIds = free ? free.split(",").filter(Boolean) : [];
+  const freeFromIds = parseFreeParam(free);
   const activesList = getActivesForConcern(slug);
   const allStrengthOptions = active ? getStrengthOptionsForActive(slug, active) : [];
   // Labels carry one-off values (3.69%, 5.25%) that are almost always a

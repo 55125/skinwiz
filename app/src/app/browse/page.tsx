@@ -13,6 +13,7 @@ import { TRUST_TIERS } from "@/lib/trust-tiers";
 import { cn } from "@/lib/utils";
 import { variantRobots } from "@/lib/seo";
 import { SITE_NAME } from "@/lib/brand";
+import { parseFreeParam } from "@/lib/avoid-shared";
 
 type BrowseParams = { concern?: string; tier?: string; active?: string; free?: string; sort?: string; page?: string };
 
@@ -65,7 +66,7 @@ export default async function BrowsePage({
 }) {
   const { concern, tier, active, free, sort: sortParam, page: pageParam } = await searchParams;
   const page = Math.max(1, parseInt(pageParam ?? "1", 10) || 1);
-  const freeFromIds = free ? free.split(",").filter(Boolean) : [];
+  const freeFromIds = parseFreeParam(free);
   const selectedTier = TRUST_TIERS.find((t) => t.label === tier);
   const concerns = getConcerns();
   const allActives = getAllActives();

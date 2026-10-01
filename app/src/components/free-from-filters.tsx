@@ -3,6 +3,7 @@ import { ChevronDown } from "lucide-react";
 import { FilterChip } from "@/components/filter-chip";
 import { FREE_FROM_CHECKS } from "@/db/ingredient-flags";
 import { readAvoidIds } from "@/lib/avoid";
+import { CONTACT_ALLERGENS, FEATURED_ALLERGEN_IDS, allergenLabel } from "@/db/contact-allergens";
 
 // Server-rendered toggle links, no client JS -- same philosophy as the
 // existing single-select active-ingredient chips on /concern/[slug]. Each
@@ -38,7 +39,9 @@ export async function FreeFromFilters({
     avoidIds.length > 0 && avoidIds.length === selected.length && avoidIds.every((id) => selected.includes(id));
 
   const clean = FREE_FROM_CHECKS.filter((c) => c.category === "clean");
-  const contactAllergen = FREE_FROM_CHECKS.filter((c) => c.category === "contact-allergen");
+  // The full allergen list is ~100 long: offer the high-yield picks here,
+  // plus whatever else is already selected so an active filter stays visible.
+  const allergenIds = [...new Set([...FEATURED_ALLERGEN_IDS, ...selected.filter((id) => allergenLabel(id))])];
   const skin = FREE_FROM_CHECKS.filter((c) => c.category === "skin");
 
   return (
@@ -66,16 +69,19 @@ export async function FreeFromFilters({
           ))}
       </FilterGroup>
       <FilterGroup
-        title="Avoid common contact-dermatitis allergens"
-        checks={contactAllergen}
+        title="Avoid contact-dermatitis allergens"
+        checks={allergenIds.map((id) => ({ id }))}
         selected={selected}
         defaultOpen={false}
       >
-          {contactAllergen.map((c) => (
-            <FilterChip key={c.id} href={hrefToggling(c.id)} selected={selected.includes(c.id)} showCheck>
-              {c.label}
+          {allergenIds.map((id) => (
+            <FilterChip key={id} href={hrefToggling(id)} selected={selected.includes(id)} showCheck>
+              {allergenLabel(id)}
             </FilterChip>
           ))}
+          <Link href="/allergens" className="self-center px-1 text-xs font-medium text-brand hover:underline">
+            All {CONTACT_ALLERGENS.length} allergens →
+          </Link>
       </FilterGroup>
       <FilterGroup
         title="Skin type & lifestyle"
@@ -93,7 +99,8 @@ export async function FreeFromFilters({
         Computed from each product&apos;s published ingredient list, not a brand&apos;s marketing claim or a
         certification, and not exhaustive — see a board-certified dermatologist about your own known allergens.
         Products we don&apos;t have a full ingredient list for (most openFDA-only listings) won&apos;t match any
-        filter here rather than being assumed clean.
+        filter here rather than being assumed clean, and a product listing only &ldquo;fragrance&rdquo; doesn&apos;t
+        pass a fragrance-allergen filter, since the blend could contain it.
       </p>
     </div>
   );

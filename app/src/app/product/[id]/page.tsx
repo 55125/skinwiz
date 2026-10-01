@@ -27,6 +27,7 @@ import { ewgHazardBadge } from "@/lib/ewg";
 import { readSessionId } from "@/lib/session";
 import { getSessionOutcome } from "@/lib/outcomes";
 import { readAvoidIds, avoidVerdict, avoidedIngredientName } from "@/lib/avoid";
+import { AllergenFindings } from "@/components/allergen-findings";
 import { activeName, describeStrengths } from "@/lib/strength-display";
 import { formatPct } from "@/db/strength";
 import { monographStatus, formatRange } from "@/db/monograph-ranges";
@@ -91,7 +92,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
   const sourceBadge = dataSourceBadge(product.dataSource);
   const ewgScore = getEwgScoreForProduct(product.id);
   const avoidIds = await readAvoidIds();
-  const avoid = avoidVerdict(product.freeFromFlags, avoidIds);
+  const avoid = avoidVerdict(product, avoidIds);
   const profile = await readProfile();
   const shelfSession = await readSessionId();
   const shelfEntry = shelfSession ? getShelfEntry(shelfSession, product.id) : undefined;
@@ -195,6 +196,16 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
                   edit your list
                 </Link>
                 .
+              </AlertDescription>
+            </Alert>
+          )}
+          {(avoid?.status === "possible" || (avoid?.status === "conflicts" && avoid.possible.length > 0)) && (
+            <Alert className="border-amber-300 bg-amber-50 dark:border-amber-900 dark:bg-amber-950/40">
+              <AlertTriangle className="h-4 w-4 text-amber-600" />
+              <AlertTitle>Undisclosed fragrance: can&apos;t rule out {avoid.possible.length === 1 ? "an allergen" : `${avoid.possible.length} allergens`} you avoid</AlertTitle>
+              <AlertDescription>
+                {avoid.possible.map(avoidedIngredientName).join(", ")} wouldn&apos;t have to be named on the label when
+                it&apos;s part of &ldquo;fragrance&rdquo; or &ldquo;parfum.&rdquo;
               </AlertDescription>
             </Alert>
           )}
@@ -335,6 +346,14 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
               </h2>
               <IngredientList items={listedIngredients} likes={profile.likes} dislikes={profile.dislikes} />
             </div>
+          )}
+
+          {product.allergenHits && (
+            <AllergenFindings
+              hits={product.allergenHits}
+              ingredientNames={ingredientRows.map((r) => r.rawName)}
+              avoidIds={avoidIds}
+            />
           )}
 
           {product.freeFromFlags && product.freeFromFlags.length > 0 && (

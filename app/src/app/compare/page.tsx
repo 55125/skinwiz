@@ -6,6 +6,7 @@ import { ComparePicker } from "@/components/compare-picker";
 import { DualScoreBadges } from "@/components/score-badge";
 import { Badge } from "@/components/ui/badge";
 import { FREE_FROM_CHECKS } from "@/db/ingredient-flags";
+import { getAllergen } from "@/db/contact-allergens";
 import { getProduct, getIngredientsForProduct, getEwgScoreForProduct } from "@/lib/queries";
 import { getScoresForProducts } from "@/lib/scoring";
 import { ewgHazardBadge } from "@/lib/ewg";
@@ -60,6 +61,7 @@ function Comparison({ A, B }: { A: Loaded; B: Loaded }) {
   const bIds = new Set(B.ingredients.map((i) => i.ingredientId));
   const shared = A.ingredients.filter((i) => bIds.has(i.ingredientId));
   const onlyA = A.ingredients.filter((i) => !bIds.has(i.ingredientId));
+  const allergenIds = [...new Set([...(A.product.allergenHits ?? []), ...(B.product.allergenHits ?? [])])];
   const onlyB = B.ingredients.filter((i) => !aIds.has(i.ingredientId));
   const canCompareLists = A.ingredients.length >= 4 && B.ingredients.length >= 4;
   const union = new Set([...aIds, ...bIds]).size;
@@ -153,6 +155,40 @@ function Comparison({ A, B }: { A: Loaded; B: Loaded }) {
                 return (
                   <tr key={c.id} className={cn("border-t", differs && "bg-brand-soft/40")}>
                     <td className="px-3 py-2">{c.label}</td>
+                    <td className="px-3 py-2">{cell(A.product)}</td>
+                    <td className="px-3 py-2">{cell(B.product)}</td>
+                  </tr>
+                );
+              })}
+              {allergenIds.length > 0 && (
+                <tr className="border-t bg-muted/30">
+                  <td colSpan={3} className="px-3 py-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    Contact allergens either one lists
+                  </td>
+                </tr>
+              )}
+              {allergenIds.map((id) => {
+                const cell = (p: Loaded["product"]) =>
+                  !p.allergenHits ? (
+                    <Minus className="h-4 w-4 text-muted-foreground" aria-label="not assessed" />
+                  ) : p.allergenHits.includes(id) ? (
+                    <X className="h-4 w-4 text-amber-600" aria-label="contains" />
+                  ) : (
+                    <Check className="h-4 w-4 text-emerald-600" aria-label="free of it" />
+                  );
+                return (
+                  <tr
+                    key={id}
+                    className={cn(
+                      "border-t",
+                      !!A.product.allergenHits && !!B.product.allergenHits && A.product.allergenHits.includes(id) !== B.product.allergenHits.includes(id) && "bg-brand-soft/40",
+                    )}
+                  >
+                    <td className="px-3 py-2">
+                      <Link href={`/allergens/${id}`} className="hover:underline">
+                        No {getAllergen(id)?.name ?? id}
+                      </Link>
+                    </td>
                     <td className="px-3 py-2">{cell(A.product)}</td>
                     <td className="px-3 py-2">{cell(B.product)}</td>
                   </tr>

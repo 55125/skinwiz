@@ -4,7 +4,6 @@ import {
   ArrowRight,
   CircleDot,
   Droplets,
-  FlaskConical,
   Hand,
   ShieldCheck,
   ShieldPlus,
@@ -87,34 +86,44 @@ export default function Home() {
           ],
         }}
       />
-      <section className="relative border-b">
+      <section className="relative overflow-hidden border-b">
+        {/* The gel swatch: shown as shot on the paper-colored ground in light
+            mode, inverted in dark (--hero-photo-filter) so its paper goes dark
+            too. Edges are feathered into the page by .hero-photo's mask. */}
+        {/* eslint-disable-next-line @next/next/no-img-element -- one decorative, already-optimized webp; next/image would add a resize step for no gain */}
+        <img
+          src="/hero/gel.webp"
+          alt=""
+          aria-hidden
+          width={1024}
+          height={623}
+          fetchPriority="high"
+          className="hero-photo pointer-events-none absolute left-1/2 top-6 w-[210vw] max-w-none -translate-x-1/2 select-none sm:-top-7 sm:w-[1100px]"
+        />
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-0 bg-[radial-gradient(60%_60%_at_50%_0%,var(--brand-soft),transparent)]"
+          className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_70%_26%_at_50%_45%,color-mix(in_oklch,var(--hero-glow)_42%,transparent)_0%,color-mix(in_oklch,var(--hero-glow)_18%,transparent)_60%,transparent_100%)] sm:bg-[radial-gradient(ellipse_27%_22%_at_50%_52%,color-mix(in_oklch,var(--hero-glow)_42%,transparent)_0%,color-mix(in_oklch,var(--hero-glow)_18%,transparent)_60%,transparent_100%)]"
         />
-        <div className="relative mx-auto max-w-3xl px-4 pb-16 pt-16 text-center sm:pt-24">
-          <span className="inline-flex items-center gap-1.5 rounded-full border bg-card/80 px-3 py-1 text-xs font-medium text-muted-foreground backdrop-blur">
-            <FlaskConical className="h-3.5 w-3.5 text-brand" />
-            OTC skincare, ingredient by ingredient
+        <div className="hero-glow relative mx-auto max-w-3xl px-4 pb-16 pt-12 text-center sm:pb-20 sm:pt-24">
+          <span className="inline-flex items-center rounded-full border bg-card px-3 py-1 text-xs font-medium text-muted-foreground [text-shadow:none]">
+            Built by a board-certified dermatologist
           </span>
-          <h1 className="mt-6 text-4xl font-semibold leading-[1.1] sm:text-6xl">
-            Skincare, scored <span className="text-brand">two ways.</span>
+          <h1 className="mt-10 text-[2.5rem] font-semibold leading-[1.08] sm:text-6xl">
+            Find your <span className="text-brand">actives</span>.
           </h1>
-          <p className="mx-auto mt-5 max-w-xl text-lg text-muted-foreground">
-            A <strong className="font-medium text-foreground">User Score</strong> from real reported
-            outcomes, and soon a separate <strong className="font-medium text-foreground">Derm Score</strong>{" "}
-            from verified dermatologists — not a guess from an ingredient list.
+          <p className="mx-auto mt-5 max-w-xl text-lg font-medium text-foreground/85 sm:text-[19px]">
+            Every product, every ingredient, every data point for the perfect regimen
           </p>
-          <div className="mx-auto mt-8 max-w-2xl">
+          <div className="mx-auto mt-8 max-w-2xl [text-shadow:none]">
             <SearchBar large />
           </div>
           <div className="mt-4 flex flex-wrap items-center justify-center gap-2 text-sm">
-            <span className="text-muted-foreground">Try:</span>
+            <span className="text-foreground/80">Try:</span>
             {SUGGESTED_SEARCHES.map((term) => (
               <Link
                 key={term}
                 href={`/search?q=${encodeURIComponent(term)}`}
-                className="rounded-full border bg-card px-3 py-1 text-foreground/80 transition-colors hover:border-brand/40 hover:text-foreground"
+                className="rounded-full border bg-card px-3 py-1 text-foreground/80 transition-colors [text-shadow:none] hover:border-brand/40 hover:text-foreground"
               >
                 {term}
               </Link>

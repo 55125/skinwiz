@@ -141,7 +141,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
 
       <div className={product.imageUrl ? "grid gap-8 md:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] md:items-start" : ""}>
         {product.imageUrl && (
-          <div className="flex aspect-[4/3] items-center justify-center overflow-hidden rounded-3xl border bg-gradient-to-br from-muted to-secondary md:sticky md:top-24 md:aspect-square">
+          <div className="flex aspect-[4/3] items-center justify-center overflow-hidden rounded-3xl border bg-white dark:bg-gradient-to-br dark:from-muted dark:to-secondary md:sticky md:top-24 md:aspect-square">
             {/* eslint-disable-next-line @next/next/no-img-element -- mix of same-origin (brand-direct, self-hosted) and external OBF-hosted photos; not worth a next/image remotePatterns allowlist for the OBF case alone */}
             <img src={product.imageUrl} alt={product.brandName} className="h-full w-full object-contain p-8" />
           </div>

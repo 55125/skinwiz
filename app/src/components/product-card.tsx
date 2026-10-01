@@ -49,7 +49,7 @@ export function ProductCard({
           grey placeholders reads as missing content, so the dosage form
           moves into the text block instead. */}
       {product.imageUrl && (
-        <div className="relative flex aspect-[4/3] w-full items-center justify-center overflow-hidden bg-gradient-to-br from-muted to-secondary">
+        <div className="relative flex aspect-[4/3] w-full items-center justify-center overflow-hidden bg-white dark:bg-gradient-to-br dark:from-muted dark:to-secondary">
           {/* eslint-disable-next-line @next/next/no-img-element -- mix of same-origin (brand-direct, self-hosted -- see tools/catalog_pipeline/build_brand_direct_catalog.py) and external OBF-hosted photos; not worth a next/image remotePatterns allowlist for the OBF case alone */}
           <img
             src={product.imageUrl}

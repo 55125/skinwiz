@@ -7,7 +7,7 @@ export function SiteLogo() {
   return (
     <Link href="/" className="flex shrink-0 items-center gap-2 font-semibold tracking-tight">
       <span className="flex h-8 w-8 items-center justify-center rounded-[10px] bg-primary text-primary-foreground shadow-sm">
-        <SiteLogoMark className="h-5 w-5" />
+        <SiteLogoMark className="h-6 w-6" />
       </span>
       <span className="font-display text-[19px] font-medium tracking-[-0.02em]">{SITE_NAME}</span>
     </Link>

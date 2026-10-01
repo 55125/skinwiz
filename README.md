@@ -1,4 +1,4 @@
-# SkinWiz
+# Actively Skin
 
 Patient-facing tool: skin concern → active ingredient → OTC product, monetized via affiliate links.
 

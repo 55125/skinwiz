@@ -86,7 +86,7 @@ async function fetchText(url: string): Promise<string | null> {
   try {
     const { stdout } = await execFileAsync(
       "curl",
-      ["-s", "--max-time", "20", "-A", "Mozilla/5.0 (skinwiz-catalog-pipeline/0.1)", url],
+      ["-s", "--max-time", "20", "-A", "Mozilla/5.0 (activelyskin-catalog-pipeline/0.1)", url],
       { maxBuffer: 20 * 1024 * 1024 },
     );
     return stdout || null;

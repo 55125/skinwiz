@@ -3,10 +3,11 @@ import Link from "next/link";
 import { PageHeader } from "@/components/page-header";
 import { AvoidListEditor } from "@/components/avoid-list-editor";
 import { readAvoidIds } from "@/lib/avoid";
+import { SITE_NAME } from "@/lib/brand";
 
 export const metadata: Metadata = {
   title: "Ingredients I avoid",
-  description: "Pick the ingredients you avoid and SkinWiz will flag every product that contains them.",
+  description: `Pick the ingredients you avoid and ${SITE_NAME} will flag every product that contains them.`,
 };
 
 export default async function AvoidPage() {

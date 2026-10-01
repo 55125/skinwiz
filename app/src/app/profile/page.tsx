@@ -3,10 +3,11 @@ import Link from "next/link";
 import { PageHeader } from "@/components/page-header";
 import { ProfileEditor } from "@/components/profile-editor";
 import { getIngredientNames, readProfile } from "@/lib/profile";
+import { SITE_NAME } from "@/lib/brand";
 
 export const metadata: Metadata = {
   title: "My skin profile",
-  description: "Set your skin type, concerns and the ingredients you like or dislike, and SkinWiz scores every product against them.",
+  description: `Set your skin type, concerns and the ingredients you like or dislike, and ${SITE_NAME} scores every product against them.`,
   robots: { index: false },
 };
 

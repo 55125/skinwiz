@@ -1,11 +1,12 @@
 import { RaterApplicationForm } from "@/components/rater-application-form";
 import { Separator } from "@/components/ui/separator";
 import type { Metadata } from "next";
+import { SITE_NAME } from "@/lib/brand";
 
 export const metadata: Metadata = {
   alternates: { canonical: "/for-clinicians" },
   title: "For dermatologists",
-  description: "Request to join the SkinWiz dermatologist rating panel.",
+  description: `Request to join the ${SITE_NAME} dermatologist rating panel.`,
 };
 
 export default function ForCliniciansPage() {
@@ -14,7 +15,7 @@ export default function ForCliniciansPage() {
       <div>
         <h1 className="text-3xl font-semibold sm:text-4xl">For dermatologists</h1>
         <p className="mt-2 text-muted-foreground">
-          SkinWiz&apos;s Derm Score exists because every other tool in this space runs on ingredient-list
+          {SITE_NAME}&apos;s Derm Score exists because every other tool in this space runs on ingredient-list
           heuristics with no clinical authority behind them. We&apos;re building a verified panel of
           board-certified dermatologists instead.
         </p>

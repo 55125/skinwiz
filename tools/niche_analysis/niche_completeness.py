@@ -39,7 +39,7 @@ NICHES = {
 
 def _get(params: dict) -> dict:
     url = f"{BASE}?{urllib.parse.urlencode(params)}"
-    req = urllib.request.Request(url, headers={"User-Agent": "skinwiz-niche-analysis/0.1"})
+    req = urllib.request.Request(url, headers={"User-Agent": "activelyskin-niche-analysis/0.1"})
     with urllib.request.urlopen(req, timeout=30) as resp:
         return json.loads(resp.read())
 

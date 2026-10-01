@@ -4,6 +4,7 @@ import "./globals.css";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { siteUrl } from "@/lib/site-url";
+import { SITE_NAME } from "@/lib/brand";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -31,14 +32,14 @@ const SITE_DESCRIPTION =
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl()),
   title: {
-    default: "SkinWiz — OTC skincare, ingredient by ingredient",
-    template: "%s — SkinWiz",
+    default: `${SITE_NAME} — OTC skincare, ingredient by ingredient`,
+    template: `%s — ${SITE_NAME}`,
   },
   description: SITE_DESCRIPTION,
   // No og:title/description here: child pages don't merge openGraph, so a
   // root value would be inherited verbatim by every page. Without one,
   // share previews fall back to each page's own <title> and description.
-  openGraph: { type: "website", siteName: "SkinWiz", locale: "en_US" },
+  openGraph: { type: "website", siteName: SITE_NAME, locale: "en_US" },
   twitter: { card: "summary" },
 };
 

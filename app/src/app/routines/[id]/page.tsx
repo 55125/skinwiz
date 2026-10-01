@@ -10,6 +10,7 @@ import { readSessionId } from "@/lib/session";
 import { findRoutineConflicts } from "@/lib/routine-conflicts";
 import { AlertTriangle } from "lucide-react";
 import type { Metadata } from "next";
+import { SITE_NAME } from "@/lib/brand";
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
@@ -17,7 +18,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   if (!routine) return {};
   return {
     title: `${routine.title} — ${routine.concernName} routine`,
-    description: `A community-submitted ${routine.concernName.toLowerCase()} routine on SkinWiz. User-posted and not reviewed by dermatologists.`,
+    description: `A community-submitted ${routine.concernName.toLowerCase()} routine on ${SITE_NAME}. User-posted and not reviewed by dermatologists.`,
     alternates: { canonical: `/routines/${routine.id}` },
   };
 }

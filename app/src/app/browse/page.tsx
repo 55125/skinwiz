@@ -12,13 +12,14 @@ import { readAvoidIds } from "@/lib/avoid";
 import { TRUST_TIERS } from "@/lib/trust-tiers";
 import { cn } from "@/lib/utils";
 import { variantRobots } from "@/lib/seo";
+import { SITE_NAME } from "@/lib/brand";
 
 type BrowseParams = { concern?: string; tier?: string; active?: string; free?: string; sort?: string; page?: string };
 
 export async function generateMetadata({ searchParams }: { searchParams: Promise<BrowseParams> }): Promise<Metadata> {
   return {
     title: "Browse all products",
-    description: "Browse the full SkinWiz catalog by concern, trust tier, active ingredient, or ingredient-based filters.",
+    description: `Browse the full ${SITE_NAME} catalog by concern, trust tier, active ingredient, or ingredient-based filters.`,
     alternates: { canonical: "/browse" },
     robots: variantRobots(await searchParams),
   };

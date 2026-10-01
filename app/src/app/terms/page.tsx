@@ -2,11 +2,12 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { LegalPage } from "@/components/legal-page";
 import { LEGAL_EMAIL, LEGAL_OPERATOR, LEGAL_STATE } from "@/lib/legal";
+import { SITE_NAME } from "@/lib/brand";
 
 export const metadata: Metadata = {
   alternates: { canonical: "/terms" },
   title: "Terms of Service",
-  description: "The terms that govern your use of SkinWiz.",
+  description: `The terms that govern your use of ${SITE_NAME}.`,
 };
 
 const mail = <a href={`mailto:${LEGAL_EMAIL}`}>{LEGAL_EMAIL}</a>;
@@ -19,13 +20,13 @@ export default function TermsPage() {
         <div className="space-y-3">
           <p>
             These Terms of Service (&ldquo;Terms&rdquo;) are an agreement between you and {LEGAL_OPERATOR}{" "}
-            (&ldquo;SkinWiz,&rdquo; &ldquo;we,&rdquo; &ldquo;us&rdquo;). They govern your use of this website
+            (&ldquo;{SITE_NAME},&rdquo; &ldquo;we,&rdquo; &ldquo;us&rdquo;). They govern your use of this website
             and its tools (the &ldquo;Service&rdquo;). By using the Service, you agree to these Terms and to our{" "}
             <Link href="/privacy" className="underline underline-offset-2">Privacy Policy</Link>. If you do not
             agree, do not use the Service.
           </p>
           <p className="rounded-lg border bg-muted/40 p-4 text-sm">
-            <strong className="text-foreground">SkinWiz is not medical advice.</strong> It is an educational
+            <strong className="text-foreground">{SITE_NAME} is not medical advice.</strong> It is an educational
             tool for comparing over-the-counter skincare ingredients and products. It does not diagnose, treat
             or cure any condition, and it does not replace a dermatologist or other healthcare professional.
             Section 2 explains this in full.
@@ -33,7 +34,7 @@ export default function TermsPage() {
         </div>
       }
     >
-      <h2 id="eligibility">1. Who may use SkinWiz</h2>
+      <h2 id="eligibility">1. Who may use {SITE_NAME}</h2>
       <p>
         You must be at least 13 years old to use the Service. If you are under 18, you may use it only with
         the involvement of a parent or guardian who agrees to these Terms for you. By using the Service, you
@@ -49,13 +50,13 @@ export default function TermsPage() {
         </li>
         <li>
           Using the Service does not create a doctor-patient or other professional relationship between you
-          and SkinWiz, or between you and any dermatologist or clinician connected with SkinWiz.
+          and {SITE_NAME}, or between you and any dermatologist or clinician connected with {SITE_NAME}.
         </li>
         <li>
           Always get the advice of a qualified healthcare professional about a skin condition, and before you
           start, stop or combine treatments. This matters especially if you are pregnant or breastfeeding, have
           allergies or a skin condition, take prescription medication, or are buying for a child. Never ignore
-          professional advice, or delay getting it, because of something you read on SkinWiz.
+          professional advice, or delay getting it, because of something you read on {SITE_NAME}.
         </li>
         <li>
           Always read and follow the product label. Patch-test new products, and stop using any product that
@@ -76,7 +77,7 @@ export default function TermsPage() {
         Product, ingredient and label information comes from public sources. These include the FDA&apos;s
         openFDA databases, Open Beauty Facts (a community-edited database) and manufacturers. It may be
         incomplete, out of date or wrong, and manufacturers change formulas without notice. The label on the
-        product you actually buy always takes precedence over what SkinWiz shows.
+        product you actually buy always takes precedence over what {SITE_NAME} shows.
       </p>
       <p>
         Scores and flags are opinions and screening aids, not guarantees:
@@ -93,12 +94,12 @@ export default function TermsPage() {
 
       <h2 id="affiliate">4. Affiliate links, retailers and third-party sites</h2>
       <p>
-        Some links on SkinWiz are affiliate links. We may earn a commission if you buy through them, at no
+        Some links on {SITE_NAME} are affiliate links. We may earn a commission if you buy through them, at no
         extra cost to you, and each one is labeled. Commercial relationships do not affect Derm Scores or User
         Scores.
       </p>
       <p>
-        SkinWiz does not sell products. A purchase you make is between you and the retailer, whose terms
+        {SITE_NAME} does not sell products. A purchase you make is between you and the retailer, whose terms
         govern price, availability, shipping, returns and product quality. Links to third-party sites are for
         convenience. We do not control those sites and are not responsible for their content, products or
         privacy practices.
@@ -111,7 +112,7 @@ export default function TermsPage() {
       </p>
       <ul>
         <li>
-          <strong>You keep ownership</strong> of your User Content. You grant SkinWiz a worldwide,
+          <strong>You keep ownership</strong> of your User Content. You grant {SITE_NAME} a worldwide,
           non-exclusive, royalty-free, perpetual license to host, store, display, reproduce, adapt and
           distribute it in order to run, improve and promote the Service. This includes combining outcome
           reports into aggregate scores. The license continues for aggregate and de-identified data after you
@@ -176,7 +177,7 @@ export default function TermsPage() {
         <a href="https://world.openbeautyfacts.org" target="_blank" rel="noopener noreferrer">
           Open Beauty Facts
         </a>
-        , and FDA data is in the public domain. SkinWiz and its logo are our trademarks.
+        , and FDA data is in the public domain. {SITE_NAME} and its logo are our trademarks.
       </p>
       <p>
         If you send us feedback or suggestions, we may use them without any obligation to you.
@@ -209,7 +210,7 @@ export default function TermsPage() {
 
       <h2 id="liability">11. Limitation of liability</h2>
       <p className="uppercase">
-        To the fullest extent the law permits, SkinWiz and its operators, contributors, clinicians and service
+        To the fullest extent the law permits, {SITE_NAME} and its operators, contributors, clinicians and service
         providers will not be liable for any indirect, incidental, special, consequential, exemplary or
         punitive damages. This includes skin reactions or other harm from products you choose to use, lost
         profits and lost data, arising from or related to the Service. Our total liability for all claims
@@ -222,7 +223,7 @@ export default function TermsPage() {
 
       <h2 id="indemnity">12. Indemnity</h2>
       <p>
-        You agree to defend, indemnify and hold harmless SkinWiz and its operators against any claims, losses
+        You agree to defend, indemnify and hold harmless {SITE_NAME} and its operators against any claims, losses
         and expenses, including reasonable legal fees, that arise from your User Content, your misuse of the
         Service or your breach of these Terms.
       </p>
@@ -254,7 +255,7 @@ export default function TermsPage() {
           after a change takes effect, you accept the updated Terms.
         </li>
         <li>
-          These Terms and our Privacy Policy are the entire agreement between you and SkinWiz about the
+          These Terms and our Privacy Policy are the entire agreement between you and {SITE_NAME} about the
           Service.
         </li>
         <li>If any provision is found unenforceable, the rest remains in effect.</li>

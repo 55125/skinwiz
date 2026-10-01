@@ -8,11 +8,12 @@ import { getConcerns } from "@/lib/queries";
 import { getRoutinesForConcern } from "@/lib/routines";
 import type { Metadata } from "next";
 import { variantRobots } from "@/lib/seo";
+import { SITE_NAME } from "@/lib/brand";
 
 export async function generateMetadata({ searchParams }: { searchParams: Promise<{ concern?: string }> }): Promise<Metadata> {
   return {
     title: "Community routines",
-    description: "Skincare routines posted and voted on by the SkinWiz community, grouped by skin concern.",
+    description: `Skincare routines posted and voted on by the ${SITE_NAME} community, grouped by skin concern.`,
     alternates: { canonical: "/routines" },
     robots: variantRobots(await searchParams),
   };

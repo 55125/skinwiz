@@ -3,7 +3,7 @@
 Build the skin-concern OTC drug catalog from openFDA (project.md §6, MVP
 build order step 1). Filename/module name is historical (started as
 acne+sun only) — PURPOSES below now covers every FDA OTC monograph
-category that maps to a browsable skin concern on SkinWiz.
+category that maps to a browsable skin concern on Actively Skin.
 
 Deliberately excluded, even though they're technically skin-adjacent
 (scoped 2026-09-27 per a product decision to stay within dermatology-
@@ -74,7 +74,7 @@ def _get(url: str, retries: int = 3) -> dict:
         url = f"{url}{'&' if '?' in url else '?'}api_key={urllib.parse.quote(api_key)}"
     for attempt in range(retries):
         try:
-            req = urllib.request.Request(url, headers={"User-Agent": "skinwiz-catalog-pipeline/0.1"})
+            req = urllib.request.Request(url, headers={"User-Agent": "activelyskin-catalog-pipeline/0.1"})
             with urllib.request.urlopen(req, timeout=30) as resp:
                 return json.loads(resp.read())
         except urllib.error.HTTPError as exc:

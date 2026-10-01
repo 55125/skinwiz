@@ -1,19 +1,20 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import { SITE_NAME } from "@/lib/brand";
 
 export const metadata: Metadata = {
   alternates: { canonical: "/about" },
   title: "About & methodology",
-  description: "How SkinWiz scores skincare products, where its data comes from, and what it is not.",
+  description: `How ${SITE_NAME} scores skincare products, where its data comes from, and what it is not.`,
 };
 
 export default function AboutPage() {
   return (
     <div className="mx-auto max-w-2xl px-4 py-10 space-y-8">
       <div>
-        <h1 className="text-3xl font-semibold sm:text-4xl">About SkinWiz</h1>
+        <h1 className="text-3xl font-semibold sm:text-4xl">About {SITE_NAME}</h1>
         <p className="mt-2 text-muted-foreground">
-          SkinWiz matches self-reported skin concerns to evidence-graded active ingredients and specific
+          {SITE_NAME} matches self-reported skin concerns to evidence-graded active ingredients and specific
           OTC products. It is built for education and product matching — not diagnosis or individualized
           treatment.
         </p>
@@ -34,7 +35,7 @@ export default function AboutPage() {
           </li>
           <li>
             <strong className="text-foreground">User Score</strong> — the percentage of people who
-            reported improvement after using the product, logged directly on SkinWiz rather than pulled
+            reported improvement after using the product, logged directly on {SITE_NAME} rather than pulled
             from retailer star ratings. Shown once a few people have logged an outcome, and marked
             &ldquo;Early&rdquo; until more than 5 have.
           </li>
@@ -74,7 +75,7 @@ export default function AboutPage() {
       <section className="space-y-2">
         <h2 className="text-lg font-medium">Not medical advice</h2>
         <p className="text-sm text-muted-foreground">
-          SkinWiz does not diagnose any condition, and using it does not create a doctor-patient relationship
+          {SITE_NAME} does not diagnose any condition, and using it does not create a doctor-patient relationship
           with any dermatologist affiliated with the site. Nothing here should delay
           or replace care from a board-certified dermatologist. See our{" "}
           <Link href="/terms" className="underline underline-offset-2">Terms of Service</Link> and{" "}

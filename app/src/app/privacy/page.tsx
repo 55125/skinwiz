@@ -2,11 +2,12 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { LegalPage } from "@/components/legal-page";
 import { LEGAL_EMAIL, LEGAL_OPERATOR, LEGAL_STATE } from "@/lib/legal";
+import { SITE_NAME } from "@/lib/brand";
 
 export const metadata: Metadata = {
   alternates: { canonical: "/privacy" },
   title: "Privacy Policy",
-  description: "What SkinWiz collects, why, who it is shared with, and the choices you have.",
+  description: `What ${SITE_NAME} collects, why, who it is shared with, and the choices you have.`,
 };
 
 const mail = <a href={`mailto:${LEGAL_EMAIL}`}>{LEGAL_EMAIL}</a>;
@@ -18,11 +19,11 @@ export default function PrivacyPage() {
       intro={
         <div className="space-y-3">
           <p>
-            This policy explains what information {LEGAL_OPERATOR} (&ldquo;SkinWiz,&rdquo; &ldquo;we,&rdquo;
+            This policy explains what information {LEGAL_OPERATOR} (&ldquo;{SITE_NAME},&rdquo; &ldquo;we,&rdquo;
             &ldquo;us&rdquo;) collects when you use this website, how we use it, and the choices you have.
           </p>
           <p className="rounded-lg border bg-muted/40 p-4 text-sm">
-            <strong className="text-foreground">The short version.</strong> SkinWiz has no accounts and asks for
+            <strong className="text-foreground">The short version.</strong> {SITE_NAME} has no accounts and asks for
             no name or email to use its tools. Your skin profile and avoid list are stored in cookies on your
             own device. We do not sell your information, share it for targeted advertising, or run advertising
             or analytics trackers.
@@ -77,7 +78,7 @@ export default function PrivacyPage() {
 
       <h2 id="cookies">2. Cookies</h2>
       <p>
-        We use only first-party cookies that SkinWiz needs to work. We use no advertising, analytics or
+        We use only first-party cookies that {SITE_NAME} needs to work. We use no advertising, analytics or
         cross-site tracking cookies.
       </p>
       <table>
@@ -169,18 +170,18 @@ export default function PrivacyPage() {
         </li>
         <li>
           <strong>Legal and safety</strong>: when required by law or legal process, or to protect the rights,
-          safety or property of SkinWiz, our users or others.
+          safety or property of {SITE_NAME}, our users or others.
         </li>
         <li>
-          <strong>Business transfer</strong>: if SkinWiz is merged, acquired or sold, information may pass to
+          <strong>Business transfer</strong>: if {SITE_NAME} is merged, acquired or sold, information may pass to
           the new owner, and this policy will continue to apply to it.
         </li>
       </ul>
       <h3>Affiliate links and third-party content</h3>
       <p>
-        Some product links are affiliate links. When you click one, you leave SkinWiz. The retailer or
+        Some product links are affiliate links. When you click one, you leave {SITE_NAME}. The retailer or
         affiliate network (for example, impact.com) may set its own cookies to record that you came from
-        SkinWiz and whether you bought something. That tracking is governed by their privacy policies. The
+        {SITE_NAME} and whether you bought something. That tracking is governed by their privacy policies. The
         commission reports we receive do not identify you to us.
       </p>
       <p>
@@ -238,14 +239,14 @@ export default function PrivacyPage() {
 
       <h2 id="children">9. Children</h2>
       <p>
-        SkinWiz is not directed to children under 13, and we do not knowingly collect personal information
+        {SITE_NAME} is not directed to children under 13, and we do not knowingly collect personal information
         from them. If you believe a child under 13 has given us information, email {mail} and we will delete
         it.
       </p>
 
       <h2 id="international">10. Where data is processed</h2>
       <p>
-        SkinWiz is operated from, and hosted in, the United States. If you use it from another country, your
+        {SITE_NAME} is operated from, and hosted in, the United States. If you use it from another country, your
         information will be processed in the US.
       </p>
 

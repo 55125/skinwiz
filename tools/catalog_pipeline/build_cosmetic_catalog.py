@@ -88,7 +88,7 @@ def _get(url: str, retries: int = 3) -> dict:
     silently write a shorter catalog."""
     for attempt in range(retries):
         try:
-            req = urllib.request.Request(url, headers={"User-Agent": "skinwiz-catalog-pipeline/0.1"})
+            req = urllib.request.Request(url, headers={"User-Agent": "activelyskin-catalog-pipeline/0.1"})
             with urllib.request.urlopen(req, timeout=20) as resp:
                 return json.loads(resp.read())
         except Exception as exc:

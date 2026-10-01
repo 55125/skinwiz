@@ -23,6 +23,7 @@ import { JsonLd } from "@/components/json-ld";
 import { siteUrl } from "@/lib/site-url";
 import { countProducts, getAllActives, getConcerns, getTopProducts, getTopActives } from "@/lib/queries";
 import { getTopRoutines } from "@/lib/routines";
+import { SITE_NAME } from "@/lib/brand";
 
 // Force dynamic: without this, Next.js statically prerenders "/" once at
 // build time -- against whatever the database contains at that moment.
@@ -33,7 +34,7 @@ export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   alternates: { canonical: "/" },
-  openGraph: { type: "website", siteName: "SkinWiz", title: "SkinWiz — OTC skincare, ingredient by ingredient", url: "/" },
+  openGraph: { type: "website", siteName: SITE_NAME, title: `${SITE_NAME} — OTC skincare, ingredient by ingredient`, url: "/" },
 };
 
 const CONCERN_ICONS: Record<string, LucideIcon> = {
@@ -75,14 +76,14 @@ export default function Home() {
               "@type": "WebSite",
               "@id": `${base}/#website`,
               url: base,
-              name: "SkinWiz",
+              name: SITE_NAME,
               potentialAction: {
                 "@type": "SearchAction",
                 target: { "@type": "EntryPoint", urlTemplate: `${base}/search?q={search_term_string}` },
                 "query-input": "required name=search_term_string",
               },
             },
-            { "@type": "Organization", "@id": `${base}/#organization`, name: "SkinWiz", url: base },
+            { "@type": "Organization", "@id": `${base}/#organization`, name: SITE_NAME, url: base },
           ],
         }}
       />
@@ -237,7 +238,7 @@ export default function Home() {
               {
                 icon: <Users className="h-5 w-5 text-violet-600" />,
                 title: "User Score",
-                body: "The share of people who logged that a product actually helped — outcomes reported on SkinWiz, not scraped store reviews.",
+                body: `The share of people who logged that a product actually helped — outcomes reported on ${SITE_NAME}, not scraped store reviews.`,
               },
               {
                 icon: <ShieldCheck className="h-5 w-5 text-emerald-600" />,

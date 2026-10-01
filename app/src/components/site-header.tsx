@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { SiteLogoMark } from "@/components/site-logo-mark";
 import { SiteNav } from "@/components/site-nav";
+import { SITE_NAME } from "@/lib/brand";
 
 export function SiteLogo() {
   return (
@@ -8,7 +9,7 @@ export function SiteLogo() {
       <span className="flex h-8 w-8 items-center justify-center rounded-[10px] bg-primary text-primary-foreground shadow-sm">
         <SiteLogoMark className="h-5 w-5" />
       </span>
-      <span className="font-display text-[19px] font-medium tracking-[-0.02em]">SkinWiz</span>
+      <span className="font-display text-[19px] font-medium tracking-[-0.02em]">{SITE_NAME}</span>
     </Link>
   );
 }

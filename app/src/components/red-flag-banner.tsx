@@ -1,4 +1,5 @@
 import { AlertTriangle } from "lucide-react";
+import { SITE_NAME } from "@/lib/brand";
 
 // project.md §3, point 2: "Red-flag gate before any recommendation ...
 // Reduces liability, doubles as referral funnel." Shown before any product
@@ -18,7 +19,7 @@ export function RedFlagBanner() {
       <p>
         <strong className="font-semibold text-amber-950 dark:text-amber-100">See a board-certified dermatologist first</strong>{" "}
         if you have a changing or bleeding lesion, rapid spread, pain or fever, eye involvement, or no improvement
-        after 8–12 weeks of consistent use. SkinWiz is educational and doesn&apos;t diagnose your skin.
+        after 8–12 weeks of consistent use. {SITE_NAME} is educational and doesn&apos;t diagnose your skin.
       </p>
     </div>
   );

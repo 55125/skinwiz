@@ -1,6 +1,6 @@
 # build_acne_sun_catalog.py
 
-Builds the OTC drug product catalog for every skin concern SkinWiz covers
+Builds the OTC drug product catalog for every skin concern Actively Skin covers
 from openFDA — project.md §6 MVP build order, step 1. No dependencies
 beyond the standard library. Filename is historical (started as acne+sun
 only, 2026-09-27); it now covers 7 categories — see "Scope, 2026-09-27"

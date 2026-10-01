@@ -8,6 +8,7 @@ import { ACTIVE_DEFINITIONS, CONCERN_DEFINITIONS, matchActiveIds, nicheToConcern
 import { computeFreeFromFlags } from "./ingredient-flags";
 import { parseStrengths, strengthKey } from "./strength";
 import { aliasesFor, canonicalSlug, parseIngredients, pickDisplayName } from "./ingredient-parse";
+import { SITE_NAME } from "@/lib/brand";
 
 const REPO_ROOT = path.resolve(process.cwd(), "..");
 // Four sources: the primary openFDA catalog, the DailyMed resolution pass
@@ -117,7 +118,7 @@ function normalizeBrandName(raw: string): string {
 }
 
 async function main() {
-  console.log("Seeding SkinWiz database...");
+  console.log(`Seeding ${SITE_NAME} database...`);
 
   // Wipe and regenerate reference/catalog data only, in FK-safe order.
   // dermRatings, audienceOutcomes, dermRaters, raterApplications, routines,

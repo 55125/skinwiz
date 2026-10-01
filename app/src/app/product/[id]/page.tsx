@@ -42,6 +42,7 @@ import { displayManufacturer, tidyIngredientName } from "@/lib/format";
 import { productTitle, breadcrumbLd } from "@/lib/seo";
 import { JsonLd } from "@/components/json-ld";
 import { siteUrl } from "@/lib/site-url";
+import { SITE_NAME } from "@/lib/brand";
 
 const FREE_FROM_BADGE = "border-emerald-300 text-emerald-700 dark:border-emerald-900 dark:text-emerald-400";
 
@@ -62,8 +63,8 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   const product = getProduct(decodeURIComponent(id));
   if (!product) return {};
   const description = product.activeIngredientText
-    ? `${product.brandName} — ${product.activeIngredientText}. Ingredients, matches and User Score on SkinWiz.`
-    : `${product.brandName} on SkinWiz.`;
+    ? `${product.brandName} — ${product.activeIngredientText}. Ingredients, matches and User Score on ${SITE_NAME}.`
+    : `${product.brandName} on ${SITE_NAME}.`;
   return {
     title: productTitle(product, describeStrengths, displayManufacturer),
     description,
@@ -602,8 +603,8 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
           <span className="sr-only"> (opens in new tab)</span></a>
         </div>
         <p className="text-xs italic text-muted-foreground">
-          These are search links, not vetted reviews — SkinWiz doesn&apos;t screen or endorse social
-          content. Only the scores above come from feedback collected on SkinWiz.
+          These are search links, not vetted reviews — {SITE_NAME} doesn&apos;t screen or endorse social
+          content. Only the scores above come from feedback collected on {SITE_NAME}.
         </p>
       </section>
 

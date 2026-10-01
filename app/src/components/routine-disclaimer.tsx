@@ -1,4 +1,5 @@
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { SITE_NAME } from "@/lib/brand";
 
 // Routines are the one part of the site with zero verification step —
 // unlike products (FDA/brand-direct/community-sourced, each labeled) or
@@ -8,10 +9,10 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 export function RoutineDisclaimer() {
   return (
     <Alert className="border-amber-300 bg-amber-50 dark:border-amber-900 dark:bg-amber-950/40">
-      <AlertTitle>User-submitted, not reviewed by SkinWiz</AlertTitle>
+      <AlertTitle>User-submitted, not reviewed by {SITE_NAME}</AlertTitle>
       <AlertDescription>
         Routines are posted directly by other visitors and are not checked by dermatologists or
-        SkinWiz staff. Vote score reflects community opinion, not clinical accuracy. Don&apos;t
+        {SITE_NAME} staff. Vote score reflects community opinion, not clinical accuracy. Don&apos;t
         treat a routine as medical advice — see a board-certified dermatologist for guidance
         specific to you.
       </AlertDescription>

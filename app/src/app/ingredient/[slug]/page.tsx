@@ -34,6 +34,7 @@ import { cn } from "@/lib/utils";
 import { variantRobots, breadcrumbLd } from "@/lib/seo";
 import { JsonLd } from "@/components/json-ld";
 import { siteUrl } from "@/lib/site-url";
+import { SITE_NAME } from "@/lib/brand";
 
 type Params = Promise<{ slug: string }>;
 
@@ -49,7 +50,7 @@ export async function generateMetadata({
   const n = ingredient.productCount;
   return {
     title: `${ingredient.name}: what it is and products that contain it`,
-    description: `${ingredient.name} appears in ${n.toLocaleString()} product${n === 1 ? "" : "s"} in the SkinWiz catalog. See every product that contains it, how it is used, and what we know about it.`,
+    description: `${ingredient.name} appears in ${n.toLocaleString()} product${n === 1 ? "" : "s"} in the ${SITE_NAME} catalog. See every product that contains it, how it is used, and what we know about it.`,
     // one-off entries are mostly label typos; keep them reachable but out of search results
     robots: n < MIN_PUBLIC_PRODUCTS ? { index: false } : variantRobots(await searchParams),
     alternates: { canonical: `/ingredient/${encodeURIComponent(ingredient.id)}` },
@@ -242,7 +243,7 @@ export default async function IngredientPage({
             </section>
           ) : (
             <section className="rounded-2xl border border-dashed p-5 text-sm text-muted-foreground sm:p-6">
-              SkinWiz doesn&apos;t track {ingredient.name} as an active, so there&apos;s no evidence summary for it here —
+              {SITE_NAME} doesn&apos;t track {ingredient.name} as an active, so there&apos;s no evidence summary for it here —
               this page shows exactly where it appears in the catalog. Names are grouped from the published
               ingredient lists, so a misspelling on one label can appear as its own entry.
             </section>

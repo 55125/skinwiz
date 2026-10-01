@@ -1,4 +1,4 @@
-// A droplet with a small four-point spark: skincare + "wiz" without the
+// A droplet with a small four-point spark (from the SkinWiz era) without the
 // stock Sparkles icon. Drawn with currentColor so it follows the tile.
 export function SiteLogoMark({ className }: { className?: string }) {
   return (

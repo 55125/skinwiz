@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { SiteLogo } from "@/components/site-header";
 import { FREE_FROM_CHECKS } from "@/db/ingredient-flags";
+import { SITE_NAME } from "@/lib/brand";
 
 const FOOTER_LINKS = [
   {
@@ -28,7 +29,7 @@ const FOOTER_LINKS = [
     ],
   },
   {
-    heading: "SkinWiz",
+    heading: SITE_NAME,
     links: [
       { href: "/about", label: "About & methodology" },
       { href: "/for-clinicians", label: "For clinicians" },
@@ -83,7 +84,7 @@ export function SiteFooter() {
 
         <div className="mt-8 grid gap-4 border-t pt-8 text-xs leading-relaxed text-muted-foreground md:grid-cols-2">
           <p>
-            <strong className="text-foreground">Not medical advice.</strong> SkinWiz provides educational
+            <strong className="text-foreground">Not medical advice.</strong> {SITE_NAME} provides educational
             information about OTC skincare ingredients and products. It does not diagnose any condition and
             does not create a doctor-patient relationship. Always talk to a board-certified dermatologist
             about your specific skin.

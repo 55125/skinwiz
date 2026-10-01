@@ -1,4 +1,4 @@
-# SkinWiz — app
+# Actively Skin — app
 
 The MVP web app: browse skincare products by active ingredient across 8
 concerns (acne, sun protection, antifungal, antidandruff, anti-itch, dry

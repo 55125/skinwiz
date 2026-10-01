@@ -307,7 +307,7 @@ COSMETIC_ACTIVES = {
 def _get(url: str, retries: int = 3) -> str | None:
     for attempt in range(retries):
         try:
-            req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 (skinwiz-catalog-pipeline/0.1)"})
+            req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 (activelyskin-catalog-pipeline/0.1)"})
             with urllib.request.urlopen(req, timeout=20) as resp:
                 return resp.read().decode("utf-8", errors="replace")
         except urllib.error.HTTPError as exc:
@@ -332,7 +332,7 @@ def _get(url: str, retries: int = 3) -> str | None:
 def _get_bytes(url: str, retries: int = 3) -> bytes | None:
     for attempt in range(retries):
         try:
-            req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 (skinwiz-catalog-pipeline/0.1)"})
+            req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 (activelyskin-catalog-pipeline/0.1)"})
             with urllib.request.urlopen(req, timeout=20) as resp:
                 data = resp.read(MAX_IMAGE_BYTES + 1)
                 if len(data) > MAX_IMAGE_BYTES:

@@ -20,7 +20,7 @@ import requests
 # Reddit's API rules ask for a real contact in the User-Agent; set
 # SKINWIZ_CONTACT (an email or URL) rather than shipping a placeholder.
 _CONTACT = os.environ.get("SKINWIZ_CONTACT")
-USER_AGENT = f"skinwiz-complaint-miner/0.1 (contact: {_CONTACT})" if _CONTACT else "skinwiz-complaint-miner/0.1"
+USER_AGENT = f"activelyskin-complaint-miner/0.1 (contact: {_CONTACT})" if _CONTACT else "activelyskin-complaint-miner/0.1"
 
 # Each theme mirrors a row in project.md §4's complaint table, plus an "other"
 # catch-all. baseline_severity reflects the manual severity read in that

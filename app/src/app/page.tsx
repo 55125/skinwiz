@@ -95,24 +95,24 @@ export default function Home() {
           src="/hero/gel.webp"
           alt=""
           aria-hidden
-          width={1024}
-          height={623}
+          width={1315}
+          height={800}
           fetchPriority="high"
-          className="hero-photo pointer-events-none absolute left-1/2 top-6 w-[190vw] max-w-none -translate-x-[32%] select-none sm:-top-7 sm:w-[1100px] sm:-translate-x-1/2"
+          className="hero-photo pointer-events-none absolute left-1/2 top-6 w-[190vw] max-w-none -translate-x-[32%] select-none sm:-top-[100px] sm:w-[1100px] sm:-translate-x-[46%]"
         />
         <div
           aria-hidden
           className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_70%_26%_at_50%_45%,color-mix(in_oklch,var(--hero-glow)_42%,transparent)_0%,color-mix(in_oklch,var(--hero-glow)_18%,transparent)_60%,transparent_100%)] sm:bg-[radial-gradient(ellipse_27%_22%_at_50%_52%,color-mix(in_oklch,var(--hero-glow)_42%,transparent)_0%,color-mix(in_oklch,var(--hero-glow)_18%,transparent)_60%,transparent_100%)]"
         />
         <div className="hero-glow relative mx-auto max-w-3xl px-4 pb-16 pt-12 text-center sm:pb-20 sm:pt-24">
-          <span className="inline-flex items-center rounded-full border bg-card px-3 py-1 text-xs font-medium text-muted-foreground [text-shadow:none]">
+          <span className="inline-flex items-center rounded-full border bg-card px-3 py-1 text-xs font-medium text-muted-foreground [text-shadow:none] sm:-translate-y-[64px]">
             Built by a board-certified dermatologist
           </span>
           <h1 className="mt-10 text-[2.5rem] font-semibold leading-[1.08] sm:text-6xl">
             Find your <span className="text-brand">actives</span>.
           </h1>
           <p className="mx-auto mt-5 max-w-xl text-lg font-medium text-foreground/85 sm:text-[19px]">
-            Every product, every ingredient, every data point for the perfect regimen
+            Every product, every ingredient. Build the perfect regimen.
           </p>
           <div className="mx-auto mt-8 max-w-2xl [text-shadow:none]">
             <SearchBar large />

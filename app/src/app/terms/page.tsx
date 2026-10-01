@@ -4,7 +4,8 @@ import { LegalPage } from "@/components/legal-page";
 import { LEGAL_EMAIL, LEGAL_OPERATOR, LEGAL_STATE } from "@/lib/legal";
 
 export const metadata: Metadata = {
-  title: "Terms of Service — SkinWiz",
+  alternates: { canonical: "/terms" },
+  title: "Terms of Service",
   description: "The terms that govern your use of SkinWiz.",
 };
 

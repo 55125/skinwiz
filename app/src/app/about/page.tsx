@@ -2,7 +2,8 @@ import Link from "next/link";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "About & methodology — SkinWiz",
+  alternates: { canonical: "/about" },
+  title: "About & methodology",
   description: "How SkinWiz scores skincare products, where its data comes from, and what it is not.",
 };
 
@@ -34,7 +35,8 @@ export default function AboutPage() {
           <li>
             <strong className="text-foreground">User Score</strong> — the percentage of people who
             reported improvement after using the product, logged directly on SkinWiz rather than pulled
-            from retailer star ratings. Not shown until at least 10 people have logged an outcome.
+            from retailer star ratings. Shown once a few people have logged an outcome, and marked
+            &ldquo;Early&rdquo; until more than 5 have.
           </li>
         </ul>
       </section>

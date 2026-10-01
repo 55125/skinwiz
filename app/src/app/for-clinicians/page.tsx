@@ -3,7 +3,8 @@ import { Separator } from "@/components/ui/separator";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "For dermatologists — SkinWiz",
+  alternates: { canonical: "/for-clinicians" },
+  title: "For dermatologists",
   description: "Request to join the SkinWiz dermatologist rating panel.",
 };
 

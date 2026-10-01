@@ -4,7 +4,7 @@ import { getConcerns } from "@/lib/queries";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Post a routine — SkinWiz",
+  title: "Post a routine",
   robots: { index: false },
 };
 

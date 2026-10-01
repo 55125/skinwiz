@@ -569,3 +569,23 @@ export function getPublicIngredientIds(): { id: string }[] {
     .where(sql`${ingredients.productCount} >= ${MIN_PUBLIC_PRODUCTS}`)
     .all();
 }
+
+// The FDA lists one product under several codes (usually pack sizes), which
+// makes identical pages. Listings with the same name, labeler, form and
+// strength collapse to the lowest id: that page is the canonical URL and the
+// only one in the sitemap. Same SQL as canonicalProductIds() below.
+export function getCanonicalProductId(p: typeof products.$inferSelect): string {
+  const row = db.get<{ id: string }>(sql`
+    SELECT min(id) AS id FROM products
+    WHERE brand_name = ${p.brandName}
+      AND manufacturer IS ${p.manufacturer}
+      AND dosage_form IS ${p.dosageForm}
+      AND strength_key IS ${p.strengthKey}`);
+  return row?.id ?? p.id;
+}
+
+export function canonicalProductIds(): string[] {
+  return db
+    .all<{ id: string }>(sql`SELECT min(id) AS id FROM products GROUP BY brand_name, manufacturer, dosage_form, strength_key`)
+    .map((r) => r.id);
+}

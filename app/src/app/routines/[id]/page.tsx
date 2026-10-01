@@ -16,8 +16,9 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   const routine = getRoutine(parseInt(id, 10));
   if (!routine) return {};
   return {
-    title: `${routine.title} — ${routine.concernName} routine — SkinWiz`,
+    title: `${routine.title} — ${routine.concernName} routine`,
     description: `A community-submitted ${routine.concernName.toLowerCase()} routine on SkinWiz. User-posted and not reviewed by dermatologists.`,
+    alternates: { canonical: `/routines/${routine.id}` },
   };
 }
 

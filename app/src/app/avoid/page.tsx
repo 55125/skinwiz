@@ -5,7 +5,7 @@ import { AvoidListEditor } from "@/components/avoid-list-editor";
 import { readAvoidIds } from "@/lib/avoid";
 
 export const metadata: Metadata = {
-  title: "Ingredients I avoid — SkinWiz",
+  title: "Ingredients I avoid",
   description: "Pick the ingredients you avoid and SkinWiz will flag every product that contains them.",
 };
 

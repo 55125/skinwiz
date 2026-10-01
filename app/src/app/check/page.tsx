@@ -18,7 +18,7 @@ const MAX_CHARS = 6000;
 export async function generateMetadata({ searchParams }: { searchParams: Promise<{ list?: string }> }): Promise<Metadata> {
   const { list } = await searchParams;
   return {
-    title: "Ingredient list checker — SkinWiz",
+    title: "Ingredient list checker",
     description:
       "Paste any product's ingredient list to check it for fungal-acne triggers, fragrance, alcohol, common contact allergens and more, and find products with a similar formula.",
     robots: list ? { index: false } : undefined,

@@ -7,11 +7,16 @@ import { RoutineDisclaimer } from "@/components/routine-disclaimer";
 import { getConcerns } from "@/lib/queries";
 import { getRoutinesForConcern } from "@/lib/routines";
 import type { Metadata } from "next";
+import { variantRobots } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "Community routines — SkinWiz",
-  description: "Skincare routines posted and voted on by the SkinWiz community, grouped by skin concern.",
-};
+export async function generateMetadata({ searchParams }: { searchParams: Promise<{ concern?: string }> }): Promise<Metadata> {
+  return {
+    title: "Community routines",
+    description: "Skincare routines posted and voted on by the SkinWiz community, grouped by skin concern.",
+    alternates: { canonical: "/routines" },
+    robots: variantRobots(await searchParams),
+  };
+}
 
 export default async function RoutinesPage({
   searchParams,

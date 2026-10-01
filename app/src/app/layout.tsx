@@ -3,6 +3,7 @@ import { Fraunces, Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
+import { siteUrl } from "@/lib/site-url";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -22,10 +23,23 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const SITE_DESCRIPTION =
+  "Find OTC skincare products by active ingredient, scored separately by dermatologists and by real reported outcomes — not guesses from an ingredient list.";
+
+// metadataBase lets every page give relative canonical/OpenGraph URLs; the
+// title template appends the brand so pages set only their own title.
 export const metadata: Metadata = {
-  title: "SkinWiz — OTC skincare, ingredient by ingredient",
-  description:
-    "Find OTC skincare products by active ingredient, scored separately by dermatologists and by real reported outcomes — not guesses from an ingredient list.",
+  metadataBase: new URL(siteUrl()),
+  title: {
+    default: "SkinWiz — OTC skincare, ingredient by ingredient",
+    template: "%s — SkinWiz",
+  },
+  description: SITE_DESCRIPTION,
+  // No og:title/description here: child pages don't merge openGraph, so a
+  // root value would be inherited verbatim by every page. Without one,
+  // share previews fall back to each page's own <title> and description.
+  openGraph: { type: "website", siteName: "SkinWiz", locale: "en_US" },
+  twitter: { card: "summary" },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

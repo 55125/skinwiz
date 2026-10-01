@@ -6,9 +6,12 @@ import { ProductGrid } from "@/components/product-grid";
 import { readSessionId } from "@/lib/session";
 import { getShelf } from "@/lib/shelf";
 import { findRoutineConflicts } from "@/lib/routine-conflicts";
+import { getLoggedProductIds } from "@/lib/outcomes";
+import { getConcerns } from "@/lib/queries";
+import { ShelfOutcomePrompt } from "@/components/shelf-outcome-prompt";
 
 export const metadata: Metadata = {
-  title: "My shelf — SkinWiz",
+  title: "My shelf",
   description: "The skincare products you own, want and have finished, with a check for actives that shouldn't be combined.",
   robots: { index: false },
 };
@@ -21,6 +24,23 @@ export default async function ShelfPage() {
   const want = items.filter((i) => i.status === "want");
   const empties = items.filter((i) => i.status === "empty");
   const conflicts = findRoutineConflicts(inUse.map((i) => ({ productId: i.product.id, productBrandName: i.product.brandName })));
+
+  // Finished products first -- that's when someone actually knows whether
+  // it worked. In-use ones are asked too; an answer can be changed later.
+  const askable = [...empties, ...inUse];
+  const logged = sessionId
+    ? getLoggedProductIds(sessionId, askable.map((i) => ({ productId: i.product.id, concernId: i.product.concernId })))
+    : new Set<string>();
+  const concernNames = new Map(getConcerns().map((c) => [c.id, c.name]));
+  const toAsk = askable
+    .filter((i) => !logged.has(i.product.id))
+    .slice(0, 8)
+    .map((i) => ({
+      productId: i.product.id,
+      brandName: i.product.brandName,
+      concernName: concernNames.get(i.product.concernId) ?? "this concern",
+      finished: i.status === "empty",
+    }));
 
   const sections = [
     { title: "In use", items: inUse },
@@ -68,6 +88,8 @@ export default async function ShelfPage() {
               </p>
             </div>
           )}
+
+          {toAsk.length > 0 && <ShelfOutcomePrompt items={toAsk} />}
 
           {sections.map((s) => (
             <section key={s.title} className="space-y-4">

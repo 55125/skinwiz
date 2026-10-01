@@ -4,11 +4,25 @@ import { PageHeader } from "@/components/page-header";
 import { Pagination } from "@/components/pagination";
 import { getIngredientLetters, getPopularIngredients, listIngredients } from "@/lib/queries";
 import { cn } from "@/lib/utils";
+import { variantRobots } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "Ingredients A–Z — SkinWiz",
-  description: "Every ingredient in the SkinWiz catalog, with the products that contain each one.",
-};
+// Letter pages are the crawl path into ingredient pages, so they're indexed
+// under their own canonical; later pages within a letter are not.
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: Promise<{ letter?: string; page?: string }>;
+}): Promise<Metadata> {
+  const { letter, page } = await searchParams;
+  const oneLetter = letter && /^[a-z#]$/i.test(letter) ? letter.toUpperCase() : undefined;
+  return {
+    title: "Ingredients A–Z",
+    description: "Every ingredient in the SkinWiz catalog, with the products that contain each one.",
+    // No letter shows "A", so A shares the bare URL.
+      alternates: { canonical: oneLetter && oneLetter !== "A" ? `/ingredients?letter=${encodeURIComponent(oneLetter)}` : "/ingredients" },
+    robots: variantRobots({ page: page && page !== "1" ? page : undefined }),
+  };
+}
 
 export const dynamic = "force-dynamic";
 

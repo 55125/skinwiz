@@ -8,14 +8,27 @@ import { RedFlagBanner } from "@/components/red-flag-banner";
 import { FreeFromFilters } from "@/components/free-from-filters";
 import { getConcern, getActivesForConcern, getProductsForConcern, getStrengthOptionsForActive } from "@/lib/queries";
 import { formatPct } from "@/db/strength";
+import { variantRobots, breadcrumbLd } from "@/lib/seo";
+import { JsonLd } from "@/components/json-ld";
+import { siteUrl } from "@/lib/site-url";
 
-export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+type ConcernParams = { page?: string; active?: string; free?: string; strength?: string };
+
+export async function generateMetadata({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ slug: string }>;
+  searchParams: Promise<ConcernParams>;
+}): Promise<Metadata> {
   const { slug } = await params;
   const concern = getConcern(slug);
   if (!concern) return {};
   return {
-    title: `${concern.name} — SkinWiz`,
+    title: `${concern.name} products`,
     description: `${concern.description} Derm Score and User Score for every product.`,
+    alternates: { canonical: `/concern/${slug}` },
+    robots: variantRobots(await searchParams),
   };
 }
 
@@ -24,7 +37,7 @@ export default async function ConcernPage({
   searchParams,
 }: {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ page?: string; active?: string; free?: string; strength?: string }>;
+  searchParams: Promise<ConcernParams>;
 }) {
   const { slug } = await params;
   const { page: pageParam, active, free, strength } = await searchParams;
@@ -49,6 +62,7 @@ export default async function ConcernPage({
 
   return (
     <div className="mx-auto max-w-6xl space-y-8 px-4 py-10">
+      <JsonLd data={breadcrumbLd(siteUrl(), [["Home", "/"], [concern.name, `/concern/${slug}`]])} />
       <PageHeader eyebrow="Concern" title={concern.name} description={concern.description} />
 
       <RedFlagBanner />

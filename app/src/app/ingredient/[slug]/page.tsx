@@ -29,19 +29,30 @@ import { IngredientPreference } from "@/components/ingredient-preference";
 import { pubchemLinkText } from "@/lib/pubchem";
 import { canonicalSlug } from "@/db/ingredient-parse";
 import { ewgHazardBadge } from "@/lib/ewg";
+import { displayManufacturer } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { variantRobots, breadcrumbLd } from "@/lib/seo";
+import { JsonLd } from "@/components/json-ld";
+import { siteUrl } from "@/lib/site-url";
 
 type Params = Promise<{ slug: string }>;
 
-export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+  searchParams,
+}: {
+  params: Params;
+  searchParams: Promise<{ concern?: string; page?: string }>;
+}): Promise<Metadata> {
   const ingredient = getIngredient(decodeURIComponent((await params).slug));
   if (!ingredient) return {};
   const n = ingredient.productCount;
   return {
-    title: `${ingredient.name} — products containing it — SkinWiz`,
+    title: `${ingredient.name}: what it is and products that contain it`,
     description: `${ingredient.name} appears in ${n.toLocaleString()} product${n === 1 ? "" : "s"} in the SkinWiz catalog. See every product that contains it, how it is used, and what we know about it.`,
     // one-off entries are mostly label typos; keep them reachable but out of search results
-    robots: n < MIN_PUBLIC_PRODUCTS ? { index: false } : undefined,
+    robots: n < MIN_PUBLIC_PRODUCTS ? { index: false } : variantRobots(await searchParams),
+    alternates: { canonical: `/ingredient/${encodeURIComponent(ingredient.id)}` },
   };
 }
 
@@ -105,6 +116,13 @@ export default async function IngredientPage({
 
   return (
     <div className="mx-auto max-w-6xl space-y-10 px-4 py-8 sm:py-10">
+      <JsonLd
+        data={breadcrumbLd(siteUrl(), [
+          ["Home", "/"],
+          ["Ingredients", "/ingredients"],
+          [ingredient.name, `/ingredient/${encodeURIComponent(ingredient.id)}`],
+        ])}
+      />
       <Link href="/ingredients" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
         <ChevronLeft className="h-4 w-4" />
         All ingredients
@@ -244,6 +262,18 @@ export default async function IngredientPage({
                 A product listing {ingredient.name} can&apos;t carry these badges. Computed from published ingredient
                 lists, not a certification, and not exhaustive.
               </p>
+              <p className="mt-3 text-sm">
+                Avoiding it? Browse{" "}
+                {failedChecks.map((c, i) => (
+                  <span key={c.id}>
+                    {i > 0 && (i === failedChecks.length - 1 ? " or " : ", ")}
+                    <Link href={`/guide/${c.id}`} className="font-medium text-brand hover:underline">
+                      {c.label.toLowerCase()}
+                    </Link>
+                  </span>
+                ))}{" "}
+                products.
+              </p>
             </section>
           )}
         </div>
@@ -274,8 +304,8 @@ export default async function IngredientPage({
               <ul className="space-y-1.5 text-sm">
                 {brands.map((b) => (
                   <li key={b.manufacturer} className="flex items-center justify-between gap-3">
-                    <Link href={`/search?q=${encodeURIComponent(b.manufacturer)}`} className="truncate hover:text-brand">
-                      {b.manufacturer}
+                    <Link href={`/search?q=${encodeURIComponent(b.manufacturer)}`} rel="nofollow" className="truncate hover:text-brand">
+                      {displayManufacturer(b.manufacturer)}
                     </Link>
                     <span className="shrink-0 text-xs tabular-nums text-muted-foreground">{b.count.toLocaleString()}</span>
                   </li>

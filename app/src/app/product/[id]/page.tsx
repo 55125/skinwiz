@@ -9,6 +9,7 @@ import { DualScoreBadges } from "@/components/score-badge";
 import { RedFlagBanner } from "@/components/red-flag-banner";
 import {
   getProduct,
+  getCanonicalProductId,
   getEvidenceNotesForActives,
   getAffiliateLinksForProduct,
   getVideoLinksForProduct,
@@ -26,7 +27,7 @@ import { ewgHazardBadge } from "@/lib/ewg";
 import { readSessionId } from "@/lib/session";
 import { getSessionOutcome } from "@/lib/outcomes";
 import { readAvoidIds, avoidVerdict, avoidedIngredientName } from "@/lib/avoid";
-import { activeName } from "@/lib/strength-display";
+import { activeName, describeStrengths } from "@/lib/strength-display";
 import { formatPct } from "@/db/strength";
 import { monographStatus, formatRange } from "@/db/monograph-ranges";
 import { OutcomeForm } from "@/components/outcome-form";
@@ -38,8 +39,23 @@ import { MatchBadge } from "@/components/match-badge";
 import { avoidLabelsFor, hasProfile, matchProduct, readProfile } from "@/lib/profile";
 import { pubchemLinkText } from "@/lib/pubchem";
 import { displayManufacturer, tidyIngredientName } from "@/lib/format";
+import { productTitle, breadcrumbLd } from "@/lib/seo";
+import { JsonLd } from "@/components/json-ld";
+import { siteUrl } from "@/lib/site-url";
 
 const FREE_FROM_BADGE = "border-emerald-300 text-emerald-700 dark:border-emerald-900 dark:text-emerald-400";
+
+// Each filter tag links to its guide page (more products passing the same
+// check) -- also the main crawl path into the guides.
+function FreeFromLink({ id }: { id: string }) {
+  return (
+    <Link href={`/guide/${id}`}>
+      <Badge variant="outline" className={`${FREE_FROM_BADGE} hover:bg-emerald-50 dark:hover:bg-emerald-950/40`}>
+        {getFreeFromCheck(id)?.label ?? id}
+      </Badge>
+    </Link>
+  );
+}
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
@@ -49,8 +65,9 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     ? `${product.brandName} — ${product.activeIngredientText}. Derm Score and User Score on SkinWiz.`
     : `${product.brandName} on SkinWiz.`;
   return {
-    title: `${product.brandName} — SkinWiz`,
+    title: productTitle(product, describeStrengths, displayManufacturer),
     description,
+    alternates: { canonical: `/product/${encodeURIComponent(getCanonicalProductId(product))}` },
   };
 }
 
@@ -104,6 +121,13 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
 
   return (
     <div className="mx-auto max-w-5xl space-y-10 px-4 py-8 sm:py-10">
+      <JsonLd
+        data={breadcrumbLd(siteUrl(), [
+          ["Home", "/"],
+          ...(concern ? [[concern.name, `/concern/${concern.id}`] as [string, string]] : []),
+          [product.brandName, `/product/${encodeURIComponent(product.id)}`],
+        ])}
+      />
       {concern && (
         <Link
           href={`/concern/${concern.id}`}
@@ -302,9 +326,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
               <details className="group/ff">
                 <summary className="flex cursor-pointer list-none flex-wrap gap-1.5 [&::-webkit-details-marker]:hidden">
                   {product.freeFromFlags.slice(0, 6).map((id) => (
-                    <Badge key={id} variant="outline" className={FREE_FROM_BADGE}>
-                      {getFreeFromCheck(id)?.label ?? id}
-                    </Badge>
+                    <FreeFromLink key={id} id={id} />
                   ))}
                   {product.freeFromFlags.length > 6 && (
                     <span className="text-xs font-medium text-brand group-open/ff:hidden">
@@ -314,9 +336,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
                 </summary>
                 <div className="mt-1.5 flex flex-wrap gap-1.5">
                   {product.freeFromFlags.slice(6).map((id) => (
-                    <Badge key={id} variant="outline" className={FREE_FROM_BADGE}>
-                      {getFreeFromCheck(id)?.label ?? id}
-                    </Badge>
+                    <FreeFromLink key={id} id={id} />
                   ))}
                 </div>
               </details>
@@ -376,7 +396,12 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
       <RedFlagBanner />
       </div>
 
-      <OutcomeForm productId={product.id} concernName={concern?.name ?? "this concern"} initial={myOutcome} />
+      <OutcomeForm
+        productId={product.id}
+        concernName={concern?.name ?? "this concern"}
+        initial={myOutcome}
+        finished={shelfEntry?.status === "empty"}
+      />
 
       <section className="space-y-4">
         <h2 className="flex items-center gap-2 text-xl font-semibold">

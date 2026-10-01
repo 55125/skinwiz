@@ -1,8 +1,9 @@
 import type { MetadataRoute } from "next";
 import { db } from "@/db/client";
-import { products, concerns } from "@/db/schema";
+import { concerns } from "@/db/schema";
 import { siteUrl } from "@/lib/site-url";
-import { getPublicIngredientIds } from "@/lib/queries";
+import { canonicalProductIds, getPublicIngredientIds } from "@/lib/queries";
+import { getTopRoutines } from "@/lib/routines";
 import { FREE_FROM_CHECKS } from "@/db/ingredient-flags";
 
 const STATIC_PAGES = ["/browse", "/ingredients", "/routines", "/check", "/about", "/for-clinicians", "/privacy", "/terms"];
@@ -19,7 +20,11 @@ export const dynamic = "force-dynamic";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const concernRows = db.select({ id: concerns.id }).from(concerns).all();
-  const productRows = db.select({ id: products.id }).from(products).all();
+  // Duplicate FDA listings (same product, several pack-size codes) are left
+  // out: each page's canonical points at the one listed here.
+  const productIds = canonicalProductIds();
+  // Net-downvoted community routines aren't worth pointing crawlers at.
+  const routineRows = getTopRoutines(5000).filter((r) => r.score >= 0);
   const SITE_URL = siteUrl();
 
   return [
@@ -40,8 +45,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "weekly" as const,
       priority: 0.5,
     })),
-    ...productRows.map((p) => ({
-      url: `${SITE_URL}/product/${encodeURIComponent(p.id)}`,
+    ...routineRows.map((r) => ({
+      url: `${SITE_URL}/routines/${r.id}`,
+      changeFrequency: "weekly" as const,
+      priority: 0.4,
+    })),
+    ...productIds.map((id) => ({
+      url: `${SITE_URL}/product/${encodeURIComponent(id)}`,
       changeFrequency: "weekly" as const,
       priority: 0.6,
     })),

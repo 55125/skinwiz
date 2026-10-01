@@ -8,6 +8,9 @@ import { FilterChip } from "@/components/filter-chip";
 import { db } from "@/db/client";
 import { FREE_FROM_CHECKS, getFreeFromCheck } from "@/db/ingredient-flags";
 import { browseProducts } from "@/lib/queries";
+import { breadcrumbLd } from "@/lib/seo";
+import { JsonLd } from "@/components/json-ld";
+import { siteUrl } from "@/lib/site-url";
 
 export const dynamic = "force-dynamic";
 
@@ -22,8 +25,9 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const check = getFreeFromCheck(slug);
   if (!check) return {};
   return {
-    title: `${check.label} skincare products — SkinWiz`,
+    title: `${check.label} skincare products`,
     description: `Browse ${check.label.toLowerCase()} products checked against their full ingredient lists, with the exact ingredients each check looks for.`,
+    alternates: { canonical: `/guide/${slug}` },
   };
 }
 
@@ -43,6 +47,7 @@ export default async function GuidePage({ params }: { params: Promise<{ slug: st
 
   return (
     <div className="mx-auto max-w-5xl space-y-10 px-4 py-10">
+      <JsonLd data={breadcrumbLd(siteUrl(), [["Home", "/"], ["Browse", "/browse"], [check.label, `/guide/${check.id}`]])} />
       <PageHeader
         eyebrow="Ingredient filter"
         title={check.label}

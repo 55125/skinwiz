@@ -6,5 +6,12 @@ export function siteUrl(): string {
   if (explicit) return explicit.replace(/\/+$/, "");
   const railway = process.env.RAILWAY_PUBLIC_DOMAIN;
   if (railway) return `https://${railway}`;
-  return "http://localhost:3000";
+  // The Docker build has no public domain in its env, but statically
+  // prerendered pages (about, terms...) bake canonical/OpenGraph URLs in at
+  // build time -- so a production build falls back to the live domain
+  // rather than localhost. Set SITE_URL at build time too once a custom
+  // domain exists.
+  return process.env.NODE_ENV === "production" ? PRODUCTION_URL : "http://localhost:3000";
 }
+
+const PRODUCTION_URL = "https://skinwiz-production.up.railway.app";

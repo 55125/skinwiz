@@ -13,7 +13,7 @@ import { dataSourceBadge } from "@/lib/data-source";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = {
-  title: "Compare products — SkinWiz",
+  title: "Compare products",
   description: "Put two products side by side: ingredients they share, what's unique to each, and which ingredient-based filters each one passes.",
   robots: { index: false },
 };

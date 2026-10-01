@@ -29,12 +29,12 @@ function IngredientPicker({
   const [q, setQ] = useState("");
   const [results, setResults] = useState<Suggestion[]>([]);
   const seq = useRef(0);
+  // Derived rather than cleared in the effect: a short query just hides
+  // whatever the last fetch returned.
+  const shown = q.trim().length < 2 ? [] : results;
 
   useEffect(() => {
-    if (q.trim().length < 2) {
-      setResults([]);
-      return;
-    }
+    if (q.trim().length < 2) return;
     const mine = ++seq.current;
     const t = setTimeout(async () => {
       try {
@@ -63,9 +63,9 @@ function IngredientPicker({
           aria-label={`${title}: search ingredients`}
           className="h-10 w-full rounded-xl border bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
         />
-        {results.length > 0 && (
+        {shown.length > 0 && (
           <ul className="absolute z-10 mt-1 w-full overflow-hidden rounded-xl border bg-popover shadow-lg">
-            {results.map((r) => (
+            {shown.map((r) => (
               <li key={r.id}>
                 <button
                   type="button"

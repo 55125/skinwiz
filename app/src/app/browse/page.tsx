@@ -11,11 +11,18 @@ import { hasProfile, readProfile, scoreProducts } from "@/lib/profile";
 import { readAvoidIds } from "@/lib/avoid";
 import { TRUST_TIERS } from "@/lib/trust-tiers";
 import { cn } from "@/lib/utils";
+import { variantRobots } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "Browse all products — SkinWiz",
-  description: "Browse the full SkinWiz catalog by concern, trust tier, active ingredient, or ingredient-based filters.",
-};
+type BrowseParams = { concern?: string; tier?: string; active?: string; free?: string; sort?: string; page?: string };
+
+export async function generateMetadata({ searchParams }: { searchParams: Promise<BrowseParams> }): Promise<Metadata> {
+  return {
+    title: "Browse all products",
+    description: "Browse the full SkinWiz catalog by concern, trust tier, active ingredient, or ingredient-based filters.",
+    alternates: { canonical: "/browse" },
+    robots: variantRobots(await searchParams),
+  };
+}
 
 function SidebarLink({ href, selected, children }: { href: string; selected: boolean; children: React.ReactNode }) {
   return (
@@ -53,7 +60,7 @@ const ACTIVES_SHOWN = 8;
 export default async function BrowsePage({
   searchParams,
 }: {
-  searchParams: Promise<{ concern?: string; tier?: string; active?: string; free?: string; sort?: string; page?: string }>;
+  searchParams: Promise<BrowseParams>;
 }) {
   const { concern, tier, active, free, sort: sortParam, page: pageParam } = await searchParams;
   const page = Math.max(1, parseInt(pageParam ?? "1", 10) || 1);

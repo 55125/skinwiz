@@ -17,10 +17,13 @@ export function OutcomeForm({
   productId,
   concernName,
   initial,
+  finished = false,
 }: {
   productId: string;
   concernName: string;
   initial: { improved: boolean; weeksUsed: number | null } | null;
+  /** On the visitor's shelf as finished: ask directly, they've used it up. */
+  finished?: boolean;
 }) {
   const router = useRouter();
   const [improved, setImproved] = useState<boolean | null>(initial?.improved ?? null);
@@ -69,10 +72,14 @@ export function OutcomeForm({
   return (
     <div className="space-y-4 rounded-2xl border bg-gradient-to-br from-brand-soft/60 to-card p-5">
       <div className="space-y-1">
-        <h2 className="font-semibold">Used this for {concernName.toLowerCase()}? Log your result</h2>
+        <h2 className="font-semibold">
+          {finished && !initial
+            ? `You finished this — did it help with ${concernName.toLowerCase()}?`
+            : `Used this for ${concernName.toLowerCase()}? Log your result`}
+        </h2>
         <p className="text-sm text-muted-foreground">
-          Anonymous, one answer per visitor. Your answer feeds the User Score once 10 people have logged
-          an outcome — real reported results, not store reviews.
+          Anonymous, one answer per visitor. Your answer feeds the User Score once a few people have
+          logged an outcome — real reported results, not store reviews.
         </p>
       </div>
 

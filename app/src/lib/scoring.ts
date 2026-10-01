@@ -6,7 +6,12 @@ import { dermRatings, audienceOutcomes } from "@/db/schema";
 // publicly; show the rater count." Same logic applies to the audience side
 // so a single early adopter's outcome can't masquerade as a score.
 export const MIN_DERM_RATERS = 5;
-export const MIN_AUDIENCE_OUTCOMES = 10;
+// The user side starts showing early to get the score off zero, but the
+// report count stays hidden (UI shows "Early") until it's past
+// USER_COUNT_SHOWN_ABOVE, so "80% from 3" can't read as a settled verdict.
+// Pending text never shows a count either, since "2 more needed" leaks it.
+export const MIN_AUDIENCE_OUTCOMES = 3;
+export const USER_COUNT_SHOWN_ABOVE = 5;
 
 export type ScoreResult =
   | { status: "scored"; score: number; count: number }

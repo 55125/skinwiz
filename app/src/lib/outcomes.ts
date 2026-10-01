@@ -1,4 +1,4 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { db } from "@/db/client";
 import { audienceOutcomes } from "@/db/schema";
 
@@ -30,4 +30,23 @@ export function logOutcome(productId: string, concernId: string, sessionId: stri
       set: { improved: input.improved, weeksUsed: input.weeksUsed },
     })
     .run();
+}
+
+// Which of these products this visitor has already logged an outcome for
+// (for each product's own concern), in one query -- the shelf page uses it
+// to ask only about the ones still unanswered.
+export function getLoggedProductIds(sessionId: string, items: { productId: string; concernId: string }[]): Set<string> {
+  if (items.length === 0) return new Set();
+  const rows = db
+    .select({ productId: audienceOutcomes.productId, concernId: audienceOutcomes.concernId })
+    .from(audienceOutcomes)
+    .where(
+      and(
+        eq(audienceOutcomes.sessionId, sessionId),
+        inArray(audienceOutcomes.productId, items.map((i) => i.productId)),
+      ),
+    )
+    .all();
+  const wanted = new Set(items.map((i) => `${i.productId}\u0000${i.concernId}`));
+  return new Set(rows.filter((r) => wanted.has(`${r.productId}\u0000${r.concernId}`)).map((r) => r.productId));
 }

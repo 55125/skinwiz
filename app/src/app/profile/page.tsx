@@ -5,7 +5,7 @@ import { ProfileEditor } from "@/components/profile-editor";
 import { getIngredientNames, readProfile } from "@/lib/profile";
 
 export const metadata: Metadata = {
-  title: "My skin profile — SkinWiz",
+  title: "My skin profile",
   description: "Set your skin type, concerns and the ingredients you like or dislike, and SkinWiz scores every product against them.",
   robots: { index: false },
 };

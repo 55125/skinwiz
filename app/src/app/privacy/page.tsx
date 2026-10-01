@@ -4,7 +4,8 @@ import { LegalPage } from "@/components/legal-page";
 import { LEGAL_EMAIL, LEGAL_OPERATOR, LEGAL_STATE } from "@/lib/legal";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy — SkinWiz",
+  alternates: { canonical: "/privacy" },
+  title: "Privacy Policy",
   description: "What SkinWiz collects, why, who it is shared with, and the choices you have.",
 };
 

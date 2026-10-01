@@ -15,7 +15,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const q = (await searchParams).q?.trim();
   return {
-    title: q ? `“${q.slice(0, 60)}” — Search — SkinWiz` : "Search — SkinWiz",
+    title: q ? `“${q.slice(0, 60)}” — Search` : "Search",
     robots: { index: false },
   };
 }

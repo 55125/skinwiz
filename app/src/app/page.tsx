@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -18,6 +19,8 @@ import {
 import { ProductGrid } from "@/components/product-grid";
 import { SearchBar } from "@/components/search-bar";
 import { SectionHeader } from "@/components/section-header";
+import { JsonLd } from "@/components/json-ld";
+import { siteUrl } from "@/lib/site-url";
 import { countProducts, getAllActives, getConcerns, getTopProducts, getTopActives } from "@/lib/queries";
 import { getTopRoutines } from "@/lib/routines";
 
@@ -27,6 +30,11 @@ import { getTopRoutines } from "@/lib/routines";
 // so a static build would bake in an empty concerns list permanently
 // until the next deploy. Same reasoning as sitemap.ts.
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  alternates: { canonical: "/" },
+  openGraph: { type: "website", siteName: "SkinWiz", title: "SkinWiz — OTC skincare, ingredient by ingredient", url: "/" },
+};
 
 const CONCERN_ICONS: Record<string, LucideIcon> = {
   acne: CircleDot,
@@ -55,8 +63,29 @@ export default function Home() {
     { value: String(concerns.length), label: "skin concerns covered" },
   ];
 
+  const base = siteUrl();
+
   return (
     <div>
+      <JsonLd
+        data={{
+          "@context": "https://schema.org",
+          "@graph": [
+            {
+              "@type": "WebSite",
+              "@id": `${base}/#website`,
+              url: base,
+              name: "SkinWiz",
+              potentialAction: {
+                "@type": "SearchAction",
+                target: { "@type": "EntryPoint", urlTemplate: `${base}/search?q={search_term_string}` },
+                "query-input": "required name=search_term_string",
+              },
+            },
+            { "@type": "Organization", "@id": `${base}/#organization`, name: "SkinWiz", url: base },
+          ],
+        }}
+      />
       <section className="relative border-b">
         <div
           aria-hidden

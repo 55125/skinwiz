@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { SiteLogo } from "@/components/site-header";
+import { FREE_FROM_CHECKS } from "@/db/ingredient-flags";
 
 const FOOTER_LINKS = [
   {
@@ -67,7 +68,20 @@ export function SiteFooter() {
           ))}
         </div>
 
-        <div className="mt-10 grid gap-4 border-t pt-8 text-xs leading-relaxed text-muted-foreground md:grid-cols-2">
+        <div className="mt-10 border-t pt-8">
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Ingredient guides</h2>
+          <ul className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5 text-sm">
+            {FREE_FROM_CHECKS.map((c) => (
+              <li key={c.id}>
+                <Link href={`/guide/${c.id}`} className="text-foreground/70 hover:text-foreground">
+                  {c.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div className="mt-8 grid gap-4 border-t pt-8 text-xs leading-relaxed text-muted-foreground md:grid-cols-2">
           <p>
             <strong className="text-foreground">Not medical advice.</strong> SkinWiz provides educational
             information about OTC skincare ingredients and products. It does not diagnose any condition and

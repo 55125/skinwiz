@@ -100,9 +100,9 @@ export default function Home() {
             Skincare, scored <span className="text-brand">two ways.</span>
           </h1>
           <p className="mx-auto mt-5 max-w-xl text-lg text-muted-foreground">
-            A <strong className="font-medium text-foreground">Derm Score</strong> from board-certified
-            dermatologists and an <strong className="font-medium text-foreground">User Score</strong> from
-            real reported outcomes — not a guess from an ingredient list.
+            A <strong className="font-medium text-foreground">User Score</strong> from real reported
+            outcomes, and soon a separate <strong className="font-medium text-foreground">Derm Score</strong>{" "}
+            from verified dermatologists — not a guess from an ingredient list.
           </p>
           <div className="mx-auto mt-8 max-w-2xl">
             <SearchBar large />
@@ -232,7 +232,7 @@ export default function Home() {
               {
                 icon: <Stethoscope className="h-5 w-5 text-sky-600" />,
                 title: "Derm Score",
-                body: "From a panel of verified, board-certified dermatologists. Shown only once at least 5 have rated a product for a concern.",
+                body: "Coming soon. Our panel of board-certified dermatologists hasn't launched yet. Once it has, a score shows only after at least 5 have rated a product for a concern.",
               },
               {
                 icon: <Users className="h-5 w-5 text-violet-600" />,

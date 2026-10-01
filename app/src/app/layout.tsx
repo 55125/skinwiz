@@ -24,7 +24,7 @@ const geistMono = Geist_Mono({
 });
 
 const SITE_DESCRIPTION =
-  "Find OTC skincare products by active ingredient, scored separately by dermatologists and by real reported outcomes — not guesses from an ingredient list.";
+  "Find OTC skincare products by active ingredient, scored by real reported outcomes, not guesses from an ingredient list. A verified dermatologist panel is in the works.";
 
 // metadataBase lets every page give relative canonical/OpenGraph URLs; the
 // title template appends the brand so pages set only their own title.

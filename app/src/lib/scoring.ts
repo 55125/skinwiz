@@ -76,6 +76,10 @@ export function getScoresForProducts(items: ScoreKey[]): Map<string, ProductScor
 }
 
 // amber-700, not 600: 600 measured ~3.2:1 on white, below WCAG AA.
+// Flip once the dermatologist panel is rating products. Until then an unscored
+// Derm Score reads "coming soon" rather than implying raters are on the way.
+export const DERM_PANEL_LAUNCHED = false;
+
 export function scoreColorClass(score: number): string {
   if (score >= 75) return "text-emerald-700 dark:text-emerald-400";
   if (score >= 50) return "text-amber-700 dark:text-amber-400";

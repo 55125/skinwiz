@@ -1,5 +1,5 @@
 import { Stethoscope, Users } from "lucide-react";
-import { ScoreResult, USER_COUNT_SHOWN_ABOVE, scoreColorClass } from "@/lib/scoring";
+import { DERM_PANEL_LAUNCHED, ScoreResult, USER_COUNT_SHOWN_ABOVE, scoreColorClass } from "@/lib/scoring";
 import { cn } from "@/lib/utils";
 
 function ScoreBadge({
@@ -7,11 +7,13 @@ function ScoreBadge({
   label,
   result,
   hideSmallCounts,
+  unscoredText,
 }: {
   icon: React.ReactNode;
   label: string;
   result: ScoreResult;
   hideSmallCounts?: boolean;
+  unscoredText?: string;
 }) {
   const early = hideSmallCounts && result.count <= USER_COUNT_SHOWN_ABOVE;
   return (
@@ -35,7 +37,7 @@ function ScoreBadge({
           </span>
         ) : (
           <span className="text-sm text-muted-foreground">
-            {early ? "Not enough reports yet" : `Not yet rated · ${result.needed} more needed`}
+            {unscoredText ?? (early ? "Not enough reports yet" : `Not yet rated · ${result.needed} more needed`)}
           </span>
         )}
       </div>
@@ -93,7 +95,12 @@ export function DualScoreBadges({
   }
   return (
     <div className="flex flex-wrap gap-3">
-      <ScoreBadge icon={<Stethoscope className="h-4 w-4 text-sky-600" />} label="Derm Score" result={dermScore} />
+      <ScoreBadge
+        icon={<Stethoscope className="h-4 w-4 text-sky-600" />}
+        label="Derm Score"
+        result={dermScore}
+        unscoredText={DERM_PANEL_LAUNCHED ? undefined : "Coming soon · panel not launched yet"}
+      />
       <ScoreBadge icon={<Users className="h-4 w-4 text-violet-600" />} label="User Score" result={audienceScore} hideSmallCounts />
     </div>
   );

@@ -75,7 +75,7 @@ export default function AboutPage() {
         <h2 className="text-lg font-medium">Not medical advice</h2>
         <p className="text-sm text-muted-foreground">
           SkinWiz does not diagnose any condition, and using it does not create a doctor-patient relationship
-          with any dermatologist on our panel or otherwise affiliated with the site. Nothing here should delay
+          with any dermatologist affiliated with the site. Nothing here should delay
           or replace care from a board-certified dermatologist. See our{" "}
           <Link href="/terms" className="underline underline-offset-2">Terms of Service</Link> and{" "}
           <Link href="/privacy" className="underline underline-offset-2">Privacy Policy</Link>.

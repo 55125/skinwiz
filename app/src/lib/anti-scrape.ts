@@ -1,7 +1,8 @@
 // Layered, best-effort defence against bulk scraping of the catalog. None of
 // this stops a determined attacker rotating IPs and spoofing a browser -- that
 // needs an edge service (e.g. Cloudflare bot management) -- but it shuts out
-// the default tooling, AI/data crawlers, and anything hammering the site.
+// AI/data crawlers, throttles default tooling hard, and stops anything
+// hammering the site.
 // State is in-process, which is right for one Railway instance; with several
 // replicas each would enforce its own (looser) share.
 
@@ -20,11 +21,22 @@ const BLOCKED_UA = new RegExp(
     "cohere-ai", "mistralai-user", "youbot", "timpibot", "ai2bot", "friendlycrawler", "petalbot",
     // SEO / data-mining crawlers
     "semrushbot", "ahrefsbot", "mj12bot", "dotbot", "dataforseobot", "blexbot", "serpstatbot", "barkrowler",
-    // scripting libraries and headless automation
-    "python-requests", "python-urllib", "python-httpx", "aiohttp", "httpx", "scrapy", "curl/", "wget",
+    // dedicated scraping frameworks
+    "scrapy",
+  ].join("|"),
+  "i",
+);
+
+// Scripting libraries, headless browsers and generic bots. These aren't
+// refused outright: affiliate-network reviewers, link checkers and preview
+// renderers use the same tooling to look at a few pages. They get a tight
+// budget instead (LIMITS.automated*), which a bulk scraper can't live with.
+const AUTOMATION_UA = new RegExp(
+  [
+    "python-requests", "python-urllib", "python-httpx", "aiohttp", "httpx", "curl/", "wget",
     "libwww", "go-http-client", "java/", "apache-httpclient", "okhttp", "node-fetch", "axios", "undici",
     "got \\(", "postmanruntime", "insomnia", "headlesschrome", "phantomjs", "puppeteer", "playwright",
-    "selenium", "webdriver", "crawler", "scraper", "spider(?!.*(googlebot|bingbot))",
+    "selenium", "webdriver", "crawler", "scraper", "spider",
   ].join("|"),
   "i",
 );
@@ -132,6 +144,9 @@ export const LIMITS = {
   // page can prefetch 40+ ingredient links as they scroll into view.
   routerFetchesPerMinute: 600,
   detailPagesPerHour: 500,
+  // budgets for AUTOMATION_UA clients: enough to review a site, not copy it
+  automatedPagesPerMinute: 20,
+  automatedDetailPagesPerHour: 60,
   apiPerMinute: 40,
   banMs: 15 * 60_000,
   // strikes (limit breaches) before a ban
@@ -187,9 +202,12 @@ export function judge(req: RequestInfo): Verdict {
   // Always reachable so well-behaved crawlers can read the rules.
   if (path === "/robots.txt" || path === "/sitemap.xml") return { action: "allow" };
 
+  let automated = false;
   if (!ALLOWED_UA.test(ua)) {
-    if (ua.trim().length < 12) return { action: "block", status: 403, reason: "missing user agent" };
+    if (!ua.trim()) return { action: "block", status: 403, reason: "missing user agent" };
     if (BLOCKED_UA.test(ua)) return { action: "block", status: 403, reason: "automated client" };
+    // a bare "Java/17.0.2"-style UA is tooling too, not a browser
+    automated = AUTOMATION_UA.test(ua) || ua.trim().length < 12;
   }
 
   // The JSON endpoints exist for our own pages. Browsers label those calls
@@ -227,8 +245,9 @@ export function judge(req: RequestInfo): Verdict {
   const over = isRouterFetch
     ? bump(c.routerMinute, now, 60_000) > LIMITS.routerFetchesPerMinute
     : (isApi && bump(c.apiMinute, now, 60_000) > LIMITS.apiPerMinute) ||
-      (!isApi && bump(c.minute, now, 60_000) > LIMITS.pagesPerMinute) ||
-      (DETAIL_PATH.test(path) && bump(c.hour, now, 3_600_000) > LIMITS.detailPagesPerHour);
+      (!isApi && bump(c.minute, now, 60_000) > (automated ? LIMITS.automatedPagesPerMinute : LIMITS.pagesPerMinute)) ||
+      (DETAIL_PATH.test(path) &&
+        bump(c.hour, now, 3_600_000) > (automated ? LIMITS.automatedDetailPagesPerHour : LIMITS.detailPagesPerHour));
   if (!over) return { action: "allow" };
 
   const s = (strikes.get(ip) ?? 0) + 1;

@@ -26,7 +26,7 @@ export async function generateMetadata({
   if (!concern) return {};
   return {
     title: `${concern.name} products`,
-    description: `${concern.description} Derm Score and User Score for every product.`,
+    description: `${concern.description} Products matched by active ingredient, with User Scores from real reported outcomes.`,
     alternates: { canonical: `/concern/${slug}` },
     robots: variantRobots(await searchParams),
   };

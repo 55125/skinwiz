@@ -62,7 +62,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   const product = getProduct(decodeURIComponent(id));
   if (!product) return {};
   const description = product.activeIngredientText
-    ? `${product.brandName} — ${product.activeIngredientText}. Derm Score and User Score on SkinWiz.`
+    ? `${product.brandName} — ${product.activeIngredientText}. Ingredients, matches and User Score on SkinWiz.`
     : `${product.brandName} on SkinWiz.`;
   return {
     title: productTitle(product, describeStrengths, displayManufacturer),
@@ -603,7 +603,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
         </div>
         <p className="text-xs italic text-muted-foreground">
           These are search links, not vetted reviews — SkinWiz doesn&apos;t screen or endorse social
-          content. Only Derm Score and User Score above reflect verified feedback.
+          content. Only the scores above come from feedback collected on SkinWiz.
         </p>
       </section>
 

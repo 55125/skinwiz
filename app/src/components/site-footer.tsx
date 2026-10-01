@@ -46,8 +46,8 @@ export function SiteFooter() {
           <div className="col-span-2 space-y-3 md:col-span-1">
             <SiteLogo />
             <p className="max-w-sm text-sm text-muted-foreground">
-              OTC skincare, matched ingredient by ingredient — scored by dermatologists and by real
-              reported outcomes.
+              OTC skincare, matched ingredient by ingredient — scored by real reported outcomes, with a
+              verified dermatologist panel in the works.
             </p>
           </div>
           {FOOTER_LINKS.map((group) => (

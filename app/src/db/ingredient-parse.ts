@@ -53,14 +53,19 @@ export const FIXED_DISPLAY_NAMES: Record<string, string> = {
 // Text that precedes the list itself: "Inactive ingredients:", "Ingredients -"
 const LIST_LABEL = /^\s*(?:inactive|other|active)?\s*ingredients?\s*(?:list)?\s*[:\-–]?\s*/i;
 
+// A comma between two digits is a chemical locant ("1,2-Hexanediol",
+// "2-Bromo-2-Nitropropane-1,3-Diol"), not a list separator.
 function splitTopLevel(text: string): string[] {
   const out: string[] = [];
   let depth = 0;
   let cur = "";
-  for (const ch of text) {
+  const chars = [...text];
+  for (let i = 0; i < chars.length; i++) {
+    const ch = chars[i];
     if (ch === "(" || ch === "[") depth++;
     else if (ch === ")" || ch === "]") depth = Math.max(0, depth - 1);
-    if (ch === "," && depth === 0) {
+    const locant = /\d/.test(chars[i - 1] ?? "") && /\d/.test(chars[i + 1] ?? "");
+    if (ch === "," && depth === 0 && !locant) {
       out.push(cur);
       cur = "";
     } else {

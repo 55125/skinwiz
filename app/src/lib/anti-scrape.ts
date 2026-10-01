@@ -5,6 +5,9 @@
 // State is in-process, which is right for one Railway instance; with several
 // replicas each would enforce its own (looser) share.
 
+import { Resolver } from "node:dns/promises";
+import { BlockList, isIP } from "node:net";
+
 // Crawlers that have no business copying the catalog. Search-engine crawlers
 // (Googlebot, Bingbot, DuckDuckBot, Applebot) are deliberately absent.
 const BLOCKED_UA = new RegExp(
@@ -28,6 +31,92 @@ const BLOCKED_UA = new RegExp(
 
 // Fetchers that must keep working: platform health checks.
 const ALLOWED_UA = /railwayhealthcheck|googlebot|bingbot|duckduckbot|applebot(?!-extended)|slurp|yandexbot/i;
+
+// Search crawlers we let past the rate limits, once the IP is proven to be
+// theirs (anyone can send a Googlebot UA). Each operator documents the same
+// check: the IP's PTR name sits under their domain and that name resolves
+// back to the IP. DuckDuckBot publishes an IP list instead of rDNS, so it
+// stays on the normal limits.
+const VERIFIABLE_CRAWLERS: { ua: RegExp; hosts: RegExp }[] = [
+  { ua: /googlebot|google-inspectiontool/i, hosts: /\.(googlebot|google|googleusercontent)\.com$/i },
+  { ua: /bingbot/i, hosts: /\.search\.msn\.com$/i },
+  { ua: /applebot(?!-extended)/i, hosts: /\.applebot\.apple\.com$/i },
+  { ua: /yandexbot/i, hosts: /\.yandex\.(ru|net|com)$/i },
+];
+
+const verified = new Map<string, { ok: boolean; until: number }>();
+const pending = new Map<string, Promise<boolean>>();
+const MAX_VERIFIED = 10_000;
+const VERIFY_OK_MS = 24 * 3_600_000;
+const VERIFY_FAIL_MS = 3_600_000;
+const DNS_TIMEOUT_MS = 1_500;
+
+/** The hostname pattern to verify against, if the UA claims to be a verifiable search crawler. */
+export function claimedCrawler(ua: string): RegExp | null {
+  return VERIFIABLE_CRAWLERS.find((c) => c.ua.test(ua))?.hosts ?? null;
+}
+
+// Reverse lookup, check the domain, then forward-confirm the name maps back to
+// the same IP. Any DNS error or timeout counts as "not verified".
+async function lookupCrawler(ip: string, hosts: RegExp): Promise<boolean> {
+  const family = isIP(ip);
+  if (!family) return false;
+  const dns = new Resolver({ timeout: DNS_TIMEOUT_MS, tries: 1 });
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const deadline = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => {
+      dns.cancel();
+      reject(new Error("dns timeout"));
+    }, DNS_TIMEOUT_MS);
+  });
+  try {
+    return await Promise.race([
+      (async () => {
+        const names = (await dns.reverse(ip)).filter((n) => hosts.test(n.replace(/\.$/, "")));
+        const type = family === 6 ? "ipv6" : "ipv4";
+        for (const name of names) {
+          const addrs = await (family === 6 ? dns.resolve6(name) : dns.resolve4(name)).catch(() => []);
+          // BlockList compares parsed addresses, so IPv6 spelling differences don't matter
+          const list = new BlockList();
+          for (const a of addrs) list.addAddress(a, type);
+          if (list.check(ip, type)) return true;
+        }
+        return false;
+      })(),
+      deadline,
+    ]);
+  } catch {
+    return false;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+/**
+ * Whether this IP is a genuine search crawler matching the UA's claim. Results
+ * are cached per IP; failures (including DNS trouble) are cached for less long
+ * and just mean the request gets the ordinary limits.
+ */
+export async function verifyCrawler(ip: string, ua: string, now = Date.now()): Promise<boolean> {
+  const hosts = claimedCrawler(ua);
+  if (!hosts) return false;
+  const ip0 = ip.replace(/^::ffff:(?=\d+\.\d+\.\d+\.\d+$)/i, "");
+  // Keyed by IP + claimed operator so a Google IP can't vouch for a "bingbot" UA.
+  const key = `${hosts.source}|${ip0}`;
+  const hit = verified.get(key);
+  if (hit && hit.until > now) return hit.ok;
+  let p = pending.get(key);
+  if (!p) {
+    p = lookupCrawler(ip0, hosts).then((ok) => {
+      if (verified.size >= MAX_VERIFIED) verified.clear();
+      verified.set(key, { ok, until: Date.now() + (ok ? VERIFY_OK_MS : VERIFY_FAIL_MS) });
+      pending.delete(key);
+      return ok;
+    });
+    pending.set(key, p);
+  }
+  return p;
+}
 
 export type Verdict = { action: "allow" } | { action: "block"; status: number; reason: string; retryAfter?: number };
 
@@ -82,6 +171,8 @@ export type RequestInfo = {
   method: string;
   headers: Headers;
   ip: string | null;
+  // set when verifyCrawler() confirmed the IP belongs to a search engine
+  verifiedCrawler?: boolean;
   now?: number;
 };
 
@@ -110,6 +201,9 @@ export function judge(req: RequestInfo): Verdict {
 
   const ip = req.ip;
   if (!ip) return { action: "allow" };
+  // Verified search crawlers walk all ~24k detail pages; the limits and bans
+  // below would lock them out for good.
+  if (req.verifiedCrawler) return { action: "allow" };
   sweep(now);
 
   let c = clients.get(ip);

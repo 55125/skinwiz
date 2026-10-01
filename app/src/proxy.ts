@@ -3,6 +3,14 @@ import type { NextRequest } from "next/server";
 import { claimedCrawler, clientIp, judge, verifyCrawler } from "@/lib/anti-scrape";
 
 export async function proxy(request: NextRequest) {
+  // One canonical host: www.activelyskin.com -> activelyskin.com, path intact.
+  // Read the Host header, not nextUrl, which is the container's own address
+  // behind Railway's edge.
+  const host = request.headers.get("host") ?? "";
+  if (host.startsWith("www.")) {
+    const { pathname, search } = request.nextUrl;
+    return NextResponse.redirect(`https://${host.slice(4)}${pathname}${search}`, 308);
+  }
   if (process.env.ANTI_SCRAPE === "off") return NextResponse.next();
   // Owner-only escape hatch for our own automated testing: set the secret in
   // the environment and send it as this header. Unset (the default) = disabled.

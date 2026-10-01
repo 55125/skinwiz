@@ -9,9 +9,8 @@ export function siteUrl(): string {
   // The Docker build has no public domain in its env, but statically
   // prerendered pages (about, terms...) bake canonical/OpenGraph URLs in at
   // build time -- so a production build falls back to the live domain
-  // rather than localhost. Set SITE_URL at build time too once a custom
-  // domain exists.
+  // rather than localhost.
   return process.env.NODE_ENV === "production" ? PRODUCTION_URL : "http://localhost:3000";
 }
 
-const PRODUCTION_URL = "https://skinwiz-production.up.railway.app";
+const PRODUCTION_URL = "https://activelyskin.com";

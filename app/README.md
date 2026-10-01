@@ -52,6 +52,10 @@ repo-root `Dockerfile` — not `app/`-scoped, because `db/seed.ts` resolves
 the catalog CSVs via a relative `../tools/...` path and the container
 needs `tools/` alongside `app/` for that to keep working unchanged.
 
+- **Custom domain** `activelyskin.com` (+ `www`), DNS on Cloudflare as
+  CNAMEs to Railway with the proxy off (grey cloud). `SITE_URL` is set to
+  the apex in Railway; the old `skinwiz-production.up.railway.app` still
+  serves too, but canonical URLs point at the apex.
 - **Persistent volume** mounted at `/data`; `DATABASE_PATH=/data/skinwiz.db`
   env var (see `src/db/client.ts`) points SQLite at it instead of the
   container's ephemeral filesystem, which is wiped on every redeploy.

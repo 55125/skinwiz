@@ -10,15 +10,19 @@ import { findPrivacyHits, PRIVACY_HIT_TEXT } from "@/lib/note-privacy";
 import {
   HANDOUT_SLOTS,
   MAX_DIRECTIONS,
+  MAX_HEADING,
   MAX_LABEL,
   MAX_NOTES,
   MAX_RULE,
+  MAX_SECTION_BODY,
+  MAX_SECTIONS,
   MAX_STEPS,
   MAX_STOP_RULES,
   MAX_TITLE,
   SLOT_LABEL,
   type HandoutSlot,
 } from "@/lib/handout-types";
+import { encodeImportCode } from "@/lib/avoid-import";
 import { cn } from "@/lib/utils";
 
 export type BuilderStep = {
@@ -37,6 +41,7 @@ export type BuilderInitial = {
   title: string;
   templateId: string | null;
   templateDraft: boolean;
+  sections: { heading: string; body: string }[];
   steps: BuilderStep[];
   stopRules: string[];
   notes: string;
@@ -56,9 +61,18 @@ function extractAvoidCode(input: string): string {
   return decodeURIComponent(m ? m[1] : t);
 }
 
-export function HandoutBuilder({ initial, rxAllowed }: { initial: BuilderInitial; rxAllowed: boolean }) {
+export function HandoutBuilder({
+  initial,
+  rxAllowed,
+  lists = [],
+}: {
+  initial: BuilderInitial;
+  rxAllowed: boolean;
+  lists?: { id: string; name: string; ids: string[] }[];
+}) {
   const router = useRouter();
   const [title, setTitle] = useState(initial.title);
+  const [sections, setSections] = useState(() => initial.sections.map((x) => ({ ...x, uid: uid() })));
   const [steps, setSteps] = useState<BuilderStep[]>(initial.steps);
   const [rules, setRules] = useState<string[]>(initial.stopRules);
   const [notes, setNotes] = useState(initial.notes);
@@ -67,7 +81,23 @@ export function HandoutBuilder({ initial, rxAllowed }: { initial: BuilderInitial
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
 
-  const freeText = [title, notes, ...rules, ...steps.map((s) => `${s.label} ${s.directions}`)].join("\n");
+  const freeText = [
+    title,
+    notes,
+    ...rules,
+    ...sections.map((x) => `${x.heading}\n${x.body}`),
+    ...steps.map((s) => `${s.label} ${s.directions}`),
+  ].join("\n");
+  const updateSection = (u: string, patch: Partial<{ heading: string; body: string }>) =>
+    setSections((all) => all.map((x) => (x.uid === u ? { ...x, ...patch } : x)));
+  const moveSection = (i: number, d: -1 | 1) =>
+    setSections((all) => {
+      const j = i + d;
+      if (j < 0 || j >= all.length) return all;
+      const next = [...all];
+      [next[i], next[j]] = [next[j], next[i]];
+      return next;
+    });
   const privacyHits = useMemo(() => findPrivacyHits(freeText), [freeText]);
 
   const update = (u: string, patch: Partial<BuilderStep>) => setSteps((all) => all.map((s) => (s.uid === u ? { ...s, ...patch } : s)));
@@ -90,6 +120,7 @@ export function HandoutBuilder({ initial, rxAllowed }: { initial: BuilderInitial
           handoutId: initial.handoutId,
           templateId: initial.templateId,
           title,
+          sections: sections.map(({ heading, body }) => ({ heading, body })),
           steps: steps.map(({ slot, label, productId, directions }) => ({ slot, label, productId, directions })),
           stopRules: rules,
           notes,
@@ -109,7 +140,7 @@ export function HandoutBuilder({ initial, rxAllowed }: { initial: BuilderInitial
     <div className="space-y-8">
       {initial.templateDraft && (
         <p className="rounded-xl border border-amber-300 bg-amber-50 p-3 text-xs text-amber-900 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
-          Draft template, pending clinical review. Every step, direction and rule is yours to edit before printing.
+          Draft template, AI-written and pending clinical review. Read it before handing it out; every word is yours to edit.
         </p>
       )}
 
@@ -118,10 +149,64 @@ export function HandoutBuilder({ initial, rxAllowed }: { initial: BuilderInitial
         <Input value={title} maxLength={MAX_TITLE} onChange={(e) => setTitle(e.target.value)} />
       </label>
 
+      <section className="space-y-3" aria-labelledby="sections-h">
+        <div className="flex items-center justify-between">
+          <h2 id="sections-h" className="text-lg font-semibold">
+            Patient information
+          </h2>
+          <span className="text-xs text-muted-foreground">
+            {sections.length}/{MAX_SECTIONS}
+          </span>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          What it is, what to expect, how to care for it. A blank line starts a new paragraph; start a line with &ldquo;- &rdquo; for a bullet.
+        </p>
+        <ol className="space-y-3">
+          {sections.map((x, i) => (
+            <li key={x.uid} className="space-y-2 rounded-2xl border bg-card p-4">
+              <div className="flex items-center gap-2">
+                <Input
+                  aria-label="Section heading"
+                  value={x.heading}
+                  maxLength={MAX_HEADING}
+                  placeholder="Heading, e.g. Caring for your wound"
+                  onChange={(e) => updateSection(x.uid, { heading: e.target.value })}
+                  className="font-medium"
+                />
+                <IconBtn label="Move section up" onClick={() => moveSection(i, -1)}>
+                  <ArrowUp className="h-4 w-4" />
+                </IconBtn>
+                <IconBtn label="Move section down" onClick={() => moveSection(i, 1)}>
+                  <ArrowDown className="h-4 w-4" />
+                </IconBtn>
+                <IconBtn label="Remove section" onClick={() => setSections((all) => all.filter((y) => y.uid !== x.uid))}>
+                  <Trash2 className="h-4 w-4" />
+                </IconBtn>
+              </div>
+              <Textarea
+                aria-label="Section text"
+                value={x.body}
+                maxLength={MAX_SECTION_BODY}
+                rows={Math.min(12, Math.max(4, x.body.split("\n").length + 1))}
+                onChange={(e) => updateSection(x.uid, { body: e.target.value })}
+              />
+            </li>
+          ))}
+        </ol>
+        <Button
+          type="button"
+          variant="outline"
+          disabled={sections.length >= MAX_SECTIONS}
+          onClick={() => setSections((all) => [...all, { uid: uid(), heading: "", body: "" }])}
+        >
+          <Plus className="h-4 w-4" /> Add a section
+        </Button>
+      </section>
+
       <section className="space-y-3" aria-labelledby="steps-h">
         <div className="flex items-center justify-between">
           <h2 id="steps-h" className="text-lg font-semibold">
-            Steps
+            Products and steps{sections.length > 0 ? " (optional)" : ""}
           </h2>
           <span className="text-xs text-muted-foreground">
             {steps.length}/{MAX_STEPS}
@@ -277,6 +362,26 @@ export function HandoutBuilder({ initial, rxAllowed }: { initial: BuilderInitial
           to include the patient&apos;s avoid list with this plan. Only the allergen code is kept.
         </p>
         <Input value={avoid} onChange={(e) => setAvoid(e.target.value)} placeholder="https://…/avoid/import?a=…" />
+        {lists.length > 0 && (
+          <label className="flex flex-wrap items-center gap-2 text-sm">
+            <span className="text-muted-foreground">Or use a starter list:</span>
+            <select
+              className="h-9 rounded-md border bg-background px-2"
+              value=""
+              onChange={(e) => {
+                const list = lists.find((l) => l.id === e.target.value);
+                if (list) setAvoid(encodeImportCode(list.ids));
+              }}
+            >
+              <option value="">Choose…</option>
+              {lists.map((l) => (
+                <option key={l.id} value={l.id}>
+                  {l.name}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
       </section>
 
       {privacyHits.length > 0 && (
@@ -290,7 +395,7 @@ export function HandoutBuilder({ initial, rxAllowed }: { initial: BuilderInitial
       )}
 
       <div className="flex flex-wrap items-center gap-3 border-t pt-4">
-        <Button type="button" onClick={save} disabled={pending || steps.length === 0}>
+        <Button type="button" onClick={save} disabled={pending || (steps.length === 0 && sections.length === 0)}>
           {pending ? "Saving…" : initial.handoutId ? "Save as a new version" : "Save handout"}
         </Button>
         {initial.handoutId && (

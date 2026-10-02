@@ -5,8 +5,10 @@ import { ChevronLeft } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { HandoutBuilder, type BuilderInitial } from "@/components/handout-builder";
 import { currentClinician, isVerified } from "@/lib/clinicians";
+import { listsForClinician } from "@/lib/clinician-lists";
 import { getOwnedHandout, getVersion } from "@/lib/handouts";
 import { getTemplate, UNIVERSAL_STOP_RULES } from "@/db/handout-templates";
+import { sectionsOf } from "@/lib/handout-types";
 
 export const metadata: Metadata = { title: "Build a handout" };
 
@@ -30,6 +32,7 @@ export default async function NewHandoutPage({
       title: editing ? source.title : `${source.title} (copy)`.slice(0, 80),
       templateId: source.templateId,
       templateDraft: false,
+      sections: sectionsOf(source.content),
       steps: source.content.steps.map((s, i) => ({ uid: `v${i}`, slot: s.slot, label: s.label, productId: s.productId, kind: s.kind, productName: s.productName, directions: s.directions, search: "" })),
       stopRules: source.content.stopRules,
       notes: source.content.notes,
@@ -43,6 +46,7 @@ export default async function NewHandoutPage({
       title: t?.title ?? "Your skincare plan",
       templateId: t?.id ?? null,
       templateDraft: !!t && !t.reviewed,
+      sections: t?.sections ?? [],
       steps: (t?.steps ?? []).map((s, i) => ({
         uid: `t${i}`,
         slot: s.slot,
@@ -67,9 +71,13 @@ export default async function NewHandoutPage({
       <PageHeader
         eyebrow="Handout builder"
         title={heading}
-        description="Pick the products, write your directions, and set when to call. The patient's name goes on the print screen only and is never sent to us."
+        description="Write what the patient needs to know, add products if it's a routine, and set when to call. The patient's name goes on the print screen only and is never sent to us."
       />
-      <HandoutBuilder initial={initial} rxAllowed={isVerified(clinician)} />
+      <HandoutBuilder
+        initial={initial}
+        rxAllowed={isVerified(clinician)}
+        lists={listsForClinician(clinician.id).map((l) => ({ id: l.id, name: l.name, ids: l.ids }))}
+      />
     </div>
   );
 }

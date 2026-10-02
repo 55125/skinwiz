@@ -515,6 +515,17 @@ export const people = sqliteTable("people", {
   createdAt: text("created_at").notNull(),
 });
 
+// A signed-in person's avoid list (lib/avoid.ts), so it follows them to any
+// device. Anonymous visitors keep theirs only in the sw_avoid cookie. An
+// empty array is a deliberately cleared list, not "nothing saved".
+export const personAvoidLists = sqliteTable("person_avoid_lists", {
+  personId: text("person_id")
+    .primaryKey()
+    .references(() => people.id, { onDelete: "cascade" }),
+  ids: text("ids", { mode: "json" }).$type<string[]>().notNull(),
+  updatedAt: text("updated_at").notNull(),
+});
+
 // Browser session (sw_session cookie value) -> person. A session links to
 // at most one person; a person can have many (phone, laptop).
 export const personSessions = sqliteTable(
@@ -706,6 +717,22 @@ export const clinicians = sqliteTable("clinicians", {
   createdAt: text("created_at").notNull(),
   updatedAt: text("updated_at").notNull(),
 });
+
+// A practice's saved avoid lists ("starter lists"): a name and allergen ids
+// (lib/avoid-import.ts IMPORT_CODES), used to pre-fill the patch-test sheet,
+// the MA reader and a handout's avoid list. Practice-level, never per patient.
+export const clinicianLists = sqliteTable(
+  "clinician_lists",
+  {
+    id: text("id").primaryKey(), // random, url-safe
+    clinicianId: text("clinician_id").notNull().references(() => clinicians.id),
+    name: text("name").notNull(),
+    ids: text("ids", { mode: "json" }).$type<string[]>().notNull(),
+    createdAt: text("created_at").notNull(),
+    updatedAt: text("updated_at").notNull(),
+  },
+  (table) => [index("clinician_lists_clinician_idx").on(table.clinicianId)],
+);
 
 export const handouts = sqliteTable(
   "handouts",

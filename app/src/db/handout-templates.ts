@@ -13,6 +13,12 @@
 // Isotretinoin never appears here and can't be added (informational only).
 
 import type { HandoutSlot } from "@/lib/handout-types";
+import { CONDITIONS_INFLAMMATORY_HANDOUTS } from "@/db/handout-library/conditions-inflammatory";
+import { CONDITIONS_GROWTHS_HANDOUTS } from "@/db/handout-library/conditions-growths";
+import { PROCEDURE_HANDOUTS } from "@/db/handout-library/procedures";
+import { COSMETIC_HANDOUTS } from "@/db/handout-library/cosmetic";
+import { PEDIATRIC_HANDOUTS } from "@/db/handout-library/pediatric";
+import { TREATMENT_HANDOUTS } from "@/db/handout-library/treatments";
 
 export type TemplateStep = {
   label: string;
@@ -22,11 +28,29 @@ export type TemplateStep = {
   directions: string;
 };
 
+// Patient-education text: a heading and a body. In the body, a blank line
+// starts a new paragraph and a line starting "- " is a bullet.
+export type TemplateSection = { heading: string; body: string };
+
+export type HandoutCategory = "conditions" | "procedures" | "cosmetic" | "pediatric" | "treatments";
+
+export const HANDOUT_CATEGORIES: { id: HandoutCategory; name: string; blurb: string }[] = [
+  { id: "conditions", name: "Skin conditions", blurb: "What it is, what helps, what to expect." },
+  { id: "procedures", name: "Surgery & procedures", blurb: "Before and after care for office procedures and dermatologic surgery." },
+  { id: "cosmetic", name: "Cosmetic", blurb: "Preparing for and recovering from cosmetic treatments." },
+  { id: "pediatric", name: "Pediatric dermatology", blurb: "Written for parents and caregivers." },
+  { id: "treatments", name: "Using your treatment", blurb: "How to use common treatments safely, plus sun protection and skin checks." },
+];
+
 export type HandoutTemplate = {
   id: string;
   name: string;
   title: string; // default handout title (the patient sees it)
   summary: string;
+  category: HandoutCategory;
+  // Education text, shown above any steps. Empty for pure regimen templates.
+  sections: TemplateSection[];
+  // Product steps; empty for education-only handouts (wound care, what is eczema...).
   steps: TemplateStep[];
   stopRules: string[];
   notes: string;
@@ -69,6 +93,8 @@ export const HANDOUT_TEMPLATES: HandoutTemplate[] = [
     name: "Acne starter (mild to moderate)",
     title: "Your acne plan",
     summary: "Cleanser, benzoyl peroxide, a topical retinoid at night, moisturizer and sunscreen.",
+    category: "conditions",
+    sections: [],
     steps: [
       { ...GENTLE_CLEANSER("am"), label: "Benzoyl peroxide wash", search: "benzoyl peroxide wash", directions: "Lather onto damp skin, leave on for 1 to 2 minutes, then rinse. It can bleach towels and pillowcases." },
       MOISTURIZER("am"),
@@ -102,6 +128,8 @@ export const HANDOUT_TEMPLATES: HandoutTemplate[] = [
     name: "Rosacea (papulopustular / redness)",
     title: "Your rosacea plan",
     summary: "Gentle care, a prescription anti-inflammatory, moisturizer and mineral sunscreen; trigger tips.",
+    category: "conditions",
+    sections: [],
     steps: [
       GENTLE_CLEANSER("am"),
       {
@@ -133,6 +161,8 @@ export const HANDOUT_TEMPLATES: HandoutTemplate[] = [
     name: "Eczema flare + maintenance",
     title: "Your eczema plan",
     summary: "A short steroid course for flares, then daily moisturizing and a non-steroidal for maintenance.",
+    category: "conditions",
+    sections: [],
     steps: [
       {
         label: "Flare treatment (body)",
@@ -177,6 +207,8 @@ export const HANDOUT_TEMPLATES: HandoutTemplate[] = [
     name: "Post-procedure care (peel, laser, resurfacing)",
     title: "Your aftercare plan",
     summary: "Gentle cleansing, a healing ointment, strict sun protection, actives on hold.",
+    category: "procedures",
+    sections: [],
     steps: [
       { ...GENTLE_CLEANSER("both"), directions: "Twice a day, very gently with lukewarm water and a fragrance-free cleanser. Pat dry; don't rub or pick." },
       {
@@ -206,6 +238,8 @@ export const HANDOUT_TEMPLATES: HandoutTemplate[] = [
     name: "Melasma",
     title: "Your melasma plan",
     summary: "Daily tinted mineral sunscreen plus a prescription lightener on the dark patches at night.",
+    category: "conditions",
+    sections: [],
     steps: [
       GENTLE_CLEANSER("am"),
       {
@@ -243,6 +277,8 @@ export const HANDOUT_TEMPLATES: HandoutTemplate[] = [
     name: "Seborrheic dermatitis",
     title: "Your seborrheic dermatitis plan",
     summary: "Medicated shampoo for scalp, beard and face, with an antifungal cream and a short steroid for flares.",
+    category: "conditions",
+    sections: [],
     steps: [
       {
         label: "Medicated shampoo",
@@ -282,6 +318,33 @@ export const HANDOUT_TEMPLATES: HandoutTemplate[] = [
   },
 ];
 
+// The patient-education library (src/db/handout-library), after the six
+// regimen templates above. Same review status: reviewed=false shows "draft".
+export const ALL_HANDOUT_TEMPLATES: HandoutTemplate[] = [
+  ...HANDOUT_TEMPLATES,
+  ...CONDITIONS_INFLAMMATORY_HANDOUTS,
+  ...CONDITIONS_GROWTHS_HANDOUTS,
+  ...PROCEDURE_HANDOUTS,
+  ...COSMETIC_HANDOUTS,
+  ...PEDIATRIC_HANDOUTS,
+  ...TREATMENT_HANDOUTS,
+];
+
+const TEMPLATE_BY_ID = new Map(ALL_HANDOUT_TEMPLATES.map((t) => [t.id, t]));
+
 export function getTemplate(id: string | null | undefined): HandoutTemplate | undefined {
-  return HANDOUT_TEMPLATES.find((t) => t.id === id);
+  return id ? TEMPLATE_BY_ID.get(id) : undefined;
+}
+
+/** The library as plain list data (no template text), for the browser component. */
+export function libraryItems() {
+  return ALL_HANDOUT_TEMPLATES.map((t) => ({
+    id: t.id,
+    name: t.name,
+    summary: t.summary,
+    category: t.category,
+    draft: !t.reviewed,
+    sections: t.sections.length,
+    steps: t.steps.length,
+  }));
 }

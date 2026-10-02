@@ -15,13 +15,17 @@ import { getRxLabel, rxDisplayName } from "@/lib/rx-catalog";
 import {
   HANDOUT_SLOTS,
   MAX_DIRECTIONS,
+  MAX_HEADING,
   MAX_LABEL,
   MAX_NOTES,
   MAX_RULE,
+  MAX_SECTION_BODY,
+  MAX_SECTIONS,
   MAX_STEPS,
   MAX_STOP_RULES,
   MAX_TITLE,
   type HandoutContent,
+  type HandoutSection,
   type HandoutSlot,
   type HandoutStep,
 } from "@/lib/handout-types";
@@ -83,7 +87,16 @@ export function validateHandoutInput(raw: unknown, opts: { allowRx: boolean }): 
   const body = (raw ?? {}) as Record<string, unknown>;
   const title = clean(body.title, MAX_TITLE) || "Your skincare plan";
   const stepsIn = Array.isArray(body.steps) ? body.steps.slice(0, MAX_STEPS + 1) : [];
-  if (stepsIn.length === 0) return { ok: false, error: "Add at least one step." };
+  const sectionsIn = Array.isArray(body.sections) ? body.sections.slice(0, MAX_SECTIONS + 1) : [];
+  if (sectionsIn.length > MAX_SECTIONS) return { ok: false, error: `A handout can have up to ${MAX_SECTIONS} sections.` };
+  const sections: HandoutSection[] = [];
+  for (const raw of sectionsIn) {
+    const sec = (raw ?? {}) as Record<string, unknown>;
+    const heading = clean(sec.heading, MAX_HEADING);
+    const text = clean(typeof sec.body === "string" ? sec.body.replace(/\r\n?/g, "\n") : "", MAX_SECTION_BODY);
+    if (heading || text) sections.push({ heading, body: text });
+  }
+  if (stepsIn.length === 0 && sections.length === 0) return { ok: false, error: "Add a section or a step." };
   if (stepsIn.length > MAX_STEPS) return { ok: false, error: `A handout can have up to ${MAX_STEPS} steps.` };
   const ids = stepsIn.map((s) => (s as Record<string, unknown>)?.productId).filter((v): v is string => typeof v === "string" && v.length > 0);
   const byId = new Map(
@@ -121,7 +134,7 @@ export function validateHandoutInput(raw: unknown, opts: { allowRx: boolean }): 
     if (decodeImportCode(code).ok) avoidCode = code;
     else return { ok: false, error: "That patch-test code doesn't decode. Copy it from the patch-test sheet link (the a= part)." };
   }
-  return { ok: true, title, content: { steps, stopRules, notes, avoidCode } };
+  return { ok: true, title, content: { sections, steps, stopRules, notes, avoidCode } };
 }
 
 // --- handouts and versions -----------------------------------------------------

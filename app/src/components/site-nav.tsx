@@ -25,6 +25,7 @@ const YOU_ITEMS = [
 
 const SECONDARY_ITEMS = [
   { href: "/for-clinicians", label: "For clinicians" },
+  { href: "/clinic-tools", label: "Clinic tools" },
   { href: "/about", label: "About" },
 ];
 

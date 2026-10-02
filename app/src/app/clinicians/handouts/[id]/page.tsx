@@ -8,7 +8,8 @@ import { ChartNoteButton } from "@/components/chart-note-button";
 import { buttonVariants } from "@/components/ui/button";
 import { currentClinician } from "@/lib/clinicians";
 import { countsForVersions, getOwnedHandout, getVersion } from "@/lib/handouts";
-import { SLOT_LABEL } from "@/lib/handout-types";
+import { SLOT_LABEL, sectionsOf } from "@/lib/handout-types";
+import { HandoutSections } from "@/components/handout-sections";
 
 export const metadata: Metadata = { title: "Print handout" };
 
@@ -50,6 +51,11 @@ export default async function HandoutVersionPage({ params, searchParams }: { par
 
       <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
         <div className="space-y-6">
+          {sectionsOf(c).length > 0 && (
+            <div className="rounded-xl border bg-card p-4">
+              <HandoutSections sections={sectionsOf(c)} />
+            </div>
+          )}
           <ol className="space-y-2">
             {c.steps.map((s) => (
               <li key={s.key} className="rounded-xl border bg-card p-3 text-sm">

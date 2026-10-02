@@ -27,6 +27,18 @@ export default function ForCliniciansPage() {
         </p>
       </div>
 
+      <section className="space-y-2 rounded-2xl border-2 border-brand/40 bg-card p-4 text-sm">
+        <h2 className="text-base font-semibold text-foreground">Free clinic tools</h2>
+        <p className="text-muted-foreground">
+          A library of patient handouts to use as is or customize, a tap-to-grade patch-test reader for medical assistants with a
+          chart-ready write-up, and starter lists for your standard avoid lists. Patients get them by print, QR code or your own
+          email, and land on a private page of their own.
+        </p>
+        <Link href="/clinic-tools" className="inline-block font-medium text-brand hover:underline">
+          See the clinic tools →
+        </Link>
+      </section>
+
       <section className="space-y-2 rounded-2xl border border-brand/30 bg-brand-soft/40 p-4 text-sm">
         <h2 className="text-base font-medium text-foreground">Patch-test results sheet with a QR code</h2>
         <p className="text-muted-foreground">
@@ -43,8 +55,9 @@ export default function ForCliniciansPage() {
         <section className="space-y-2 rounded-2xl border border-brand/30 bg-brand-soft/40 p-4 text-sm">
           <h2 className="text-base font-medium text-foreground">Patient handouts with a QR code</h2>
           <p className="text-muted-foreground">
-            Build a one-page regimen handout (OTC and prescription steps, your own directions, when to call), print it with a QR
-            code, and paste a chart note. Your patient scans it to save the plan privately on their phone. Sign in with your email
+            Start from the handout library or a blank page: patient information, OTC and prescription steps, your own directions
+            and when to call. Print it with a QR code, show the code, or email the link from your own email app, and paste a chart
+            note. Your patient scans it to save the plan privately on their phone. Sign in with your email
             and NPI; no patient details are ever sent to us.
           </p>
           <Link href="/clinicians" className="inline-block font-medium text-brand hover:underline">

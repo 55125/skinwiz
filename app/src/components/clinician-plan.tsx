@@ -7,10 +7,11 @@ import { getAffiliateLinksForProducts } from "@/lib/queries";
 import { buildOrderPlan, cartEnvFromProcess, findItAt, RETAILER_NAME, type OrderPlan } from "@/lib/retailer-carts";
 import { rxFulfillmentLink } from "@/lib/rx-fulfillment";
 import { rxPriceCheckUrl } from "@/db/rx";
-import type { HandoutStep } from "@/lib/handout-types";
+import { sectionsOf, type HandoutStep } from "@/lib/handout-types";
 import type { HandoutVersion } from "@/lib/handouts";
 import type { StepState } from "@/lib/regimens";
 import type { products } from "@/db/schema";
+import { HandoutSections } from "@/components/handout-sections";
 
 type Product = typeof products.$inferSelect;
 
@@ -149,6 +150,12 @@ export function ClinicianPlan({
         </section>
       )}
 
+      {sectionsOf(version.content).length > 0 && (
+        <div className="rounded-2xl border bg-card p-5">
+          <HandoutSections sections={sectionsOf(version.content)} />
+        </div>
+      )}
+
       <div className="grid gap-8 md:grid-cols-2">
         {groups
           .filter((g) => g.items.length > 0)
@@ -181,7 +188,7 @@ export function ClinicianPlan({
           <h3 className="font-semibold">Your patch-test results</h3>
           <p className="text-muted-foreground">Your clinician included the ingredients to avoid. Add them to your avoid list so every product is checked.</p>
           <Link
-            href={`/avoid/import?a=${encodeURIComponent(version.content.avoidCode)}&c=${encodeURIComponent(version.clinicName)}`}
+            href={`/avoid/import?a=${encodeURIComponent(version.content.avoidCode)}`}
             className="inline-flex items-center gap-1 font-medium text-brand hover:underline"
           >
             Review and add to my avoid list

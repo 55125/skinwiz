@@ -13,13 +13,13 @@
 //   IU, QD, QOD, MS, MSO4, MgSO4, trailing zero, missing leading zero): ours
 //   aren't on the list, and the clinician's own free text is rewritten where
 //   it uses one.
-import type { HandoutContent, HandoutSlot } from "@/lib/handout-types";
+import { sectionsOf, type HandoutContent, type HandoutSlot } from "@/lib/handout-types";
 
 export type ChartNoteVersion = {
   ref: string;
   title: string;
   createdAt: string; // ISO
-  content: Pick<HandoutContent, "steps" | "stopRules" | "avoidCode">;
+  content: Pick<HandoutContent, "steps" | "stopRules" | "avoidCode" | "sections">;
 };
 
 export type ChartNoteOptions = { abbreviations?: boolean; short?: boolean; date?: Date };
@@ -80,8 +80,12 @@ export function buildChartNote(v: ChartNoteVersion, opts: ChartNoteOptions = {})
   const date = formatDate(opts.date ?? new Date(v.createdAt));
   const ref = clean(v.ref);
   const steps = v.content.steps;
+  const topics = sectionsOf(v.content).map((x) => stripEnd(clean(x.heading))).filter(Boolean);
+  // Education-only handouts (wound care, what is eczema) have no steps.
+  const kind = steps.length > 0 ? "skincare plan" : "patient handout";
 
   if (opts.short) {
+    if (steps.length === 0) return `Actively patient handout ${ref} provided ${date}: ${clean(v.title)}.`;
     const parts = steps.map((s) => {
       const what = s.kind === "rx" ? clean(s.productName ?? s.label).replace(/\s*\(.*\)$/, "") : clean(s.label);
       return s.slot === "as-directed" ? what : `${what} ${timing[s.slot]}`;
@@ -89,7 +93,8 @@ export function buildChartNote(v: ChartNoteVersion, opts: ChartNoteOptions = {})
     return `Actively skincare plan ${ref} provided ${date}: ${parts.join(", ")}.`;
   }
 
-  const lines: string[] = [`Skincare plan given via Actively (ref ${ref}), ${date}: ${clean(v.title)}.`];
+  const lines: string[] = [`${kind.charAt(0).toUpperCase()}${kind.slice(1)} given via Actively (ref ${ref}), ${date}: ${clean(v.title)}.`];
+  if (topics.length) lines.push(`Topics covered: ${topics.join("; ")}.`);
   const otc = steps.filter((s) => s.kind !== "rx");
   for (const [slot, head] of [
     ["am", "AM"],

@@ -29,7 +29,13 @@ export type HandoutStep = {
   directions: string; // the clinician's sig (prefilled from the label, editable)
 };
 
+// Patient-education text (wound care, what to expect...). In the body, a
+// blank line starts a paragraph and a line starting "- " is a bullet.
+export type HandoutSection = { heading: string; body: string };
+
 export type HandoutContent = {
+  // Absent on versions written before sections existed: read via sectionsOf().
+  sections?: HandoutSection[];
   steps: HandoutStep[];
   stopRules: string[]; // "Stop and call us if..."
   notes: string; // free text to the patient; never patient details
@@ -37,6 +43,13 @@ export type HandoutContent = {
   avoidCode: string | null;
 };
 
+export function sectionsOf(content: Pick<HandoutContent, "sections">): HandoutSection[] {
+  return content.sections ?? [];
+}
+
+export const MAX_SECTIONS = 10;
+export const MAX_HEADING = 80;
+export const MAX_SECTION_BODY = 1500;
 export const MAX_STEPS = 16;
 export const MAX_STOP_RULES = 10;
 export const MAX_NOTES = 600;

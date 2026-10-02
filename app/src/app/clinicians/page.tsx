@@ -9,7 +9,10 @@ import { buttonVariants } from "@/components/ui/button";
 import { clinicianDisplayName, currentClinician, saveClinicianProfile, type Clinician } from "@/lib/clinicians";
 import { findVersionByRef, listHandoutsForClinician } from "@/lib/handouts";
 import { lookupNpi } from "@/lib/npi";
-import { HANDOUT_TEMPLATES } from "@/db/handout-templates";
+import { HANDOUT_CATEGORIES, libraryItems } from "@/db/handout-templates";
+import { HandoutLibrary } from "@/components/handout-library";
+import { StarterLists } from "@/components/starter-lists";
+import { listsForClinician } from "@/lib/clinician-lists";
 
 export const metadata: Metadata = { title: "Dashboard" };
 
@@ -89,17 +92,23 @@ export default async function CliniciansPage({ searchParams }: { searchParams: P
         <h2 id="new-h" className="text-lg font-semibold">
           New handout
         </h2>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {HANDOUT_TEMPLATES.map((t) => (
-            <Link key={t.id} href={`/clinicians/handouts/new?template=${t.id}`} className="space-y-1 rounded-2xl border bg-card p-4 hover:border-brand">
-              <p className="font-medium">{t.name}</p>
-              <p className="text-xs text-muted-foreground">{t.summary}</p>
-            </Link>
-          ))}
-          <Link href="/clinicians/handouts/new" className="flex items-center gap-2 rounded-2xl border border-dashed p-4 text-sm font-medium hover:border-brand">
+        <div className="flex flex-wrap items-center gap-3">
+          <Link href="/clinicians/handouts/new" className="inline-flex items-center gap-2 rounded-full border border-dashed px-4 py-2 text-sm font-medium hover:border-brand">
             <FilePlus2 className="h-4 w-4" /> Start blank
           </Link>
+          <span className="text-sm text-muted-foreground">or start from {libraryItems().length} ready-made handouts:</span>
         </div>
+        <HandoutLibrary items={libraryItems()} categories={HANDOUT_CATEGORIES} useHref="/clinicians/handouts/new?template=" />
+      </section>
+
+      <section id="lists" className="scroll-mt-24 space-y-3" aria-labelledby="lists-h">
+        <div className="space-y-1">
+          <h2 id="lists-h" className="text-lg font-semibold">
+            Starter lists
+          </h2>
+          <p className="text-sm text-muted-foreground">Your practice&apos;s standard avoid lists, ready for the patch-test sheet and handouts.</p>
+        </div>
+        <StarterLists lists={listsForClinician(clinician.id).map((l) => ({ id: l.id, name: l.name, ids: l.ids }))} />
       </section>
 
       <section className="space-y-3" aria-labelledby="list-h">

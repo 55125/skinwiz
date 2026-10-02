@@ -26,7 +26,7 @@ export default function PrivacyPage() {
             <strong className="text-foreground">The short version.</strong> {SITE_NAME} has no accounts or passwords
             and asks for no name or email to use its tools. Your skin profile and avoid list are stored in cookies
             on your own device. Adding an email address is optional; if you do, we use it only to keep your shelf
-            across devices and to send the check-ins and safety alerts you choose, and you can delete it at any
+            and avoid list across devices and to send the check-ins and safety alerts you choose, and you can delete it at any
             time. We do not sell your information, share it for targeted advertising, or run advertising or
             analytics trackers.
           </p>
@@ -44,8 +44,9 @@ export default function PrivacyPage() {
           database.
         </li>
         <li>
-          <strong>Avoid list</strong>: the ingredient checks you turn on. It is stored in a cookie in your
-          browser in the same way.
+          <strong>Avoid list</strong>: the ingredient checks and allergens you turn on, including any added from
+          a patch-test link your clinic gave you. It is stored in a cookie in your browser in the same way. If you
+          add an email address, it is also saved with your email so it follows you to every device you sign in on.
         </li>
         <li>
           <strong>Shelf</strong>: products you mark as owned, wanted, or finished, and whether they are
@@ -158,7 +159,7 @@ export default function PrivacyPage() {
       <ul>
         <li>To provide the features you use: match scores, your shelf, ingredient checks and routines.</li>
         <li>To calculate aggregate User Scores and rank community routines.</li>
-        <li>If you add an email: to sign you in by link, keep your shelf across devices, and send the check-ins and safety alerts you have turned on.</li>
+        <li>If you add an email: to sign you in by link, keep your shelf and avoid list across devices, and send the check-ins and safety alerts you have turned on.</li>
         <li>To review clinician applications and reply to people who contact us.</li>
         <li>To keep the site secure and working, and to prevent abuse, fraud and scraping.</li>
         <li>To comply with the law and enforce our <Link href="/terms">Terms of Service</Link>.</li>
@@ -245,7 +246,7 @@ export default function PrivacyPage() {
         <li>
           Your email address, preferences, check-in schedule and answers, and the record of which safety alerts we
           sent you are kept until you delete them on the <Link href="/account">Email settings</Link> page or ask
-          us to. Deleting removes them, along with your shelf, regimen, outcome reports, votes, reports and any
+          us to. Deleting removes them, along with your avoid list, shelf, regimen, outcome reports, votes, reports and any
           routines saved with that email, on every linked device. Sign-in link records are deleted about a day
           after the link expires. Copies held by our email provider are kept under its own retention limits.
         </li>

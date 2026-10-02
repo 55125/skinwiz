@@ -34,9 +34,9 @@ function formatDate(iso: string): string {
 // one-page sheet with a QR code that loads the list into the patient's
 // avoid list. Everything stays in this tab; the patient's name is never
 // part of the link.
-export function PatchTestIssuer() {
+export function PatchTestIssuer({ lists = [], initialIds = [] }: { lists?: { id: string; name: string; ids: string[] }[]; initialIds?: string[] }) {
   const origin = useOrigin();
-  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [selected, setSelected] = useState<Set<string>>(() => new Set(initialIds));
   const [date, setDate] = useState("");
   const [note, setNote] = useState("");
   const [patient, setPatient] = useState("");
@@ -55,6 +55,27 @@ export function PatchTestIssuer() {
         <h2 id="pt-positives" className="text-base font-semibold">
           1. Tick the positive allergens
         </h2>
+        {lists.length > 0 && (
+          <label className="flex flex-wrap items-center gap-2 text-sm">
+            <span className="text-muted-foreground">Add a starter list:</span>
+            <select
+              className="h-9 rounded-md border bg-background px-2"
+              value=""
+              onChange={(e) => {
+                const list = lists.find((l) => l.id === e.target.value);
+                if (list) setSelected((prev) => new Set([...prev, ...list.ids]));
+                setCopied(false);
+              }}
+            >
+              <option value="">Choose…</option>
+              {lists.map((l) => (
+                <option key={l.id} value={l.id}>
+                  {l.name} ({l.ids.length})
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
         <PatchTestChecklist
           selected={selected}
           onChange={(next) => {

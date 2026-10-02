@@ -92,7 +92,7 @@ test("privacy: no patient field is accepted or persisted", () => {
   const sneaky = input({ patientName: "Maria Lopez", dob: "1990-01-02", mrn: "00482913", patient: { name: "x" } });
   const v = m.h.validateHandoutInput(sneaky, { allowRx: true });
   assert.ok(v.ok);
-  assert.deepEqual(Object.keys(v.content).sort(), ["avoidCode", "notes", "steps", "stopRules"]);
+  assert.deepEqual(Object.keys(v.content).sort(), ["avoidCode", "notes", "sections", "steps", "stopRules"]);
   for (const s of v.content.steps) assert.deepEqual(Object.keys(s).sort(), ["directions", "key", "kind", "label", "productId", "productName", "slot"]);
   const { version } = m.h.createHandout(clinician, { title: v.title, templateId: null, content: v.content }, T0);
   const raw = JSON.stringify(m.db.all(m.sql`SELECT * FROM handout_versions WHERE id = ${version.id}`));
@@ -103,6 +103,27 @@ test("privacy: no patient field is accepted or persisted", () => {
     assert.ok(cols.length > 0, table);
     for (const c of cols) assert.ok(!/patient|dob|birth|mrn|ssn|diagnos/i.test(c), `${table}.${c}`);
   }
+});
+
+test("education sections: text-only handouts are valid, sections are trimmed and capped, empty is refused", () => {
+  const edu = m.h.validateHandoutInput(
+    {
+      title: "Caring for your wound",
+      steps: [],
+      sections: [
+        { heading: "  Day one  ", body: "Keep the bandage on.\r\n- Keep it dry\n- Rest", extra: "dropped" },
+        { heading: "", body: "" },
+      ],
+    },
+    { allowRx: false },
+  );
+  assert.ok(edu.ok);
+  assert.deepEqual(edu.content.sections, [{ heading: "Day one", body: "Keep the bandage on.\n- Keep it dry\n- Rest" }]);
+  assert.equal(edu.content.steps.length, 0);
+  const tooMany = m.h.validateHandoutInput({ steps: [], sections: Array.from({ length: 11 }, () => ({ heading: "h", body: "b" })) }, { allowRx: false });
+  assert.equal(tooMany.ok, false);
+  const empty = m.h.validateHandoutInput({ steps: [], sections: [] }, { allowRx: false });
+  assert.equal(empty.ok, false);
 });
 
 test("versions are immutable; an edit is a new version and old printouts keep theirs", () => {

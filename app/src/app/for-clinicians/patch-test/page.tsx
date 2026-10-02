@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { PageHeader } from "@/components/page-header";
 import { PatchTestIssuer } from "@/components/patch-test-issuer";
+import { FEATURES } from "@/lib/feature-flags";
+import { currentClinician } from "@/lib/clinicians";
+import { listsForClinician } from "@/lib/clinician-lists";
 import { SITE_NAME } from "@/lib/brand";
 
 // A tool, not content: kept out of search results but free to link to (and
@@ -13,7 +16,14 @@ export const metadata: Metadata = {
   robots: { index: false, follow: true },
 };
 
-export default function PatchTestIssuePage() {
+export const dynamic = "force-dynamic";
+
+export default async function PatchTestIssuePage({ searchParams }: { searchParams: Promise<{ list?: string }> }) {
+  const { list } = await searchParams;
+  // A signed-in clinician's starter lists; anyone else gets the plain sheet.
+  const { clinician } = FEATURES.HANDOUTS ? await currentClinician() : { clinician: null };
+  const lists = clinician ? listsForClinician(clinician.id).map((l) => ({ id: l.id, name: l.name, ids: l.ids })) : [];
+  const initialIds = lists.find((l) => l.id === list)?.ids ?? [];
   return (
     <div className="mx-auto max-w-6xl space-y-8 px-4 py-10 print:hidden">
       <PageHeader
@@ -42,7 +52,7 @@ export default function PatchTestIssuePage() {
         </li>
       </ul>
 
-      <PatchTestIssuer />
+      <PatchTestIssuer lists={lists} initialIds={initialIds} key={list ?? "none"} />
 
       <div className="space-y-2 rounded-2xl border bg-muted/40 p-4 text-xs leading-relaxed text-muted-foreground">
         <p>

@@ -43,7 +43,7 @@ export function verifyUnsubscribeToken(token: string, now: Date): { personId: st
 // Where a sign-in may land afterwards. Only same-site paths under a short
 // allow-list (the clinician area today), so a crafted link can't bounce
 // someone off-site or into an arbitrary page.
-const NEXT_PREFIXES = ["/clinicians", "/regimen", "/h/"];
+const NEXT_PREFIXES = ["/clinicians", "/regimen", "/h/", "/avoid"];
 export function safeNextPath(next: unknown): string | null {
   if (typeof next !== "string" || next.length > 200 || !next.startsWith("/") || next.startsWith("//") || /[\\\s]/.test(next)) return null;
   return NEXT_PREFIXES.some((p) => next === p || next.startsWith(p.endsWith("/") ? p : `${p}/`) || next.startsWith(`${p}?`)) ? next : null;

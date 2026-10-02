@@ -6,6 +6,9 @@ import { getNotOnLabel, importItemName, watchForNames } from "@/db/patch-test-se
 import { avoidedIngredientName, readAvoidIds } from "@/lib/avoid";
 import { cleanDetails, decodeImportCode, mergeAvoidIds } from "@/lib/avoid-import";
 import { getSafeProductsByConcern } from "@/lib/queries";
+import { EmailSignupCard } from "@/components/email-signup-card";
+import { personForSession } from "@/lib/identity";
+import { readDeviceSessionId } from "@/lib/session";
 import { FilterChip } from "@/components/filter-chip";
 
 // Where a dermatologist's QR code lands (/for-clinicians/patch-test). A
@@ -54,6 +57,8 @@ export default async function AvoidImportPage({ searchParams }: { searchParams: 
   }
 
   const existing = await readAvoidIds();
+  const device = await readDeviceSessionId();
+  const signedInAs = device ? (personForSession(device)?.email ?? null) : null;
   const { already, coveredBy } = mergeAvoidIds(existing, decoded.avoidIds);
   const alreadySet = new Set(already);
   const otherOnList = existing.filter((id) => !decoded.avoidIds.includes(id));
@@ -138,6 +143,15 @@ export default async function AvoidImportPage({ searchParams }: { searchParams: 
             ))}
           </div>
         </section>
+      )}
+
+      {!signedInAs && (
+        <EmailSignupCard
+          signedInAs={null}
+          next="/avoid"
+          title="Keep this list on every device"
+          blurb="Optional. Add your email and your avoid list is saved to your account, so it's there on any phone or computer you sign in on, along with your shelf and any plans from your clinic. No password; we send a one-time link."
+        />
       )}
 
       {decoded.notOnLabel.length > 0 && (

@@ -145,3 +145,24 @@ test("ACDS 2020 tray order: 90 allergens, 9 panels of 10, numbered 1-90, every i
   assert.match(items[65].name, /melamine/);
   assert.match(items[89].name, /chlorocresol/);
 });
+
+test("80-allergen trays: ACDS 2017 and NAC-80 are 8 panels of 10, numbered 1-80, every id resolves", async () => {
+  const { PATCH_TEST_SERIES, getNotOnLabel } = await import("./patch-test-series");
+  const { resolveAllergenId } = await import("./contact-allergens");
+  const spot: Record<string, [number, RegExp][]> = {
+    "acds-2017": [[1, /Nickel/], [19, /Methyldibromo/], [47, /Lavender/], [66, /melamine/], [80, /Benzyl alcohol/]],
+    "nac-80": [[1, /Amerchol/], [2, /persulfate/], [47, /Caine mix/], [53, /Nickel/], [69, /Lanolin alcohol/], [80, /Propylene glycol/]],
+  };
+  for (const [id, checks] of Object.entries(spot)) {
+    const s = PATCH_TEST_SERIES.find((x) => x.id === id)!;
+    assert.equal(s.groups.length, 8, id);
+    const items = s.groups.flatMap((g) => g.items);
+    assert.deepEqual(items.map((i) => i.pos), Array.from({ length: 80 }, (_, i) => i + 1), id);
+    for (const it of items) {
+      for (const a of it.ids) assert.ok(resolveAllergenId(a), `${id} ${it.name}: ${a}`);
+      if (it.notOnLabel) assert.ok(getNotOnLabel(it.notOnLabel), `${id} ${it.name}`);
+      assert.ok(it.ids.length > 0 || it.notOnLabel, `${id} ${it.name}`);
+    }
+    for (const [n, re] of checks) assert.match(items[n - 1].name, re, `${id} #${n}`);
+  }
+});

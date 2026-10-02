@@ -13,8 +13,9 @@ import { buildImportPath } from "@/lib/avoid-import";
 import {
   GRADE_LABEL,
   READING_DAYS,
-  DEFAULT_ACDS_LAYOUT,
+  TRAY_SERIES,
   backSpec,
+  defaultTrayLayout,
   type AcdsLayout,
   type BackPanel,
   type BackSpec,
@@ -39,18 +40,21 @@ const GRADE_STYLE: Record<Grade, string> = {
   IR: "border-sky-400 bg-sky-100 text-sky-950 dark:bg-sky-900/50 dark:text-sky-100",
 };
 
-const ACDS_LAYOUT_KEY = "actively.reader.acdsLayout";
+// The clinic's panel placement per tray series, remembered on the device.
+const TRAY_LAYOUT_KEY = "actively.reader.trayLayouts";
+type TrayLayouts = Record<string, AcdsLayout>;
 
-function loadAcdsLayout(): AcdsLayout {
+function loadTrayLayouts(): TrayLayouts {
   try {
-    const raw = typeof window === "undefined" ? null : localStorage.getItem(ACDS_LAYOUT_KEY);
-    const v = raw ? (JSON.parse(raw) as Partial<AcdsLayout>) : {};
-    return {
-      leftCount: typeof v.leftCount === "number" ? v.leftCount : DEFAULT_ACDS_LAYOUT.leftCount,
-      numbering: v.numbering === "rows" ? "rows" : "columns",
-    };
+    const raw = typeof window === "undefined" ? null : localStorage.getItem(TRAY_LAYOUT_KEY);
+    const all = raw ? (JSON.parse(raw) as Record<string, Partial<AcdsLayout>>) : {};
+    const out: TrayLayouts = {};
+    for (const [id, v] of Object.entries(all)) {
+      if (typeof v?.leftCount === "number") out[id] = { leftCount: v.leftCount, numbering: v.numbering === "rows" ? "rows" : "columns" };
+    }
+    return out;
   } catch {
-    return DEFAULT_ACDS_LAYOUT;
+    return {};
   }
 }
 
@@ -71,18 +75,20 @@ export function PatchTestReader() {
   const [grades, setGrades] = useState<Record<string, Grade>>({});
   const [view, setView] = useState<"grid" | "results">("grid");
   const [layout, setLayout] = useState<"back" | "list">("back");
-  // The clinic's ACDS panel placement: device setting, no patient data.
-  const [acds, setAcds] = useState<AcdsLayout>(loadAcdsLayout);
+  // The clinic's panel placement per tray series: device setting, no patient data.
+  const [trayLayouts, setTrayLayouts] = useState<TrayLayouts>(loadTrayLayouts);
   const [includeDoubtful, setIncludeDoubtful] = useState(false);
   const [patient, setPatient] = useState("");
   const [copied, setCopied] = useState<"note" | "link" | null>(null);
 
   const series = getSeries(seriesId);
+  const acds = trayLayouts[series.id] ?? defaultTrayLayout(series);
   const spec = backSpec(series, acds);
   function saveAcds(next: AcdsLayout) {
-    setAcds(next);
+    const all = { ...trayLayouts, [series.id]: next };
+    setTrayLayouts(all);
     try {
-      localStorage.setItem(ACDS_LAYOUT_KEY, JSON.stringify(next));
+      localStorage.setItem(TRAY_LAYOUT_KEY, JSON.stringify(all));
     } catch {}
   }
   const chambers = useMemo(() => chambersFor(series), [series]);
@@ -266,7 +272,8 @@ export function PatchTestReader() {
       </p>
       {!spec && (
         <p className="text-xs text-muted-foreground">
-          This list is grouped by allergen type, not tray order. To read by position, pick ACDS core 2020 or the T.R.U.E. Test.
+          This list is grouped by allergen type, not tray order. To read by position, pick your tray: the T.R.U.E. Test, ACDS core
+          (2020 or 2017) or NAC-80.
         </p>
       )}
       {spec && (
@@ -289,7 +296,7 @@ export function PatchTestReader() {
               {label}
             </button>
           ))}
-          {series.id === "acds-2020" && layout === "back" && (
+          {TRAY_SERIES.has(series.id) && layout === "back" && (
             <>
               <label className="ml-2 flex items-center gap-1">
                 <span className="text-muted-foreground">Panels left of the spine</span>
@@ -298,7 +305,7 @@ export function PatchTestReader() {
                   value={acds.leftCount}
                   onChange={(e) => saveAcds({ ...acds, leftCount: Number(e.target.value) })}
                 >
-                  {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
+                  {Array.from({ length: series.groups.length - 1 }, (_, i) => i + 1).map((n) => (
                     <option key={n} value={n}>
                       {n}
                     </option>

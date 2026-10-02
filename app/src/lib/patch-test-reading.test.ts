@@ -59,3 +59,15 @@ test("ACDS core 2020 reads by position: 90 chambers, 9 panels on the back, clini
   const text = readingWriteUp({ series, chambers: ch, grades: { "66": "+" }, day: "d4" });
   assert.match(text, /Ethyleneurea melamine formaldehyde \(Panel VII, #66\): \+/);
 });
+
+test("80-allergen trays read on the back with half the panels on the left by default", async () => {
+  const { backSpec } = await import("./patch-test-reading");
+  for (const id of ["acds-2017", "nac-80"]) {
+    const series = getSeries(id);
+    assert.equal(chambersFor(series).length, 80, id);
+    const spec = backSpec(series)!;
+    assert.deepEqual(spec.left.map((p) => p.label), ["I", "II", "III", "IV"], id);
+    assert.deepEqual(spec.right.map((p) => p.label), ["V", "VI", "VII", "VIII"], id);
+    assert.equal(spec.rows, 5);
+  }
+});

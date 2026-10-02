@@ -117,16 +117,23 @@ export type BackSpec = {
   note: string;
 };
 export type AcdsLayout = { leftCount: number; numbering: Numbering };
-export const DEFAULT_ACDS_LAYOUT: AcdsLayout = { leftCount: 5, numbering: "columns" };
+// Series sold as panels of 10 chambers (2 x 5), read by tray position.
+export const TRAY_SERIES = new Set(["acds-2020", "acds-2017", "nac-80"]);
+
+/** Default placement: half the panels (rounded up) on the patient's left. */
+export function defaultTrayLayout(series: PatchTestSeries): AcdsLayout {
+  return { leftCount: Math.ceil(series.groups.length / 2), numbering: "columns" };
+}
 
 /**
  * How a series' panels sit on the back, seen from behind the patient, or
  * null for series without a fixed panel format (read as a list).
- * T.R.U.E. Test: fixed by its label (Figures 3 and 4). ACDS core 2020: 9
- * panels of 10 (2 x 5 chambers); where they go is the clinic's choice, so
- * the split and numbering come from the clinic's saved layout.
+ * T.R.U.E. Test: fixed by its label (Figures 3 and 4). ACDS core (2020: 9
+ * panels, 2017: 8) and NAC-80 (8): panels of 10 (2 x 5 chambers); where
+ * they go is the clinic's choice, so the split and numbering come from the
+ * clinic's saved layout.
  */
-export function backSpec(series: PatchTestSeries, acds: AcdsLayout = DEFAULT_ACDS_LAYOUT): BackSpec | null {
+export function backSpec(series: PatchTestSeries, acds: AcdsLayout = defaultTrayLayout(series)): BackSpec | null {
   if (series.id === "true-test") {
     return {
       left: [
@@ -139,7 +146,7 @@ export function backSpec(series: PatchTestSeries, acds: AcdsLayout = DEFAULT_ACD
       note: "Seen from behind the patient, as the panels are applied per the T.R.U.E. Test label.",
     };
   }
-  if (series.id === "acds-2020") {
+  if (TRAY_SERIES.has(series.id)) {
     const panels = series.groups.map((g) => ({ group: g.title, label: g.title.replace(/^Panel /, "") }));
     const n = Math.min(panels.length - 1, Math.max(1, Math.round(acds.leftCount)));
     return {

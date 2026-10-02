@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { claimedCrawler, clientIp, judge, verifyCrawler } from "@/lib/anti-scrape";
+import { CRON_PATH_PREFIX, isCronAuthorized } from "@/lib/cron-auth";
 
 export async function proxy(request: NextRequest) {
   // One canonical host: www.activelyskin.com -> activelyskin.com, path intact.
@@ -16,6 +17,10 @@ export async function proxy(request: NextRequest) {
   // the environment and send it as this header. Unset (the default) = disabled.
   const bypass = process.env.ANTI_SCRAPE_BYPASS_TOKEN;
   if (bypass && bypass.length >= 16 && request.headers.get("x-skinwiz-bypass") === bypass) return NextResponse.next();
+  // The scheduled job (curl from a Railway cron service or an external
+  // pinger) skips the bot limits only when it carries the cron secret; the
+  // route checks the secret again. Without it, it's judged like anything else.
+  if (request.nextUrl.pathname.startsWith(CRON_PATH_PREFIX) && isCronAuthorized(request.headers)) return NextResponse.next();
   const ip = clientIp(request.headers);
   const ua = request.headers.get("user-agent") ?? "";
   // Only UAs claiming to be a search crawler pay for a DNS check (cached per

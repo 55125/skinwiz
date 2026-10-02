@@ -1,14 +1,18 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, ShieldAlert } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { ProductGrid } from "@/components/product-grid";
-import { readSessionId } from "@/lib/session";
+import { readDeviceSessionId, readSessionId } from "@/lib/session";
 import { getShelf } from "@/lib/shelf";
 import { findRoutineConflicts } from "@/lib/routine-conflicts";
 import { getLoggedProductIds } from "@/lib/outcomes";
 import { getConcerns } from "@/lib/queries";
 import { ShelfOutcomePrompt } from "@/components/shelf-outcome-prompt";
+import { EmailSignupCard } from "@/components/email-signup-card";
+import { personForSession } from "@/lib/identity";
+import { shelfRecallAlerts } from "@/lib/recalls";
+import { EMAIL_CONFIDENCE, fdaRecallUrl } from "@/lib/recall-match";
 
 export const metadata: Metadata = {
   title: "My shelf",
@@ -18,6 +22,9 @@ export const metadata: Metadata = {
 
 export default async function ShelfPage() {
   const sessionId = await readSessionId();
+  const device = await readDeviceSessionId();
+  const person = device ? personForSession(device) : null;
+  const alerts = sessionId ? shelfRecallAlerts(sessionId) : [];
   const items = sessionId ? getShelf(sessionId) : [];
   const inUse = items.filter((i) => i.status === "own" && i.opened);
   const sealed = items.filter((i) => i.status === "own" && !i.opened);
@@ -54,12 +61,45 @@ export default async function ShelfPage() {
       <PageHeader
         eyebrow="Your products"
         title="My shelf"
-        description="Track what you own, what you want and what you've finished. Saved against an anonymous cookie in this browser — no account, and clearing your cookies clears your shelf."
+        description="Track what you own, what you want and what you've finished. Saved against an anonymous cookie in this browser — no account. Add an email if you want it on other devices too."
       />
 
       <Link href="/regimen" className="inline-flex items-center gap-1 text-sm font-medium text-brand hover:underline">
         See your morning and night order on My regimen →
       </Link>
+
+      <EmailSignupCard signedInAs={person?.email ?? null} />
+
+      {alerts.length > 0 && (
+        <section aria-labelledby="safety-alerts" className="space-y-3 rounded-2xl border border-amber-300 bg-amber-50/70 p-4 dark:border-amber-900 dark:bg-amber-950/30">
+          <h2 id="safety-alerts" className="flex items-center gap-2 text-base font-semibold">
+            <ShieldAlert className="h-5 w-5" aria-hidden /> Safety alerts
+          </h2>
+          <ul className="space-y-2 text-sm">
+            {alerts.map((a) => (
+              <li key={`${a.recallNumber}-${a.productId}`}>
+                <Link href={`/product/${encodeURIComponent(a.productId)}`} className="font-medium hover:underline">
+                  {a.brandName}
+                </Link>{" "}
+                <span className="text-muted-foreground">
+                  ({a.shelfStatus === "want" ? "wishlist" : "on your shelf"}) —{" "}
+                  {a.confidence >= EMAIL_CONFIDENCE ? "FDA recall" : "a recall may cover it"}
+                  {a.classification && <>, {a.classification}</>}
+                  {a.recallInitiationDate && <>, started {a.recallInitiationDate}</>}
+                  {a.status === "Terminated" && <>, recall has ended</>}.{" "}
+                </span>
+                <a href={fdaRecallUrl(a.eventId)} target="_blank" rel="noopener noreferrer" className="text-brand hover:underline">
+                  FDA notice<span className="sr-only"> for {a.brandName} (opens in a new tab)</span>
+                </a>
+              </li>
+            ))}
+          </ul>
+          <p className="text-xs text-muted-foreground">
+            Recalls usually cover specific lots — compare your package&apos;s lot number with the notice.
+            {person ? " We email you once about each new recall." : " Add an email above to be told about new ones."}
+          </p>
+        </section>
+      )}
 
       {items.length === 0 ? (
         <div className="rounded-2xl border border-dashed p-10 text-center text-muted-foreground">

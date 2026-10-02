@@ -42,6 +42,22 @@ export function rateLimit(
   return null;
 }
 
+// For state-changing account routes: refuse requests a browser labels as
+// cross-site. (SameSite=Lax cookies already keep the session cookie off
+// cross-site POSTs; this is the second lock.)
+export function isSameOrigin(request: Request): boolean {
+  const site = request.headers.get("sec-fetch-site");
+  if (site) return site === "same-origin" || site === "none";
+  const origin = request.headers.get("origin");
+  if (!origin) return true;
+  const host = request.headers.get("x-forwarded-host") ?? request.headers.get("host");
+  try {
+    return new URL(origin).host === host;
+  } catch {
+    return false;
+  }
+}
+
 const MAX_BODY_BYTES = 32 * 1024;
 
 // Reads the body as text first so an oversized payload is rejected before

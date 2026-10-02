@@ -47,6 +47,8 @@ import { productTitle, breadcrumbLd } from "@/lib/seo";
 import { JsonLd } from "@/components/json-ld";
 import { siteUrl } from "@/lib/site-url";
 import { SITE_NAME } from "@/lib/brand";
+import { recallsForProduct } from "@/lib/recalls";
+import { RecallBanner } from "@/components/recall-banner";
 
 const FREE_FROM_BADGE = "border-emerald-300 text-emerald-700 dark:border-emerald-900 dark:text-emerald-400";
 
@@ -175,6 +177,8 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
               )}
             </div>
           </div>
+
+          <RecallBanner recalls={recallsForProduct(product.id)} />
 
           <DualScoreBadges dermScore={dermScore} audienceScore={audienceScore} />
 

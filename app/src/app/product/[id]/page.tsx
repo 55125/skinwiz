@@ -58,6 +58,7 @@ import { productPregnancyFindings } from "@/lib/pregnancy";
 import { PregnancyNotice } from "@/components/pregnancy-notice";
 import { recallsForProduct } from "@/lib/recalls";
 import { RecallBanner } from "@/components/recall-banner";
+import { canViewRxReference } from "@/lib/clinicians";
 
 const FREE_FROM_BADGE = "border-emerald-300 text-emerald-700 dark:border-emerald-900 dark:text-emerald-400";
 
@@ -91,9 +92,9 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
   const { id } = await params;
   const product = getProduct(decodeURIComponent(id));
   if (!product) {
-    // Prescription rows have no consumer product page; with the Rx reference
-    // pages switched on, send the id there instead of a 404.
-    if (FEATURES.RX_CATALOG && getRxProduct(decodeURIComponent(id))) redirect(`/rx/${encodeURIComponent(decodeURIComponent(id))}`);
+    // Prescription rows have no consumer product page; a verified clinician
+    // is sent to the Rx reference page instead, everyone else gets a 404.
+    if (getRxProduct(decodeURIComponent(id)) && (await canViewRxReference())) redirect(`/rx/${encodeURIComponent(decodeURIComponent(id))}`);
     notFound();
   }
 

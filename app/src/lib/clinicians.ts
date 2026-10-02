@@ -9,6 +9,7 @@ import { clinicians } from "@/db/schema";
 import { iso, personForSession } from "@/lib/identity";
 import { readDeviceSessionId } from "@/lib/session";
 import { judgeNpi, type NpiRecord, type VerifyOutcome } from "@/lib/npi";
+import { FEATURES } from "@/lib/feature-flags";
 
 export type Clinician = typeof clinicians.$inferSelect;
 
@@ -32,6 +33,16 @@ export async function currentClinician() {
 }
 
 export const isVerified = (c: Clinician | null | undefined): boolean => !!c?.verifiedAt;
+
+/**
+ * Prescription reference pages (/rx) are for verified clinicians building
+ * handouts, not the public: consumers never see an Rx page or a link to one.
+ * A patient still sees the Rx steps their own clinician put in their plan.
+ */
+export async function canViewRxReference(): Promise<boolean> {
+  if (!FEATURES.RX_CATALOG || !FEATURES.HANDOUTS) return false;
+  return isVerified((await currentClinician()).clinician);
+}
 
 /** "Dr. Adams, MD" / "Jane Smith, PA-C" -- for the badge, print sheet and chart. */
 export function clinicianDisplayName(c: Pick<Clinician, "firstName" | "lastName" | "credential">): string {

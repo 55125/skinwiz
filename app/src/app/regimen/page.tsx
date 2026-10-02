@@ -21,6 +21,7 @@ import { EscalationList } from "@/components/escalation-guidance";
 import { getConcerns } from "@/lib/queries";
 import { cn } from "@/lib/utils";
 import { SITE_NAME } from "@/lib/brand";
+import { canViewRxReference } from "@/lib/clinicians";
 
 export const metadata: Metadata = {
   title: "My regimen",
@@ -28,13 +29,13 @@ export const metadata: Metadata = {
   robots: { index: false },
 };
 
-function StepRow({ s, index, regimenId }: { s: RegimenStep; index: number; regimenId: number }) {
+function StepRow({ s, index, regimenId, rxLinks }: { s: RegimenStep; index: number; regimenId: number; rxLinks: boolean }) {
   const strength = describeStrengths(s.product.strengths, s.product.activeIds);
   const suggestion = suggestSlot(s.product);
   const activeGuidance = guidanceForActives(s.product.activeIds ?? []);
   const formulation = guidanceForStep(s.step);
   const hasHowTo = !!(s.label?.directions || s.label?.warnings || activeGuidance.length || formulation);
-  const href = s.product.isRx ? (FEATURES.RX_CATALOG ? `/rx/${encodeURIComponent(s.product.id)}` : null) : `/product/${encodeURIComponent(s.product.id)}`;
+  const href = s.product.isRx ? (rxLinks ? `/rx/${encodeURIComponent(s.product.id)}` : null) : `/product/${encodeURIComponent(s.product.id)}`;
   return (
     <li className="space-y-3 rounded-2xl border bg-card p-4">
       <div className="flex items-start gap-3">
@@ -71,7 +72,21 @@ function StepRow({ s, index, regimenId }: { s: RegimenStep; index: number; regim
   );
 }
 
-function SlotColumn({ title, icon: Icon, steps, empty, regimenId }: { title: string; icon: typeof Sun; steps: RegimenStep[]; empty: string; regimenId: number }) {
+function SlotColumn({
+  title,
+  icon: Icon,
+  steps,
+  empty,
+  regimenId,
+  rxLinks,
+}: {
+  title: string;
+  icon: typeof Sun;
+  steps: RegimenStep[];
+  empty: string;
+  regimenId: number;
+  rxLinks: boolean;
+}) {
   return (
     <section className="space-y-3">
       <h2 className="flex items-center gap-2 text-xl font-semibold">
@@ -85,7 +100,7 @@ function SlotColumn({ title, icon: Icon, steps, empty, regimenId }: { title: str
       ) : (
         <ol className="space-y-3">
           {steps.map((s, i) => (
-            <StepRow key={s.product.id} s={s} index={i} regimenId={regimenId} />
+            <StepRow key={s.product.id} s={s} index={i} regimenId={regimenId} rxLinks={rxLinks} />
           ))}
         </ol>
       )}
@@ -119,6 +134,7 @@ function RegimenTabs({ list, selectedId }: { list: RegimenSummary[]; selectedId:
 export default async function RegimenPage({ searchParams }: { searchParams: Promise<{ r?: string; saved?: string; skipped?: string }> }) {
   const { r, saved, skipped } = await searchParams;
   const sessionId = await readSessionId();
+  const rxLinks = await canViewRxReference();
   const list = sessionId ? listRegimens(sessionId) : [];
   const selected = list.find((x) => String(x.id) === r) ?? list.find((x) => x.active) ?? list[0] ?? null;
 
@@ -138,7 +154,7 @@ export default async function RegimenPage({ searchParams }: { searchParams: Prom
         <RegimenTabs list={list} selectedId={selected.id} />
         {FEATURES.HANDOUTS ? (
           <>
-            <ClinicianPlan version={plan.version} products={plan.products} states={plan.states} regimenId={selected.id} />
+            <ClinicianPlan version={plan.version} products={plan.products} states={plan.states} regimenId={selected.id} rxLinks={rxLinks} />
             <RegimenActions regimenId={selected.id} kind="clinician" active={selected.active} name={selected.name} />
             <EmailSignupCard
               signedInAs={person?.email ?? null}
@@ -234,8 +250,8 @@ export default async function RegimenPage({ searchParams }: { searchParams: Prom
           )}
 
           <div className="grid gap-8 md:grid-cols-2">
-            <SlotColumn title="Morning" icon={Sun} steps={regimen.am} empty="Nothing in the morning yet." regimenId={regimenId} />
-            <SlotColumn title="Night" icon={Moon} steps={regimen.pm} empty="Nothing at night yet." regimenId={regimenId} />
+            <SlotColumn title="Morning" icon={Sun} steps={regimen.am} empty="Nothing in the morning yet." regimenId={regimenId} rxLinks={rxLinks} />
+            <SlotColumn title="Night" icon={Moon} steps={regimen.pm} empty="Nothing at night yet." regimenId={regimenId} rxLinks={rxLinks} />
           </div>
 
           {selected && list.length > 1 && <RegimenActions regimenId={selected.id} kind="own" active={selected.active} name={selected.name} />}

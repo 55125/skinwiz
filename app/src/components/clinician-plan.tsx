@@ -3,7 +3,6 @@ import { AlertTriangle, ExternalLink, Moon, Phone, Pill, ShoppingBag, Sun, SunMo
 import { MdBadge } from "@/components/md-badge";
 import { PlanStepControls } from "@/components/plan-step-controls";
 import { badgeCredential } from "@/lib/clinicians";
-import { FEATURES } from "@/lib/feature-flags";
 import { getAffiliateLinksForProducts } from "@/lib/queries";
 import { buildOrderPlan, cartEnvFromProcess, findItAt, RETAILER_NAME, type OrderPlan } from "@/lib/retailer-carts";
 import { rxFulfillmentLink } from "@/lib/rx-fulfillment";
@@ -25,12 +24,15 @@ export function ClinicianPlan({
   states,
   regimenId,
   preview = false,
+  rxLinks = false,
 }: {
   version: HandoutVersion;
   products: Map<string, Product>;
   states: Map<string, StepState>;
   regimenId: number | null;
   preview?: boolean;
+  /** Link Rx steps to their /rx reference page: verified clinicians only. */
+  rxLinks?: boolean;
 }) {
   const steps = version.content.steps;
   const visible = steps.filter((s) => !states.get(s.key)?.hidden);
@@ -54,7 +56,7 @@ export function ClinicianPlan({
     const p = s.productId ? products.get(s.productId) : undefined;
     const st = states.get(s.key);
     const live = s.productId ? liveByProduct.get(s.productId) : undefined;
-    const productHref = p ? (p.isRx ? (FEATURES.RX_CATALOG ? `/rx/${encodeURIComponent(p.id)}` : null) : `/product/${encodeURIComponent(p.id)}`) : null;
+    const productHref = p ? (p.isRx ? (rxLinks ? `/rx/${encodeURIComponent(p.id)}` : null) : `/product/${encodeURIComponent(p.id)}`) : null;
     return (
       <li key={`${s.key}-${i}`} className={`space-y-2 rounded-2xl border bg-card p-4 ${st?.doneAt ? "opacity-70" : ""}`}>
         <div className="flex items-start gap-3">

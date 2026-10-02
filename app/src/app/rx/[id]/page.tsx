@@ -4,21 +4,22 @@ import { notFound } from "next/navigation";
 import { AlertOctagon, ChevronLeft, ExternalLink, Info, Stethoscope } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { RxLabelSection } from "@/components/rx-label-section";
-import { FEATURES } from "@/lib/feature-flags";
 import { getRxProduct } from "@/lib/queries";
 import { getRxLabel, listRxProducts, rxDisplayName } from "@/lib/rx-catalog";
 import { innermostPackage, marketingCategoryLabel, rxGroupLabel, rxPriceCheckUrl } from "@/db/rx";
 import { POTENCY_LABEL, type PotencyClass } from "@/db/steroid-potency";
 import { displayManufacturer } from "@/lib/format";
 import { SITE_NAME } from "@/lib/brand";
+import { canViewRxReference } from "@/lib/clinicians";
 
 // Prescription reference page: what the FDA label says, never a
-// recommendation. Behind FEATURE_RX_CATALOG (404 when off), noindex, no
+// recommendation. Verified clinicians only (lib/clinicians.ts canViewRxReference;
+// 404 for everyone else), noindex, no
 // JSON-LD, no affiliate or buy link -- only a plain "check prices" search.
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
-  const p = FEATURES.RX_CATALOG ? getRxProduct(decodeURIComponent(id)) : undefined;
+  const p = (await canViewRxReference()) ? getRxProduct(decodeURIComponent(id)) : undefined;
   if (!p) return { robots: { index: false, follow: false } };
   return {
     title: `${rxDisplayName(p)} (prescription)`,
@@ -28,7 +29,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 }
 
 export default async function RxProductPage({ params }: { params: Promise<{ id: string }> }) {
-  if (!FEATURES.RX_CATALOG) notFound();
+  if (!(await canViewRxReference())) notFound();
   const { id } = await params;
   const p = getRxProduct(decodeURIComponent(id));
   if (!p) notFound();

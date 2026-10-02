@@ -6,7 +6,7 @@ import { inArray } from "drizzle-orm";
 import { db } from "@/db/client";
 import { products } from "@/db/schema";
 import { ClinicianPlan } from "@/components/clinician-plan";
-import { currentClinician } from "@/lib/clinicians";
+import { canViewRxReference, currentClinician } from "@/lib/clinicians";
 import { getOwnedHandout, getVersion } from "@/lib/handouts";
 
 export const metadata: Metadata = { title: "Patient preview" };
@@ -33,7 +33,7 @@ export default async function HandoutPreviewPage({ params, searchParams }: { par
       <p className="flex items-center gap-2 rounded-xl border border-brand/30 bg-brand-soft/40 p-3 text-sm">
         <Eye className="h-4 w-4 text-brand" /> Preview: this is what your patient sees on their phone after saving the plan.
       </p>
-      <ClinicianPlan version={version} products={prods} states={new Map()} regimenId={null} preview />
+      <ClinicianPlan version={version} products={prods} states={new Map()} regimenId={null} preview rxLinks={await canViewRxReference()} />
     </div>
   );
 }

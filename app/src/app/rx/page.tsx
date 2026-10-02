@@ -2,10 +2,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { PageHeader } from "@/components/page-header";
-import { FEATURES } from "@/lib/feature-flags";
 import { listRxProducts, rxDisplayName, type RxProduct } from "@/lib/rx-catalog";
 import { RX_GROUPS } from "@/db/rx";
 import { ROMAN, type PotencyClass } from "@/db/steroid-potency";
+import { canViewRxReference } from "@/lib/clinicians";
 
 // Flag read per request (a static page would bake in the build-time value).
 export const dynamic = "force-dynamic";
@@ -17,9 +17,9 @@ export const metadata: Metadata = {
 };
 
 // Index of the Rx reference pages, one link per generic + strength + form.
-// Flag-gated and noindex, like the pages themselves.
-export default function RxIndexPage() {
-  if (!FEATURES.RX_CATALOG) notFound();
+// Verified clinicians only and noindex, like the pages themselves.
+export default async function RxIndexPage() {
+  if (!(await canViewRxReference())) notFound();
   const rows = listRxProducts();
   const byGroup = new Map<string, Map<string, { name: string; id: string; potency: number | null }>>();
   for (const r of rows) {

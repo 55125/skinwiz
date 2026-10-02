@@ -151,7 +151,11 @@ export default async function ConcernPage({
       />
 
       <div className="space-y-4">
-        <AvoidSwitch basePath={`/concern/${slug}`} searchParams={{ active, free }} selected={freeFromIds} />
+        <AvoidSwitch
+          basePath={`/concern/${slug}`}
+          searchParams={{ active, free, [PREGNANCY_FILTER_PARAM]: pregnancyHide ? PREGNANCY_FILTER_VALUE : undefined }}
+          selected={freeFromIds}
+        />
         <p className="text-sm text-muted-foreground">
           <span className="font-semibold text-foreground tabular-nums">{total.toLocaleString()}</span> product
           {total === 1 ? "" : "s"}

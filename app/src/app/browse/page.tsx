@@ -248,7 +248,7 @@ export default async function BrowsePage({
         <div className="min-w-0 space-y-5">
           <RedFlagBanner />
 
-          <AvoidSwitch basePath="/browse" searchParams={{ concern, tier, active, free, sort }} selected={freeFromIds} />
+          <AvoidSwitch basePath="/browse" searchParams={{ concern, tier, active, free, hsa, sort, pregnancy }} selected={freeFromIds} />
 
           <div className="flex flex-wrap items-center justify-between gap-3">
             <p className="text-sm text-muted-foreground">

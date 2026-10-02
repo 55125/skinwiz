@@ -5,6 +5,8 @@ import { AvoidImportButton } from "@/components/avoid-import-button";
 import { getNotOnLabel, importItemName, watchForNames } from "@/db/patch-test-series";
 import { avoidedIngredientName, readAvoidIds } from "@/lib/avoid";
 import { cleanDetails, decodeImportCode, mergeAvoidIds } from "@/lib/avoid-import";
+import { getSafeProductsByConcern } from "@/lib/queries";
+import { FilterChip } from "@/components/filter-chip";
 
 // Where a dermatologist's QR code lands (/for-clinicians/patch-test). A
 // tool page: noindex, and /avoid is disallowed in robots.txt anyway.
@@ -55,12 +57,14 @@ export default async function AvoidImportPage({ searchParams }: { searchParams: 
   const { already, coveredBy } = mergeAvoidIds(existing, decoded.avoidIds);
   const alreadySet = new Set(already);
   const otherOnList = existing.filter((id) => !decoded.avoidIds.includes(id));
+  const safeByConcern = getSafeProductsByConcern(decoded.avoidIds);
+  const safeTotal = safeByConcern.reduce((sum, c) => sum + c.n, 0);
 
   return (
     <div className="mx-auto max-w-2xl space-y-8 px-4 py-10">
       <PageHeader
-        eyebrow={clinic ? `From ${clinic}` : "Patch-test results"}
-        title="Your dermatologist marked these allergens"
+        eyebrow={clinic ? `From ${clinic}` : date ? "Patch-test results" : "Shared allergen list"}
+        title={clinic || date ? "Your dermatologist marked these allergens" : "Allergens to avoid"}
         description="Add them to your avoid list and every product you look up here is checked for them, under every name they go by on a label."
       >
         {date && <p className="text-sm text-muted-foreground">Patch test read on {formatDate(date)}</p>}
@@ -109,6 +113,30 @@ export default async function AvoidImportPage({ searchParams }: { searchParams: 
               Also on your list already, and kept: {otherOnList.map(avoidedIngredientName).join(", ")}.
             </p>
           )}
+        </section>
+      )}
+
+      {safeByConcern.length > 0 && (
+        <section className="space-y-3" aria-labelledby="import-safe">
+          <div className="flex flex-wrap items-baseline justify-between gap-2">
+            <h2 id="import-safe" className="text-base font-semibold">
+              Products safe for this list
+            </h2>
+            <Link href={`/browse?free=${encodeURIComponent(decoded.avoidIds.join(","))}`} className="text-sm font-medium text-brand hover:underline">
+              Browse all {safeTotal.toLocaleString()} →
+            </Link>
+          </div>
+          <p className="text-sm text-muted-foreground">
+            Full ingredient lists clear of every allergen above, including fragrance allergens that could hide in an
+            undisclosed &ldquo;fragrance.&rdquo;
+          </p>
+          <div className="flex flex-wrap gap-1.5">
+            {safeByConcern.map((c) => (
+              <FilterChip key={c.id} selected={false} href={`/browse?free=${encodeURIComponent(decoded.avoidIds.join(","))}&concern=${c.id}`}>
+                {c.name} ({c.n.toLocaleString()})
+              </FilterChip>
+            ))}
+          </div>
         </section>
       )}
 

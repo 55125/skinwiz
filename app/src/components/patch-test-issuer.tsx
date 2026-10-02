@@ -14,7 +14,7 @@ import { MAX_CLINIC_LENGTH, MAX_NOTE_LENGTH, buildImportPath, cleanDetails } fro
 import { SITE_NAME } from "@/lib/brand";
 
 const noop = () => () => {};
-const useOrigin = () =>
+export const useOrigin = () =>
   useSyncExternalStore(
     noop,
     () => window.location.origin,
@@ -154,7 +154,7 @@ function Field({ label, hint, children }: { label: string; hint?: string; childr
 
 // Rendered straight into <body> and shown only when printing; the print CSS
 // hides every other child of <body>.
-function PrintSheet({
+export function PrintSheet({
   url,
   ids,
   offLabel,

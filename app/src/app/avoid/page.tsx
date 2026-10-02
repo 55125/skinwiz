@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { PageHeader } from "@/components/page-header";
 import { AvoidListEditor } from "@/components/avoid-list-editor";
+import { ShareAvoidList } from "@/components/share-avoid-list";
 import { readAvoidIds } from "@/lib/avoid";
 import { SITE_NAME } from "@/lib/brand";
 
@@ -20,6 +21,8 @@ export default async function AvoidPage({ searchParams }: { searchParams: Promis
         title="Ingredients I avoid"
         description="Pick what you steer clear of. Every product card and page will then flag anything on your list, and listing pages get a one-click filter. Saved in this browser only — no account, nothing sent anywhere."
       />
+
+      <ShareAvoidList ids={ids} />
 
       <AvoidListEditor initialIds={ids} pasteOpen={paste === "1"} seriesOpen={series === "1"} />
 

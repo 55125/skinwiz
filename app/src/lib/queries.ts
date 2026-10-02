@@ -75,6 +75,17 @@ export function getFreeOfAllergenByConcern(id: string): { id: string; name: stri
   `);
 }
 
+/** Products clear of every id in a list, counted per concern. */
+export function getSafeProductsByConcern(ids: string[]): { id: string; name: string; n: number }[] {
+  if (ids.length === 0) return [];
+  return db.all<{ id: string; name: string; n: number }>(sql`
+    SELECT c.id AS id, c.name AS name, COUNT(*) AS n
+    FROM products JOIN concerns c ON c.id = products.concern_id
+    WHERE ${and(...freeFromWhereClauses(ids))}
+    GROUP BY c.id ORDER BY n DESC
+  `);
+}
+
 export function getAssessedProductCount(): number {
   return db.get<{ n: number }>(sql`SELECT COUNT(*) AS n FROM products WHERE allergen_hits IS NOT NULL`)!.n;
 }

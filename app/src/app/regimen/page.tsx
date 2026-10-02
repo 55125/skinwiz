@@ -192,7 +192,7 @@ export default async function RegimenPage({ searchParams }: { searchParams: Prom
       <PageHeader
         eyebrow="Your products"
         title={selected && list.length > 1 ? selected.name : "My regimen"}
-        description="What you use morning and night, in the order to apply it: thinnest to thickest, with sunscreen last in the morning. Saved in this browser only, with no account."
+        description="What you use morning and night, in the order to apply it: thinnest to thickest, with sunscreen last in the morning. Saved in this browser with no account. Add an email in Email settings if you want it on other devices too."
       />
 
       <RedFlagBanner />

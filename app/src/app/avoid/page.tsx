@@ -10,8 +10,8 @@ export const metadata: Metadata = {
   description: `Pick the ingredients you avoid and ${SITE_NAME} will flag every product that contains them.`,
 };
 
-export default async function AvoidPage({ searchParams }: { searchParams: Promise<{ paste?: string }> }) {
-  const { paste } = await searchParams;
+export default async function AvoidPage({ searchParams }: { searchParams: Promise<{ paste?: string; series?: string }> }) {
+  const { paste, series } = await searchParams;
   const ids = await readAvoidIds();
   return (
     <div className="mx-auto max-w-3xl space-y-8 px-4 py-10">
@@ -21,7 +21,7 @@ export default async function AvoidPage({ searchParams }: { searchParams: Promis
         description="Pick what you steer clear of. Every product card and page will then flag anything on your list, and listing pages get a one-click filter. Saved in this browser only — no account, nothing sent anywhere."
       />
 
-      <AvoidListEditor initialIds={ids} pasteOpen={paste === "1"} />
+      <AvoidListEditor initialIds={ids} pasteOpen={paste === "1"} seriesOpen={series === "1"} />
 
       <div className="space-y-2 rounded-2xl border bg-muted/40 p-4 text-xs leading-relaxed text-muted-foreground">
         <p>

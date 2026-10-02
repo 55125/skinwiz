@@ -4,21 +4,8 @@ import { useMemo, useState } from "react";
 import { Check, ClipboardList } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { allergenLabel, parsePatchTestResults } from "@/db/contact-allergens";
+import { PATCH_TEST_FAMILY as FAMILY_FOR, allergenLabel, parsePatchTestResults } from "@/db/contact-allergens";
 import { cn } from "@/lib/utils";
-
-// Families a positive result usually means avoiding whole -- offered next
-// to the match; ticked by default only where that's the standard advice.
-const FAMILY_FOR: Record<string, { id: string; byDefault: boolean }> = {
-  formaldehyde: { id: "formaldehyde-and-releasers", byDefault: true },
-  ppd: { id: "ppd-type-dyes", byDefault: true },
-  ptd: { id: "ppd-type-dyes", byDefault: true },
-  "decyl-glucoside": { id: "glucosides", byDefault: false },
-  "lauryl-glucoside": { id: "glucosides", byDefault: false },
-  "coco-glucoside": { id: "glucosides", byDefault: false },
-  methylisothiazolinone: { id: "isothiazolinones", byDefault: false },
-  "mci-mi": { id: "isothiazolinones", byDefault: false },
-};
 
 const EXAMPLE = "Methylisothiazolinone 0.2% aq ++\nFragrance mix I 8% pet +\nAmerchol L-101 50% pet +\nQuaternium-15 2% pet negative";
 

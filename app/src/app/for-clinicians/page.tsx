@@ -1,6 +1,7 @@
 import { RaterApplicationForm } from "@/components/rater-application-form";
 import { Separator } from "@/components/ui/separator";
 import type { Metadata } from "next";
+import Link from "next/link";
 import { SITE_NAME } from "@/lib/brand";
 
 export const metadata: Metadata = {
@@ -20,6 +21,18 @@ export default function ForCliniciansPage() {
           board-certified dermatologists instead.
         </p>
       </div>
+
+      <section className="space-y-2 rounded-2xl border border-brand/30 bg-brand-soft/40 p-4 text-sm">
+        <h2 className="text-base font-medium text-foreground">Patch-test results sheet with a QR code</h2>
+        <p className="text-muted-foreground">
+          At the reading, tick your patient&apos;s positives on the T.R.U.E. Test or core series and print a one-page
+          sheet. The patient scans the QR code and their {SITE_NAME} avoid list is filled in with every label name for
+          each allergen. No account for either of you, and nothing is stored.
+        </p>
+        <Link href="/for-clinicians/patch-test" className="inline-block font-medium text-brand hover:underline">
+          Make a patch-test sheet →
+        </Link>
+      </section>
 
       <section className="space-y-2 text-sm">
         <h2 className="text-base font-medium text-foreground">How the panel will work</h2>

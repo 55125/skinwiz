@@ -140,6 +140,33 @@ export const products = sqliteTable("products", {
   // the FDA-sourced rows without a visible distinction.
   dataSource: text("data_source").notNull().default("openfda"),
   verified: integer("verified", { mode: "boolean" }).notNull().default(true),
+  // From the openFDA NDC directory (tools/catalog_pipeline): "OTC MONOGRAPH
+  // DRUG", "NDA", "ANDA", "UNAPPROVED HOMEOPATHIC", ... and "HUMAN OTC DRUG" /
+  // "HUMAN PRESCRIPTION DRUG". null when the directory doesn't list the NDC
+  // (most DailyMed-resolved rows) and for cosmetic sources.
+  marketingCategory: text("marketing_category"),
+  productType: text("product_type"),
+  // The first package's NDC-directory description ("1 TUBE in 1 CARTON / 45
+  // g in 1 TUBE"), for price per ounce (lib/equivalence.ts).
+  packageDescription: text("package_description"),
+  // ---- Prescription rows (rx_catalog.csv) --------------------------------
+  // isRx rows are reference/handout data only. They must never reach a
+  // consumer listing, search, match score, equivalence group, HSA tag,
+  // affiliate link or the sitemap: every consumer query filters
+  // isRx = false (lib/queries.ts OTC_ONLY; rx-exclusion.test.ts checks each
+  // one). They live under the hidden "rx" concern, carry no activeIds /
+  // strengths / ingredient memberships, and are only shown by the
+  // flag-gated /rx pages and clinician handouts.
+  isRx: integer("is_rx", { mode: "boolean" }).notNull().default(false),
+  genericName: text("generic_name"), // "tretinoin", "clindamycin phosphate and benzoyl peroxide"
+  rxGroup: text("rx_group"), // retinoid | acne | rosacea | corticosteroid | nonsteroidal | antifungal | other | oral
+  strengthText: text("strength_text"), // "tretinoin 0.025%", "doxycycline hyclate 100 mg"
+  route: text("route"), // "TOPICAL", "ORAL"
+  // US topical steroid potency class 1 (superpotent) .. 7, from
+  // db/steroid-potency.ts; null = not a steroid, or unclassified.
+  steroidPotencyClass: integer("steroid_potency_class"),
+  // Isotretinoin: a reference page only, never addable to a handout (iPLEDGE).
+  informationalOnly: integer("informational_only", { mode: "boolean" }).notNull().default(false),
 }, (table) => [index("products_strength_key_idx").on(table.strengthKey)]);
 
 // One row per distinct normalized ingredient across every product's full
@@ -399,6 +426,22 @@ export const labelSections = sqliteTable("label_sections", {
   whenUsing: text("when_using"),
   stopUse: text("stop_use"),
   askDoctor: text("ask_doctor"),
+});
+
+// Prescribing-information sections for the Rx catalog, keyed by SPL set id
+// (tools/catalog_pipeline/build_rx_catalog.py). Verbatim label text, each
+// section capped at ~6,000 characters by the pipeline. Catalog data: wiped
+// and reloaded by every seed.
+export const rxLabelSections = sqliteTable("rx_label_sections", {
+  splSetId: text("spl_set_id").primaryKey(),
+  effectiveTime: text("effective_time"),
+  indications: text("indications"),
+  dosageAndAdministration: text("dosage_and_administration"),
+  boxedWarning: text("boxed_warning"),
+  contraindications: text("contraindications"),
+  warnings: text("warnings"),
+  pregnancy: text("pregnancy"),
+  lactation: text("lactation"),
 });
 
 // ---------------------------------------------------------------------------

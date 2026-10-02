@@ -1,4 +1,4 @@
-import { inArray, sql } from "drizzle-orm";
+import { and, eq, inArray, sql } from "drizzle-orm";
 import { db } from "@/db/client";
 import { products } from "@/db/schema";
 import { avoidConflicts } from "@/lib/avoid-shared";
@@ -87,7 +87,11 @@ export function findSimilarProducts(
   scored.sort((a, b) => b.score - a.score);
   const best = scored.slice(0, limit);
   if (best.length === 0) return [];
-  const rows = db.select().from(products).where(inArray(products.id, best.map((b) => b.pid))).all();
+  const rows = db
+    .select()
+    .from(products)
+    .where(and(inArray(products.id, best.map((b) => b.pid)), eq(products.isRx, false)))
+    .all();
   const byId = new Map(rows.map((r) => [r.id, r]));
   return best.flatMap((b) => {
     const product = byId.get(b.pid);

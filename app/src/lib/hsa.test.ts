@@ -74,3 +74,12 @@ test("SPF parsing", () => {
   assert.equal(spfFromName("Kids SPF-50 and SPF 30 pack"), 50);
   assert.equal(spfFromName("Moisturizer"), null);
 });
+
+test("homeopathic and prescription rows are never tagged", () => {
+  assert.deepEqual(hsaStatus(p({ marketingCategory: "UNAPPROVED HOMEOPATHIC" })), { eligible: false, reason: "homeopathic" });
+  assert.deepEqual(hsaStatus(p({ marketingCategory: "unapproved homeopathic" })), { eligible: false, reason: "homeopathic" });
+  assert.deepEqual(hsaStatus(p({ marketingCategory: "OTC MONOGRAPH DRUG" })), { eligible: true, reason: "otc-drug" });
+  assert.deepEqual(hsaStatus(p({ marketingCategory: "ANDA" })), { eligible: true, reason: "otc-drug" });
+  assert.deepEqual(hsaStatus(p({ marketingCategory: null })), { eligible: true, reason: "otc-drug" });
+  assert.deepEqual(hsaStatus(p({ isRx: true, marketingCategory: "NDA" })), { eligible: false, reason: "prescription" });
+});

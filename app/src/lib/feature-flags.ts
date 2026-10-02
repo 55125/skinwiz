@@ -8,6 +8,14 @@
 //                               /guide/pregnancy-breastfeeding
 //   FEATURE_ESCALATION=on       "When OTC isn't enough" guidance on concern,
 //                               regimen and shelf pages
+//   FEATURE_RX_CATALOG=on       prescription reference pages (/rx, /rx/[id]),
+//                               noindex; off = 404 (review/rx-handouts-review.html)
+//   FEATURE_HANDOUTS=on         clinician sign-in, NPI verification, the
+//                               handout builder, dashboard, /h/[token] claim
+//                               links and clinician-issued regimens; off = 404
+//
+// Rx rows never appear in consumer listings, search or the sitemap whatever
+// these flags say (lib/queries.ts OTC_ONLY).
 //
 // "off" forces a flag off anywhere (handy for checking the gated-off pages
 // locally). Read per call, never at module load, so a runtime env change
@@ -27,5 +35,11 @@ export const FEATURES = {
   },
   get ESCALATION_GUIDANCE(): boolean {
     return envFlag("FEATURE_ESCALATION");
+  },
+  get RX_CATALOG(): boolean {
+    return envFlag("FEATURE_RX_CATALOG");
+  },
+  get HANDOUTS(): boolean {
+    return envFlag("FEATURE_HANDOUTS");
   },
 };

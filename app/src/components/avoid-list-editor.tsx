@@ -15,6 +15,7 @@ import {
   normalizeForAllergens,
   type ContactAllergen,
 } from "@/db/contact-allergens";
+import { PatchTestPaste } from "@/components/patch-test-paste";
 import { cn } from "@/lib/utils";
 
 // Every name an allergen goes by, normalized once, so searching a patch-test
@@ -24,7 +25,7 @@ const SEARCH_INDEX = CONTACT_ALLERGENS.map((a) => ({
   haystack: normalizeForAllergens([a.name, ...labelNames(a), ...(a.aka ?? [])].join(" | ")),
 }));
 
-export function AvoidListEditor({ initialIds }: { initialIds: string[] }) {
+export function AvoidListEditor({ initialIds, pasteOpen }: { initialIds: string[]; pasteOpen?: boolean }) {
   const router = useRouter();
   const [ids, setIds] = useState<Set<string>>(new Set(initialIds));
   const [saved, setSaved] = useState(true);
@@ -40,12 +41,12 @@ export function AvoidListEditor({ initialIds }: { initialIds: string[] }) {
     setSaved(false);
   }
 
-  function save() {
+  function save(next: Set<string> = ids) {
     startTransition(async () => {
       const res = await fetch("/api/avoid", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ids: [...ids] }),
+        body: JSON.stringify({ ids: [...next] }),
       });
       if (res.ok) {
         setSaved(true);
@@ -61,6 +62,15 @@ export function AvoidListEditor({ initialIds }: { initialIds: string[] }) {
 
   return (
     <div className="space-y-8">
+      <PatchTestPaste
+        defaultOpen={pasteOpen}
+        onAdd={(picked) => {
+          const next = new Set([...ids, ...picked]);
+          setIds(next);
+          save(next);
+        }}
+      />
+
       <AllergenPicker ids={ids} toggle={toggle} />
 
       {groups.map((group) => (
@@ -74,8 +84,8 @@ export function AvoidListEditor({ initialIds }: { initialIds: string[] }) {
         </fieldset>
       ))}
 
-      <div className="sticky bottom-4 flex items-center gap-3 rounded-full">
-        <Button type="button" onClick={save} disabled={saved || isPending} className="rounded-full px-5 shadow-md">
+      <div className={cn("flex items-center gap-3", !saved && "sticky bottom-4 z-10")}>
+        <Button type="button" onClick={() => save()} disabled={saved || isPending} className="rounded-full px-5 shadow-md">
           {saved ? (
             <>
               <Check className="h-4 w-4" /> Saved

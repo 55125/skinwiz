@@ -15,7 +15,8 @@
     "db:seed": "tsx src/db/seed.ts",
     "fetch:youtube-videos": "tsx src/db/fetch-youtube-videos.ts",
     "enrich:pubchem": "tsx src/db/enrich-pubchem.ts",
-    "enrich:ewg": "tsx src/db/enrich-ewg.ts"
+    "enrich:ewg": "tsx src/db/enrich-ewg.ts",
+    "test": "tsx --test src/db/*.test.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",

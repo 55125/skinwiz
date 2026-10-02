@@ -861,3 +861,64 @@ export function allergenBlockers(id: string): string[] {
 export function labelNames(a: ContactAllergen): string[] {
   return [...new Set(a.terms.map((t) => t.replace(/\*/g, "")))];
 }
+
+// --- Patch-test results ---
+
+// Series names that aren't label names, mapped to what they stand for.
+// Checked before label matching so "Fragrance mix I" isn't read as an
+// undisclosed fragrance.
+const PATCH_TEST_NAMES: [string, string][] = [
+  ["fragrance mix ii", "fragrance-mix-2"],
+  ["fragrance mix 2", "fragrance-mix-2"],
+  ["fragrance mix i", "fragrance-mix-1"],
+  ["fragrance mix 1", "fragrance-mix-1"],
+  ["fragrance mix", "fragrance-mix-1"],
+  ["paraben mix", "parabens"],
+  ["caine mix", "benzocaine"],
+  ["compositae mix", "compositae"],
+  ["formaldehyde releaser", "formaldehyde-releasers"],
+  ["amidoamine", "cocamidopropyl-betaine"],
+  ["dimethylaminopropylamine", "cocamidopropyl-betaine"],
+  ["dmapa", "cocamidopropyl-betaine"],
+  ["mci mi", "mci-mi"],
+  ["mci", "mci-mi"],
+  ["mit", "methylisothiazolinone"],
+  ["mi", "methylisothiazolinone"],
+  ["sso", "sorbitan-sesquioleate"],
+  ["pg", "propylene-glycol"],
+  ["grotan bk", "hydroxyethyl-triazine"],
+  ["sesquiterpene lactone mix", "compositae"],
+].map(([name, id]) => [normalizeForAllergens(name), id]);
+
+// Concentrations, vehicles and readings that follow an allergen on a
+// results sheet: "Methylisothiazolinone 0.2% aq ++ (relevant)".
+const RESULT_NOISE =
+  /\b(\d+([.,]\d+)?\s*%|\d+([.,]\d+)?\s*(mg|µg|ug)(\s*\/\s*cm2?)?|pet|petrolatum|aq|water|eth|ethanol|acetone|ac|day\s*\d|d\s*\d|reading|positive|pos|relevant|relevance|current|past|possible|probable|definite|doubtful|irritant|ir|allergic|reaction|result|weak|strong|extreme)\b|[+?()[\]:#*]+|\b\d+\.(?=\s)/gi;
+const NEGATIVE = /\b(neg|negative|nr|not reactive|no reaction)\b|(^|\s)[-–]\s*$|(^|\s)0\s*$/i;
+
+export type PatchTestLine = { line: string; ids: string[]; negative: boolean };
+
+/**
+ * Reads a pasted patch-test results sheet, one allergen per line (or comma-
+ * separated), into allergen/group ids. Lines read as negative are flagged so
+ * the caller can leave them unticked.
+ */
+export function parsePatchTestResults(text: string): PatchTestLine[] {
+  const lines = text
+    .split(/\r?\n|;|,(?!\d)/)
+    .map((l) => l.trim())
+    .filter((l) => /[a-z]{2}/i.test(l));
+  return lines.slice(0, 120).map((line) => {
+    const negative = NEGATIVE.test(line);
+    const cleaned = normalizeForAllergens(line.replace(NEGATIVE, " ").replace(RESULT_NOISE, " "));
+    const exact = PATCH_TEST_NAMES.find(([name]) => cleaned === name);
+    const named = exact ?? PATCH_TEST_NAMES.find(([name]) => name.length > 3 && new RegExp(`(^| )${escapeRe(name)}( |$)`).test(cleaned));
+    if (named) return { line, ids: [named[1]], negative };
+    const group = ALLERGEN_GROUPS.find((g) => normalizeForAllergens(g.name) === cleaned);
+    if (group) return { line, ids: [group.id], negative };
+    // An exact aka ("Kathon CG", "Amerchol L-101") before word matching.
+    const aka = CONTACT_ALLERGENS.find((a) => [a.name, ...(a.aka ?? [])].some((n) => normalizeForAllergens(n) === cleaned));
+    if (aka) return { line, ids: [aka.id], negative };
+    return { line, ids: cleaned ? allergensInIngredient(cleaned) : [], negative };
+  });
+}

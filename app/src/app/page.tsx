@@ -3,6 +3,7 @@ import Link from "next/link";
 import {
   ArrowRight,
   CircleDot,
+  ClipboardList,
   Droplets,
   Hand,
   ShieldCheck,
@@ -23,6 +24,7 @@ import { siteUrl } from "@/lib/site-url";
 import { countProducts, getAllActives, getConcerns, getTopProducts, getTopActives } from "@/lib/queries";
 import { getTopRoutines } from "@/lib/routines";
 import { SITE_NAME } from "@/lib/brand";
+import { CONTACT_ALLERGENS } from "@/db/contact-allergens";
 
 // Force dynamic: without this, Next.js statically prerenders "/" once at
 // build time -- against whatever the database contains at that moment.
@@ -159,6 +161,45 @@ export default function Home() {
                 </Link>
               );
             })}
+          </div>
+        </section>
+
+        <section className="grid grid-cols-1 gap-6 overflow-hidden rounded-3xl border bg-card p-6 sm:p-8 md:grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)] md:items-center">
+          <div className="min-w-0 space-y-4">
+            <p className="text-xs font-semibold uppercase tracking-wider text-brand">Contact dermatitis</p>
+            <h2 className="text-2xl font-semibold sm:text-3xl">Allergic to something? Avoid it under every name.</h2>
+            <p className="max-w-xl text-muted-foreground">
+              Labels rarely use the name on your patch-test results: methylisothiazolinone hides as &ldquo;Kathon
+              CG,&rdquo; lanolin as &ldquo;wool alcohols.&rdquo; Paste your results and we&apos;ll flag all{" "}
+              {CONTACT_ALLERGENS.length} allergens we track, under any of their names, on every product.
+            </p>
+            <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
+              <Link
+                href="/avoid?paste=1"
+                className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
+              >
+                <ClipboardList className="h-4 w-4" />
+                Paste my patch-test results
+              </Link>
+              <Link href="/allergens" className="inline-flex items-center gap-1 text-sm font-medium text-brand hover:underline">
+                Browse the allergen guide
+                <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
+            </div>
+          </div>
+          <div aria-hidden className="min-w-0 space-y-2 rounded-2xl border bg-background/60 p-4 text-sm">
+            {[
+              ["Kathon CG", "MCI/MI preservative"],
+              ["Wool alcohols", "Lanolin"],
+              ["Lyral", "HICC (fragrance)"],
+              ["Quaternium-15", "Formaldehyde releaser"],
+            ].map(([label, allergen]) => (
+              <div key={label} className="flex items-center justify-between gap-3 rounded-xl bg-card px-3 py-2.5 shadow-sm">
+                <span className="min-w-0 truncate text-muted-foreground">{label}</span>
+                <ArrowRight className="h-3.5 w-3.5 shrink-0 text-brand" />
+                <span className="min-w-0 truncate text-right font-medium">{allergen}</span>
+              </div>
+            ))}
           </div>
         </section>
 

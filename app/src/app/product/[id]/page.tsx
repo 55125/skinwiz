@@ -22,7 +22,7 @@ import { getScoresForProducts } from "@/lib/scoring";
 import { getVideoSearchLinks } from "@/lib/video-links";
 import { dataSourceBadge } from "@/lib/data-source";
 import { FREE_FROM_CHECKS, getFreeFromCheck, ingredientFailsCheck } from "@/db/ingredient-flags";
-import { findSimilarProducts } from "@/lib/similar";
+import { findSafeSwaps, findSimilarProducts } from "@/lib/similar";
 import { ewgHazardBadge } from "@/lib/ewg";
 import { readSessionId } from "@/lib/session";
 import { getSessionOutcome } from "@/lib/outcomes";
@@ -104,6 +104,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
   const formulationGuidance = guidanceForStep(stepTypeOf(product));
   const myOutcome = sessionId ? getSessionOutcome(product.id, product.concernId, sessionId) : null;
   const equivalents = getEquivalentProducts(product);
+  const needsSwap = avoid?.status === "conflicts" || avoid?.status === "possible";
   const ingredientRows = getIngredientsForProduct(product.id);
   const isDrugLabel = product.dataSource === "openfda" || product.dataSource === "dailymed";
   const labelActives = ingredientRows.filter((r) => r.position <= 0);
@@ -111,6 +112,9 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
   const similar = isDrugLabel
     ? []
     : findSimilarProducts(listedIngredients.map((r) => r.ingredientId), { excludeId: product.id, limit: 4 });
+  const safeSwaps = needsSwap
+    ? findSafeSwaps(product, ingredientRows.filter((r) => r.position > 0).map((r) => r.ingredientId), avoidIds)
+    : [];
   const match = matchProduct(
     product,
     ingredientRows.map((r) => ({ id: r.ingredientId, position: r.position, isActive: r.isActive })),
@@ -195,7 +199,14 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
                 <Link href="/avoid" className="underline">
                   edit your list
                 </Link>
-                .
+                .{safeSwaps.length > 0 && (
+                  <>
+                    {" "}
+                    <a href="#safe-swaps" className="font-medium underline">
+                      See {safeSwaps.length} similar without them ↓
+                    </a>
+                  </>
+                )}
               </AlertDescription>
             </Alert>
           )}
@@ -206,6 +217,14 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
               <AlertDescription>
                 {avoid.possible.map(avoidedIngredientName).join(", ")} wouldn&apos;t have to be named on the label when
                 it&apos;s part of &ldquo;fragrance&rdquo; or &ldquo;parfum.&rdquo;
+                {avoid.status === "possible" && safeSwaps.length > 0 && (
+                  <>
+                    {" "}
+                    <a href="#safe-swaps" className="font-medium underline">
+                      See {safeSwaps.length} similar without it ↓
+                    </a>
+                  </>
+                )}
               </AlertDescription>
             </Alert>
           )}
@@ -435,6 +454,22 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
 
       <RedFlagBanner />
       </div>
+
+      {safeSwaps.length > 0 && (
+        <section id="safe-swaps" className="scroll-mt-24 space-y-4 rounded-3xl border border-emerald-300/70 bg-emerald-50/40 p-5 sm:p-6 dark:border-emerald-900 dark:bg-emerald-950/20">
+          <div className="space-y-1">
+            <h2 className="text-xl font-semibold">Without what you avoid</h2>
+            <p className="text-sm text-muted-foreground">
+              Similar products whose full ingredient lists are clear of everything on your{" "}
+              <Link href="/avoid" className="underline">
+                avoid list
+              </Link>
+              , including fragrance allergens that could hide in an undisclosed fragrance.
+            </p>
+          </div>
+          <ProductGrid products={safeSwaps} columns="sm:grid-cols-2 lg:grid-cols-4" />
+        </section>
+      )}
 
       <OutcomeForm
         productId={product.id}

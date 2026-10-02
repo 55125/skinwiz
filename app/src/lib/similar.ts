@@ -1,6 +1,8 @@
 import { inArray, sql } from "drizzle-orm";
 import { db } from "@/db/client";
 import { products } from "@/db/schema";
+import { avoidConflicts } from "@/lib/avoid-shared";
+import { browseProducts } from "@/lib/queries";
 
 // Formula similarity by ingredient overlap. Every ingredient is weighted by
 // how rare it is across the catalog (ln(N / products-with-it)), so sharing
@@ -91,4 +93,53 @@ export function findSimilarProducts(
     const product = byId.get(b.pid);
     return product ? [{ product, score: b.score, shared: b.shared, total: b.total }] : [];
   });
+}
+
+// A rough product kind from the name and dosage form, so a body wash's swaps
+// are washes before serums. Coarse on purpose: unknown stays unknown.
+const KINDS: [string, RegExp][] = [
+  ["cleanser", /\b(wash|cleanser|cleansing|shower|soap|scrub|foam(ing)?)\b/i],
+  ["shampoo", /\b(shampoo|conditioner)\b/i],
+  ["sunscreen", /\b(sunscreen|spf|sun\s?(cream|lotion|stick|spray))\b/i],
+  ["serum", /\b(serum|essence|ampoule|toner|solution)\b/i],
+  ["lip", /\b(lip|balm)\b/i],
+  ["deodorant", /\b(deodorant|antiperspirant)\b/i],
+  ["cream", /\b(cream|lotion|moisturi[sz]er|gel|butter|baume|ointment)\b/i],
+];
+
+function productKind(p: typeof products.$inferSelect): string | null {
+  const text = `${p.brandName} ${p.dosageForm ?? ""}`;
+  return KINDS.find(([, re]) => re.test(text))?.[0] ?? null;
+}
+
+/**
+ * Products like this one that are clear of everything on an avoid list,
+ * same kind of product first (wash for a wash): closest formulas, then the
+ * same first active for the same concern. Only products with a full
+ * ingredient list qualify -- "couldn't check" is never offered as safe.
+ */
+export function findSafeSwaps(
+  product: typeof products.$inferSelect,
+  ingredientSlugs: string[],
+  avoidIds: string[],
+  limit = 4,
+): (typeof products.$inferSelect)[] {
+  if (avoidIds.length === 0) return [];
+  const clear = (p: typeof products.$inferSelect) => {
+    const found = avoidConflicts(p, avoidIds);
+    return !!found && found.conflicts.length === 0 && found.possible.length === 0;
+  };
+  const kind = productKind(product);
+  const similar = findSimilarProducts(ingredientSlugs, { excludeId: product.id, limit: 60, minScore: 0.2 }).map((s) => s.product);
+  const { rows } = browseProducts({ concernId: product.concernId, activeId: product.activeIds[0], freeFromIds: avoidIds }, 1);
+  // Stable order: similarity first, then same-concern products; same kind
+  // anywhere in that list beats a different kind.
+  const pool = [...similar.filter(clear), ...rows.filter((p) => p.id !== product.id)];
+  const rank = (p: typeof products.$inferSelect) => (kind && productKind(p) === kind ? 0 : 1);
+  const out = new Map<string, typeof products.$inferSelect>();
+  for (const p of pool.map((p, i) => ({ p, i })).sort((a, b) => rank(a.p) - rank(b.p) || a.i - b.i).map((x) => x.p)) {
+    if (out.size >= limit) break;
+    if (!out.has(p.id)) out.set(p.id, p);
+  }
+  return [...out.values()];
 }

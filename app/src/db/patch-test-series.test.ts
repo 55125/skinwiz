@@ -127,3 +127,21 @@ test("import and issue pages are reachable from an ordinary phone", () => {
   const post = judge({ pathname: "/api/avoid", method: "POST", headers: new Headers({ "user-agent": iphone }), ip: "203.0.113.7" });
   assert.equal(post.action, "allow");
 });
+
+test("ACDS 2020 tray order: 90 allergens, 9 panels of 10, numbered 1-90, every id resolves", async () => {
+  const { PATCH_TEST_SERIES, getNotOnLabel } = await import("./patch-test-series");
+  const { resolveAllergenId } = await import("./contact-allergens");
+  const acds = PATCH_TEST_SERIES.find((s) => s.id === "acds-2020")!;
+  assert.equal(acds.groups.length, 9);
+  const items = acds.groups.flatMap((g) => g.items);
+  assert.deepEqual(items.map((i) => i.pos), Array.from({ length: 90 }, (_, i) => i + 1));
+  for (const g of acds.groups) assert.equal(g.items.length, 10, g.title);
+  for (const it of items) {
+    assert.ok(it.ids.length > 0 || it.notOnLabel, it.name);
+    for (const id of it.ids) assert.ok(resolveAllergenId(id), `${it.name}: ${id}`);
+    if (it.notOnLabel) assert.ok(getNotOnLabel(it.notOnLabel), it.name);
+  }
+  assert.match(items[0].name, /Nickel/);
+  assert.match(items[65].name, /melamine/);
+  assert.match(items[89].name, /chlorocresol/);
+});

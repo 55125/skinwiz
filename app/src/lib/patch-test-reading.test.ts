@@ -40,3 +40,22 @@ test("other series are numbered 1..n with no control", () => {
   assert.ok(ch.length > 30);
   assert.ok(ch.every((c, i) => c.number === i + 1 && c.item));
 });
+
+test("ACDS core 2020 reads by position: 90 chambers, 9 panels on the back, clinic-set split", async () => {
+  const { backSpec } = await import("./patch-test-reading");
+  const series = getSeries("acds-2020");
+  const ch = chambersFor(series);
+  assert.equal(ch.length, 90);
+  assert.ok(ch.every((c, i) => c.number === i + 1 && c.item));
+  const spec = backSpec(series)!;
+  assert.deepEqual(spec.left.map((p) => p.label), ["I", "II", "III", "IV", "V"]);
+  assert.deepEqual(spec.right.map((p) => p.label), ["VI", "VII", "VIII", "IX"]);
+  assert.equal(spec.rows, 5);
+  const four = backSpec(series, { leftCount: 4, numbering: "rows" })!;
+  assert.equal(four.left.length, 4);
+  assert.equal(four.numbering, "rows");
+  assert.equal(backSpec(series, { leftCount: 99, numbering: "columns" })!.right.length, 1);
+  assert.equal(backSpec(getSeries("core")), null);
+  const text = readingWriteUp({ series, chambers: ch, grades: { "66": "+" }, day: "d4" });
+  assert.match(text, /Ethyleneurea melamine formaldehyde \(Panel VII, #66\): \+/);
+});

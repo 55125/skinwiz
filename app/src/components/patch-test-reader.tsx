@@ -13,6 +13,12 @@ import { buildImportPath } from "@/lib/avoid-import";
 import {
   GRADE_LABEL,
   READING_DAYS,
+  DEFAULT_ACDS_LAYOUT,
+  backSpec,
+  type AcdsLayout,
+  type BackPanel,
+  type BackSpec,
+  type Numbering,
   avoidIdsFrom,
   chambersFor,
   getSeries,
@@ -33,6 +39,21 @@ const GRADE_STYLE: Record<Grade, string> = {
   IR: "border-sky-400 bg-sky-100 text-sky-950 dark:bg-sky-900/50 dark:text-sky-100",
 };
 
+const ACDS_LAYOUT_KEY = "actively.reader.acdsLayout";
+
+function loadAcdsLayout(): AcdsLayout {
+  try {
+    const raw = typeof window === "undefined" ? null : localStorage.getItem(ACDS_LAYOUT_KEY);
+    const v = raw ? (JSON.parse(raw) as Partial<AcdsLayout>) : {};
+    return {
+      leftCount: typeof v.leftCount === "number" ? v.leftCount : DEFAULT_ACDS_LAYOUT.leftCount,
+      numbering: v.numbering === "rows" ? "rows" : "columns",
+    };
+  } catch {
+    return DEFAULT_ACDS_LAYOUT;
+  }
+}
+
 const todayIso = () => {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -50,11 +71,20 @@ export function PatchTestReader() {
   const [grades, setGrades] = useState<Record<string, Grade>>({});
   const [view, setView] = useState<"grid" | "results">("grid");
   const [layout, setLayout] = useState<"back" | "list">("back");
+  // The clinic's ACDS panel placement: device setting, no patient data.
+  const [acds, setAcds] = useState<AcdsLayout>(loadAcdsLayout);
   const [includeDoubtful, setIncludeDoubtful] = useState(false);
   const [patient, setPatient] = useState("");
   const [copied, setCopied] = useState<"note" | "link" | null>(null);
 
   const series = getSeries(seriesId);
+  const spec = backSpec(series, acds);
+  function saveAcds(next: AcdsLayout) {
+    setAcds(next);
+    try {
+      localStorage.setItem(ACDS_LAYOUT_KEY, JSON.stringify(next));
+    } catch {}
+  }
   const chambers = useMemo(() => chambersFor(series), [series]);
   const groups = useMemo(() => [...new Set(chambers.map((c) => c.group))], [chambers]);
   const graded = Object.values(grades).filter((g) => g !== "neg").length;
@@ -66,11 +96,17 @@ export function PatchTestReader() {
   const url = `${origin}${buildImportPath(avoidAll, { date: readDate || undefined })}`;
   const hasPositives = avoidAll.length > 0;
 
-  const tap = (key: string) => setGrades((all) => ({ ...all, [key]: nextGrade(all[key] ?? "neg") }));
+  const [lastTapped, setLastTapped] = useState<string | null>(null);
+  const tap = (key: string) => {
+    setGrades((all) => ({ ...all, [key]: nextGrade(all[key] ?? "neg") }));
+    setLastTapped(key);
+  };
+  const last = lastTapped ? chambers.find((c) => c.key === lastTapped) : undefined;
 
   function reset() {
     if (graded > 0 && !confirm("Clear all grades and start a new reading?")) return;
     setGrades({});
+    setLastTapped(null);
     setPatient("");
     setView("grid");
   }
@@ -187,6 +223,7 @@ export function PatchTestReader() {
             onChange={(e) => {
               if (graded > 0 && !confirm("Switching series clears the grades. Continue?")) return;
               setGrades({});
+              setLastTapped(null);
               setSeriesId(e.target.value);
             }}
           >
@@ -227,10 +264,12 @@ export function PatchTestReader() {
           <Smartphone className="h-3.5 w-3.5 rotate-90" /> Turn your phone sideways for bigger boxes.
         </span>
       </p>
-      {series.id !== "true-test" && (
-        <p className="text-xs text-muted-foreground">Chambers are numbered in this list&apos;s order. Confirm the numbers against your tray before reading.</p>
+      {!spec && (
+        <p className="text-xs text-muted-foreground">
+          This list is grouped by allergen type, not tray order. To read by position, pick ACDS core 2020 or the T.R.U.E. Test.
+        </p>
       )}
-      {series.id === "true-test" && (
+      {spec && (
         <div className="flex flex-wrap items-center gap-2 text-xs" role="radiogroup" aria-label="Layout">
           <span className="text-muted-foreground">Layout:</span>
           {(
@@ -250,11 +289,53 @@ export function PatchTestReader() {
               {label}
             </button>
           ))}
+          {series.id === "acds-2020" && layout === "back" && (
+            <>
+              <label className="ml-2 flex items-center gap-1">
+                <span className="text-muted-foreground">Panels left of the spine</span>
+                <select
+                  className="h-7 rounded-md border bg-background px-1"
+                  value={acds.leftCount}
+                  onChange={(e) => saveAcds({ ...acds, leftCount: Number(e.target.value) })}
+                >
+                  {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
+                    <option key={n} value={n}>
+                      {n}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="flex items-center gap-1">
+                <span className="text-muted-foreground">Numbered</span>
+                <select
+                  className="h-7 rounded-md border bg-background px-1"
+                  value={acds.numbering}
+                  onChange={(e) => saveAcds({ ...acds, numbering: e.target.value as Numbering })}
+                >
+                  <option value="columns">down each column</option>
+                  <option value="rows">across each row</option>
+                </select>
+              </label>
+            </>
+          )}
         </div>
       )}
 
-      {series.id === "true-test" && layout === "back" ? (
-        <BackLayout chambers={chambers} grades={grades} onTap={tap} />
+      {spec && layout === "back" && (
+        <p className="min-h-5 text-sm" aria-live="polite">
+          {last ? (
+            <>
+              <span className="font-semibold tabular-nums">#{last.number}</span> {last.item ? last.item.name : "Negative control"}:{" "}
+              <span className="font-semibold">{GRADE_LABEL[grades[last.key] ?? "neg"]}</span>
+            </>
+          ) : (
+            <span className="text-muted-foreground">Tap a chamber; its allergen shows here.</span>
+          )}
+        </p>
+      )}
+
+      {spec && layout === "back" ? (
+        <BackLayout spec={spec} chambers={chambers} grades={grades} onTap={tap} />
       ) : (
         groups.map((group) => (
         <section key={group} className="space-y-2" aria-label={group}>
@@ -282,21 +363,31 @@ export function PatchTestReader() {
   );
 }
 
-// The T.R.U.E. Test as it sits on the back, seen from behind the patient (FDA
-// label, Figures 3 and 4): Panels 1.3 and 2.3 on the patient's left, 3.3 on
-// the right, each about 5 cm from the spine. Each panel is a vertical strip
-// of 2 columns x 6 rows, numbered down the left column then the right.
-const BACK_PANELS = [
-  { group: "Panel 1", label: "1.3" },
-  { group: "Panel 2", label: "2.3" },
-  { group: "Panel 3", label: "3.3" },
-];
-
-function BackLayout({ chambers, grades, onTap }: { chambers: Chamber[]; grades: Record<string, Grade>; onTap: (key: string) => void }) {
-  const panel = (p: (typeof BACK_PANELS)[number]) => (
+// Panels as they sit on the back, seen from behind the patient (see
+// backSpec in lib/patch-test-reading.ts). Rows share the screen's height;
+// a series with many panels scrolls sideways on a narrow screen.
+function BackLayout({
+  spec,
+  chambers,
+  grades,
+  onTap,
+}: {
+  spec: BackSpec;
+  chambers: Chamber[];
+  grades: Record<string, Grade>;
+  onTap: (key: string) => void;
+}) {
+  const panel = (p: BackPanel) => (
     <div key={p.group} className="flex min-w-0 flex-1 flex-col gap-1">
       <p className="text-center text-xs font-semibold">Panel {p.label}</p>
-      <div className="grid min-h-0 flex-1 grid-flow-col grid-cols-2 grid-rows-6 gap-1 sm:gap-1.5">
+      <div
+        className="grid min-h-0 flex-1 gap-1 sm:gap-1.5"
+        style={{
+          gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+          gridTemplateRows: `repeat(${spec.rows}, minmax(0, 1fr))`,
+          gridAutoFlow: spec.numbering === "columns" ? "column" : "row",
+        }}
+      >
         {chambers
           .filter((c) => c.group === p.group)
           .sort((a, b) => a.number - b.number)
@@ -306,24 +397,31 @@ function BackLayout({ chambers, grades, onTap }: { chambers: Chamber[]; grades: 
       </div>
     </div>
   );
+  const panels = spec.left.length + spec.right.length;
   return (
-    <div className="mx-auto max-w-3xl space-y-2">
-      <div className="flex text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-        <span className="flex-[2] text-center">Patient&apos;s left</span>
-        <span className="w-6 sm:w-12" />
-        <span className="flex-1 text-center">Patient&apos;s right</span>
-      </div>
-      {/* Rows share the screen's height, so a whole panel fits in either orientation. */}
-      <div className="flex items-stretch gap-1.5 sm:gap-3" style={{ height: "min(calc(100dvh - 120px), 640px)", minHeight: 300 }}>
-        {panel(BACK_PANELS[0])}
-        {panel(BACK_PANELS[1])}
-        <div className="flex w-6 shrink-0 flex-col items-center sm:w-12" aria-hidden>
-          <span className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground">Spine</span>
-          <span className="mt-1 w-px flex-1 border-l-2 border-dashed border-muted-foreground/40" />
+    <div className={cn("space-y-2", panels <= 3 && "mx-auto max-w-3xl")}>
+      <div className="overflow-x-auto pb-1">
+        <div className="space-y-2" style={{ minWidth: panels * 84 }}>
+          <div className="flex text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+            <span className="text-center" style={{ flex: spec.left.length }}>
+              Patient&apos;s left
+            </span>
+            <span className="w-6 sm:w-12" />
+            <span className="text-center" style={{ flex: spec.right.length }}>
+              Patient&apos;s right
+            </span>
+          </div>
+          <div className="flex items-stretch gap-1.5 sm:gap-3" style={{ height: "min(calc(100dvh - 120px), 640px)", minHeight: 260 }}>
+            {spec.left.map(panel)}
+            <div className="flex w-6 shrink-0 flex-col items-center sm:w-12" aria-hidden>
+              <span className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground">Spine</span>
+              <span className="mt-1 w-px flex-1 border-l-2 border-dashed border-muted-foreground/40" />
+            </div>
+            {spec.right.map(panel)}
+          </div>
         </div>
-        {panel(BACK_PANELS[2])}
       </div>
-      <p className="text-center text-xs text-muted-foreground">Seen from behind the patient, as the panels are applied per the T.R.U.E. Test label.</p>
+      <p className="text-center text-xs text-muted-foreground">{spec.note}</p>
     </div>
   );
 }
@@ -338,7 +436,7 @@ function ChamberBox({ chamber, grade, onTap, compact = false }: { chamber: Chamb
         aria-label={`${chamber.number}. ${name}: ${GRADE_LABEL[grade]}. Tap to change.`}
         title={name}
         className={cn(
-          "flex h-full min-h-0 select-none flex-col justify-between rounded-lg border-2 p-1 text-left transition-colors active:scale-[0.97] sm:p-1.5",
+          "@container flex h-full min-h-0 select-none flex-col justify-between rounded-lg border-2 p-1 text-left transition-colors active:scale-[0.97] sm:p-1.5",
           GRADE_STYLE[grade],
           !chamber.item && grade === "neg" && "border-dashed",
         )}
@@ -347,7 +445,8 @@ function ChamberBox({ chamber, grade, onTap, compact = false }: { chamber: Chamb
           <span className="text-sm font-bold tabular-nums leading-none sm:text-base">{chamber.number}</span>
           <span className="text-xs font-bold leading-none sm:text-sm">{grade === "neg" ? "−" : grade}</span>
         </span>
-        <span className="hidden text-[10px] font-medium leading-tight sm:line-clamp-2">{name}</span>
+        {/* Only when the box itself is wide enough to read it. */}
+        <span className="hidden text-[10px] font-medium leading-tight @[76px]:line-clamp-2">{name}</span>
       </button>
     );
   }

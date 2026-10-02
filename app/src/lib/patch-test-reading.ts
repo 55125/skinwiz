@@ -80,7 +80,7 @@ export function readingWriteUp(opts: {
 }): string {
   const { series, chambers, grades } = opts;
   const day = READING_DAYS.find((d) => d.id === opts.day)?.label ?? opts.day;
-  const place = (c: Chamber) => (series.id === "true-test" ? `${c.group}, #${c.number}` : `#${c.number}`);
+  const place = (c: Chamber) => (backSpec(series) ? `${c.group}, #${c.number}` : `#${c.number}`);
   const line = (c: Chamber) => `- ${c.item ? c.item.name : "Negative control"} (${place(c)}): ${grades[c.key] ?? "neg"}`;
   const by = (pred: (g: Grade) => boolean) => chambers.filter((c) => c.item && pred(grades[c.key] ?? "neg"));
   const positive = by((g) => POSITIVE.has(g));
@@ -103,4 +103,52 @@ export function readingWriteUp(opts: {
   }
   lines.push("Clinical relevance to be determined by the clinician.");
   return lines.join("\n");
+}
+
+// --- Panels as they sit on the back ---------------------------------------------
+
+export type BackPanel = { group: string; label: string };
+export type Numbering = "columns" | "rows";
+export type BackSpec = {
+  left: BackPanel[]; // patient's left, outermost first
+  right: BackPanel[]; // patient's right, next to the spine first
+  rows: number; // each panel is 2 columns wide
+  numbering: Numbering; // "columns": down the left column, then the right
+  note: string;
+};
+export type AcdsLayout = { leftCount: number; numbering: Numbering };
+export const DEFAULT_ACDS_LAYOUT: AcdsLayout = { leftCount: 5, numbering: "columns" };
+
+/**
+ * How a series' panels sit on the back, seen from behind the patient, or
+ * null for series without a fixed panel format (read as a list).
+ * T.R.U.E. Test: fixed by its label (Figures 3 and 4). ACDS core 2020: 9
+ * panels of 10 (2 x 5 chambers); where they go is the clinic's choice, so
+ * the split and numbering come from the clinic's saved layout.
+ */
+export function backSpec(series: PatchTestSeries, acds: AcdsLayout = DEFAULT_ACDS_LAYOUT): BackSpec | null {
+  if (series.id === "true-test") {
+    return {
+      left: [
+        { group: "Panel 1", label: "1.3" },
+        { group: "Panel 2", label: "2.3" },
+      ],
+      right: [{ group: "Panel 3", label: "3.3" }],
+      rows: 6,
+      numbering: "columns",
+      note: "Seen from behind the patient, as the panels are applied per the T.R.U.E. Test label.",
+    };
+  }
+  if (series.id === "acds-2020") {
+    const panels = series.groups.map((g) => ({ group: g.title, label: g.title.replace(/^Panel /, "") }));
+    const n = Math.min(panels.length - 1, Math.max(1, Math.round(acds.leftCount)));
+    return {
+      left: panels.slice(0, n),
+      right: panels.slice(n),
+      rows: 5,
+      numbering: acds.numbering,
+      note: "Seen from behind the patient. Panel I is outermost on the patient's left; set your clinic's layout above if yours differs.",
+    };
+  }
+  return null;
 }

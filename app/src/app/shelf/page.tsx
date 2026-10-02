@@ -6,9 +6,12 @@ import { ProductGrid } from "@/components/product-grid";
 import { readSessionId } from "@/lib/session";
 import { getShelf } from "@/lib/shelf";
 import { findRoutineConflicts } from "@/lib/routine-conflicts";
-import { getLoggedProductIds } from "@/lib/outcomes";
+import { getSessionOutcomes, type OutcomeInput } from "@/lib/outcomes";
 import { getConcerns } from "@/lib/queries";
 import { ShelfOutcomePrompt } from "@/components/shelf-outcome-prompt";
+import { FEATURES } from "@/lib/feature-flags";
+import { escalationFor } from "@/db/escalation-guidance";
+import { EscalationList } from "@/components/escalation-guidance";
 
 export const metadata: Metadata = {
   title: "My shelf",
@@ -28,10 +31,26 @@ export default async function ShelfPage() {
   // Finished products first -- that's when someone actually knows whether
   // it worked. In-use ones are asked too; an answer can be changed later.
   const askable = [...empties, ...inUse];
-  const logged = sessionId
-    ? getLoggedProductIds(sessionId, askable.map((i) => ({ productId: i.product.id, concernId: i.product.concernId })))
-    : new Set<string>();
+  const outcomes = sessionId
+    ? getSessionOutcomes(sessionId, askable.map((i) => ({ productId: i.product.id, concernId: i.product.concernId })))
+    : new Map<string, OutcomeInput>();
+  const logged = new Set(outcomes.keys());
   const concernNames = new Map(getConcerns().map((c) => [c.id, c.name]));
+  // Gated: products the visitor said didn't help point to "When OTC isn't
+  // enough" for their concern, one row per concern.
+  const notHelped = FEATURES.ESCALATION_GUIDANCE ? askable.filter((i) => outcomes.get(i.product.id)?.improved === false) : [];
+  const escalations = [...new Set(notHelped.map((i) => i.product.concernId))].flatMap((concernId) => {
+    const guidance = escalationFor(concernId);
+    if (!guidance) return [];
+    const names = notHelped.filter((i) => i.product.concernId === concernId).map((i) => i.product.brandName);
+    return [
+      {
+        guidance,
+        concernName: concernNames.get(concernId) ?? concernId,
+        note: `You said ${names.slice(0, 2).join(" and ")}${names.length > 2 ? ` and ${names.length - 2} more` : ""} didn't help.`,
+      },
+    ];
+  });
   const toAsk = askable
     .filter((i) => !logged.has(i.product.id))
     .slice(0, 8)
@@ -94,6 +113,12 @@ export default async function ShelfPage() {
           )}
 
           {toAsk.length > 0 && <ShelfOutcomePrompt items={toAsk} />}
+
+          <EscalationList
+            title="Not seeing results?"
+            intro="Some products didn't help, by your answers. Here's how long a fair try usually is, and when it's worth seeing a dermatologist."
+            items={escalations}
+          />
 
           {sections.map((s) => (
             <section key={s.title} className="space-y-4">

@@ -36,9 +36,16 @@ export function logOutcome(productId: string, concernId: string, sessionId: stri
 // (for each product's own concern), in one query -- the shelf page uses it
 // to ask only about the ones still unanswered.
 export function getLoggedProductIds(sessionId: string, items: { productId: string; concernId: string }[]): Set<string> {
-  if (items.length === 0) return new Set();
+  return new Set(getSessionOutcomes(sessionId, items).keys());
+}
+
+// This visitor's own answers for these products (for each product's own
+// concern) -- the shelf uses it to point anyone who said "didn't help" to the
+// "When OTC isn't enough" guidance for that concern.
+export function getSessionOutcomes(sessionId: string, items: { productId: string; concernId: string }[]): Map<string, OutcomeInput> {
+  if (items.length === 0) return new Map();
   const rows = db
-    .select({ productId: audienceOutcomes.productId, concernId: audienceOutcomes.concernId })
+    .select({ productId: audienceOutcomes.productId, concernId: audienceOutcomes.concernId, improved: audienceOutcomes.improved, weeksUsed: audienceOutcomes.weeksUsed })
     .from(audienceOutcomes)
     .where(
       and(
@@ -48,5 +55,9 @@ export function getLoggedProductIds(sessionId: string, items: { productId: strin
     )
     .all();
   const wanted = new Set(items.map((i) => `${i.productId}\u0000${i.concernId}`));
-  return new Set(rows.filter((r) => wanted.has(`${r.productId}\u0000${r.concernId}`)).map((r) => r.productId));
+  return new Map(
+    rows
+      .filter((r) => wanted.has(`${r.productId}\u0000${r.concernId}`))
+      .map((r) => [r.productId, { improved: r.improved, weeksUsed: r.weeksUsed }]),
+  );
 }

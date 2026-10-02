@@ -16,6 +16,8 @@ import { FEATURES } from "@/lib/feature-flags";
 import { readProfile } from "@/lib/profile";
 import { PREGNANCY_FILTER_PARAM, PREGNANCY_FILTER_VALUE, pregnancyAvoidIngredientIds } from "@/lib/pregnancy";
 import { PregnancyFilter } from "@/components/pregnancy-notice";
+import { escalationFor } from "@/db/escalation-guidance";
+import { EscalationPanel } from "@/components/escalation-guidance";
 
 type ConcernParams = { page?: string; active?: string; free?: string; strength?: string; pregnancy?: string };
 
@@ -86,13 +88,23 @@ export default async function ConcernPage({
     const q = qs.toString();
     return `/concern/${slug}${q ? `?${q}` : ""}`;
   })();
+  const escalation = FEATURES.ESCALATION_GUIDANCE ? escalationFor(slug) : undefined;
 
   return (
     <div className="mx-auto max-w-6xl space-y-8 px-4 py-10">
       <JsonLd data={breadcrumbLd(siteUrl(), [["Home", "/"], [concern.name, `/concern/${slug}`]])} />
       <PageHeader eyebrow="Concern" title={concern.name} description={concern.description} />
 
-      <RedFlagBanner />
+      {escalation ? (
+        <div className="space-y-2">
+          <RedFlagBanner />
+          <a href="#otc-not-enough" className="inline-block text-sm font-medium text-brand hover:underline">
+            When OTC isn&apos;t enough: how long to try, and when to see a dermatologist ↓
+          </a>
+        </div>
+      ) : (
+        <RedFlagBanner />
+      )}
 
       <div className="space-y-3">
         <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Active ingredient</p>
@@ -150,6 +162,8 @@ export default async function ConcernPage({
           hrefFor={(p) => `/concern/${slug}?page=${p}${pageLinkSuffix}`}
         />
       </div>
+
+      {escalation && <EscalationPanel guidance={escalation} concernName={concern.name} />}
     </div>
   );
 }

@@ -37,8 +37,9 @@ export default function PrivacyPage() {
       <h3>Information you choose to give us</h3>
       <ul>
         <li>
-          <strong>Skin profile</strong>: your skin type, skin concerns (for example acne or redness), and
-          ingredients you like or dislike. It is stored in a cookie in your browser. Your browser sends it to
+          <strong>Skin profile</strong>: your skin type, skin concerns (for example acne or redness),
+          ingredients you like or dislike, and, if you choose to tell us, whether you are pregnant, trying to
+          conceive or breastfeeding. It is stored in a cookie in your browser. Your browser sends it to
           our server with each page request so we can personalize match scores. We do not save it in our
           database.
         </li>
@@ -166,7 +167,7 @@ export default function PrivacyPage() {
 
       <h2 id="health-data">4. Consumer health data</h2>
       <p>
-        Your skin concerns, your liked and disliked ingredients, your outcome reports and your check-in answers may count as
+        Your skin concerns, your pregnancy or breastfeeding status, your liked and disliked ingredients, your outcome reports and your check-in answers may count as
         &ldquo;consumer health data&rdquo; under laws such as Washington&apos;s My Health My Data Act,
         Nevada&apos;s consumer health data law, and the {LEGAL_STATE} Data Privacy Act. This section is our
         consumer health data privacy policy. It applies to that information in addition to the rest of this

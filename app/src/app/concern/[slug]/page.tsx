@@ -12,6 +12,7 @@ import { variantRobots, breadcrumbLd } from "@/lib/seo";
 import { JsonLd } from "@/components/json-ld";
 import { siteUrl } from "@/lib/site-url";
 import { parseFreeParam } from "@/lib/avoid-shared";
+import { AvoidSwitch } from "@/components/avoid-switch";
 
 type ConcernParams = { page?: string; active?: string; free?: string; strength?: string };
 
@@ -107,6 +108,7 @@ export default async function ConcernPage({
       <FreeFromFilters basePath={`/concern/${slug}`} searchParams={{ active, free }} selected={freeFromIds} />
 
       <div className="space-y-4">
+        <AvoidSwitch basePath={`/concern/${slug}`} searchParams={{ active, free }} selected={freeFromIds} />
         <p className="text-sm text-muted-foreground">
           <span className="font-semibold text-foreground tabular-nums">{total.toLocaleString()}</span> product
           {total === 1 ? "" : "s"}

@@ -35,8 +35,6 @@ export async function FreeFromFilters({
   }
 
   const avoidIds = await readAvoidIds();
-  const avoidApplied =
-    avoidIds.length > 0 && avoidIds.length === selected.length && avoidIds.every((id) => selected.includes(id));
 
   const clean = FREE_FROM_CHECKS.filter((c) => c.category === "clean");
   // The full allergen list is ~100 long: offer the high-yield picks here,
@@ -46,16 +44,9 @@ export async function FreeFromFilters({
 
   return (
     <div className="space-y-4 rounded-2xl border bg-card p-4">
-      <div className="flex flex-wrap items-center gap-2">
-        {avoidIds.length > 0 ? (
-          <FilterChip href={avoidApplied ? hrefWithFree([]) : hrefWithFree(avoidIds)} selected={avoidApplied} showCheck>
-            {avoidApplied ? "Hiding what I avoid" : `Hide what I avoid (${avoidIds.length})`}
-          </FilterChip>
-        ) : null}
-        <Link href="/avoid" className="text-xs font-medium text-brand hover:underline">
-          {avoidIds.length > 0 ? "Edit my avoid list" : "Set up my avoid list"}
-        </Link>
-      </div>
+      <Link href="/avoid" className="block text-xs font-medium text-brand hover:underline">
+        {avoidIds.length > 0 ? "Edit my avoid list" : "Set up my avoid list"}
+      </Link>
       <FilterGroup
         title="Clean ingredient filters"
         checks={clean}

@@ -8,6 +8,7 @@ import { searchProducts, searchProductsCount, searchActives, getConcerns } from 
 import { TRUST_TIERS } from "@/lib/trust-tiers";
 import type { Metadata } from "next";
 import { parseFreeParam } from "@/lib/avoid-shared";
+import { AvoidSwitch } from "@/components/avoid-switch";
 
 export async function generateMetadata({
   searchParams,
@@ -86,6 +87,7 @@ export default async function SearchPage({
             ))}
           </div>
           <FreeFromFilters basePath="/search" searchParams={{ q, concern, tier, free }} selected={freeFromIds} />
+          <AvoidSwitch basePath="/search" searchParams={{ q, concern, tier }} selected={freeFromIds} />
         </div>
       )}
 

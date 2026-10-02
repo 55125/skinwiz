@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils";
 import { variantRobots } from "@/lib/seo";
 import { SITE_NAME } from "@/lib/brand";
 import { parseFreeParam } from "@/lib/avoid-shared";
+import { AvoidSwitch } from "@/components/avoid-switch";
 
 type BrowseParams = { concern?: string; tier?: string; active?: string; free?: string; sort?: string; page?: string };
 
@@ -205,6 +206,8 @@ export default async function BrowsePage({
 
         <div className="min-w-0 space-y-5">
           <RedFlagBanner />
+
+          <AvoidSwitch basePath="/browse" searchParams={{ concern, tier, active, free, sort }} selected={freeFromIds} />
 
           <div className="flex flex-wrap items-center justify-between gap-3">
             <p className="text-sm text-muted-foreground">

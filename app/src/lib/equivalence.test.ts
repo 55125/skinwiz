@@ -5,6 +5,7 @@ import {
   buildEquivalenceGroups,
   displayablePrice,
   exclusionReason,
+  isApplicationCategory,
   labelerKey,
   parsePackageDescription,
   resolveDosageForm,
@@ -31,8 +32,8 @@ function row(over: Partial<EquivalenceRow>): EquivalenceRow {
 
 test("adapalene 0.1% gel from different labelers forms one group with a readable slug", () => {
   const groups = buildEquivalenceGroups([
-    row({ brandName: "Differin", manufacturer: "Galderma Laboratories, L.P." }),
-    row({ manufacturer: "Target Corporation" }),
+    row({ brandName: "Differin", manufacturer: "Galderma Laboratories, L.P.", marketingCategory: "NDA" }),
+    row({ manufacturer: "Target Corporation", marketingCategory: "ANDA" }),
     row({ manufacturer: "Walgreens" }),
   ]);
   assert.equal(groups.length, 1);
@@ -154,4 +155,34 @@ test("unit price needs a package size, and demo prices are never displayable", (
   assert.equal(displayablePrice({ price: 12.99, isDemo: true }), null);
   assert.equal(displayablePrice({ price: 12.99, isDemo: false }), 12.99);
   assert.equal(displayablePrice({ price: null, isDemo: false }), null);
+});
+
+test("NDA/ANDA groups are detected from the marketing category, not the active", () => {
+  // Same active as the adapalene group above, but every listing is a
+  // monograph product (or unlisted): not an application group.
+  const mono = buildEquivalenceGroups([
+    row({ manufacturer: "A", marketingCategory: "OTC MONOGRAPH DRUG" }),
+    row({ manufacturer: "B", marketingCategory: null }),
+  ]);
+  assert.equal(mono[0].application, false);
+  // Any member listed under an application marks the group.
+  const bpo = (over: Partial<EquivalenceRow>) => row({ strengthKey: "benzoyl-peroxide:2.5", activeIds: ["benzoyl-peroxide"], ...over });
+  const app = buildEquivalenceGroups([bpo({ manufacturer: "A", marketingCategory: "NDA AUTHORIZED GENERIC" }), bpo({ manufacturer: "B" })]);
+  assert.equal(app[0].application, true);
+  assert.equal(isApplicationCategory("ANDA"), true);
+  assert.equal(isApplicationCategory("NDA"), true);
+  assert.equal(isApplicationCategory("OTC MONOGRAPH NOT FINAL"), false);
+  assert.equal(isApplicationCategory("UNAPPROVED HOMEOPATHIC"), false);
+  assert.equal(isApplicationCategory(undefined), false);
+});
+
+test("prescription rows never join an equivalence group", () => {
+  assert.equal(exclusionReason(row({ isRx: true })), "prescription");
+  const groups = buildEquivalenceGroups([row({ isRx: true, manufacturer: "X" }), row({ isRx: true, manufacturer: "Y" })]);
+  assert.equal(groups.length, 0);
+});
+
+test("nested NDC package descriptions use the innermost size", () => {
+  assert.deepEqual(parsePackageDescription("1 TUBE in 1 CARTON (0187-5170-45) / 45 g in 1 TUBE"), { amount: 45, unit: "g" });
+  assert.deepEqual(parsePackageDescription("1 BOTTLE in 1 CARTON (0000-0000-01) / 118 mL in 1 BOTTLE"), { amount: 118, unit: "mL" });
 });

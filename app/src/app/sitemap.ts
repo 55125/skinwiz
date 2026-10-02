@@ -1,5 +1,7 @@
 import type { MetadataRoute } from "next";
+import { ne } from "drizzle-orm";
 import { db } from "@/db/client";
+import { RX_CONCERN_ID } from "@/db/rx";
 import { concerns } from "@/db/schema";
 import { siteUrl } from "@/lib/site-url";
 import { canonicalProductIds, getPublicIngredientIds } from "@/lib/queries";
@@ -22,7 +24,9 @@ const STATIC_PAGES = ["/browse", "/ingredients", "/allergens", "/same", "/guide/
 export const dynamic = "force-dynamic";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const concernRows = db.select({ id: concerns.id }).from(concerns).all();
+  // Never the hidden prescription concern; no /rx, /clinicians or /h URLs
+  // either (the Rx pages are noindex for now, handouts are private).
+  const concernRows = db.select({ id: concerns.id }).from(concerns).where(ne(concerns.id, RX_CONCERN_ID)).all();
   // Duplicate FDA listings (same product, several pack-size codes) are left
   // out: each page's canonical points at the one listed here.
   const productIds = canonicalProductIds();

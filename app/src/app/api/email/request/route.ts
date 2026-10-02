@@ -5,7 +5,7 @@ import { createSignInToken, recentTokenCount } from "@/lib/identity";
 import { normalizeEmail } from "@/lib/tokens";
 import { sendEmail } from "@/lib/email";
 import { signInEmail } from "@/lib/email-templates";
-import { signInUrl } from "@/lib/email-links";
+import { safeNextPath, signInUrl } from "@/lib/email-links";
 
 const PER_ADDRESS_PER_HOUR = 3;
 
@@ -19,13 +19,14 @@ export async function POST(request: Request) {
   const parsed = await readJsonBody(request);
   if (!parsed.ok) return parsed.response;
   const email = normalizeEmail((parsed.body as { email?: unknown } | null)?.email);
+  const next = safeNextPath((parsed.body as { next?: unknown } | null)?.next);
   if (!email) return NextResponse.json({ error: "Enter a valid email address." }, { status: 400 });
 
   const now = new Date();
   const deviceSessionId = await getOrCreateDeviceSessionId();
   if (recentTokenCount(email, now) < PER_ADDRESS_PER_HOUR) {
     const token = createSignInToken(email, deviceSessionId, now);
-    const msg = signInEmail(signInUrl(token));
+    const msg = signInEmail(signInUrl(token, next));
     const res = await sendEmail({ to: email, ...msg, category: "transactional" });
     if (!res.ok) console.error(`[email] sign-in link failed: ${res.error}`);
   }

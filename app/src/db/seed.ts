@@ -10,6 +10,8 @@ import { computeAllergenHits } from "./contact-allergens";
 import { parseStrengths, strengthKey } from "./strength";
 import { aliasesFor, canonicalSlug, parseIngredients, pickDisplayName } from "./ingredient-parse";
 import { SITE_NAME } from "@/lib/brand";
+import { RX_CONCERN } from "./rx";
+import { steroidPotencyClass, type Ingredient } from "./steroid-potency";
 
 const REPO_ROOT = path.resolve(process.cwd(), "..");
 // Four sources: the primary openFDA catalog, the DailyMed resolution pass
@@ -27,6 +29,13 @@ const CATALOG_CSVS = [
 ];
 const AFFILIATE_CSV = path.join(REPO_ROOT, "tools/affiliate_feeds/output/matched_catalog.csv");
 const LABEL_SECTIONS_CSV = path.join(REPO_ROOT, "tools/catalog_pipeline/output/label_sections.csv");
+// Optional side files: package descriptions + marketing category for the OTC
+// rows, and the Rx catalog with its prescribing-information sections. The
+// seed works without any of them (see each loader). RX_CATALOG_CSV can point
+// elsewhere (a missing path = seed without Rx rows).
+const OTC_PACKAGE_INFO_CSV = path.join(REPO_ROOT, "tools/catalog_pipeline/output/otc_package_info.csv");
+const RX_CATALOG_CSV = process.env.RX_CATALOG_CSV ?? path.join(REPO_ROOT, "tools/catalog_pipeline/output/rx_catalog.csv");
+const RX_LABEL_SECTIONS_CSV = path.join(REPO_ROOT, "tools/catalog_pipeline/output/rx_label_sections.csv");
 
 type CatalogRow = {
   product_ndc: string;
@@ -66,7 +75,31 @@ type CatalogRow = {
   // feed computeFreeFromFlags() below; never previously read at all before
   // the free-from-flags feature.
   inactive_ingredient_text?: string;
+  marketing_category?: string;
+  product_type?: string;
 };
+
+type PackageInfoRow = { product_ndc: string; marketing_category: string; product_type: string; package_descriptions: string };
+
+type RxCatalogRow = {
+  product_ndc: string;
+  rx_group: string;
+  brand_name: string;
+  generic_name: string;
+  labeler: string;
+  active_ingredients_structured: string;
+  strength_text: string;
+  ingredients_json: string;
+  dosage_form: string;
+  route: string;
+  marketing_category: string;
+  product_type: string;
+  package_descriptions: string;
+  spl_set_id: string;
+  informational_only: string;
+};
+
+const firstPackage = (descriptions: string | undefined) => descriptions?.split(" | ")[0]?.trim() || null;
 
 const PRE_MATCHED_SOURCES = new Set(["open_beauty_facts", "brand_direct"]);
 
@@ -166,7 +199,7 @@ function reseed() {
   db.delete(schema.concerns).run();
 
   db.insert(schema.concerns)
-    .values(CONCERN_DEFINITIONS.map((c) => ({ id: c.id, name: c.name, description: c.description })))
+    .values([...CONCERN_DEFINITIONS.map((c) => ({ id: c.id, name: c.name, description: c.description })), RX_CONCERN])
     .run();
 
   db.insert(schema.actives)
@@ -201,6 +234,13 @@ function reseed() {
   const productBatch: (typeof schema.products.$inferInsert)[] = [];
   const seenNdc = new Set<string>();
   const memberships: { productId: string; position: number; slug: string; rawName: string; isActive: boolean }[] = [];
+  const packageInfo = new Map<string, PackageInfoRow>();
+  if (fs.existsSync(OTC_PACKAGE_INFO_CSV)) {
+    for (const r of readCsv<PackageInfoRow>(OTC_PACKAGE_INFO_CSV)) packageInfo.set(r.product_ndc, r);
+    console.log(`  ${packageInfo.size} OTC package descriptions / marketing categories`);
+  } else {
+    console.log("  no otc_package_info.csv, skipping (run tools/catalog_pipeline/fetch_otc_package_info.py)");
+  }
 
   for (const csvPath of CATALOG_CSVS) {
     if (!fs.existsSync(csvPath)) {
@@ -284,9 +324,19 @@ function reseed() {
         allergenHits: computeAllergenHits(fullIngredientText),
         strengths,
         strengthKey: strengthKey(strengths, activeIds),
+        // The NDC directory pass is fresher than the catalog CSV's own column
+        // (and covers DailyMed-resolved rows the original build missed).
+        marketingCategory: packageInfo.get(row.product_ndc)?.marketing_category || row.marketing_category || null,
+        productType: packageInfo.get(row.product_ndc)?.product_type || row.product_type || null,
+        packageDescription: firstPackage(packageInfo.get(row.product_ndc)?.package_descriptions),
+        isRx: false,
       });
     }
   }
+
+  // Affiliate rows may only ever attach to these (never a prescription).
+  const otcNdc = new Set(seenNdc);
+  productBatch.push(...rxProducts(seenNdc));
 
   // better-sqlite3 has a bound-parameter ceiling per statement — batch inserts.
   const BATCH_SIZE = 500;
@@ -303,7 +353,7 @@ function reseed() {
     const affiliateRows = readCsv<AffiliateRow>(AFFILIATE_CSV);
     let affiliateInserted = 0;
     for (const row of affiliateRows) {
-      if (!row.matched_product_ndc || !seenNdc.has(row.matched_product_ndc)) continue;
+      if (!row.matched_product_ndc || !otcNdc.has(row.matched_product_ndc)) continue;
       db.insert(schema.affiliateLinks)
         .values({
           productId: row.matched_product_ndc,
@@ -323,7 +373,100 @@ function reseed() {
   }
 
   insertLabelSections();
+  insertRxLabelSections();
   reconcileOrphans();
+}
+
+// Prescription rows (build_rx_catalog.py). Deliberately bare on everything a
+// consumer feature keys on: no activeIds, strengths, ingredient memberships
+// or free-from/allergen flags, and the hidden "rx" concern -- so even a query
+// that forgot the isRx filter would mostly skip them. The filter is still the
+// real guarantee (lib/queries.ts OTC_ONLY).
+function rxProducts(seenNdc: Set<string>): (typeof schema.products.$inferInsert)[] {
+  if (!fs.existsSync(RX_CATALOG_CSV)) {
+    console.log(`Skipping ${RX_CATALOG_CSV} (not found -- run tools/catalog_pipeline/build_rx_catalog.py)`);
+    return [];
+  }
+  const out: (typeof schema.products.$inferInsert)[] = [];
+  let classified = 0;
+  for (const row of readCsv<RxCatalogRow>(RX_CATALOG_CSV)) {
+    if (!row.product_ndc || seenNdc.has(row.product_ndc)) continue;
+    seenNdc.add(row.product_ndc);
+    let ingredients: Ingredient[] = [];
+    try {
+      ingredients = (JSON.parse(row.ingredients_json || "[]") as { name: string; pct: number | null }[]).map((i) => ({
+        name: i.name,
+        pct: i.pct ?? null,
+      }));
+    } catch {
+      ingredients = [];
+    }
+    const potency = steroidPotencyClass(ingredients, row.dosage_form);
+    if (potency) classified++;
+    out.push({
+      id: row.product_ndc,
+      concernId: RX_CONCERN.id,
+      brandName: normalizeBrandName(row.brand_name?.trim() || row.generic_name || "(unnamed product)"),
+      manufacturer: row.labeler || null,
+      dosageForm: row.dosage_form || null,
+      activeIngredientText: row.active_ingredients_structured || null,
+      activeIds: [],
+      splSetId: row.spl_set_id || null,
+      dataSource: "openfda",
+      verified: true,
+      freeFromFlags: null,
+      allergenHits: null,
+      strengths: null,
+      strengthKey: null,
+      marketingCategory: row.marketing_category || null,
+      productType: row.product_type || "HUMAN PRESCRIPTION DRUG",
+      packageDescription: firstPackage(row.package_descriptions),
+      isRx: true,
+      genericName: row.generic_name || null,
+      rxGroup: row.rx_group || null,
+      strengthText: row.strength_text || null,
+      route: row.route || null,
+      steroidPotencyClass: potency,
+      informationalOnly: row.informational_only === "1",
+    });
+  }
+  console.log(`  ${out.length} prescription (reference-only) rows, ${classified} with a steroid potency class`);
+  return out;
+}
+
+type RxLabelRow = {
+  spl_set_id: string;
+  effective_time: string;
+  indications: string;
+  dosage_and_administration: string;
+  boxed_warning: string;
+  contraindications: string;
+  warnings: string;
+  pregnancy: string;
+  lactation: string;
+};
+
+function insertRxLabelSections() {
+  db.delete(schema.rxLabelSections).run();
+  if (!fs.existsSync(RX_CATALOG_CSV) || !fs.existsSync(RX_LABEL_SECTIONS_CSV)) {
+    console.log("  no Rx label sections, skipping");
+    return;
+  }
+  const orNull = (v: string) => (v && v.trim() ? v : null);
+  const rows = readCsv<RxLabelRow>(RX_LABEL_SECTIONS_CSV).map((r) => ({
+    splSetId: r.spl_set_id,
+    effectiveTime: orNull(r.effective_time),
+    indications: orNull(r.indications),
+    dosageAndAdministration: orNull(r.dosage_and_administration),
+    boxedWarning: orNull(r.boxed_warning),
+    contraindications: orNull(r.contraindications),
+    warnings: orNull(r.warnings),
+    pregnancy: orNull(r.pregnancy),
+    lactation: orNull(r.lactation),
+  }));
+  const BATCH = 100;
+  for (let i = 0; i < rows.length; i += BATCH) db.insert(schema.rxLabelSections).values(rows.slice(i, i + BATCH)).run();
+  console.log(`  inserted ${rows.length} Rx label sections`);
 }
 
 type LabelSectionRow = {

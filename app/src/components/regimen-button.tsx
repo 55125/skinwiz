@@ -20,8 +20,11 @@ export function RegimenButton({
   suggestedSlot,
   suggestedReason,
   compact,
+  regimenId,
 }: {
   productId: string;
+  /** Which of the visitor's own regimens (the regimen page); omitted = their primary one. */
+  regimenId?: number;
   initialSlot: Slot | null;
   suggestedSlot: Slot;
   suggestedReason: string | null;
@@ -39,7 +42,7 @@ export function RegimenButton({
       const res = await fetch("/api/regimen", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ productId, slot: next }),
+        body: JSON.stringify(regimenId === undefined ? { productId, slot: next } : { productId, slot: next, regimenId }),
       });
       if (res.ok) {
         setSlot(next);

@@ -19,7 +19,8 @@ export default function robots(): MetadataRoute.Robots {
         ],
         disallow: "/",
       },
-      { userAgent: "*", allow: "/", disallow: ["/api/", "/search", "/shelf", "/profile", "/avoid"] },
+      // /h/ links are private claim links printed on clinician handouts.
+      { userAgent: "*", allow: "/", disallow: ["/api/", "/search", "/shelf", "/profile", "/avoid", "/h/", "/clinicians", "/regimen"] },
     ],
     sitemap: `${siteUrl()}/sitemap.xml`,
   };

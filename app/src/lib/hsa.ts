@@ -19,6 +19,14 @@
 //   Necessity (hyperhidrosis) for them -- "usually eligible" would mislead.
 // - Cosmetics (brand-direct, Open Beauty Facts): no tag. Items used for
 //   appearance or general health generally aren't medical care (IRS Pub. 502).
+// - Homeopathic products (NDC marketing category "UNAPPROVED HOMEOPATHIC"):
+//   no tag. They're drug-listed but FDA hasn't evaluated them, and plan
+//   administrators vary on whether they count as a "medicine or drug" --
+//   "usually eligible" would overstate it. Read from the NDC directory
+//   (products.marketingCategory); a row without one is judged as before.
+// - Prescription rows: no tag. They're reimbursable with the prescription
+//   itself, a different flow from this OTC label, and they never appear in
+//   consumer listings anyway (lib/queries.ts OTC_ONLY).
 // Always a "usually", never a promise: the plan administrator decides.
 import { ACTIVE_DEFINITIONS } from "../db/actives";
 
@@ -59,11 +67,27 @@ export type HsaInput = {
   brandName: string;
   dosageForm?: string | null;
   label: SunscreenLabelFlags | null;
+  marketingCategory?: string | null;
+  isRx?: boolean;
 };
 
 export type HsaStatus =
   | { eligible: true; reason: "otc-drug" | "sunscreen-broad-spectrum" }
-  | { eligible: false; reason: "not-a-drug" | "antiperspirant" | "makeup-with-spf" | "sunscreen-unconfirmed" | "sunscreen-sunburn-only" };
+  | {
+      eligible: false;
+      reason:
+        | "not-a-drug"
+        | "prescription"
+        | "homeopathic"
+        | "antiperspirant"
+        | "makeup-with-spf"
+        | "sunscreen-unconfirmed"
+        | "sunscreen-sunburn-only";
+    };
+
+export function isHomeopathic(marketingCategory: string | null | undefined): boolean {
+  return /homeopathic/i.test(marketingCategory ?? "");
+}
 
 const MAKEUP_RE =
   /\b(foundation|lipstick|lip ?gloss|lip ?colou?r|concealer|[bc]c ?cream|primer|bronzer|blush|cushion|make-?up|mascara|eye ?shadow)\b/i;
@@ -79,7 +103,9 @@ export function spfFromName(name: string): number | null {
 }
 
 export function hsaStatus(p: HsaInput): HsaStatus {
+  if (p.isRx) return { eligible: false, reason: "prescription" };
   if (!DRUG_SOURCES.has(p.dataSource)) return { eligible: false, reason: "not-a-drug" };
+  if (isHomeopathic(p.marketingCategory)) return { eligible: false, reason: "homeopathic" };
   if (p.concernId === "excessive-sweating" || p.activeIds.some((id) => ANTIPERSPIRANT.has(id))) {
     return { eligible: false, reason: "antiperspirant" };
   }

@@ -17,6 +17,14 @@ import { getFreeFromCheck } from "@/db/ingredient-flags";
 import { allergenBlockers, resolveAllergenId } from "@/db/contact-allergens";
 import { hsaEligibleIdsJson } from "@/lib/otc-index";
 import { displayablePrice } from "@/lib/equivalence";
+import { RX_CONCERN_ID } from "@/db/rx";
+
+// Prescription rows (products.isRx) are reference/handout data and must never
+// reach a consumer listing, search, count, score, equivalence list or the
+// sitemap. Every consumer query below includes this clause (or its raw-SQL
+// twin `is_rx = 0`); rx-exclusion.test.ts seeds an Rx row and checks each
+// one. Rx rows are read only through getRxProduct / lib/rx-catalog.ts.
+export const OTC_ONLY: SQL = sql`${products.isRx} = 0`;
 
 // Shared by getProductsForConcern and searchProducts -- one membership
 // check per selected free-from id, ANDed together, so a product must satisfy every
@@ -60,7 +68,8 @@ export function getAllIngredientIds(): string[] {
 /** How many assessed products list each contact allergen. */
 export function getAllergenProductCounts(): Map<string, number> {
   const rows = db.all<{ id: string; n: number }>(sql`
-    SELECT json_each.value AS id, COUNT(*) AS n FROM products, json_each(products.allergen_hits) GROUP BY json_each.value
+    SELECT json_each.value AS id, COUNT(*) AS n FROM products, json_each(products.allergen_hits)
+    WHERE products.is_rx = 0 GROUP BY json_each.value
   `);
   return new Map(rows.map((r) => [r.id, r.n]));
 }
@@ -70,7 +79,7 @@ export function getFreeOfAllergenByConcern(id: string): { id: string; name: stri
   return db.all<{ id: string; name: string; n: number }>(sql`
     SELECT c.id AS id, c.name AS name, COUNT(*) AS n
     FROM products JOIN concerns c ON c.id = products.concern_id
-    WHERE ${and(...freeFromWhereClauses([id]))}
+    WHERE ${and(OTC_ONLY, ...freeFromWhereClauses([id]))}
     GROUP BY c.id ORDER BY n DESC
   `);
 }
@@ -87,7 +96,7 @@ export function getSafeProductsByConcern(ids: string[]): { id: string; name: str
 }
 
 export function getAssessedProductCount(): number {
-  return db.get<{ n: number }>(sql`SELECT COUNT(*) AS n FROM products WHERE allergen_hits IS NOT NULL`)!.n;
+  return db.get<{ n: number }>(sql`SELECT COUNT(*) AS n FROM products WHERE allergen_hits IS NOT NULL AND is_rx = 0`)!.n;
 }
 
 // Exact membership test on a JSON-array text column, so URL-supplied ids
@@ -101,11 +110,14 @@ function likeContains(q: string): string {
   return `%${q.replace(/[\\%_]/g, (c) => `\\${c}`)}%`;
 }
 
+// The hidden "rx" concern (db/rx.ts) holds the prescription rows; it is never
+// a browsable concern.
 export function getConcerns() {
-  return db.select().from(concerns).all();
+  return db.select().from(concerns).where(sql`${concerns.id} != ${RX_CONCERN_ID}`).all();
 }
 
 export function getConcern(id: string) {
+  if (id === RX_CONCERN_ID) return undefined;
   return db.select().from(concerns).where(eq(concerns.id, id)).get();
 }
 
@@ -135,7 +147,7 @@ export function getProductsForConcern(
   excludeIngredientIds?: string[],
 ) {
   const offset = (page - 1) * PAGE_SIZE;
-  const clauses = [eq(products.concernId, concernId), ...freeFromWhereClauses(freeFromIds)];
+  const clauses = [OTC_ONLY, eq(products.concernId, concernId), ...freeFromWhereClauses(freeFromIds)];
   if (excludeIngredientIds) clauses.push(excludesIngredientsClause(excludeIngredientIds));
   if (activeId) {
     clauses.push(jsonArrayContains(products.activeIds, activeId));
@@ -162,7 +174,7 @@ export type BrowseFilters = {
 };
 
 export function browseWhere(filters: BrowseFilters): SQL | undefined {
-  const clauses = [...freeFromWhereClauses(filters.freeFromIds ?? [])];
+  const clauses = [OTC_ONLY, ...freeFromWhereClauses(filters.freeFromIds ?? [])];
   if (filters.excludeIngredientIds) clauses.push(excludesIngredientsClause(filters.excludeIngredientIds));
   if (filters.concernId) clauses.push(eq(products.concernId, filters.concernId));
   if (filters.dataSources && filters.dataSources.length > 0) clauses.push(inArray(products.dataSource, filters.dataSources));
@@ -211,10 +223,21 @@ export function getAllActives() {
 }
 
 export function countProducts(): number {
-  return db.select({ count: sql<number>`count(*)` }).from(products).get()!.count;
+  return db.select({ count: sql<number>`count(*)` }).from(products).where(OTC_ONLY).get()!.count;
 }
 
+/** An OTC/cosmetic product by id -- undefined for an Rx row, so every consumer page and API refuses them. */
 export function getProduct(id: string) {
+  return db.select().from(products).where(and(eq(products.id, id), OTC_ONLY)).get();
+}
+
+/** A prescription row by id (the /rx pages and clinician handouts only). */
+export function getRxProduct(id: string) {
+  return db.select().from(products).where(and(eq(products.id, id), eq(products.isRx, true))).get();
+}
+
+/** Either kind -- only for code that then decides per product (handouts, regimen edits). */
+export function getAnyProduct(id: string) {
   return db.select().from(products).where(eq(products.id, id)).get();
 }
 
@@ -226,7 +249,7 @@ export function getStrengthOptionsForActive(concernId: string, activeId: string)
   return db
     .select({ pct: sql<number>`${expr}`, count: sql<number>`count(*)` })
     .from(products)
-    .where(and(eq(products.concernId, concernId), sql`${expr} IS NOT NULL`))
+    .where(and(OTC_ONLY, eq(products.concernId, concernId), sql`${expr} IS NOT NULL`))
     .groupBy(expr)
     .orderBy(expr)
     .all();
@@ -239,7 +262,7 @@ export function getStrengthOptionsForActive(concernId: string, activeId: string)
 // brand's other package sizes.
 export function getEquivalentProducts(product: typeof products.$inferSelect, limit = 8) {
   if (!product.strengthKey) return { rows: [], total: 0 };
-  const clauses = [eq(products.strengthKey, product.strengthKey), sql`${products.id} != ${product.id}`];
+  const clauses = [OTC_ONLY, eq(products.strengthKey, product.strengthKey), sql`${products.id} != ${product.id}`];
   if (product.dosageForm) clauses.push(eq(products.dosageForm, product.dosageForm));
   const whereClause = and(...clauses);
   const sameMaker = sql`CASE WHEN ${products.manufacturer} = ${product.manufacturer ?? ""} THEN 1 ELSE 0 END`;
@@ -296,29 +319,66 @@ export function getEwgScoresForProducts(productIds: string[]): Map<string, EwgSc
 // a real one -- so this filters isDemo in SQL and again via displayablePrice.
 // Keyed by the caller's group id, lowest price among that group's ids.
 // Empty today, which hides every price column built on it.
-export function getLivePrices(idGroups: Map<string, string[]>): Map<string, number> {
+export function getLivePrices(idGroups: Map<string, string[]>): Map<string, { price: number; productId: string }> {
   const all = [...idGroups.values()].flat();
   if (all.length === 0) return new Map();
   const rows = db
     .select({ productId: affiliateLinks.productId, price: affiliateLinks.price, isDemo: affiliateLinks.isDemo })
     .from(affiliateLinks)
-    .where(and(inArray(affiliateLinks.productId, all), eq(affiliateLinks.isDemo, false)))
+    .where(
+      and(
+        inArray(affiliateLinks.productId, all),
+        eq(affiliateLinks.isDemo, false),
+        sql`${affiliateLinks.productId} IN (SELECT id FROM products WHERE is_rx = 0)`,
+      ),
+    )
     .all();
   const best = new Map<string, number>();
   for (const r of rows) {
     const price = displayablePrice(r);
     if (price != null && price < (best.get(r.productId) ?? Infinity)) best.set(r.productId, price);
   }
-  const out = new Map<string, number>();
+  const out = new Map<string, { price: number; productId: string }>();
   for (const [key, ids] of idGroups) {
-    const min = Math.min(...ids.map((id) => best.get(id) ?? Infinity));
-    if (Number.isFinite(min)) out.set(key, min);
+    let pick: { price: number; productId: string } | null = null;
+    for (const id of ids) {
+      const p = best.get(id);
+      if (p !== undefined && (!pick || p < pick.price)) pick = { price: p, productId: id };
+    }
+    if (pick) out.set(key, pick);
   }
   return out;
 }
 
+/** products.packageDescription for each id that has one (price per ounce). */
+export function getPackageDescriptions(ids: string[]): Map<string, string> {
+  if (ids.length === 0) return new Map();
+  const rows = db
+    .select({ id: products.id, d: products.packageDescription })
+    .from(products)
+    .where(and(inArray(products.id, ids), OTC_ONLY))
+    .all();
+  return new Map(rows.filter((r) => r.d).map((r) => [r.id, r.d!]));
+}
+
+// Never for a prescription row: no buy or affiliate link on Rx, ever
+// (business-plan.md §3). The seed never inserts one; this is the second lock.
 export function getAffiliateLinksForProduct(productId: string) {
-  return db.select().from(affiliateLinks).where(eq(affiliateLinks.productId, productId)).all();
+  return db
+    .select()
+    .from(affiliateLinks)
+    .where(and(eq(affiliateLinks.productId, productId), sql`${affiliateLinks.productId} IN (SELECT id FROM products WHERE is_rx = 0)`))
+    .all();
+}
+
+/** Affiliate rows for many products at once (OTC only, same lock as above). */
+export function getAffiliateLinksForProducts(productIds: string[]) {
+  if (productIds.length === 0) return [];
+  return db
+    .select()
+    .from(affiliateLinks)
+    .where(and(inArray(affiliateLinks.productId, productIds), sql`${affiliateLinks.productId} IN (SELECT id FROM products WHERE is_rx = 0)`))
+    .all();
 }
 
 // Real cached YouTube results (see db/fetch-youtube-videos.ts) — empty for
@@ -341,6 +401,7 @@ function buildSearchWhere(q: string, filters: { concernId?: string; dataSources?
   // literally contain the ingredient name. Caught by testing the search
   // page with a real ingredient query before considering this done.
   const clauses = [
+    OTC_ONLY,
     sql`(${products.brandName} LIKE ${needle} ESCAPE '\\' OR ${products.manufacturer} LIKE ${needle} ESCAPE '\\' OR ${products.activeIngredientText} LIKE ${needle} ESCAPE '\\')`,
     ...freeFromWhereClauses(filters.freeFromIds ?? []),
   ];
@@ -403,7 +464,7 @@ export function suggestProducts(q: string, limit = 6) {
       dataSource: products.dataSource,
     })
     .from(products)
-    .where(sql`(${products.brandName} LIKE ${needle} ESCAPE '\\' OR ${products.manufacturer} LIKE ${needle} ESCAPE '\\')`)
+    .where(and(OTC_ONLY, sql`(${products.brandName} LIKE ${needle} ESCAPE '\\' OR ${products.manufacturer} LIKE ${needle} ESCAPE '\\')`))
     .orderBy(
       sql`CASE WHEN ${products.brandName} LIKE ${prefix} ESCAPE '\\' THEN 0 WHEN ${products.manufacturer} LIKE ${prefix} ESCAPE '\\' THEN 1 ELSE 2 END`,
       sql`CASE ${products.dataSource} WHEN 'brand_direct' THEN 0 WHEN 'openfda' THEN 1 WHEN 'dailymed' THEN 2 ELSE 3 END`,
@@ -450,6 +511,7 @@ export function getTopProducts(limit = 8) {
   return db
     .select()
     .from(products)
+    .where(OTC_ONLY)
     .orderBy(
       sql`CASE ${products.dataSource} WHEN 'brand_direct' THEN 0 WHEN 'openfda' THEN 1 WHEN 'dailymed' THEN 2 ELSE 3 END`,
       sql`RANDOM()`,
@@ -466,6 +528,7 @@ export function getTopActives(limit = 8) {
     SELECT a.id as activeId, a.canonical_name as canonicalName, COUNT(*) as productCount
     FROM products p, json_each(p.active_ids) je
     JOIN actives a ON a.id = je.value
+    WHERE p.is_rx = 0
     GROUP BY a.id
     ORDER BY productCount DESC
     LIMIT ${limit}
@@ -512,12 +575,12 @@ export function getIngredientsForProduct(productId: string) {
 export function getProductsForIngredient(id: string, page: number, concernId?: string) {
   const offset = (page - 1) * INGREDIENT_PAGE_SIZE;
   const membership = sql`${products.id} IN (SELECT product_id FROM product_ingredients WHERE ingredient_id = ${id})`;
-  const where = concernId ? and(membership, eq(products.concernId, concernId)) : membership;
+  const where = concernId ? and(OTC_ONLY, membership, eq(products.concernId, concernId)) : and(OTC_ONLY, membership);
   const rows = db
     .select({ product: products, position: productIngredients.position, isActive: productIngredients.isActive })
     .from(productIngredients)
     .innerJoin(products, eq(products.id, productIngredients.productId))
-    .where(and(eq(productIngredients.ingredientId, id), concernId ? eq(products.concernId, concernId) : undefined))
+    .where(and(OTC_ONLY, eq(productIngredients.ingredientId, id), concernId ? eq(products.concernId, concernId) : undefined))
     .orderBy(
       sql`${productIngredients.isActive} DESC`,
       sql`CASE ${products.dataSource} WHEN 'brand_direct' THEN 0 WHEN 'openfda' THEN 1 WHEN 'dailymed' THEN 2 ELSE 3 END`,
@@ -537,7 +600,7 @@ export function getIngredientConcernCounts(id: string) {
     FROM product_ingredients pi
     JOIN products p ON p.id = pi.product_id
     JOIN concerns c ON c.id = p.concern_id
-    WHERE pi.ingredient_id = ${id}
+    WHERE pi.ingredient_id = ${id} AND p.is_rx = 0
     GROUP BY c.id
     ORDER BY count DESC
   `);
@@ -565,7 +628,7 @@ export function getIngredientStats(id: string) {
       '' AS bySource
     FROM product_ingredients pi
     JOIN products p ON p.id = pi.product_id
-    WHERE pi.ingredient_id = ${id}
+    WHERE pi.ingredient_id = ${id} AND p.is_rx = 0
   `)!;
   return s;
 }
@@ -575,7 +638,7 @@ export function getIngredientTopBrands(id: string, limit = 8) {
     SELECT p.manufacturer AS manufacturer, COUNT(*) AS count
     FROM product_ingredients pi
     JOIN products p ON p.id = pi.product_id
-    WHERE pi.ingredient_id = ${id} AND p.manufacturer IS NOT NULL AND p.manufacturer != ''
+    WHERE pi.ingredient_id = ${id} AND p.is_rx = 0 AND p.manufacturer IS NOT NULL AND p.manufacturer != ''
     GROUP BY LOWER(p.manufacturer)
     ORDER BY count DESC, p.manufacturer
     LIMIT ${limit}
@@ -587,7 +650,7 @@ export function getIngredientTopBrands(id: string, limit = 8) {
 export function getActiveStrengthStats(activeId: string) {
   const expr = strengthExpr(activeId);
   return db.get<{ n: number; min: number | null; max: number | null }>(sql`
-    SELECT COUNT(${expr}) AS n, MIN(${expr}) AS min, MAX(${expr}) AS max FROM products
+    SELECT COUNT(${expr}) AS n, MIN(${expr}) AS min, MAX(${expr}) AS max FROM products WHERE is_rx = 0
   `)!;
 }
 
@@ -682,7 +745,8 @@ export function getPublicIngredientIds(): { id: string }[] {
 export function getCanonicalProductId(p: typeof products.$inferSelect): string {
   const row = db.get<{ id: string }>(sql`
     SELECT min(id) AS id FROM products
-    WHERE brand_name = ${p.brandName}
+    WHERE is_rx = ${p.isRx ? 1 : 0}
+      AND brand_name = ${p.brandName}
       AND manufacturer IS ${p.manufacturer}
       AND dosage_form IS ${p.dosageForm}
       AND strength_key IS ${p.strengthKey}`);
@@ -691,6 +755,8 @@ export function getCanonicalProductId(p: typeof products.$inferSelect): string {
 
 export function canonicalProductIds(): string[] {
   return db
-    .all<{ id: string }>(sql`SELECT min(id) AS id FROM products GROUP BY brand_name, manufacturer, dosage_form, strength_key`)
+    .all<{ id: string }>(
+      sql`SELECT min(id) AS id FROM products WHERE is_rx = 0 GROUP BY brand_name, manufacturer, dosage_form, strength_key`,
+    )
     .map((r) => r.id);
 }

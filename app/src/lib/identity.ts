@@ -101,6 +101,14 @@ export function mergeSessionInto(from: string, to: string, tx: Pick<Tx, "run"> =
   tx.run(sql`DELETE FROM audience_outcomes WHERE session_id = ${to} AND EXISTS (
     SELECT 1 FROM audience_outcomes f WHERE f.session_id = ${from} AND f.product_id = audience_outcomes.product_id
       AND f.concern_id = audience_outcomes.concern_id AND f.created_at > audience_outcomes.created_at)`);
+  // Regimens move whole (items belong to a regimen, so they never collide);
+  // if the destination already has an active regimen it stays the active one.
+  tx.run(sql`UPDATE regimens SET active = 0 WHERE session_id = ${from}
+    AND EXISTS (SELECT 1 FROM regimens WHERE session_id = ${to} AND active = 1)`);
+  tx.run(sql`UPDATE regimens SET session_id = ${to} WHERE session_id = ${from}`);
+  // A claimed clinician plan follows its owner too, so the QR keeps opening
+  // it on every device the person signs in on.
+  tx.run(sql`UPDATE handout_instances SET claimed_session_id = ${to} WHERE claimed_session_id = ${from}`);
   for (const table of ["shelf_items", "audience_outcomes", "regimen_items", "routine_votes", "routine_reports"]) {
     // OR IGNORE leaves conflicting rows behind under `from`; they're the losers.
     tx.run(sql`UPDATE OR IGNORE ${sql.identifier(table)} SET session_id = ${to} WHERE session_id = ${from}`);
@@ -205,6 +213,14 @@ export function deletePersonAndData(personId: string) {
     for (const table of ["shelf_items", "regimen_items", "audience_outcomes", "routine_votes", "routine_reports", "routines"]) {
       tx.run(sql`DELETE FROM ${sql.identifier(table)} WHERE session_id = ${home}`);
     }
+    tx.run(sql`DELETE FROM regimen_step_states WHERE regimen_id IN (SELECT id FROM regimens WHERE session_id = ${home})`);
+    tx.run(sql`DELETE FROM regimens WHERE session_id = ${home}`);
+    // Claimed printouts stay claimed (the clinic's counts don't change) but
+    // belong to no one any more: the QR shows the neutral "already saved" page.
+    tx.run(sql`UPDATE handout_instances SET claimed_session_id = NULL WHERE claimed_session_id = ${home}`);
+    // A clinician profile is unlinked, not deleted: handouts already in
+    // patients' hands keep working. (It holds only public NPPES data and clinic text.)
+    tx.run(sql`UPDATE clinicians SET person_id = NULL WHERE person_id = ${personId}`);
     for (const table of ["outcome_observations", "recall_notifications", "checkins", "person_sessions"]) {
       tx.run(sql`DELETE FROM ${sql.identifier(table)} WHERE person_id = ${personId}`);
     }

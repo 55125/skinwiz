@@ -6,8 +6,8 @@ import { EquivalenceExplainer, EquivalenceRows } from "@/components/equivalence-
 import { JsonLd } from "@/components/json-ld";
 import { RedFlagBanner } from "@/components/red-flag-banner";
 import { getEquivalenceGroup, getEquivalenceGroups } from "@/lib/otc-index";
-import { getConcern, getLivePrices } from "@/lib/queries";
-import { unitPrice } from "@/lib/equivalence";
+import { getConcern, getLivePrices, getPackageDescriptions } from "@/lib/queries";
+import { parsePackageDescription, unitPrice } from "@/lib/equivalence";
 import { HSA_GUIDE_PATH } from "@/lib/hsa";
 import { breadcrumbLd } from "@/lib/seo";
 import { siteUrl } from "@/lib/site-url";
@@ -42,11 +42,12 @@ export default async function SamePage({ params }: { params: Promise<{ slug: str
   const reference = named[0] ?? group.members[0];
 
   // Live prices only (none exist yet, so this stays empty and no price
-  // renders). Package size isn't in the catalog, so per-unit stays null too.
+  // renders). Per-unit uses the priced listing's own NDC package size.
   const live = getLivePrices(new Map(group.members.map((m) => [m.id, m.ids])));
+  const packages = getPackageDescriptions([...live.values()].map((v) => v.productId));
   const prices = new Map(
-    [...live].map(([id, price]) => {
-      const per = unitPrice(price, null);
+    [...live].map(([id, { price, productId }]) => {
+      const per = unitPrice(price, parsePackageDescription(packages.get(productId)));
       return [id, { price, perUnit: per ? `$${per.value.toFixed(2)}/${per.per}` : null }];
     }),
   );

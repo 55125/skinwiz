@@ -3,6 +3,11 @@ import { Separator } from "@/components/ui/separator";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { SITE_NAME } from "@/lib/brand";
+import { FEATURES } from "@/lib/feature-flags";
+
+// Dynamic so the handout-builder link follows FEATURE_HANDOUTS at runtime
+// instead of whatever the flag was at build time.
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   alternates: { canonical: "/for-clinicians" },
@@ -33,6 +38,20 @@ export default function ForCliniciansPage() {
           Make a patch-test sheet →
         </Link>
       </section>
+
+      {FEATURES.HANDOUTS && (
+        <section className="space-y-2 rounded-2xl border border-brand/30 bg-brand-soft/40 p-4 text-sm">
+          <h2 className="text-base font-medium text-foreground">Patient handouts with a QR code</h2>
+          <p className="text-muted-foreground">
+            Build a one-page regimen handout (OTC and prescription steps, your own directions, when to call), print it with a QR
+            code, and paste a chart note. Your patient scans it to save the plan privately on their phone. Sign in with your email
+            and NPI; no patient details are ever sent to us.
+          </p>
+          <Link href="/clinicians" className="inline-block font-medium text-brand hover:underline">
+            Open the handout builder →
+          </Link>
+        </section>
+      )}
 
       <section className="space-y-2 text-sm">
         <h2 className="text-base font-medium text-foreground">How the panel will work</h2>

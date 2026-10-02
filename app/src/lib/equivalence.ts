@@ -30,6 +30,10 @@ export type EquivalenceRow = {
   activeIds: string[];
   concernId: string;
   dataSource: string;
+  // NDC-directory marketing category ("OTC MONOGRAPH DRUG", "NDA", "ANDA",
+  // ...); null/absent when the directory doesn't list the NDC.
+  marketingCategory?: string | null;
+  isRx?: boolean;
 };
 
 export type EquivalenceMember = {
@@ -53,7 +57,8 @@ export type EquivalenceGroup = {
   dosageForm: string; // as listed, upper case ("GEL")
   concernId: string; // the first member's; groups can span browsing concerns
   // Approved under an NDA/ANDA rather than an OTC monograph (adapalene,
-  // terbinafine, butenafine) -- changes how the "same standard" line reads.
+  // terbinafine, butenafine today) -- changes how the "same standard" line
+  // reads. From the members' NDC marketing category, not a hardcoded list.
   application: boolean;
   members: EquivalenceMember[];
   labelerCount: number;
@@ -63,9 +68,12 @@ export const DRUG_SOURCES = ["openfda", "dailymed"];
 const EXCLUDED_CONCERNS = new Set(["sun-protection", "excessive-sweating"]);
 const MAX_ACTIVES = 2;
 
-// Topical OTC actives sold under an approved application (Rx-to-OTC switch
-// plus generics), not a monograph.
-const APPLICATION_ACTIVES = new Set(["adapalene", "terbinafine", "butenafine"]);
+// Sold under an approved application (Rx-to-OTC switch plus its generics)
+// rather than an OTC monograph: the NDC directory's marketing category says
+// so directly ("NDA", "ANDA", "NDA AUTHORIZED GENERIC", "BLA").
+export function isApplicationCategory(marketingCategory: string | null | undefined): boolean {
+  return /^(NDA|ANDA|BLA)\b/i.test((marketingCategory ?? "").trim());
+}
 
 const ACTIVE_BY_ID = new Map(ACTIVE_DEFINITIONS.map((a) => [a.id, a]));
 
@@ -179,6 +187,7 @@ function bucketForConcern(concernId: string): UseBucket {
 
 /** Why a row can't join a group, or null when it can. Exported for tests. */
 export function exclusionReason(row: EquivalenceRow): string | null {
+  if (row.isRx) return "prescription";
   if (!DRUG_SOURCES.includes(row.dataSource)) return "not an FDA drug listing";
   if (!row.strengthKey) return "strength not parsed";
   if (row.activeIds.length === 0 || row.activeIds.length > MAX_ACTIVES) return "too many actives";
@@ -257,7 +266,10 @@ export function buildEquivalenceGroups(rows: EquivalenceRow[], minLabelers = 2):
       strengths,
       dosageForm: form,
       concernId: first.concernId,
-      application: activeIds.some((id) => APPLICATION_ACTIVES.has(id)),
+      // A group is one standard: if any member's listing says NDA/ANDA, the
+      // group is (members without a listed category are DailyMed-resolved
+      // rows the NDC directory doesn't cover, not monograph evidence).
+      application: members.some((r) => isApplicationCategory(r.marketingCategory)),
       members: out,
       labelerCount: labelers.size,
     });
@@ -277,10 +289,12 @@ export function buildEquivalenceGroups(rows: EquivalenceRow[], minLabelers = 2):
 }
 
 // ---- Price per unit -------------------------------------------------------
-// Package size isn't in the catalog yet: the pipeline keeps only package NDC
-// codes (tools/catalog_pipeline, `package_ndcs`), not openFDA's packaging
-// description ("45 g in 1 TUBE"). parsePackageDescription is ready for when
-// it does; until then unitPrice() gets null and returns null.
+// Package size comes from the NDC directory's packaging description, stored
+// per product as products.packageDescription (first package listed;
+// tools/catalog_pipeline/fetch_otc_package_info.py). Nested packaging reads
+// outer to inner ("1 TUBE in 1 CARTON (ndc) / 45 g in 1 TUBE"); the size is
+// the innermost part. Prices still only show for live (non-demo) affiliate
+// rows, which don't exist yet.
 
 export type PackageSize = { amount: number; unit: "g" | "mL" | "count" };
 
@@ -290,7 +304,8 @@ const FLOZ_TO_ML = 29.5735;
 /** "45 g in 1 TUBE", "1.7 OZ in 1 BOTTLE", "118 mL in 1 BOTTLE, PLASTIC" -> size. */
 export function parsePackageDescription(description: string | null | undefined): PackageSize | null {
   if (!description) return null;
-  const m = /^\s*(\d*\.?\d+)\s*(g|gram|grams|mg|kg|ml|l|oz|fl\.?\s*oz|wipes?|pads?|cloths?|swabs?)\b/i.exec(description);
+  const inner = description.split("/").at(-1)!.replace(/\([^)]*\)/g, " ");
+  const m = /^\s*(\d*\.?\d+)\s*(g|gram|grams|mg|kg|ml|l|oz|fl\.?\s*oz|wipes?|pads?|cloths?|swabs?)\b/i.exec(inner);
   if (!m) return null;
   const n = parseFloat(m[1]);
   if (!(n > 0)) return null;

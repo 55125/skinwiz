@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { AlertTriangle, ChevronLeft, ExternalLink, FlaskConical, Info, PlaySquare, Music2, Camera, ShieldCheck } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
@@ -9,6 +9,7 @@ import { DualScoreBadges } from "@/components/score-badge";
 import { RedFlagBanner } from "@/components/red-flag-banner";
 import {
   getProduct,
+  getRxProduct,
   getCanonicalProductId,
   getEvidenceNotesForActives,
   getAffiliateLinksForProduct,
@@ -37,6 +38,7 @@ import { IngredientList } from "@/components/ingredient-list";
 import { ShelfButton } from "@/components/shelf-button";
 import { getShelfEntry } from "@/lib/shelf";
 import { RegimenButton } from "@/components/regimen-button";
+import { primaryOwnRegimenId } from "@/lib/regimens";
 import { HowToUse } from "@/components/how-to-use";
 import { getLabelSections, getRegimenSlot, guidanceForActives, guidanceForStep, stepTypeOf, suggestSlot } from "@/lib/regimen";
 import { MatchBadge } from "@/components/match-badge";
@@ -88,7 +90,12 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 export default async function ProductPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const product = getProduct(decodeURIComponent(id));
-  if (!product) notFound();
+  if (!product) {
+    // Prescription rows have no consumer product page; with the Rx reference
+    // pages switched on, send the id there instead of a 404.
+    if (FEATURES.RX_CATALOG && getRxProduct(decodeURIComponent(id))) redirect(`/rx/${encodeURIComponent(decodeURIComponent(id))}`);
+    notFound();
+  }
 
   const concern = getConcern(product.concernId);
   const evidenceNotes = getEvidenceNotesForActives(product.activeIds as string[], product.concernId);
@@ -106,7 +113,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
   const shelfSession = await readSessionId();
   const shelfEntry = shelfSession ? getShelfEntry(shelfSession, product.id) : undefined;
   const sessionId = await readSessionId();
-  const regimenSlot = sessionId ? getRegimenSlot(sessionId, product.id) : null;
+  const regimenSlot = sessionId ? getRegimenSlot(primaryOwnRegimenId(sessionId, false), product.id) : null;
   const slotSuggestion = suggestSlot(product);
   const labelSection = getLabelSections(product.splSetId);
   const activeGuidance = guidanceForActives(product.activeIds ?? []);

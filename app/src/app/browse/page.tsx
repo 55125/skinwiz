@@ -14,8 +14,9 @@ import { cn } from "@/lib/utils";
 import { variantRobots } from "@/lib/seo";
 import { SITE_NAME } from "@/lib/brand";
 import { parseFreeParam } from "@/lib/avoid-shared";
+import { HSA_GUIDE_PATH } from "@/lib/hsa";
 
-type BrowseParams = { concern?: string; tier?: string; active?: string; free?: string; sort?: string; page?: string };
+type BrowseParams = { concern?: string; tier?: string; active?: string; free?: string; hsa?: string; sort?: string; page?: string };
 
 export async function generateMetadata({ searchParams }: { searchParams: Promise<BrowseParams> }): Promise<Metadata> {
   return {
@@ -64,7 +65,8 @@ export default async function BrowsePage({
 }: {
   searchParams: Promise<BrowseParams>;
 }) {
-  const { concern, tier, active, free, sort: sortParam, page: pageParam } = await searchParams;
+  const { concern, tier, active, free, hsa: hsaParam, sort: sortParam, page: pageParam } = await searchParams;
+  const hsa = hsaParam === "1" ? "1" : undefined;
   const page = Math.max(1, parseInt(pageParam ?? "1", 10) || 1);
   const freeFromIds = parseFreeParam(free);
   const selectedTier = TRUST_TIERS.find((t) => t.label === tier);
@@ -75,18 +77,18 @@ export default async function BrowsePage({
   const avoidIds = await readAvoidIds();
   const canMatch = hasProfile(profile) || avoidIds.length > 0;
   const sort = sortParam === "match" && canMatch ? "match" : sortParam === "name" ? "name" : undefined;
-  const queryFilters = { concernId: concern, dataSources: selectedTier?.dataSources, activeId: active, freeFromIds };
+  const queryFilters = { concernId: concern, dataSources: selectedTier?.dataSources, activeId: active, freeFromIds, hsaOnly: !!hsa };
 
   const { rows, total, pageSize } =
     sort === "match"
       ? browseProductsByMatch(queryFilters, page, (all) => scoreProducts(all, profile, avoidIds))
       : browseProducts(queryFilters, page, sort);
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
-  const activeFilterCount = [concern, selectedTier, active].filter(Boolean).length + freeFromIds.length;
+  const activeFilterCount = [concern, selectedTier, active, hsa].filter(Boolean).length + freeFromIds.length;
 
   function hrefWith(overrides: Record<string, string | undefined>) {
     const params = new URLSearchParams();
-    const merged = { concern, tier, active, free, sort, page: undefined as string | undefined, ...overrides };
+    const merged = { concern, tier, active, free, hsa, sort, page: undefined as string | undefined, ...overrides };
     for (const [k, v] of Object.entries(merged)) if (v) params.set(k, v);
     const qs = params.toString();
     return `/browse${qs ? `?${qs}` : ""}`;
@@ -170,7 +172,23 @@ export default async function BrowsePage({
         )}
       </SidebarGroup>
 
-      <FreeFromFilters basePath="/browse" searchParams={{ concern, tier, active, free, sort }} selected={freeFromIds} />
+      <SidebarGroup title="Spending account">
+        <ul className="space-y-0.5">
+          <li>
+            <SidebarLink href={hrefWith({ hsa: hsa ? undefined : "1" })} selected={!!hsa}>
+              HSA/FSA eligible
+            </SidebarLink>
+          </li>
+        </ul>
+        <p className="mt-1 px-2.5 text-xs text-muted-foreground">
+          OTC medicines and broad spectrum SPF 15+ sunscreens. Your plan decides.{" "}
+          <Link href={HSA_GUIDE_PATH} className="underline">
+            How this works
+          </Link>
+        </p>
+      </SidebarGroup>
+
+      <FreeFromFilters basePath="/browse" searchParams={{ concern, tier, active, free, hsa, sort }} selected={freeFromIds} />
     </div>
   );
 

@@ -4,6 +4,7 @@ import { getScoresForProducts } from "@/lib/scoring";
 import { readAvoidIds } from "@/lib/avoid";
 import { avoidLabelsFor, getIngredientMembership, matchProduct, readProfile } from "@/lib/profile";
 import { cn } from "@/lib/utils";
+import { isHsaEligible } from "@/lib/otc-index";
 import type { products } from "@/db/schema";
 
 // Fetches every card's scores and EWG rating in one query each, rather
@@ -32,6 +33,7 @@ export async function ProductGrid({
           ewgScore={ewg.get(product.id) ?? null}
           avoidIds={avoidIds}
           match={membership ? matchProduct(product, membership.get(product.id), profile, avoidLabels) : null}
+          hsaEligible={isHsaEligible(product.id)}
         />
       ))}
     </div>

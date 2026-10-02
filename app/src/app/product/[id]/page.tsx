@@ -38,6 +38,7 @@ import { IngredientList } from "@/components/ingredient-list";
 import { ShelfButton } from "@/components/shelf-button";
 import { getShelfEntry } from "@/lib/shelf";
 import { RegimenButton } from "@/components/regimen-button";
+import { primaryOwnRegimenId } from "@/lib/regimens";
 import { HowToUse } from "@/components/how-to-use";
 import { getLabelSections, getRegimenSlot, guidanceForActives, guidanceForStep, stepTypeOf, suggestSlot } from "@/lib/regimen";
 import { MatchBadge } from "@/components/match-badge";
@@ -112,7 +113,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
   const shelfSession = await readSessionId();
   const shelfEntry = shelfSession ? getShelfEntry(shelfSession, product.id) : undefined;
   const sessionId = await readSessionId();
-  const regimenSlot = sessionId ? getRegimenSlot(sessionId, product.id) : null;
+  const regimenSlot = sessionId ? getRegimenSlot(primaryOwnRegimenId(sessionId, false), product.id) : null;
   const slotSuggestion = suggestSlot(product);
   const labelSection = getLabelSections(product.splSetId);
   const activeGuidance = guidanceForActives(product.activeIds ?? []);

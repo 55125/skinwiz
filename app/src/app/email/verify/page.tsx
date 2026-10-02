@@ -4,6 +4,7 @@ import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { peekSignInToken } from "@/lib/identity";
 import { maskEmail } from "@/lib/tokens";
+import { safeNextPath } from "@/lib/email-links";
 
 export const metadata: Metadata = {
   title: "Confirm your email",
@@ -15,8 +16,9 @@ export const metadata: Metadata = {
 // prefetch email links); the button posts to /api/email/verify, which uses up
 // the one-time token. Showing the address lets someone notice a link that
 // isn't for them before their shelf is merged into it.
-export default async function VerifyPage({ searchParams }: { searchParams: Promise<{ token?: string; error?: string }> }) {
-  const { token, error } = await searchParams;
+export default async function VerifyPage({ searchParams }: { searchParams: Promise<{ token?: string; error?: string; next?: string }> }) {
+  const { token, error, next: nextParam } = await searchParams;
+  const next = safeNextPath(nextParam);
   const pending = token && token.length <= 128 ? peekSignInToken(token, new Date()) : null;
 
   return (
@@ -25,6 +27,7 @@ export default async function VerifyPage({ searchParams }: { searchParams: Promi
       {pending ? (
         <form method="post" action="/api/email/verify" className="space-y-4">
           <input type="hidden" name="token" value={token} />
+          {next && <input type="hidden" name="next" value={next} />}
           <p>
             Save this browser&apos;s shelf to <span className="font-medium">{maskEmail(pending.email)}</span> and sign in
             on this device?

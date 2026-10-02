@@ -7,6 +7,9 @@ import { listRxProducts, rxDisplayName, type RxProduct } from "@/lib/rx-catalog"
 import { RX_GROUPS } from "@/db/rx";
 import { ROMAN, type PotencyClass } from "@/db/steroid-potency";
 
+// Flag read per request (a static page would bake in the build-time value).
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Prescription skin medicines: reference",
   description: "What common prescription skin medicines are and how their FDA labels say they're used. Reference only: ask your dermatologist.",

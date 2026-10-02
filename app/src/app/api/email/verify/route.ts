@@ -2,6 +2,7 @@ import { rateLimit } from "@/lib/api-guard";
 import { getOrCreateDeviceSessionId } from "@/lib/session";
 import { completeSignIn, consumeSignInToken } from "@/lib/identity";
 import { scheduleForOpenedShelf } from "@/lib/checkins";
+import { safeNextPath } from "@/lib/email-links";
 
 // The confirmation page (/email/verify) posts here. The emailed link itself
 // is a GET of that page, which changes nothing -- mail scanners that
@@ -19,7 +20,7 @@ export async function POST(request: Request) {
   const deviceSessionId = await getOrCreateDeviceSessionId();
   const { person } = completeSignIn({ email: consumed.email, requestSessionId: consumed.requestSessionId, deviceSessionId, now });
   scheduleForOpenedShelf(person, now);
-  return seeOther("/account?welcome=1");
+  return seeOther(safeNextPath(form?.get("next")) ?? "/account?welcome=1");
 }
 
 // Relative Location: behind Railway's proxy, request.url is the container's

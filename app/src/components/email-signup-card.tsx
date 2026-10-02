@@ -9,7 +9,18 @@ import { LIMITS } from "@/lib/limits";
 
 // "Save your shelf & get alerts": optional email via a one-time link. When
 // the browser is already linked, collapses to a one-line status.
-export function EmailSignupCard({ signedInAs }: { signedInAs: string | null }) {
+export function EmailSignupCard({
+  signedInAs,
+  next,
+  title = "Save your shelf & get alerts",
+  blurb = "Optional. Add an email to keep your shelf on any device, get a short check-in at 2, 4, 8 and 12 weeks after you open a product, and hear about FDA recalls of anything on your shelf. No password; we send a one-time link.",
+}: {
+  signedInAs: string | null;
+  /** Where the emailed link lands after confirming (allow-listed server-side). */
+  next?: string;
+  title?: string;
+  blurb?: string;
+}) {
   const [email, setEmail] = useState("");
   const [state, setState] = useState<"idle" | "sending" | "sent">("idle");
   const [error, setError] = useState<string | null>(null);
@@ -33,7 +44,7 @@ export function EmailSignupCard({ signedInAs }: { signedInAs: string | null }) {
     const res = await fetch("/api/email/request", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email }),
+      body: JSON.stringify(next ? { email, next } : { email }),
     }).catch(() => null);
     if (res?.ok) {
       setState("sent");
@@ -47,12 +58,9 @@ export function EmailSignupCard({ signedInAs }: { signedInAs: string | null }) {
     <section aria-labelledby="email-card-title" className="space-y-3 rounded-2xl border bg-gradient-to-br from-brand-soft/50 to-card p-5">
       <div className="space-y-1">
         <h2 id="email-card-title" className="flex items-center gap-2 text-lg">
-          <Mail className="h-5 w-5 text-brand" aria-hidden /> Save your shelf &amp; get alerts
+          <Mail className="h-5 w-5 text-brand" aria-hidden /> {title}
         </h2>
-        <p className="text-sm text-muted-foreground">
-          Optional. Add an email to keep your shelf on any device, get a short check-in at 2, 4, 8 and 12 weeks after
-          you open a product, and hear about FDA recalls of anything on your shelf. No password; we send a one-time link.
-        </p>
+        <p className="text-sm text-muted-foreground">{blurb}</p>
       </div>
       {state === "sent" ? (
         <p role="status" className="rounded-lg border border-emerald-300 bg-emerald-50 p-3 text-sm text-emerald-900 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-200">

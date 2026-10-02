@@ -98,28 +98,40 @@ export function guidanceForStep(step: StepType): (FormulationGuidance & { draft:
   return g && (g.reviewed || SHOW_DRAFTS) ? { ...g, draft: !g.reviewed } : null;
 }
 
-export function getRegimenSlot(sessionId: string, productId: string): Slot | null {
+// Item reads/writes act on one of the visitor's own regimens (lib/regimens.ts
+// picks which: the one open on /regimen, or for "Add to my regimen" on a
+// product page, their primary own regimen). Clinician plans have no items.
+
+/** The product's slot in that regimen, or null. regimenId null = the visitor has no own regimen yet. */
+export function getRegimenSlot(regimenId: number | null, productId: string): Slot | null {
+  if (regimenId === null) return null;
   const row = db
     .select({ slot: regimenItems.slot })
     .from(regimenItems)
-    .where(and(eq(regimenItems.sessionId, sessionId), eq(regimenItems.productId, productId)))
+    .where(and(eq(regimenItems.regimenId, regimenId), eq(regimenItems.productId, productId)))
     .get();
   return row && isSlot(row.slot) ? row.slot : null;
 }
 
-const MAX_REGIMEN = 40;
+export const MAX_REGIMEN = 40;
 
 /** slot null removes the product from the regimen. */
-export function setRegimenItem(sessionId: string, productId: string, slot: Slot | null): "ok" | "full" {
+export function setRegimenItem(
+  sessionId: string,
+  regimenId: number,
+  productId: string,
+  slot: Slot | null,
+  directions: string | null = null,
+): "ok" | "full" {
   if (slot === null) {
-    db.delete(regimenItems).where(and(eq(regimenItems.sessionId, sessionId), eq(regimenItems.productId, productId))).run();
+    db.delete(regimenItems).where(and(eq(regimenItems.regimenId, regimenId), eq(regimenItems.productId, productId))).run();
     return "ok";
   }
-  const count = db.select({ id: regimenItems.id }).from(regimenItems).where(eq(regimenItems.sessionId, sessionId)).all().length;
-  if (!getRegimenSlot(sessionId, productId) && count >= MAX_REGIMEN) return "full";
+  const count = db.select({ id: regimenItems.id }).from(regimenItems).where(eq(regimenItems.regimenId, regimenId)).all().length;
+  if (!getRegimenSlot(regimenId, productId) && count >= MAX_REGIMEN) return "full";
   db.insert(regimenItems)
-    .values({ sessionId, productId, slot })
-    .onConflictDoUpdate({ target: [regimenItems.sessionId, regimenItems.productId], set: { slot } })
+    .values({ sessionId, regimenId, productId, slot, directions })
+    .onConflictDoUpdate({ target: [regimenItems.regimenId, regimenItems.productId], set: { slot } })
     .run();
   return "ok";
 }
@@ -129,6 +141,7 @@ export type RegimenStep = {
   slot: Slot;
   step: StepType;
   label: typeof labelSections.$inferSelect | null;
+  directions: string | null; // a personal copy's note of the clinician's wording
 };
 
 export type SlotConflict = RoutineConflict & { status: "same-time" | "split" };
@@ -140,12 +153,16 @@ export type Regimen = {
   conflicts: SlotConflict[];
 };
 
-export function getRegimen(sessionId: string): Regimen {
+export const EMPTY_REGIMEN: Regimen = { am: [], pm: [], count: 0, conflicts: [] };
+
+/** One own regimen's items. The caller has already checked it belongs to the session (lib/regimens.ts). */
+export function getRegimen(regimenId: number | null): Regimen {
+  if (regimenId === null) return EMPTY_REGIMEN;
   const rows = db
-    .select({ slot: regimenItems.slot, createdAt: regimenItems.createdAt, product: products })
+    .select({ slot: regimenItems.slot, createdAt: regimenItems.createdAt, directions: regimenItems.directions, product: products })
     .from(regimenItems)
     .innerJoin(products, eq(products.id, regimenItems.productId))
-    .where(eq(regimenItems.sessionId, sessionId))
+    .where(eq(regimenItems.regimenId, regimenId))
     .orderBy(regimenItems.createdAt)
     .all();
 
@@ -159,6 +176,7 @@ export function getRegimen(sessionId: string): Regimen {
     slot: isSlot(r.slot) ? r.slot : "both",
     step: stepTypeOf(r.product),
     label: r.product.splSetId ? labels.get(r.product.splSetId) ?? null : null,
+    directions: r.directions,
   }));
   const bySlot = (s: "am" | "pm") =>
     steps.filter((x) => x.slot === s || x.slot === "both").sort((a, b) => STEP_ORDER[a.step] - STEP_ORDER[b.step]);

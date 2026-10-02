@@ -397,6 +397,12 @@ export const shelfItems = sqliteTable(
 // it -- "am", "pm" or "both"; the order within a slot isn't stored, it's
 // derived from the product's formulation (lib/regimen.ts) so steps always
 // layer thinnest to thickest with sunscreen last in the morning.
+//
+// Since migration 0010 a visitor can have several regimens (see `regimens`
+// below); every item belongs to one. Existing single regimens were migrated
+// into one "My regimen" row per session. `directions` is only set on a
+// personal copy of a clinician's plan (the clinician's wording, kept as a
+// note); everyday items read their label directions instead.
 export const regimenItems = sqliteTable(
   "regimen_items",
   {
@@ -405,11 +411,53 @@ export const regimenItems = sqliteTable(
     productId: text("product_id").notNull().references(() => products.id),
     slot: text("slot").notNull(), // "am" | "pm" | "both"
     createdAt: text("created_at").notNull().default(sql`(current_timestamp)`),
+    regimenId: integer("regimen_id").references(() => regimens.id, { onDelete: "cascade" }),
+    directions: text("directions"),
   },
   (table) => [
-    uniqueIndex("regimen_items_session_product_idx").on(table.sessionId, table.productId),
+    uniqueIndex("regimen_items_regimen_product_idx").on(table.regimenId, table.productId),
     index("regimen_items_session_idx").on(table.sessionId),
   ],
+);
+
+// A visitor's named regimens (session-keyed like everything else, so they
+// follow a signed-in person across devices and are never visible to anyone
+// else -- no public page, search or sitemap reads this table).
+//   kind "own":       built by the visitor; items in regimen_items.
+//   kind "clinician": a clinician-issued plan claimed from a handout QR
+//                     (instanceId). Its steps are read straight from the
+//                     immutable handout version, so they can't be edited:
+//                     the MD badge always means "exactly what your clinician
+//                     wrote". A personal copy is a new "own" regimen.
+// Exactly one regimen per session is active (the one /regimen opens on).
+export const regimens = sqliteTable(
+  "regimens",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    sessionId: text("session_id").notNull(),
+    name: text("name").notNull(),
+    kind: text("kind").notNull().default("own"), // "own" | "clinician"
+    instanceId: integer("instance_id").references(() => handoutInstances.id),
+    active: integer("active", { mode: "boolean" }).notNull().default(false),
+    createdAt: text("created_at").notNull(),
+  },
+  (table) => [index("regimens_session_idx").on(table.sessionId), uniqueIndex("regimens_instance_idx").on(table.instanceId)],
+);
+
+// Per-step patient state on a clinician plan (the steps themselves are
+// read-only): hidden, done for now, or "I have it" (which also marks an OTC
+// product owned + opened on the shelf, so check-ins can start).
+export const regimenStepStates = sqliteTable(
+  "regimen_step_states",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    regimenId: integer("regimen_id").notNull().references(() => regimens.id, { onDelete: "cascade" }),
+    stepKey: text("step_key").notNull(),
+    hidden: integer("hidden", { mode: "boolean" }).notNull().default(false),
+    doneAt: text("done_at"),
+    haveAt: text("have_at"),
+  },
+  (table) => [uniqueIndex("regimen_step_states_idx").on(table.regimenId, table.stepKey)],
 );
 
 // The Drug Facts "how to use" sections of each product's FDA label, keyed by
@@ -616,3 +664,104 @@ export const jobState = sqliteTable("job_state", {
   value: text("value").notNull(),
   updatedAt: text("updated_at").notNull(),
 });
+
+// ---------------------------------------------------------------------------
+// Clinician handouts (lib/clinicians.ts, lib/handouts.ts). Behind
+// FEATURE_HANDOUTS. PRIVACY BY DESIGN: none of these tables has a column for
+// a patient identifier. A handout version is the clinician's regimen; an
+// instance is one printout's QR. The patient's name is typed in the
+// clinician's browser for printing only and never sent here.
+
+// Public NPPES registry responses, cached so a re-verification (or a second
+// clinician typo-ing the same number) doesn't hit the API again, and so a
+// brief NPPES outage doesn't block someone already looked up.
+export const npiLookups = sqliteTable("npi_lookups", {
+  npi: text("npi").primaryKey(),
+  status: text("status").notNull(), // "found" | "not_found"
+  payload: text("payload"), // the raw NPPES result JSON (public data)
+  fetchedAt: text("fetched_at").notNull(),
+});
+
+// A signed-in person (magic-link email) who has entered an NPI. verifiedAt
+// is set only when NPPES confirmed an active individual (NPI-1) record whose
+// last name matches what they typed. NPI verification proves a licensed
+// prescriber's identifier, not board certification. personId is cleared
+// (not the row) when the person deletes their account, so handouts already
+// in patients' hands keep working.
+export const clinicians = sqliteTable("clinicians", {
+  id: text("id").primaryKey(), // random uuid
+  personId: text("person_id").unique().references(() => people.id),
+  npi: text("npi").notNull().unique(),
+  firstName: text("first_name"),
+  lastName: text("last_name").notNull(),
+  credential: text("credential"), // as listed in NPPES ("MD", "D.O.", "PA-C")
+  taxonomyCode: text("taxonomy_code"),
+  taxonomyDesc: text("taxonomy_desc"),
+  isDermatology: integer("is_dermatology", { mode: "boolean" }).notNull().default(false),
+  state: text("state"),
+  verifiedAt: text("verified_at"), // null = pending (NPPES unavailable when they signed up)
+  clinicName: text("clinic_name").notNull(),
+  clinicPhone: text("clinic_phone"),
+  clinicWebsite: text("clinic_website"),
+  createdAt: text("created_at").notNull(),
+  updatedAt: text("updated_at").notNull(),
+});
+
+export const handouts = sqliteTable(
+  "handouts",
+  {
+    id: text("id").primaryKey(), // random, url-safe
+    clinicianId: text("clinician_id").notNull().references(() => clinicians.id),
+    title: text("title").notNull(),
+    latestVersion: integer("latest_version").notNull().default(1),
+    createdAt: text("created_at").notNull(),
+    updatedAt: text("updated_at").notNull(),
+  },
+  (table) => [index("handouts_clinician_idx").on(table.clinicianId)],
+);
+
+// IMMUTABLE once written (SQLite triggers in migration 0010 abort any UPDATE
+// or DELETE): an edit is a new version, so a QR printed last month still
+// shows exactly what was printed. Clinic/clinician names are snapshotted.
+// `ref` is a short human-readable code for the chart note ("AB12-CD34") --
+// public on the paper, NOT an access token.
+export const handoutVersions = sqliteTable(
+  "handout_versions",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    handoutId: text("handout_id").notNull().references(() => handouts.id),
+    version: integer("version").notNull(),
+    ref: text("ref").notNull().unique(),
+    title: text("title").notNull(),
+    templateId: text("template_id"),
+    content: text("content", { mode: "json" }).$type<import("@/lib/handout-types").HandoutContent>().notNull(),
+    clinicName: text("clinic_name").notNull(),
+    clinicianName: text("clinician_name").notNull(),
+    clinicianCredential: text("clinician_credential"),
+    clinicPhone: text("clinic_phone"),
+    clinicWebsite: text("clinic_website"),
+    createdAt: text("created_at").notNull(),
+  },
+  (table) => [uniqueIndex("handout_versions_handout_version_idx").on(table.handoutId, table.version)],
+);
+
+// One printout / QR. The claim token is shown only on the paper (and once to
+// the clinician's browser); only its SHA-256 is stored. The first browser to
+// confirm it claims it: claimedSessionId is that browser's resolved session
+// (its person's home session once signed in), so the plan follows the
+// patient across their linked devices and no one else. Unclaimed instances
+// expire. Counts (opens) are plain integers, no per-visit rows or cookies.
+export const handoutInstances = sqliteTable(
+  "handout_instances",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    versionId: integer("version_id").notNull().references(() => handoutVersions.id),
+    tokenHash: text("token_hash").notNull().unique(),
+    createdAt: text("created_at").notNull(),
+    expiresAt: text("expires_at").notNull(),
+    openCount: integer("open_count").notNull().default(0),
+    claimedAt: text("claimed_at"),
+    claimedSessionId: text("claimed_session_id"),
+  },
+  (table) => [index("handout_instances_version_idx").on(table.versionId), index("handout_instances_claimed_idx").on(table.claimedSessionId)],
+);

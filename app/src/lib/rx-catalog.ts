@@ -72,7 +72,7 @@ export function rxDisplayName(p: Pick<RxProduct, "genericName" | "strengthText" 
   const generic = p.genericName?.trim() || p.brandName;
   const strengths = (p.strengthText ?? "")
     .split(";")
-    .map((s) => s.trim().match(/(\d[\d.]*\s*(%|mg|mcg|g|ug|ug\/cm2)\b.*)$/)?.[1] ?? "")
+    .map((s) => s.trim().match(/(\d[\d.]*\s*(?:%|mg|mcg|ug|g)(?![a-z]).*)$/i)?.[1] ?? "")
     .filter(Boolean);
   const form = (p.dosageForm ?? "").toLowerCase().replace(/^aerosol, /, "").replace(/, augmented$/, " (augmented)");
   const words = [generic, strengths.join(" / "), form].filter(Boolean).join(" ");

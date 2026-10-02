@@ -71,6 +71,13 @@
       "when": 1790909681587,
       "tag": "0009_rx_catalog",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "6",
+      "when": 1790910447457,
+      "tag": "0010_clinician_handouts",
+      "breakpoints": true
     }
   ]
 }

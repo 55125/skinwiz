@@ -49,6 +49,7 @@ export function PatchTestReader() {
   const [readDate, setReadDate] = useState(todayIso);
   const [grades, setGrades] = useState<Record<string, Grade>>({});
   const [view, setView] = useState<"grid" | "results">("grid");
+  const [layout, setLayout] = useState<"back" | "list">("back");
   const [includeDoubtful, setIncludeDoubtful] = useState(false);
   const [patient, setPatient] = useState("");
   const [copied, setCopied] = useState<"note" | "link" | null>(null);
@@ -64,6 +65,8 @@ export function PatchTestReader() {
   const offLabel = avoidAll.filter((id) => getNotOnLabel(id));
   const url = `${origin}${buildImportPath(avoidAll, { date: readDate || undefined })}`;
   const hasPositives = avoidAll.length > 0;
+
+  const tap = (key: string) => setGrades((all) => ({ ...all, [key]: nextGrade(all[key] ?? "neg") }));
 
   function reset() {
     if (graded > 0 && !confirm("Clear all grades and start a new reading?")) return;
@@ -227,19 +230,45 @@ export function PatchTestReader() {
       {series.id !== "true-test" && (
         <p className="text-xs text-muted-foreground">Chambers are numbered in this list&apos;s order. Confirm the numbers against your tray before reading.</p>
       )}
+      {series.id === "true-test" && (
+        <div className="flex flex-wrap items-center gap-2 text-xs" role="radiogroup" aria-label="Layout">
+          <span className="text-muted-foreground">Layout:</span>
+          {(
+            [
+              ["back", "As on the back"],
+              ["list", "List"],
+            ] as const
+          ).map(([id, label]) => (
+            <button
+              key={id}
+              type="button"
+              role="radio"
+              aria-checked={layout === id}
+              onClick={() => setLayout(id)}
+              className={cn("rounded-full border px-3 py-1 font-medium", layout === id ? "border-primary bg-primary text-primary-foreground" : "bg-card hover:bg-muted")}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      )}
 
-      {groups.map((group) => (
+      {series.id === "true-test" && layout === "back" ? (
+        <BackLayout chambers={chambers} grades={grades} onTap={tap} />
+      ) : (
+        groups.map((group) => (
         <section key={group} className="space-y-2" aria-label={group}>
           <h2 className="text-sm font-semibold">{group}</h2>
           <div className="grid grid-cols-[repeat(auto-fill,minmax(88px,1fr))] gap-2 sm:grid-cols-[repeat(auto-fill,minmax(104px,1fr))]">
             {chambers
               .filter((c) => c.group === group)
               .map((c) => (
-                <ChamberBox key={c.key} chamber={c} grade={grades[c.key] ?? "neg"} onTap={() => setGrades((all) => ({ ...all, [c.key]: nextGrade(all[c.key] ?? "neg") }))} />
+                <ChamberBox key={c.key} chamber={c} grade={grades[c.key] ?? "neg"} onTap={() => tap(c.key)} />
               ))}
           </div>
         </section>
-      ))}
+        ))
+      )}
 
       <div className="flex flex-wrap gap-2 border-t pt-4">
         <Button type="button" onClick={() => setView("results")} className="rounded-full">
@@ -253,8 +282,75 @@ export function PatchTestReader() {
   );
 }
 
-function ChamberBox({ chamber, grade, onTap }: { chamber: Chamber; grade: Grade; onTap: () => void }) {
+// The T.R.U.E. Test as it sits on the back, seen from behind the patient (FDA
+// label, Figures 3 and 4): Panels 1.3 and 2.3 on the patient's left, 3.3 on
+// the right, each about 5 cm from the spine. Each panel is a vertical strip
+// of 2 columns x 6 rows, numbered down the left column then the right.
+const BACK_PANELS = [
+  { group: "Panel 1", label: "1.3" },
+  { group: "Panel 2", label: "2.3" },
+  { group: "Panel 3", label: "3.3" },
+];
+
+function BackLayout({ chambers, grades, onTap }: { chambers: Chamber[]; grades: Record<string, Grade>; onTap: (key: string) => void }) {
+  const panel = (p: (typeof BACK_PANELS)[number]) => (
+    <div key={p.group} className="flex min-w-0 flex-1 flex-col gap-1">
+      <p className="text-center text-xs font-semibold">Panel {p.label}</p>
+      <div className="grid min-h-0 flex-1 grid-flow-col grid-cols-2 grid-rows-6 gap-1 sm:gap-1.5">
+        {chambers
+          .filter((c) => c.group === p.group)
+          .sort((a, b) => a.number - b.number)
+          .map((c) => (
+            <ChamberBox key={c.key} chamber={c} grade={grades[c.key] ?? "neg"} onTap={() => onTap(c.key)} compact />
+          ))}
+      </div>
+    </div>
+  );
+  return (
+    <div className="mx-auto max-w-3xl space-y-2">
+      <div className="flex text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+        <span className="flex-[2] text-center">Patient&apos;s left</span>
+        <span className="w-6 sm:w-12" />
+        <span className="flex-1 text-center">Patient&apos;s right</span>
+      </div>
+      {/* Rows share the screen's height, so a whole panel fits in either orientation. */}
+      <div className="flex items-stretch gap-1.5 sm:gap-3" style={{ height: "min(calc(100dvh - 120px), 640px)", minHeight: 300 }}>
+        {panel(BACK_PANELS[0])}
+        {panel(BACK_PANELS[1])}
+        <div className="flex w-6 shrink-0 flex-col items-center sm:w-12" aria-hidden>
+          <span className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground">Spine</span>
+          <span className="mt-1 w-px flex-1 border-l-2 border-dashed border-muted-foreground/40" />
+        </div>
+        {panel(BACK_PANELS[2])}
+      </div>
+      <p className="text-center text-xs text-muted-foreground">Seen from behind the patient, as the panels are applied per the T.R.U.E. Test label.</p>
+    </div>
+  );
+}
+
+function ChamberBox({ chamber, grade, onTap, compact = false }: { chamber: Chamber; grade: Grade; onTap: () => void; compact?: boolean }) {
   const name = chamber.item ? chamber.item.name : "Negative control";
+  if (compact) {
+    return (
+      <button
+        type="button"
+        onClick={onTap}
+        aria-label={`${chamber.number}. ${name}: ${GRADE_LABEL[grade]}. Tap to change.`}
+        title={name}
+        className={cn(
+          "flex h-full min-h-0 select-none flex-col justify-between rounded-lg border-2 p-1 text-left transition-colors active:scale-[0.97] sm:p-1.5",
+          GRADE_STYLE[grade],
+          !chamber.item && grade === "neg" && "border-dashed",
+        )}
+      >
+        <span className="flex items-start justify-between gap-0.5">
+          <span className="text-sm font-bold tabular-nums leading-none sm:text-base">{chamber.number}</span>
+          <span className="text-xs font-bold leading-none sm:text-sm">{grade === "neg" ? "−" : grade}</span>
+        </span>
+        <span className="hidden text-[10px] font-medium leading-tight sm:line-clamp-2">{name}</span>
+      </button>
+    );
+  }
   return (
     <button
       type="button"

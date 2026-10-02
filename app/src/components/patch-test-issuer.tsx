@@ -10,7 +10,7 @@ import { PatchTestChecklist } from "@/components/patch-test-checklist";
 import { QrCode } from "@/components/qr-code";
 import { resolveAllergenId } from "@/db/contact-allergens";
 import { getNotOnLabel, importItemName, watchForNames } from "@/db/patch-test-series";
-import { MAX_CLINIC_LENGTH, MAX_NOTE_LENGTH, buildImportPath, cleanDetails } from "@/lib/avoid-import";
+import { MAX_NOTE_LENGTH, buildImportPath, cleanDetails } from "@/lib/avoid-import";
 import { SITE_NAME } from "@/lib/brand";
 
 const noop = () => () => {};
@@ -37,7 +37,6 @@ function formatDate(iso: string): string {
 export function PatchTestIssuer() {
   const origin = useOrigin();
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [clinic, setClinic] = useState("");
   const [date, setDate] = useState("");
   const [note, setNote] = useState("");
   const [patient, setPatient] = useState("");
@@ -45,7 +44,7 @@ export function PatchTestIssuer() {
 
   const avoidIds = [...selected].filter((id) => resolveAllergenId(id));
   const offLabel = [...selected].filter((id) => getNotOnLabel(id));
-  const details = cleanDetails({ clinic, date, note });
+  const details = cleanDetails({ date, note });
   const path = buildImportPath(selected, details);
   const url = `${origin}${path}`;
   const ready = selected.size > 0 && origin !== "";
@@ -70,9 +69,6 @@ export function PatchTestIssuer() {
           <h2 id="pt-details" className="text-base font-semibold">
             2. Optional details
           </h2>
-          <Field label="Clinic name" hint="Shown to the patient and in the link.">
-            <Input value={clinic} maxLength={MAX_CLINIC_LENGTH} onChange={(e) => setClinic(e.target.value)} autoComplete="organization" />
-          </Field>
           <Field label="Reading date">
             <div className="flex gap-2">
               <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
@@ -159,7 +155,7 @@ export function PrintSheet({
   ids,
   offLabel,
   patient,
-  clinic,
+  eyebrow = "Patch-test results",
   date,
   note,
 }: {
@@ -167,7 +163,7 @@ export function PrintSheet({
   ids: string[];
   offLabel: string[];
   patient: string;
-  clinic?: string;
+  eyebrow?: string;
   date?: string;
   note?: string;
 }) {
@@ -187,12 +183,11 @@ export function PrintSheet({
       `}</style>
       <div style={{ display: "flex", gap: "8mm", alignItems: "flex-start" }}>
         <div style={{ flex: 1 }}>
-          <p style={{ fontSize: "9pt", textTransform: "uppercase", letterSpacing: "0.08em", margin: 0 }}>Patch-test results</p>
+          <p style={{ fontSize: "9pt", textTransform: "uppercase", letterSpacing: "0.08em", margin: 0 }}>{eyebrow}</p>
           <h1 style={{ fontSize: "18pt", fontWeight: 600, margin: "1mm 0 3mm" }}>Ingredients to avoid</h1>
           <table style={{ fontSize: "10pt", borderCollapse: "collapse" }}>
             <tbody>
               {patient && <InfoRow label="Patient" value={patient} />}
-              {clinic && <InfoRow label="From" value={clinic} />}
               {date && <InfoRow label="Read on" value={formatDate(date)} />}
             </tbody>
           </table>
@@ -246,7 +241,7 @@ export function PrintSheet({
         <p style={{ margin: 0, wordBreak: "break-all", fontFamily: "ui-monospace, monospace" }}>{shortUrl}</p>
         <p style={{ margin: "1.5mm 0 0" }}>
           Labels can use names not listed here, and “fragrance” or “parfum” can hide fragrance allergens. When in doubt, ask
-          your dermatologist. The link carries only the allergen list{clinic || date || note ? ", clinic, date and note" : ""}, never your name.
+          your dermatologist. The link carries only the allergen list{date || note ? ", date and note" : ""}, never your name.
         </p>
       </div>
     </div>

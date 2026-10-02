@@ -72,14 +72,13 @@ test("details are cleaned and capped; the import path carries no name field", ()
   assert.equal(cleanDate("2026-10-02"), "2026-10-02");
   assert.equal(cleanDate("2026-02-30"), undefined);
   assert.equal(cleanDate("10/02/2026"), undefined);
-  const d = cleanDetails({ clinic: "  Smith\nDermatology  ", note: "x".repeat(500), date: "nope" });
-  assert.equal(d.clinic, "Smith Dermatology");
+  const d = cleanDetails({ note: "  x\n" + "x".repeat(500), date: "nope" });
   assert.equal(d.note?.length, 140);
   assert.equal(d.date, undefined);
-  const path = buildImportPath(["lanolin", "carba-mix"], { clinic: "Smith Derm", date: "2026-10-02" });
+  const path = buildImportPath(["lanolin", "carba-mix"], { date: "2026-10-02" });
   const url = new URL(path, "https://activelyskin.com");
   assert.equal(url.pathname, "/avoid/import");
-  assert.deepEqual([...url.searchParams.keys()], ["a", "c", "d"]);
+  assert.deepEqual([...url.searchParams.keys()], ["a", "d"]);
   const back = decodeImportCode(url.searchParams.get("a"));
   assert.ok(back.ok);
   assert.deepEqual(back.avoidIds, ["lanolin"]);

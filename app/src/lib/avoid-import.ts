@@ -1,4 +1,5 @@
-// Share links for patch-test results: /avoid/import?a=<code>&c=<clinic>&d=<date>&n=<note>.
+// Share links for patch-test results: /avoid/import?a=<code>&d=<date>&n=<note>.
+// (Links from before 2026-10-02 may carry c=<clinic>; it is ignored.)
 // Nothing is stored server-side; the link is the whole record, printed as a
 // QR code on the clinician's sheet. The patient's name is never part of it.
 //
@@ -41,7 +42,6 @@ const VERSION = "1";
 // Far beyond any real code (IMPORT_CODES would need ~1,400 entries to get
 // here); anything longer has been tampered with or mangled.
 export const MAX_CODE_LENGTH = 240;
-export const MAX_CLINIC_LENGTH = 60;
 export const MAX_NOTE_LENGTH = 140;
 
 const B64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
@@ -116,7 +116,7 @@ export function decodeImportCode(code: string | undefined | null): DecodedCode {
   return { ok: true, avoidIds: [...new Set(avoidIds)], notOnLabel, unknown };
 }
 
-export type ImportDetails = { clinic?: string; date?: string; note?: string };
+export type ImportDetails = { date?: string; note?: string };
 
 function clean(s: string | undefined | null, max: number): string | undefined {
   // Control characters out, whitespace collapsed; it's shown as plain text.
@@ -131,15 +131,14 @@ export function cleanDate(s: string | undefined | null): string | undefined {
   return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === s ? s : undefined;
 }
 
-export function cleanDetails(d: { clinic?: string | null; date?: string | null; note?: string | null }): ImportDetails {
-  return { clinic: clean(d.clinic, MAX_CLINIC_LENGTH), date: cleanDate(d.date), note: clean(d.note, MAX_NOTE_LENGTH) };
+export function cleanDetails(d: { date?: string | null; note?: string | null }): ImportDetails {
+  return { date: cleanDate(d.date), note: clean(d.note, MAX_NOTE_LENGTH) };
 }
 
 /** The import path (origin-relative) for these ids and optional details. */
 export function buildImportPath(ids: Iterable<string>, details: ImportDetails = {}): string {
-  const { clinic, date, note } = cleanDetails(details);
+  const { date, note } = cleanDetails(details);
   const params = new URLSearchParams({ a: encodeImportCode(ids) });
-  if (clinic) params.set("c", clinic);
   if (date) params.set("d", date);
   if (note) params.set("n", note);
   return `/avoid/import?${params.toString()}`;

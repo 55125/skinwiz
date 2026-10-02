@@ -15,7 +15,7 @@ const SHAREABLE = new Set(IMPORT_CODES);
 // The visitor's own saved list as an import link and QR code: to show a
 // dermatologist, move to another phone, or hand to someone who shops for
 // them. Same link format as the clinician sheet (/for-clinicians/patch-test),
-// without clinic, date or note. Only allergens travel; free-from preferences
+// without date or note. Only allergens travel; free-from preferences
 // (fragrance-free, alcohol-free...) aren't part of the format.
 export function ShareAvoidList({ ids }: { ids: string[] }) {
   const origin = useOrigin();
@@ -83,7 +83,7 @@ export function ShareAvoidList({ ids }: { ids: string[] }) {
           </div>
         </div>
       )}
-      {ready && createPortal(<PrintSheet url={url} ids={shareable} offLabel={[]} patient="" />, document.body)}
+      {ready && createPortal(<PrintSheet url={url} ids={shareable} offLabel={[]} patient="" eyebrow="Allergen list" />, document.body)}
     </details>
   );
 }

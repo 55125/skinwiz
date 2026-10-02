@@ -30,7 +30,7 @@ export default function PatchTestIssuePage() {
         <li className="rounded-2xl border bg-muted/40 p-4">
           <span className="font-medium">Nothing stored by us.</span>{" "}
           <span className="text-muted-foreground">
-            The link itself carries the allergen list and any clinic name, date and note you add. The patient&apos;s
+            The link itself carries the allergen list and any date and note you add. The patient&apos;s
             name is printed from this tab only and never leaves it.
           </span>
         </li>

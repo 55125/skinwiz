@@ -15,7 +15,7 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-type Params = Partial<Record<"a" | "c" | "d" | "n", string | string[]>>;
+type Params = Partial<Record<"a" | "d" | "n", string | string[]>>;
 
 function formatDate(iso: string): string {
   return new Date(`${iso}T12:00:00Z`).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric", timeZone: "UTC" });
@@ -25,7 +25,7 @@ export default async function AvoidImportPage({ searchParams }: { searchParams: 
   const params = await searchParams;
   const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v);
   const decoded = decodeImportCode(one(params.a));
-  const { clinic, date, note } = cleanDetails({ clinic: one(params.c), date: one(params.d), note: one(params.n) });
+  const { date, note } = cleanDetails({ date: one(params.d), note: one(params.n) });
 
   if (!decoded.ok || (decoded.avoidIds.length === 0 && decoded.notOnLabel.length === 0)) {
     const why =
@@ -63,8 +63,8 @@ export default async function AvoidImportPage({ searchParams }: { searchParams: 
   return (
     <div className="mx-auto max-w-2xl space-y-8 px-4 py-10">
       <PageHeader
-        eyebrow={clinic ? `From ${clinic}` : date ? "Patch-test results" : "Shared allergen list"}
-        title={clinic || date ? "Your dermatologist marked these allergens" : "Allergens to avoid"}
+        eyebrow={date ? "Patch-test results" : "Shared allergen list"}
+        title={date ? "Your dermatologist marked these allergens" : "Allergens to avoid"}
         description="Add them to your avoid list and every product you look up here is checked for them, under every name they go by on a label."
       >
         {date && <p className="text-sm text-muted-foreground">Patch test read on {formatDate(date)}</p>}
@@ -72,7 +72,7 @@ export default async function AvoidImportPage({ searchParams }: { searchParams: 
 
       {note && (
         <div className="rounded-2xl border bg-card p-4 text-sm">
-          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Note{clinic ? ` from ${clinic}` : ""}</p>
+          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Note</p>
           <p className="mt-1 whitespace-pre-line">{note}</p>
         </div>
       )}

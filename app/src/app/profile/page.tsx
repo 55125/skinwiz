@@ -5,6 +5,9 @@ import { ProfileEditor } from "@/components/profile-editor";
 import { getIngredientNames, readProfile } from "@/lib/profile";
 import { SITE_NAME } from "@/lib/brand";
 import { FEATURES } from "@/lib/feature-flags";
+import { EmailSignupCard } from "@/components/email-signup-card";
+import { readDeviceSessionId } from "@/lib/session";
+import { personForSession } from "@/lib/identity";
 
 export const metadata: Metadata = {
   title: "My skin profile",
@@ -15,6 +18,8 @@ export const metadata: Metadata = {
 export default async function ProfilePage() {
   const profile = await readProfile();
   const names = getIngredientNames([...profile.likes, ...profile.dislikes]);
+  const device = await readDeviceSessionId();
+  const person = device ? personForSession(device) : null;
   return (
     <div className="mx-auto max-w-3xl space-y-8 px-4 py-10">
       <PageHeader
@@ -24,6 +29,8 @@ export default async function ProfilePage() {
       />
 
       <ProfileEditor initial={profile} names={names} pregnancyMode={FEATURES.PREGNANCY_MODE} />
+
+      <EmailSignupCard signedInAs={person?.email ?? null} />
 
       <div className="space-y-2 rounded-2xl border bg-muted/40 p-4 text-xs leading-relaxed text-muted-foreground">
         <p>

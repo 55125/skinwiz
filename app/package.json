@@ -16,6 +16,7 @@
     "fetch:youtube-videos": "tsx src/db/fetch-youtube-videos.ts",
     "enrich:pubchem": "tsx src/db/enrich-pubchem.ts",
     "enrich:ewg": "tsx src/db/enrich-ewg.ts",
+    "recalls:backfill": "tsx src/db/backfill-recalls.ts",
     "test": "tsx --test src/db/*.test.ts src/lib/*.test.ts"
   },
   "dependencies": {

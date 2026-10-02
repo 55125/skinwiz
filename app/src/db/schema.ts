@@ -400,3 +400,176 @@ export const labelSections = sqliteTable("label_sections", {
   stopUse: text("stop_use"),
   askDoctor: text("ask_doctor"),
 });
+
+// ---------------------------------------------------------------------------
+// Optional email (lib/identity.ts). There are still no accounts or
+// passwords: a person is just a verified email address that one or more
+// anonymous browser sessions have been linked to by a magic link.
+//
+// homeSessionId is the session id all of a person's session-keyed rows
+// (shelf, regimen, outcomes, votes, routines) live under. It is a fresh
+// random id that is never handed out as a cookie; each linked browser keeps
+// its own sw_session cookie, and lib/session.ts resolves that cookie to the
+// home id through person_sessions. So every existing session-keyed query
+// keeps working unchanged, and signing out one device is just deleting its
+// alias row. All timestamps in these tables are ISO 8601 UTC strings set in
+// JS (not current_timestamp), so string comparison orders them correctly.
+export const people = sqliteTable("people", {
+  id: text("id").primaryKey(), // random uuid
+  email: text("email").notNull().unique(), // lowercased + trimmed
+  homeSessionId: text("home_session_id").notNull().unique(),
+  emailVerifiedAt: text("email_verified_at").notNull(), // a row only exists once verified
+  checkinsEnabled: integer("checkins_enabled", { mode: "boolean" }).notNull().default(true),
+  safetyAlertsEnabled: integer("safety_alerts_enabled", { mode: "boolean" }).notNull().default(true),
+  createdAt: text("created_at").notNull(),
+});
+
+// Browser session (sw_session cookie value) -> person. A session links to
+// at most one person; a person can have many (phone, laptop).
+export const personSessions = sqliteTable(
+  "person_sessions",
+  {
+    sessionId: text("session_id").primaryKey(),
+    personId: text("person_id").notNull().references(() => people.id, { onDelete: "cascade" }),
+    linkedAt: text("linked_at").notNull(),
+  },
+  (table) => [index("person_sessions_person_idx").on(table.personId)],
+);
+
+// One-time sign-in links. Only the SHA-256 of the token is stored, so a
+// database leak can't be replayed into sign-ins. Single use (usedAt) and
+// short-lived (expiresAt, ~15 minutes); the cron job purges rows a day after
+// expiry. requestSessionId is the browser that asked, so its shelf is saved
+// too when the link is opened on another device.
+export const emailTokens = sqliteTable(
+  "email_tokens",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    tokenHash: text("token_hash").notNull().unique(),
+    email: text("email").notNull(),
+    requestSessionId: text("request_session_id"),
+    expiresAt: text("expires_at").notNull(),
+    usedAt: text("used_at"),
+    createdAt: text("created_at").notNull(),
+  },
+  (table) => [index("email_tokens_email_idx").on(table.email, table.createdAt)],
+);
+
+// Longitudinal outcome check-ins (lib/checkins.ts): when a person with a
+// verified email marks a shelf product as opened, one row per follow-up
+// point (2, 4, 8, 12 weeks). productId deliberately has no FK to products:
+// db:seed's orphan check aborts on dangling user-data FKs, and a check-in
+// for a product that later leaves the catalog should just stop, not block a
+// deploy. status: scheduled -> sending -> sent, or skipped | cancelled |
+// expired | failed.
+export const checkins = sqliteTable(
+  "checkins",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    personId: text("person_id").notNull().references(() => people.id, { onDelete: "cascade" }),
+    productId: text("product_id").notNull(),
+    concernId: text("concern_id").notNull(),
+    weeks: integer("weeks").notNull(),
+    startedAt: text("started_at").notNull(),
+    dueAt: text("due_at").notNull(),
+    status: text("status").notNull().default("scheduled"),
+    attempts: integer("attempts").notNull().default(0),
+    claimedAt: text("claimed_at"),
+    sentAt: text("sent_at"),
+    createdAt: text("created_at").notNull(),
+  },
+  (table) => [
+    uniqueIndex("checkins_person_product_weeks_idx").on(table.personId, table.productId, table.weeks),
+    index("checkins_status_due_idx").on(table.status, table.dueAt),
+  ],
+);
+
+// The answers: time-stamped observations of how a concern is going on a
+// product, one per check-in (answering again corrects it). This is the
+// longitudinal data asset (project.md §5); audience_outcomes stays the
+// one-row-per-person input to the public User Score, fed from the 8-week
+// answer (see recordCheckinAnswer in lib/checkins.ts).
+export const outcomeObservations = sqliteTable(
+  "outcome_observations",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    checkinId: integer("checkin_id").unique().references(() => checkins.id, { onDelete: "cascade" }),
+    personId: text("person_id").notNull().references(() => people.id, { onDelete: "cascade" }),
+    productId: text("product_id").notNull(),
+    concernId: text("concern_id").notNull(),
+    weeks: integer("weeks").notNull(), // weeks since starting the product
+    answer: text("answer").notNull(), // "better" | "same" | "worse" | "stopped"
+    reaction: integer("reaction", { mode: "boolean" }), // null = not answered
+    observedAt: text("observed_at").notNull(),
+  },
+  (table) => [index("outcome_observations_product_idx").on(table.productId, table.concernId)],
+);
+
+// FDA drug recalls from the openFDA enforcement API (lib/recalls.ts). Not
+// touched by db:seed; refreshed incrementally by the cron job.
+export const recalls = sqliteTable(
+  "recalls",
+  {
+    recallNumber: text("recall_number").primaryKey(), // e.g. "D-0419-2025"
+    eventId: text("event_id"),
+    classification: text("classification"), // "Class I" | "Class II" | "Class III"
+    status: text("status"), // "Ongoing" | "Completed" | "Terminated" | ...
+    reasonForRecall: text("reason_for_recall"),
+    productDescription: text("product_description").notNull(),
+    codeInfo: text("code_info"),
+    recallingFirm: text("recalling_firm"),
+    recallInitiationDate: text("recall_initiation_date"), // YYYY-MM-DD
+    reportDate: text("report_date"), // YYYY-MM-DD
+    terminationDate: text("termination_date"),
+    productNdcs: text("product_ndcs", { mode: "json" }).$type<string[]>().notNull().default(sql`'[]'`),
+    brandNames: text("brand_names", { mode: "json" }).$type<string[]>().notNull().default(sql`'[]'`),
+    fetchedAt: text("fetched_at").notNull(),
+  },
+  (table) => [index("recalls_report_date_idx").on(table.reportDate)],
+);
+
+// Recall -> catalog product, with how we matched and how sure we are.
+// confidence >= 0.9 is an identifier match (NDC or barcode) and is the only
+// kind emailed; lower values are conservative brand+firm text matches,
+// shown on the product page as "may be affected". Rebuilt on every recall
+// sync, so no FK to products (same db:seed reasoning as checkins).
+export const recallMatches = sqliteTable(
+  "recall_matches",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    recallNumber: text("recall_number").notNull().references(() => recalls.recallNumber, { onDelete: "cascade" }),
+    productId: text("product_id").notNull(),
+    matchType: text("match_type").notNull(), // "ndc" | "ndc_text" | "upc" | "text"
+    confidence: real("confidence").notNull(),
+    matchedOn: text("matched_on").notNull(),
+  },
+  (table) => [
+    uniqueIndex("recall_matches_recall_product_idx").on(table.recallNumber, table.productId),
+    index("recall_matches_product_idx").on(table.productId),
+  ],
+);
+
+// "Exactly once per recall per person": the unique index is the guarantee.
+// A row is claimed (status "sending") before the email goes out.
+export const recallNotifications = sqliteTable(
+  "recall_notifications",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    personId: text("person_id").notNull().references(() => people.id, { onDelete: "cascade" }),
+    recallNumber: text("recall_number").notNull(),
+    productId: text("product_id").notNull(),
+    status: text("status").notNull(), // "sending" | "sent" | "failed"
+    attempts: integer("attempts").notNull().default(1),
+    claimedAt: text("claimed_at").notNull(),
+    sentAt: text("sent_at"),
+  },
+  (table) => [uniqueIndex("recall_notifications_person_recall_idx").on(table.personId, table.recallNumber)],
+);
+
+// Small key/value store for background-job bookkeeping (last recall sync,
+// newest report_date seen).
+export const jobState = sqliteTable("job_state", {
+  key: text("key").primaryKey(),
+  value: text("value").notNull(),
+  updatedAt: text("updated_at").notNull(),
+});

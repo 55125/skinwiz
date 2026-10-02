@@ -57,6 +57,13 @@
       "when": 1790831732201,
       "tag": "0007_contact_allergens",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1790904156268,
+      "tag": "0008_email_checkins_recalls",
+      "breakpoints": true
     }
   ]
 }

@@ -78,6 +78,106 @@ reasonable choice for an MVP at this traffic level; revisit if real
 concurrent write load ever shows up (see `src/db/client.ts`'s comment on
 swapping to `drizzle-orm/postgres-js`).
 
+## Email, outcome check-ins and recall alerts
+
+Optional email on top of the anonymous `sw_session` cookie — still no
+accounts or passwords.
+
+- **Identity** (`src/lib/identity.ts`, `people` / `person_sessions` in
+  `src/db/schema.ts`). Entering an email sends a one-time link (stored as a
+  SHA-256 hash, 15-minute expiry, single use). The link opens
+  `/email/verify`, which only *shows* a confirm button — mail scanners
+  prefetch links, so a GET must never use the token up. Confirming creates
+  (or finds) the person and links the browser. A person's data lives under
+  a random `homeSessionId` that is never a cookie; each linked browser's
+  cookie is an alias, and `lib/session.ts` resolves it, so every existing
+  session-keyed query follows the person to new devices unchanged. Linking
+  an anonymous browser merges its shelf/regimen/outcomes/votes into the
+  person (newer shelf row and outcome win; one vote per person survives).
+  `/account` has preferences, sign-out (unlinks the device and gives it a
+  fresh cookie) and "delete my email and data" (really deletes).
+- **Sending** (`src/lib/email.ts`). Resend's HTTP API when `RESEND_API_KEY`
+  is set; otherwise every email is printed to the server console, so the
+  whole flow works locally with no account. Check-in and recall emails
+  carry `List-Unsubscribe` + `List-Unsubscribe-Post` (one-click) headers and
+  a footer link; each respects its own preference.
+- **Check-ins** (`src/lib/checkins.ts`, `checkin-schedule.ts`). Marking an
+  owned product "In use" (the opened toggle) with a verified email and
+  check-ins on schedules 2/4/8/12-week rows in `checkins`. The email's
+  answer buttons (better / same / worse / stopped) open
+  `/checkin/[signed token]` with the answer pre-selected; one tap on "Save
+  answer" records an `outcome_observations` row (with an optional
+  reaction flag). Again a confirm tap rather than record-on-GET, because
+  link scanners open all four links. **User Score rule:** only the 8-week
+  answer feeds `audience_outcomes` (the 12-week answer stands in if 8 was
+  never answered); better = improved, same/worse = not improved, stopped
+  = not scored (kept as an observation for drop-out analysis). This keeps
+  the score "% reporting improvement at 8 weeks" (project.md §5) and one
+  row per person.
+- **Recalls** (`src/lib/recalls.ts`, `recall-match.ts`). Drug recalls from
+  the openFDA enforcement API, pulled incrementally by `report_date`
+  (at most every 6 hours; an incremental sync is one or two requests,
+  paced well under openFDA's limits; `OPENFDA_API_KEY` optional), plus a
+  weekly status refresh of matched, still-open recalls. Matching: NDC from
+  `openfda.product_ndc` (confidence 1.0), NDC printed in the recall text
+  (0.95), barcode / drug UPC (0.9–0.95); otherwise a conservative
+  same-firm + every-distinctive-name-word text match (0.6–0.75, never when
+  the recall lists its own different NDC, never across product forms).
+  Matches show as a banner on the product page and under "Safety alerts" on
+  `/shelf`; only identifier matches (≥ 0.9) are emailed, once per recall
+  per person (unique index on `recall_notifications`), and only for recalls
+  reported in the last year that aren't terminated.
+  `npm run recalls:backfill` loads the last 3 years (`-- --years=N`;
+  `-- --rematch-only` re-runs matching without fetching).
+
+### The cron job
+
+`POST /api/cron/run` with `Authorization: Bearer $CRON_SECRET` runs the
+recall sync + alerts, sends due check-ins and purges expired sign-in
+tokens. Idempotent and safe to call every hour (rows are claimed before
+sending; a second overlapping call gets 409). The anti-scrape proxy lets
+`/api/cron/*` through only when the bearer secret is correct. Outside
+production, `?now=2026-12-01T00:00:00Z` fakes the clock; `?jobs=checkins`
+limits what runs.
+
+Schedule it hourly — not set up yet. Either:
+
+1. **Railway cron service** (same project): new service from the
+   `curlimages/curl` image (or any image with curl), Settings → Cron
+   Schedule `0 * * * *`, start command
+   `curl -fsS -X POST -H "Authorization: Bearer $CRON_SECRET" https://activelyskin.com/api/cron/run`,
+   with `CRON_SECRET` set as a shared/reference variable. The service runs,
+   exits, and is billed only for those seconds.
+2. **External pinger** (cron-job.org, GitHub Actions `schedule:`, etc.)
+   sending the same POST with the header.
+
+### Environment variables
+
+| Variable | Required | Purpose |
+| --- | --- | --- |
+| `APP_SECRET` | production | 32+ random chars; signs check-in and unsubscribe links (`openssl rand -base64 48`). Rotating it invalidates links in emails already sent. |
+| `CRON_SECRET` | for the job | 24+ random chars; bearer token for `/api/cron/run`. |
+| `RESEND_API_KEY` | to send real email | Without it, email is logged to the console. |
+| `EMAIL_FROM` | with Resend | e.g. `Actively <hello@mail.activelyskin.com>`; must be on a domain verified in Resend. |
+| `EMAIL_REPLY_TO` | no | Where replies go (e.g. the legal inbox). |
+| `OPENFDA_API_KEY` | no | Raises openFDA's limit from 1,000 to 120,000 requests/day; not needed at hourly cadence. |
+| `SITE_URL` | already set | Base for links in emails. Set it to `http://localhost:PORT` when testing locally. |
+
+### Owner setup before turning on real email
+
+1. Create a Resend account and add a sending domain — a subdomain such as
+   `mail.activelyskin.com` keeps the apex's reputation separate.
+2. Add the DNS records Resend shows, in Cloudflare (DNS only / grey cloud):
+   the DKIM `TXT` record (`resend._domainkey…`), the SPF `TXT` and `MX`
+   records on the `send.` bounce subdomain, then a DMARC record, e.g.
+   `_dmarc.activelyskin.com TXT "v=DMARC1; p=none; rua=mailto:<you>"`
+   (tighten to `quarantine` once reports look clean). Wait for "Verified".
+3. In Railway set `RESEND_API_KEY`, `EMAIL_FROM`, `APP_SECRET`,
+   `CRON_SECRET` (and optionally `EMAIL_REPLY_TO`, `OPENFDA_API_KEY`).
+4. Deploy (migration `0008` adds the new tables), run
+   `npm run recalls:backfill` once in the Railway shell (or let the first
+   cron run fetch the same 3 years), then add the hourly cron.
+
 ## What's real vs. not
 
 This matters more than usual for a health product — read before demoing.

@@ -13,19 +13,14 @@ import {
   allergenLabel,
   labelNames,
   normalizeForAllergens,
+  searchAllergens,
   type ContactAllergen,
 } from "@/db/contact-allergens";
 import { PatchTestPaste } from "@/components/patch-test-paste";
+import { PatchTestSeriesPicker } from "@/components/patch-test-checklist";
 import { cn } from "@/lib/utils";
 
-// Every name an allergen goes by, normalized once, so searching a patch-test
-// sheet's wording ("Kathon CG", "Lyral", "wool alcohols") finds the entry.
-const SEARCH_INDEX = CONTACT_ALLERGENS.map((a) => ({
-  allergen: a,
-  haystack: normalizeForAllergens([a.name, ...labelNames(a), ...(a.aka ?? [])].join(" | ")),
-}));
-
-export function AvoidListEditor({ initialIds, pasteOpen }: { initialIds: string[]; pasteOpen?: boolean }) {
+export function AvoidListEditor({ initialIds, pasteOpen, seriesOpen }: { initialIds: string[]; pasteOpen?: boolean; seriesOpen?: boolean }) {
   const router = useRouter();
   const [ids, setIds] = useState<Set<string>>(new Set(initialIds));
   const [saved, setSaved] = useState(true);
@@ -55,6 +50,12 @@ export function AvoidListEditor({ initialIds, pasteOpen }: { initialIds: string[
     });
   }
 
+  function addAndSave(picked: string[]) {
+    const next = new Set([...ids, ...picked]);
+    setIds(next);
+    save(next);
+  }
+
   const groups = [
     { title: "Common preferences", items: FREE_FROM_CHECKS.filter((c) => c.category === "clean") },
     { title: "Skin type & lifestyle", items: FREE_FROM_CHECKS.filter((c) => c.category === "skin") },
@@ -62,14 +63,10 @@ export function AvoidListEditor({ initialIds, pasteOpen }: { initialIds: string[
 
   return (
     <div className="space-y-8">
-      <PatchTestPaste
-        defaultOpen={pasteOpen}
-        onAdd={(picked) => {
-          const next = new Set([...ids, ...picked]);
-          setIds(next);
-          save(next);
-        }}
-      />
+      <div className="space-y-3">
+        <PatchTestPaste defaultOpen={pasteOpen} onAdd={addAndSave} />
+        <PatchTestSeriesPicker defaultOpen={seriesOpen} onAdd={addAndSave} />
+      </div>
 
       <AllergenPicker ids={ids} toggle={toggle} />
 
@@ -103,7 +100,7 @@ export function AvoidListEditor({ initialIds, pasteOpen }: { initialIds: string[
 function AllergenPicker({ ids, toggle }: { ids: Set<string>; toggle: (id: string) => void }) {
   const [query, setQuery] = useState("");
   const q = normalizeForAllergens(query);
-  const results = useMemo(() => (q.length >= 2 ? SEARCH_INDEX.filter((e) => e.haystack.includes(q)).map((e) => e.allergen) : []), [q]);
+  const results = useMemo(() => searchAllergens(q), [q]);
   const selectedAllergens = [...ids].filter((id) => allergenLabel(id));
   // Which selected family covers an allergen, so its own box can say so.
   const coveredBy = new Map<string, string>();

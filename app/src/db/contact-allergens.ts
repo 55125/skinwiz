@@ -512,6 +512,17 @@ export const CONTACT_ALLERGENS: ContactAllergen[] = [
     unless: ["bergamot mint"],
     note: "Phototoxic as well as allergenic: its furanocoumarins cause a sunburn-like reaction and dark streaks after sun exposure.",
   },
+  // T.R.U.E. Test and NACDG screening allergen. Sources: Fonacier et al.,
+  // AAAAI Practice Parameter, 2015; DeKoven et al., NACDG patch-test results
+  // 2019-2020, Dermatitis, 2023.
+  {
+    id: "colophonium",
+    name: "Colophonium (rosin)",
+    section: "botanical",
+    terms: ["colophonium", "colophony", "rosin", "*rosinate", "abietic acid", "abietyl alcohol", "hydroabietyl alcohol", "methyl abietate"],
+    aka: ["Colophony", "Abietic acid", "Glyceryl rosinate"],
+    note: "Pine resin. In mascara, eyeliner, lip products, depilatory wax, nail products and adhesives (bandages, lash glue). Modified rosins such as glyceryl rosinate are flagged too, since they can still cross-react.",
+  },
 
   // --- 8. Antioxidants ---
   {
@@ -607,6 +618,34 @@ export const CONTACT_ALLERGENS: ContactAllergen[] = [
   { id: "lidocaine", name: "Lidocaine", section: "medicament", terms: ["lidocaine", "lignocaine"] },
   { id: "pramoxine", name: "Pramoxine", section: "medicament", terms: ["pramoxine", "pramocaine"] },
   { id: "dyclonine", name: "Dyclonine", section: "medicament", terms: ["dyclonine"] },
+  // Dibucaine and tetracaine make up the T.R.U.E. Test caine mix with
+  // benzocaine. Source: Fonacier et al., AAAAI Practice Parameter, 2015.
+  {
+    id: "dibucaine",
+    name: "Dibucaine",
+    section: "medicament",
+    terms: ["dibucaine", "cinchocaine"],
+    note: "An amide anesthetic in OTC hemorrhoid and sunburn ointments.",
+  },
+  {
+    id: "tetracaine",
+    name: "Tetracaine",
+    section: "medicament",
+    terms: ["tetracaine", "amethocaine"],
+    note: "An ester anesthetic in numbing creams and gels; can cross-react with benzocaine.",
+  },
+  // T.R.U.E. Test and NACDG screening allergen. Sources: Fonacier et al.,
+  // 2015; DeKoven et al., NACDG 2019-2020, Dermatitis, 2023.
+  {
+    id: "ethylenediamine",
+    name: "Ethylenediamine",
+    section: "medicament",
+    terms: ["ethylenediamine", "ethylene diamine"],
+    unless: ["ethylenediamine tetraacetic", "ethylene diamine tetraacetic", "ethylenediamine disuccinate", "ethylenediamine tetramethylene"],
+    aka: ["Ethylenediamine dihydrochloride"],
+    note: "A stabilizer in some prescription creams. Can cross-react with the antihistamines hydroxyzine and cetirizine and with aminophylline. The chelators EDTA and EDDS on cosmetic labels are not flagged.",
+    rare: true,
+  },
   {
     id: "diphenhydramine",
     name: "Diphenhydramine",
@@ -624,6 +663,16 @@ export const CONTACT_ALLERGENS: ContactAllergen[] = [
     section: "metal",
     terms: ["chromium", "dichromate", "chromate", "ci 77288", "ci 77289"],
     note: "Less common in personal care. Chromium oxide green pigments (CI 77288/77289) are flagged too.",
+  },
+  // T.R.U.E. Test and NACDG screening allergen (gold sodium thiosulfate).
+  // Sources: Fonacier et al., 2015; DeKoven et al., NACDG 2019-2020, 2023.
+  {
+    id: "gold",
+    name: "Gold",
+    section: "metal",
+    terms: ["gold", "colloidal gold", "ci 77480"],
+    aka: ["Gold sodium thiosulfate"],
+    note: "A frequent positive patch test that is often not clinically relevant; reactions mostly come from jewelry and dental work. Gold flakes and colloidal gold turn up in some luxury skincare.",
   },
 
   // --- 12. Acrylates ---
@@ -775,6 +824,20 @@ export function concealableByFragrance(allergenId: string): boolean {
   return allergenId !== "fragrance" && BY_ID.get(allergenId)?.section === "fragrance";
 }
 
+// A positive to one of these usually means avoiding the whole family:
+// offered next to it on results sheets and series checklists, ticked by
+// default only where that's the standard advice.
+export const PATCH_TEST_FAMILY: Record<string, { id: string; byDefault: boolean }> = {
+  formaldehyde: { id: "formaldehyde-and-releasers", byDefault: true },
+  ppd: { id: "ppd-type-dyes", byDefault: true },
+  ptd: { id: "ppd-type-dyes", byDefault: true },
+  "decyl-glucoside": { id: "glucosides", byDefault: false },
+  "lauryl-glucoside": { id: "glucosides", byDefault: false },
+  "coco-glucoside": { id: "glucosides", byDefault: false },
+  methylisothiazolinone: { id: "isothiazolinones", byDefault: false },
+  "mci-mi": { id: "isothiazolinones", byDefault: false },
+};
+
 // --- Matching ---
 
 /** Lowercase, accent-free, with separators folded to single spaces and "1,3-" digit commas joined. */
@@ -860,6 +923,19 @@ export function allergenBlockers(id: string): string[] {
 /** The label names an allergen is matched on, for display ("*paraben*" -> "paraben"). */
 export function labelNames(a: ContactAllergen): string[] {
   return [...new Set(a.terms.map((t) => t.replace(/\*/g, "")))];
+}
+
+// Every name an allergen goes by, normalized once, so searching a patch-test
+// sheet's wording ("Kathon CG", "Lyral", "wool alcohols") finds the entry.
+const SEARCH_INDEX = CONTACT_ALLERGENS.map((a) => ({
+  allergen: a,
+  haystack: normalizeForAllergens([a.name, ...labelNames(a), ...(a.aka ?? [])].join(" | ")),
+}));
+
+/** Allergens any of whose names contain the query (2+ characters), in list order. */
+export function searchAllergens(query: string): ContactAllergen[] {
+  const q = normalizeForAllergens(query);
+  return q.length >= 2 ? SEARCH_INDEX.filter((e) => e.haystack.includes(q)).map((e) => e.allergen) : [];
 }
 
 // --- Patch-test results ---

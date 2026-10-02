@@ -129,3 +129,47 @@ Neutrogena Mineral Invisible Daily Defense Face Sunscreen Broad Spectrum SPF 30 
 - `output/acne_sun_unmatched.csv` — 21,266 rows with no resolvable NDC from openFDA, real ingredient/purpose data
 - `output/dailymed_resolved_catalog.csv` — 4,747 more rows recovered from that unmatched set via DailyMed (see above); same column schema, seed.ts reads both
 - `output/catalog_summary.json` — run stats for the primary build (by-niche breakdown)
+
+# build_rx_catalog.py (Rx catalog, 2026-10-02)
+
+Prescription dermatology products for the Rx reference pages and the
+clinician handout builder (business-plan.md §3). Scoped by a fixed list of
+generics (topical retinoids, acne, rosacea, topical corticosteroids,
+non-steroidal anti-inflammatories, antifungals, mupirocin / fluorouracil /
+imiquimod / hydroquinone, and the orals dermatologists co-prescribe:
+doxycycline, minocycline, sarecycline, spironolactone, terbinafine,
+fluconazole; isotretinoin as informational only). See the script docstring
+for the filters (Rx product type, topical/oral route, finished, still
+marketed, original packager only).
+
+```bash
+python3 build_rx_catalog.py          # ~100 openFDA requests
+```
+
+Outputs `output/rx_catalog.csv` (one row per product NDC, with
+`package_descriptions`, `marketing_category`, per-ingredient percent
+strengths in `ingredients_json`) and `output/rx_label_sections.csv`
+(indications, dosage & administration, boxed warning, contraindications,
+warnings, pregnancy, lactation per SPL set id, each capped at 6,000
+characters). Steroid potency classes are assigned at seed time from
+`app/src/db/steroid-potency.ts`, not here.
+
+Run 2026-10-02: 1,352 products (retinoid 112, acne 201, rosacea 35,
+corticosteroid 444, non-steroidal 21, antifungal 114, other 54, oral 371 of
+which 97 isotretinoin), 965 labels, 29 with a boxed warning. Skipped 1,590
+listings for route (oral tretinoin, vaginal/ophthalmic/nasal/injectable
+forms), 1,038 repackager listings, 5 combination orals, 2 ended listings.
+
+Known data-quality issues: a handful of listings carry unit errors in their
+filed strength (clobetasol spray filed as `.05 g/mL` = 5%, Wynzora as
+`64 mg/g`, Psorcon cream as `5 mg/g`); they're kept as filed and the potency
+mapping leaves them unclassified rather than guessing.
+
+# fetch_otc_package_info.py
+
+Package descriptions ("1 TUBE in 1 CARTON / 45 g in 1 TUBE") and marketing
+category for the OTC drug rows, from the NDC directory, written to
+`output/otc_package_info.csv` and joined by the seed on product_ndc (for
+price per ounce, the homeopathic HSA exclusion and NDA/ANDA detection).
+2026-10-02: 10,586 of 15,384 NDCs found (most DailyMed-resolved NDCs aren't
+in the NDC directory; those stay unknown).

@@ -40,6 +40,23 @@ function freeFromWhereClauses(freeFromIds: string[]): SQL[] {
   });
 }
 
+// Products that are assessed (full ingredient list) and contain none of
+// these ingredients, neither in the list nor as a labelled active. Used by
+// the pregnancy filter; unassessed products are left out, as with every
+// filter here -- "couldn't check" is never "clear".
+function excludesIngredientsClause(ids: string[]): SQL {
+  if (ids.length === 0) return sql`${products.freeFromFlags} IS NOT NULL`;
+  const list = sql.join(ids.map((i) => sql`${i}`), sql`, `);
+  return sql`(${products.freeFromFlags} IS NOT NULL
+    AND NOT EXISTS (SELECT 1 FROM product_ingredients pi WHERE pi.product_id = ${products.id} AND pi.ingredient_id IN (${list}))
+    AND NOT EXISTS (SELECT 1 FROM json_each(${products.activeIds}) WHERE json_each.value IN (${list})))`;
+}
+
+/** Every ingredient id in the catalog (for matching slug patterns in code). */
+export function getAllIngredientIds(): string[] {
+  return db.all<{ id: string }>(sql`SELECT id FROM ingredients`).map((r) => r.id);
+}
+
 /** How many assessed products list each contact allergen. */
 export function getAllergenProductCounts(): Map<string, number> {
   const rows = db.all<{ id: string; n: number }>(sql`
@@ -104,9 +121,11 @@ export function getProductsForConcern(
   activeId?: string,
   freeFromIds: string[] = [],
   strengthPct?: number,
+  excludeIngredientIds?: string[],
 ) {
   const offset = (page - 1) * PAGE_SIZE;
   const clauses = [eq(products.concernId, concernId), ...freeFromWhereClauses(freeFromIds)];
+  if (excludeIngredientIds) clauses.push(excludesIngredientsClause(excludeIngredientIds));
   if (activeId) {
     clauses.push(jsonArrayContains(products.activeIds, activeId));
     if (strengthPct !== undefined) clauses.push(sql`${strengthExpr(activeId)} = ${strengthPct}`);
@@ -122,10 +141,18 @@ export function getProductsForConcern(
 // The general catalog browser (/browse) -- every filter here is optional,
 // unlike getProductsForConcern where concernId is required. Same query
 // shape otherwise (paginated rows + a real COUNT(*), not a capped length).
-export type BrowseFilters = { concernId?: string; dataSources?: string[]; activeId?: string; freeFromIds?: string[]; hsaOnly?: boolean };
+export type BrowseFilters = {
+  concernId?: string;
+  dataSources?: string[];
+  activeId?: string;
+  freeFromIds?: string[];
+  hsaOnly?: boolean;
+  excludeIngredientIds?: string[];
+};
 
 export function browseWhere(filters: BrowseFilters): SQL | undefined {
   const clauses = [...freeFromWhereClauses(filters.freeFromIds ?? [])];
+  if (filters.excludeIngredientIds) clauses.push(excludesIngredientsClause(filters.excludeIngredientIds));
   if (filters.concernId) clauses.push(eq(products.concernId, filters.concernId));
   if (filters.dataSources && filters.dataSources.length > 0) clauses.push(inArray(products.dataSource, filters.dataSources));
   if (filters.activeId) clauses.push(jsonArrayContains(products.activeIds, filters.activeId));

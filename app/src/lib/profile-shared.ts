@@ -25,7 +25,7 @@ export const PROFILE_CONCERNS: { id: string; label: string; boosters: string[] }
   { id: "sun", label: "Sun protection", boosters: ["zinc-oxide", "titanium-dioxide", "avobenzone", "octocrylene", "homosalate"] },
 ];
 
-function boosterHit(pattern: string, id: string): boolean {
+export function boosterHit(pattern: string, id: string): boolean {
   if (pattern.startsWith("*") && pattern.endsWith("*")) return id.includes(pattern.slice(1, -1));
   if (pattern.endsWith("*")) return id.startsWith(pattern.slice(0, -1));
   return id === pattern;
@@ -38,8 +38,10 @@ function hitsFor(patterns: string[], ids: Iterable<string>): string[] {
   });
 }
 
-export type Profile = { skin: string | null; concerns: string[]; likes: string[]; dislikes: string[] };
-export const EMPTY_PROFILE: Profile = { skin: null, concerns: [], likes: [], dislikes: [] };
+// pregnant / breastfeeding only drive the pregnancy & lactation notices
+// (db/pregnancy-lactation.ts); they never change the match score.
+export type Profile = { skin: string | null; concerns: string[]; likes: string[]; dislikes: string[]; pregnant: boolean; breastfeeding: boolean };
+export const EMPTY_PROFILE: Profile = { skin: null, concerns: [], likes: [], dislikes: [], pregnant: false, breastfeeding: false };
 
 const SKIN_IDS = new Set<string>(SKIN_TYPES.map((s) => s.id));
 const CONCERN_IDS = new Set(PROFILE_CONCERNS.map((c) => c.id));
@@ -58,12 +60,15 @@ export function sanitizeProfile(input: unknown): Profile {
     concerns: Array.isArray(o.concerns) ? [...new Set(o.concerns.filter((c): c is string => typeof c === "string" && CONCERN_IDS.has(c)))] : [],
     dislikes,
     likes: slugList(o.likes).filter((l) => !dislikes.includes(l)),
+    pregnant: o.pregnant === true,
+    breastfeeding: o.breastfeeding === true,
   };
 }
 
 // s=oily|c=acne,aging|l=a,b|d=x -- only [a-z0-9,-=|] so no cookie escaping.
+// |p=1 / |b=1 are appended only when set, so existing cookies parse as-is.
 export function serializeProfile(p: Profile): string {
-  return `s=${p.skin ?? ""}|c=${p.concerns.join(",")}|l=${p.likes.join(",")}|d=${p.dislikes.join(",")}`;
+  return `s=${p.skin ?? ""}|c=${p.concerns.join(",")}|l=${p.likes.join(",")}|d=${p.dislikes.join(",")}${p.pregnant ? "|p=1" : ""}${p.breastfeeding ? "|b=1" : ""}`;
 }
 
 export function parseProfile(raw: string | undefined): Profile {
@@ -74,11 +79,17 @@ export function parseProfile(raw: string | undefined): Profile {
     if (i > 0) f[part.slice(0, i)] = part.slice(i + 1);
   }
   const list = (s: string | undefined) => (s ? s.split(",").filter(Boolean) : []);
-  return sanitizeProfile({ skin: f.s, concerns: list(f.c), likes: list(f.l), dislikes: list(f.d) });
+  return sanitizeProfile({ skin: f.s, concerns: list(f.c), likes: list(f.l), dislikes: list(f.d), pregnant: f.p === "1", breastfeeding: f.b === "1" });
 }
 
+/** Whether the profile has anything the match score uses. */
 export function hasProfile(p: Profile): boolean {
   return !!p.skin || p.concerns.length > 0 || p.likes.length > 0 || p.dislikes.length > 0;
+}
+
+/** Whether there's anything worth keeping in the cookie at all. */
+export function hasProfileData(p: Profile): boolean {
+  return hasProfile(p) || p.pregnant || p.breastfeeding;
 }
 
 // ---- scoring -------------------------------------------------------------

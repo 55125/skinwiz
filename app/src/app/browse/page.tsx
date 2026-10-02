@@ -16,8 +16,11 @@ import { SITE_NAME } from "@/lib/brand";
 import { parseFreeParam } from "@/lib/avoid-shared";
 import { AvoidSwitch } from "@/components/avoid-switch";
 import { HSA_GUIDE_PATH } from "@/lib/hsa";
+import { FEATURES } from "@/lib/feature-flags";
+import { PREGNANCY_FILTER_VALUE, pregnancyAvoidIngredientIds } from "@/lib/pregnancy";
+import { PregnancyFilter } from "@/components/pregnancy-notice";
 
-type BrowseParams = { concern?: string; tier?: string; active?: string; free?: string; hsa?: string; sort?: string; page?: string };
+type BrowseParams = { concern?: string; tier?: string; active?: string; free?: string; hsa?: string; sort?: string; page?: string; pregnancy?: string };
 
 export async function generateMetadata({ searchParams }: { searchParams: Promise<BrowseParams> }): Promise<Metadata> {
   return {
@@ -66,7 +69,7 @@ export default async function BrowsePage({
 }: {
   searchParams: Promise<BrowseParams>;
 }) {
-  const { concern, tier, active, free, hsa: hsaParam, sort: sortParam, page: pageParam } = await searchParams;
+  const { concern, tier, active, free, hsa: hsaParam, sort: sortParam, page: pageParam, pregnancy: pregnancyParam } = await searchParams;
   const hsa = hsaParam === "1" ? "1" : undefined;
   const page = Math.max(1, parseInt(pageParam ?? "1", 10) || 1);
   const freeFromIds = parseFreeParam(free);
@@ -78,18 +81,29 @@ export default async function BrowsePage({
   const avoidIds = await readAvoidIds();
   const canMatch = hasProfile(profile) || avoidIds.length > 0;
   const sort = sortParam === "match" && canMatch ? "match" : sortParam === "name" ? "name" : undefined;
-  const queryFilters = { concernId: concern, dataSources: selectedTier?.dataSources, activeId: active, freeFromIds, hsaOnly: !!hsa };
+  // Gated pregnancy filter: offered once the profile says pregnant; a
+  // ?pregnancy=hide link keeps working while the flag is on.
+  const pregnancy = FEATURES.PREGNANCY_MODE && pregnancyParam === PREGNANCY_FILTER_VALUE ? PREGNANCY_FILTER_VALUE : undefined;
+  const showPregnancyFilter = FEATURES.PREGNANCY_MODE && (!!pregnancy || profile.pregnant);
+  const queryFilters = {
+    concernId: concern,
+    dataSources: selectedTier?.dataSources,
+    activeId: active,
+    freeFromIds,
+    hsaOnly: !!hsa,
+    excludeIngredientIds: pregnancy ? pregnancyAvoidIngredientIds() : undefined,
+  };
 
   const { rows, total, pageSize } =
     sort === "match"
       ? browseProductsByMatch(queryFilters, page, (all) => scoreProducts(all, profile, avoidIds))
       : browseProducts(queryFilters, page, sort);
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
-  const activeFilterCount = [concern, selectedTier, active, hsa].filter(Boolean).length + freeFromIds.length;
+  const activeFilterCount = [concern, selectedTier, active, hsa, pregnancy].filter(Boolean).length + freeFromIds.length;
 
   function hrefWith(overrides: Record<string, string | undefined>) {
     const params = new URLSearchParams();
-    const merged = { concern, tier, active, free, hsa, sort, page: undefined as string | undefined, ...overrides };
+    const merged = { concern, tier, active, free, hsa, sort, pregnancy, page: undefined as string | undefined, ...overrides };
     for (const [k, v] of Object.entries(merged)) if (v) params.set(k, v);
     const qs = params.toString();
     return `/browse${qs ? `?${qs}` : ""}`;
@@ -189,7 +203,16 @@ export default async function BrowsePage({
         </p>
       </SidebarGroup>
 
-      <FreeFromFilters basePath="/browse" searchParams={{ concern, tier, active, free, hsa, sort }} selected={freeFromIds} />
+      <FreeFromFilters
+        basePath="/browse"
+        searchParams={{ concern, tier, active, free, hsa, sort, pregnancy }}
+        selected={freeFromIds}
+        extra={
+          showPregnancyFilter ? (
+            <PregnancyFilter href={hrefWith({ pregnancy: pregnancy ? undefined : PREGNANCY_FILTER_VALUE })} selected={!!pregnancy} />
+          ) : undefined
+        }
+      />
     </div>
   );
 

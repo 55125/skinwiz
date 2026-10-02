@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { PROFILE_COOKIE, PROFILE_COOKIE_MAX_AGE, hasProfile, parseProfile, sanitizeProfile, serializeProfile } from "@/lib/profile";
+import { PROFILE_COOKIE, PROFILE_COOKIE_MAX_AGE, hasProfileData, parseProfile, sanitizeProfile, serializeProfile } from "@/lib/profile";
 import { rateLimit, readJsonBody } from "@/lib/api-guard";
 
 export async function POST(request: Request) {
@@ -27,7 +27,7 @@ export async function POST(request: Request) {
     next = sanitizeProfile(body);
   }
 
-  if (!hasProfile(next)) store.delete(PROFILE_COOKIE);
+  if (!hasProfileData(next)) store.delete(PROFILE_COOKIE);
   else store.set(PROFILE_COOKIE, serializeProfile(next), { httpOnly: true, sameSite: "lax", maxAge: PROFILE_COOKIE_MAX_AGE });
   return NextResponse.json({ ok: true, profile: next });
 }

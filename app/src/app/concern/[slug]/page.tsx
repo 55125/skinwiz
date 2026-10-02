@@ -13,8 +13,14 @@ import { JsonLd } from "@/components/json-ld";
 import { siteUrl } from "@/lib/site-url";
 import { parseFreeParam } from "@/lib/avoid-shared";
 import { AvoidSwitch } from "@/components/avoid-switch";
+import { FEATURES } from "@/lib/feature-flags";
+import { readProfile } from "@/lib/profile";
+import { PREGNANCY_FILTER_PARAM, PREGNANCY_FILTER_VALUE, pregnancyAvoidIngredientIds } from "@/lib/pregnancy";
+import { PregnancyFilter } from "@/components/pregnancy-notice";
+import { escalationFor } from "@/db/escalation-guidance";
+import { EscalationPanel } from "@/components/escalation-guidance";
 
-type ConcernParams = { page?: string; active?: string; free?: string; strength?: string };
+type ConcernParams = { page?: string; active?: string; free?: string; strength?: string; pregnancy?: string };
 
 export async function generateMetadata({
   params,
@@ -42,7 +48,7 @@ export default async function ConcernPage({
   searchParams: Promise<ConcernParams>;
 }) {
   const { slug } = await params;
-  const { page: pageParam, active, free, strength } = await searchParams;
+  const { page: pageParam, active, free, strength, pregnancy } = await searchParams;
   const concern = getConcern(slug);
   if (!concern) notFound();
 
@@ -56,29 +62,61 @@ export default async function ConcernPage({
   // reachable via the URL and "All strengths", just not as chips.
   const strengthOptions = allStrengthOptions.filter((o) => o.count >= 3);
   const strengthPct = strength !== undefined && allStrengthOptions.some((o) => String(o.pct) === strength) ? Number(strength) : undefined;
-  const { rows, total, pageSize } = getProductsForConcern(slug, page, active, freeFromIds, strengthPct);
+  // Pregnancy filter (gated): only offered once the profile says pregnant,
+  // but an existing ?pregnancy=hide link keeps working while the flag is on.
+  const pregnancyMode = FEATURES.PREGNANCY_MODE;
+  const pregnancyHide = pregnancyMode && pregnancy === PREGNANCY_FILTER_VALUE;
+  const showPregnancyFilter = pregnancyMode && (pregnancyHide || (await readProfile()).pregnant);
+  const preg = pregnancyHide ? `&${PREGNANCY_FILTER_PARAM}=${PREGNANCY_FILTER_VALUE}` : "";
+  const { rows, total, pageSize } = getProductsForConcern(
+    slug,
+    page,
+    active,
+    freeFromIds,
+    strengthPct,
+    pregnancyHide ? pregnancyAvoidIngredientIds() : undefined,
+  );
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
-  const pageLinkSuffix = `${active ? `&active=${active}` : ""}${free ? `&free=${free}` : ""}${strengthPct !== undefined ? `&strength=${strengthPct}` : ""}`;
+  const pageLinkSuffix = `${active ? `&active=${active}` : ""}${free ? `&free=${free}` : ""}${strengthPct !== undefined ? `&strength=${strengthPct}` : ""}${preg}`;
   const strengthHref = (pct?: number) =>
-    `/concern/${slug}?active=${active}${free ? `&free=${free}` : ""}${pct !== undefined ? `&strength=${pct}` : ""}`;
+    `/concern/${slug}?active=${active}${free ? `&free=${free}` : ""}${pct !== undefined ? `&strength=${pct}` : ""}${preg}`;
+  const pregnancyToggleHref = (() => {
+    const qs = new URLSearchParams();
+    if (active) qs.set("active", active);
+    if (free) qs.set("free", free);
+    if (strengthPct !== undefined) qs.set("strength", String(strengthPct));
+    if (!pregnancyHide) qs.set(PREGNANCY_FILTER_PARAM, PREGNANCY_FILTER_VALUE);
+    const q = qs.toString();
+    return `/concern/${slug}${q ? `?${q}` : ""}`;
+  })();
+  const escalation = FEATURES.ESCALATION_GUIDANCE ? escalationFor(slug) : undefined;
 
   return (
     <div className="mx-auto max-w-6xl space-y-8 px-4 py-10">
       <JsonLd data={breadcrumbLd(siteUrl(), [["Home", "/"], [concern.name, `/concern/${slug}`]])} />
       <PageHeader eyebrow="Concern" title={concern.name} description={concern.description} />
 
-      <RedFlagBanner />
+      {escalation ? (
+        <div className="space-y-2">
+          <RedFlagBanner />
+          <a href="#otc-not-enough" className="inline-block text-sm font-medium text-brand hover:underline">
+            When OTC isn&apos;t enough: how long to try, and when to see a dermatologist ↓
+          </a>
+        </div>
+      ) : (
+        <RedFlagBanner />
+      )}
 
       <div className="space-y-3">
         <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Active ingredient</p>
         <div className="flex flex-wrap gap-1.5">
-          <FilterChip href={`/concern/${slug}${free ? `?free=${free}` : ""}`} selected={!active}>
+          <FilterChip href={`/concern/${slug}${`${free ? `&free=${free}` : ""}${preg}`.replace(/^&/, "?")}`} selected={!active}>
             All actives
           </FilterChip>
           {activesList.map((a) => (
             <FilterChip
               key={a.id}
-              href={`/concern/${slug}?active=${a.id}${free ? `&free=${free}` : ""}`}
+              href={`/concern/${slug}?active=${a.id}${free ? `&free=${free}` : ""}${preg}`}
               selected={active === a.id}
             >
               {a.canonicalName}
@@ -105,7 +143,12 @@ export default async function ConcernPage({
         </div>
       )}
 
-      <FreeFromFilters basePath={`/concern/${slug}`} searchParams={{ active, free }} selected={freeFromIds} />
+      <FreeFromFilters
+        basePath={`/concern/${slug}`}
+        searchParams={{ active, free, [PREGNANCY_FILTER_PARAM]: pregnancyHide ? PREGNANCY_FILTER_VALUE : undefined }}
+        selected={freeFromIds}
+        extra={showPregnancyFilter ? <PregnancyFilter href={pregnancyToggleHref} selected={pregnancyHide} /> : undefined}
+      />
 
       <div className="space-y-4">
         <AvoidSwitch basePath={`/concern/${slug}`} searchParams={{ active, free }} selected={freeFromIds} />
@@ -121,6 +164,8 @@ export default async function ConcernPage({
           hrefFor={(p) => `/concern/${slug}?page=${p}${pageLinkSuffix}`}
         />
       </div>
+
+      {escalation && <EscalationPanel guidance={escalation} concernName={concern.name} />}
     </div>
   );
 }

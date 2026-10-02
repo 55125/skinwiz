@@ -1,0 +1,512 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Actively pregnancy mode &amp; escalation guidance — draft for review</title>
+<style>
+:root{--ink:#141b24;--muted:#5d646c;--line:#d7d4cc;--paper:#f6f4ee;--card:#fff;--teal:#006761;--amber:#8a5a00}
+body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.6 Georgia, "Times New Roman", serif}
+main{max-width:960px;margin:0 auto;padding:40px 20px 80px}
+h1{font-size:32px;margin:0 0 4px} h2{font-size:24px;margin:48px 0 12px;padding-bottom:6px;border-bottom:2px solid var(--teal)}
+h3{font:600 18px/1.3 system-ui,sans-serif;margin:0 0 8px} h4{font:600 13px system-ui,sans-serif;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin:14px 0 4px}
+code{font:12px ui-monospace,monospace;color:var(--muted);background:#eeece5;padding:1px 6px;border-radius:4px;margin-left:6px}
+.order{font:12px system-ui,sans-serif;color:var(--muted);margin-left:6px}
+article{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 20px;margin:14px 0;break-inside:avoid}
+ul{margin:4px 0;padding-left:22px} .meta,.sources{font-family:system-ui,sans-serif;font-size:14px} .sources{color:var(--muted)}
+.review{margin-top:14px;padding-top:12px;border-top:1px dashed var(--line);display:flex;flex-wrap:wrap;gap:18px;font:14px system-ui,sans-serif}
+.notes{flex-basis:100%;min-height:44px;color:var(--muted)}
+.callout{background:#fff8e6;border:1px solid #f0d58a;border-radius:14px;padding:14px 18px} .callout li{margin:6px 0}
+.lede{color:var(--muted)} nav a{color:var(--teal)} nav{font:14px system-ui,sans-serif;columns:2}
+table{width:100%;border-collapse:collapse;font:14px/1.45 system-ui,sans-serif;margin-top:8px}
+th,td{border:1px solid var(--line);padding:6px 8px;vertical-align:top;text-align:left} thead th{background:#eeece5;font-weight:600}
+tbody th{width:110px;font-weight:600} td.src{width:28%;color:var(--muted);font-size:12px} td.box{width:84px;white-space:nowrap;font-size:13px}
+.lvl{display:inline-block;font-size:12px;font-weight:600;border-radius:999px;padding:0 8px;margin-right:4px;border:1px solid}
+.lvl.avoid{color:#8a3b00;border-color:#e3a36b;background:#fff1e3} .lvl.caution{color:#0b4f71;border-color:#86bfdc;background:#eaf6fc} .lvl.ok{color:#14613a;border-color:#8fcca8;background:#ebf8f0}
+pre{font:13px ui-monospace,monospace;background:#eeece5;padding:10px 12px;border-radius:8px;white-space:pre-wrap}
+@media print{body{background:#fff} article{border-color:#bbb}}
+</style></head><body><main>
+<h1>Actively pregnancy mode &amp; escalation guidance — draft for review</h1>
+<p class="lede">Generated 2026-10-02 from <code>app/src/db/pregnancy-lactation.ts</code> and <code>app/src/db/escalation-guidance.ts</code> · 28 ingredient classifications · 8 concerns, 48 escalation statements</p>
+
+<h2>How to review</h2>
+<p>Everything below was drafted by Claude (AI) for your review as the site's board-certified dermatologist. None of it is live in production: both features sit behind flags that are <b>off in production</b> and on only in local development.</p>
+<p>Tick one box per row (and per entry) and note edits. Send the marked-up file back, or list row numbers and changes, and the edits get applied before either flag is turned on. This file is regenerated from the source data with <code>npx tsx src/db/clinical-review.ts</code> (run in <code>app/</code>), so it always matches what would ship.</p>
+<p>Drafting rules: mainstream guidance only (ACOG, AAD, peer-reviewed reviews, NIH LactMed, FDA OTC labeling). Levels reflect the evidence rather than blanket caution, and every notice says it isn't medical clearance and to talk to an OB or dermatologist. Escalation text says when to get seen, never what a condition is.</p>
+
+<h2>Turning the features on</h2>
+<p>Flags live in <code>app/src/lib/feature-flags.ts</code>. Each is OFF when <code>NODE_ENV=production</code> and ON otherwise, unless its environment variable overrides it (<code>on</code>/<code>1</code>/<code>true</code> or <code>off</code>/<code>0</code>/<code>false</code>). After sign-off, set the variable on the production service (e.g. Railway → Variables) and redeploy or restart:</p>
+<pre>FEATURE_PREGNANCY_MODE=on   # Part A: profile options, product notices, listing filter, /guide/pregnancy-breastfeeding
+FEATURE_ESCALATION=on       # Part B: "When OTC isn't enough" on concern pages, My regimen and My shelf</pre>
+<p>While a flag is off: the profile options are hidden (any saved choice stays in the visitor's cookie, unused), notices and filters don't render, <code>?pregnancy=hide</code> is ignored, and the guide page returns 404 and is left out of the sitemap.</p>
+
+<h2>Where it shows</h2>
+<ul class="meta">
+<li><b>Part A, pregnancy &amp; breastfeeding mode.</b> Two optional checkboxes on <code>/profile</code> (“Pregnant or trying”, “Breastfeeding”, stored in the profile cookie). With either set, product pages show a notice for any avoid / caution ingredient in the published list or label actives (rinse-off products use their rinse-off level). <code>/browse</code> and <code>/concern/*</code> offer “Hide products to avoid in pregnancy” (pregnant flag only). New explainer page <code>/guide/pregnancy-breastfeeding</code>. The match score is unchanged.</li>
+<li><b>Part B, when OTC isn't enough.</b> A full panel at the bottom of each <code>/concern/*</code> page (with a jump link under the red-flag banner); a collapsible list on <code>/regimen</code> for the concerns its products cover; on <code>/shelf</code>, for concerns where the visitor answered “didn't help”. Each includes a neutral link to the AAD's public dermatologist finder; <code>app/src/lib/derm-finder.ts</code> is the one place to swap in a referral partner (setting <code>paid: true</code> adds a disclosure next to the link).</li>
+</ul>
+
+<h2>Open questions to resolve first</h2>
+<div class="callout"><ol><li>Retinyl esters (retinyl palmitate etc.) are classed <b>caution</b>, not avoid, in pregnancy. Some patient guidance lumps every vitamin A derivative together as “avoid”. Retinyl palmitate is in ~285 catalog products, often low on the list as an antioxidant (including sunscreens), so “avoid” would flag many products. Which do you want?</li><li>Cosmetic retinol / retinal / HPR are <b>avoid</b> in pregnancy at any list position, with a “likely a small amount” hint past position 12. Should a trace retinoid low on a cosmetic list still read as “usually avoided”?</li><li>Salicylic acid: leave-on is <b>caution</b> (limited areas OK, no peels / large areas / occlusion); rinse-off cleansers and shampoos are <b>OK</b>. ACOG's FAQ lists topical salicylic acid among generally acceptable OTC acne options, so caution for a 2% face product may be more conservative than you want. “Rinse-off” is inferred from the product name / form (cleanser, wash, shampoo, scalp), so a leave-on scalp serum is treated as rinse-off.</li><li>Oxybenzone is <b>caution</b> in pregnancy (weak, mixed observational data) and <b>OK</b> in lactation. That flags ~1,200 catalog products (mostly sunscreens) for pregnant users. Keep, downgrade to OK with a note, or upgrade?</li><li>Topical retinoids and adapalene in lactation are <b>caution</b> (LactMed: low risk, keep off the breast). Hydroquinone in lactation is <b>caution</b>; coal tar in lactation is <b>caution</b>. Is any of these better as avoid?</li><li>Kojic acid, arbutin, tranexamic acid and bakuchiol are <b>caution</b> purely for lack of data (no studies found). Is “ask first” right, or would you rather call these OK?</li><li>Butenafine, tolnaftate and undecylenic acid are <b>OK</b> on minimal absorption with little or no pregnancy data. Selenium sulfide shampoo is OK as rinse-off. Agree?</li><li>Not classified at all: methyl salicylate (pain-rub use in late pregnancy is an NSAID-like concern; in our catalog it's mostly flavor/fragrance at low levels), essential oils, hair dye / hydrogen peroxide, minoxidil (not in catalog), tea tree. Add any?</li><li>The pregnancy listing filter hides only <b>avoid</b> ingredients, and also hides every product without a full ingredient list (consistent with the other filters). On /concern/acne that takes 1,322 products to 775. OK?</li><li>Breastfeeding-only users get no listing filter (nothing is classed avoid for lactation). Fine?</li><li>Escalation: acne fair trial 12 weeks; antifungal 2 weeks (jock itch) / 4 weeks (athlete's foot, ringworm) per 21 CFR 333.250; dandruff ~4 weeks (the monograph only says “if it doesn't improve with regular use”); itch 7 days per the hydrocortisone label; dry skin 7 days per 21 CFR 347.50 but “a couple of weeks” for eczema routines; sweating “a few weeks” (no guideline number found); brightening 8–12 weeks. Please confirm or replace each number.</li><li>Acne red flag “acne that starts suddenly in adulthood, especially with irregular periods or new hair growth” hints at hyperandrogenism without naming it. Too close to diagnosis, or useful?</li><li>Universal urgent signs (911 for airway swelling; emergency care for rash + fever + blistering/mucosal sores after a new medicine) are shown on every escalation panel. Keep them on every concern?</li><li>Privacy: pregnancy status is consumer health data under WA My Health My Data Act and similar laws (project.md §2). It lives only in the visitor's httpOnly profile cookie and is read per request to render the page; it isn't stored server-side or logged. Worth a line in the privacy policy and an attorney check before launch.</li><li>Many AAD sources are cited as “AAD public guidance on …” rather than an exact page title / URL, because the drafter couldn't verify exact titles. Kaplan et al. (hydroquinone review) is cited without a year for the same reason. Please confirm or replace.</li></ol></div>
+
+<h2>Contents</h2>
+<nav><div><a href="#lvl-avoid">Pregnancy: Avoid</a> (5)</div><div><a href="#lvl-caution">Pregnancy: Caution / ask first</a> (7)</div><div><a href="#lvl-ok">Pregnancy: Generally OK</a> (16)</div><div><a href="#escalation">When OTC isn't enough</a> (8)</div><div><a href="#ui-copy">Fixed UI copy</a> (11)</div></nav>
+
+<h2>Part A — Pregnancy &amp; breastfeeding classifications</h2>
+<p class="meta">Levels: <span class="lvl avoid">Avoid</span> mainstream guidance says don't use it during this time (often precautionary) · <span class="lvl caution">Caution / ask first</span> fine in limited use, or not enough data · <span class="lvl ok">Generally OK</span> acceptable in normal use. Grouped by pregnancy level. The first entry whose patterns match an ingredient slug claims it; salicylate esters (butyloctyl, benzyl, tridecyl, methyl salicylate) deliberately don't match salicylic acid.</p>
+<section id="lvl-avoid"><h2>Pregnancy: Avoid</h2><article id="p-rx-retinoids">
+<h3>P1. Prescription retinoids (tretinoin, tazarotene, trifarotene) <code>rx-retinoids</code></h3>
+<p class="meta"><b>Matching patterns:</b> <code>tretinoin</code> <code>tazarotene</code> <code>trifarotene</code> <code>retinoic-acid</code> <code>isotretinoin</code></p>
+<p class="meta"><b>Catalog slugs matched</b> (products): none in the current catalog</p>
+<table><thead><tr><th></th><th>Statement shown</th><th>Source note</th><th>Sign-off</th></tr></thead><tbody>
+<tr><th>Pregnancy</th><td><span class="lvl avoid">Avoid</span> Topical retinoids are avoided during pregnancy. Absorption through the skin is low, but oral retinoids cause birth defects, and tazarotene's label lists pregnancy as a contraindication.</td><td class="src">ACOG patient FAQ: Skin Conditions During Pregnancy (acog.org)<br>Murase JE, Heller MM, Butler DC. Safety of dermatologic medications in pregnancy and lactation: Part I. Pregnancy. J Am Acad Dermatol. 2014;70(3):401.e1-14<br>Butler DC, Heller MM, Murase JE. Safety of dermatologic medications in pregnancy and lactation: Part II. Lactation. J Am Acad Dermatol. 2014;70(3):417.e1-10<br>LactMed, NIH Drugs and Lactation Database: tretinoin; tazarotene<br>Tazarotene prescribing information (pregnancy contraindication)</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+
+<tr><th>Breastfeeding</th><td><span class="lvl caution">Caution / ask first</span> Little reaches the bloodstream from topical use, so many sources consider it low risk while breastfeeding; ask first. Don't apply it to the breast or nipple area, and keep treated skin from touching the baby's skin.</td><td class="src">ACOG patient FAQ: Skin Conditions During Pregnancy (acog.org)<br>Murase JE, Heller MM, Butler DC. Safety of dermatologic medications in pregnancy and lactation: Part I. Pregnancy. J Am Acad Dermatol. 2014;70(3):401.e1-14<br>Butler DC, Heller MM, Murase JE. Safety of dermatologic medications in pregnancy and lactation: Part II. Lactation. J Am Acad Dermatol. 2014;70(3):417.e1-10<br>LactMed, NIH Drugs and Lactation Database: tretinoin; tazarotene<br>Tazarotene prescribing information (pregnancy contraindication)</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+
+</tbody></table>
+<div class="review"><span>☐ Approve entry as written</span><span>☐ Approve with edits</span><span>☐ Don't publish</span><div class="notes">Notes:</div></div>
+</article>
+<article id="p-adapalene">
+<h3>P2. Adapalene <code>adapalene</code></h3>
+<p class="meta"><b>Matching patterns:</b> <code>adapalene</code></p>
+<p class="meta"><b>Catalog slugs matched</b> (products): adapalene (43)</p>
+<table><thead><tr><th></th><th>Statement shown</th><th>Source note</th><th>Sign-off</th></tr></thead><tbody>
+<tr><th>Pregnancy</th><td><span class="lvl avoid">Avoid</span> Adapalene is a retinoid, and topical retinoids are avoided during pregnancy as a precaution, even though very little is absorbed. The OTC Drug Facts label also tells you to ask a doctor if pregnant.</td><td class="src">ACOG patient FAQ: Skin Conditions During Pregnancy (acog.org)<br>Murase JE, Heller MM, Butler DC. Safety of dermatologic medications in pregnancy and lactation: Part I. Pregnancy. J Am Acad Dermatol. 2014;70(3):401.e1-14<br>AAD public guidance on treating acne during pregnancy (aad.org)<br>LactMed, NIH Drugs and Lactation Database: adapalene<br>Differin Gel 0.1% OTC Drug Facts label</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+
+<tr><th>Breastfeeding</th><td><span class="lvl caution">Caution / ask first</span> Poorly absorbed, so LactMed rates it low risk while breastfeeding; ask first. Don't apply it to the breast or nipple area, and keep treated skin from touching the baby's skin.</td><td class="src">ACOG patient FAQ: Skin Conditions During Pregnancy (acog.org)<br>Murase JE, Heller MM, Butler DC. Safety of dermatologic medications in pregnancy and lactation: Part I. Pregnancy. J Am Acad Dermatol. 2014;70(3):401.e1-14<br>AAD public guidance on treating acne during pregnancy (aad.org)<br>LactMed, NIH Drugs and Lactation Database: adapalene<br>Differin Gel 0.1% OTC Drug Facts label</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+
+</tbody></table>
+<div class="review"><span>☐ Approve entry as written</span><span>☐ Approve with edits</span><span>☐ Don't publish</span><div class="notes">Notes:</div></div>
+</article>
+<article id="p-retinol">
+<h3>P3. Retinol and retinaldehyde <code>retinol</code></h3>
+<p class="meta"><b>Matching patterns:</b> <code>retinol-cosmetic</code> <code>retinol</code> <code>retinol-*</code> <code>retinal</code> <code>retinaldehyde</code> <code>hydroxypinacolone-retinoate</code> <code>retinyl-retinoate</code> <code>*retinoyl*</code></p>
+<p class="meta"><b>Catalog slugs matched</b> (products): retinol-cosmetic (126), hydroxypinacolone-retinoate (15), retinal (12), retinyl-retinoate (3), sodium-retinoyl-hyaluronate (2), retinol-argan-oil-caffeine (1)</p>
+<table><thead><tr><th></th><th>Statement shown</th><th>Source note</th><th>Sign-off</th></tr></thead><tbody>
+<tr><th>Pregnancy</th><td><span class="lvl avoid">Avoid</span> Cosmetic retinoids are usually avoided during pregnancy along with prescription ones. That's a precaution: there's no evidence of harm from skincare use, but there's no reason to take the chance when alternatives exist.</td><td class="src">ACOG patient FAQ: Skin Conditions During Pregnancy (acog.org)<br>Bozzo P, Chua-Gocheco A, Einarson A. Safety of skin care products during pregnancy. Can Fam Physician. 2011;57(6):665-7<br>Murase JE, Heller MM, Butler DC. Safety of dermatologic medications in pregnancy and lactation: Part I. Pregnancy. J Am Acad Dermatol. 2014;70(3):401.e1-14</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+
+<tr><th>Breastfeeding</th><td><span class="lvl caution">Caution / ask first</span> Absorption from skincare use is very low; many dermatologists consider it acceptable while breastfeeding, but ask first. Don't apply it to the breast or nipple area, and keep treated skin from touching the baby's skin.</td><td class="src">ACOG patient FAQ: Skin Conditions During Pregnancy (acog.org)<br>Bozzo P, Chua-Gocheco A, Einarson A. Safety of skin care products during pregnancy. Can Fam Physician. 2011;57(6):665-7<br>Murase JE, Heller MM, Butler DC. Safety of dermatologic medications in pregnancy and lactation: Part I. Pregnancy. J Am Acad Dermatol. 2014;70(3):401.e1-14</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+
+</tbody></table>
+<div class="review"><span>☐ Approve entry as written</span><span>☐ Approve with edits</span><span>☐ Don't publish</span><div class="notes">Notes:</div></div>
+</article>
+<article id="p-hydroquinone">
+<h3>P4. Hydroquinone <code>hydroquinone</code></h3>
+<p class="meta"><b>Matching patterns:</b> <code>hydroquinone</code></p>
+<p class="meta"><b>Catalog slugs matched</b> (products): none in the current catalog</p>
+<table><thead><tr><th></th><th>Statement shown</th><th>Source note</th><th>Sign-off</th></tr></thead><tbody>
+<tr><th>Pregnancy</th><td><span class="lvl avoid">Avoid</span> A relatively large share (roughly a third or more) is absorbed through the skin. Studies haven't shown birth defects, but it's generally avoided during pregnancy because of that absorption and the lack of need.</td><td class="src">Murase JE, Heller MM, Butler DC. Safety of dermatologic medications in pregnancy and lactation: Part I. Pregnancy. J Am Acad Dermatol. 2014;70(3):401.e1-14<br>Butler DC, Heller MM, Murase JE. Safety of dermatologic medications in pregnancy and lactation: Part II. Lactation. J Am Acad Dermatol. 2014;70(3):417.e1-10<br>Bozzo P, Chua-Gocheco A, Einarson A. Safety of skin care products during pregnancy. Can Fam Physician. 2011;57(6):665-7<br>Kaplan YC, Ozsarfati J, Nickel C, Koren G. Reproductive outcomes following hydroquinone use in human pregnancy. J Cosmet Dermatol (systematic review)<br>LactMed, NIH Drugs and Lactation Database: hydroquinone</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+
+<tr><th>Breastfeeding</th><td><span class="lvl caution">Caution / ask first</span> Because absorption is relatively high and there's little data, other options are usually preferred while breastfeeding.</td><td class="src">Murase JE, Heller MM, Butler DC. Safety of dermatologic medications in pregnancy and lactation: Part I. Pregnancy. J Am Acad Dermatol. 2014;70(3):401.e1-14<br>Butler DC, Heller MM, Murase JE. Safety of dermatologic medications in pregnancy and lactation: Part II. Lactation. J Am Acad Dermatol. 2014;70(3):417.e1-10<br>Bozzo P, Chua-Gocheco A, Einarson A. Safety of skin care products during pregnancy. Can Fam Physician. 2011;57(6):665-7<br>Kaplan YC, Ozsarfati J, Nickel C, Koren G. Reproductive outcomes following hydroquinone use in human pregnancy. J Cosmet Dermatol (systematic review)<br>LactMed, NIH Drugs and Lactation Database: hydroquinone</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+
+</tbody></table>
+<div class="review"><span>☐ Approve entry as written</span><span>☐ Approve with edits</span><span>☐ Don't publish</span><div class="notes">Notes:</div></div>
+</article>
+<article id="p-coal-tar">
+<h3>P5. Coal tar <code>coal-tar</code></h3>
+<p class="meta"><b>Matching patterns:</b> <code>coal-tar*</code></p>
+<p class="meta"><b>Catalog slugs matched</b> (products): coal-tar (3)</p>
+<table><thead><tr><th></th><th>Statement shown</th><th>Source note</th><th>Sign-off</th></tr></thead><tbody>
+<tr><th>Pregnancy</th><td><span class="lvl avoid">Avoid</span> Coal tar contains compounds that are a concern in animal studies, so it's generally avoided during pregnancy.</td><td class="src">Murase JE, Heller MM, Butler DC. Safety of dermatologic medications in pregnancy and lactation: Part I. Pregnancy. J Am Acad Dermatol. 2014;70(3):401.e1-14<br>Butler DC, Heller MM, Murase JE. Safety of dermatologic medications in pregnancy and lactation: Part II. Lactation. J Am Acad Dermatol. 2014;70(3):417.e1-10</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+
+<tr><th>Breastfeeding</th><td><span class="lvl caution">Caution / ask first</span> Little data; often avoided while breastfeeding, or used briefly. Don't apply it to the breast or nipple area, and keep treated skin from touching the baby's skin.</td><td class="src">Murase JE, Heller MM, Butler DC. Safety of dermatologic medications in pregnancy and lactation: Part I. Pregnancy. J Am Acad Dermatol. 2014;70(3):401.e1-14<br>Butler DC, Heller MM, Murase JE. Safety of dermatologic medications in pregnancy and lactation: Part II. Lactation. J Am Acad Dermatol. 2014;70(3):417.e1-10</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+
+</tbody></table>
+<div class="review"><span>☐ Approve entry as written</span><span>☐ Approve with edits</span><span>☐ Don't publish</span><div class="notes">Notes:</div></div>
+</article></section>
+<section id="lvl-caution"><h2>Pregnancy: Caution / ask first</h2><article id="p-retinyl-esters">
+<h3>P6. Retinyl esters (retinyl palmitate, acetate, propionate) <code>retinyl-esters</code></h3>
+<p class="meta"><b>Matching patterns:</b> <code>retinyl-palmitate</code> <code>retinyl-palimtate</code> <code>retinol-palmitate</code> <code>*retinyl-palmitate*</code> <code>retinyl-acetate</code> <code>retinyl-propionate</code> <code>retinyl-linoleate</code> <code>retinyl</code> <code>retinyl-cholecalciferol-tocopherol</code></p>
+<p class="meta"><b>Catalog slugs matched</b> (products): retinyl-palmitate (285), retinyl-propionate (11), retinyl-linoleate (9), retinyl-cholecalciferol-tocopherol (4), retinyl-acetate (3), tocopheryl-acetate-retinyl-palmitate (1), retinyl (1), retinyl-palimtate (1), sodium-hyaluronate-retinyl-palmitate (1), zea-mays-oil-and-retinyl-palmitate-and-cholecalciferol (1), retinol-palmitate (1), peg-10-retinyl-palmitate (1), olea-europaea-fruit-retinyl-palmitate (1)</p>
+<table><thead><tr><th></th><th>Statement shown</th><th>Source note</th><th>Sign-off</th></tr></thead><tbody>
+<tr><th>Pregnancy</th><td><span class="lvl caution">Caution / ask first</span> A much weaker vitamin A form, often used in small amounts as an antioxidant. Some guidance groups all vitamin A derivatives together and suggests avoiding them; others don't. Worth asking about, especially in a leave-on product used daily.</td><td class="src">Bozzo P, Chua-Gocheco A, Einarson A. Safety of skin care products during pregnancy. Can Fam Physician. 2011;57(6):665-7<br>Murase JE, Heller MM, Butler DC. Safety of dermatologic medications in pregnancy and lactation: Part I. Pregnancy. J Am Acad Dermatol. 2014;70(3):401.e1-14</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+
+<tr><th>Breastfeeding</th><td><span class="lvl ok">Generally OK</span> Skincare amounts are generally considered acceptable while breastfeeding.</td><td class="src">Bozzo P, Chua-Gocheco A, Einarson A. Safety of skin care products during pregnancy. Can Fam Physician. 2011;57(6):665-7<br>Murase JE, Heller MM, Butler DC. Safety of dermatologic medications in pregnancy and lactation: Part I. Pregnancy. J Am Acad Dermatol. 2014;70(3):401.e1-14</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+
+</tbody></table>
+<div class="review"><span>☐ Approve entry as written</span><span>☐ Approve with edits</span><span>☐ Don't publish</span><div class="notes">Notes:</div></div>
+</article>
+<article id="p-arbutin">
+<h3>P7. Arbutin and alpha-arbutin <code>arbutin</code></h3>
+<p class="meta"><b>Matching patterns:</b> <code>alpha-arbutin</code> <code>arbutin</code> <code>a-arbutin</code> <code>*arbutin*</code></p>
+<p class="meta"><b>Catalog slugs matched</b> (products): arbutin (36), alpha-arbutin (35), a-arbutin (3), alpha-arbutin-cycent-stearate (1), glyceryl-glucoside-and-alpha-arbutin (1)</p>
+<table><thead><tr><th></th><th>Statement shown</th><th>Source note</th><th>Sign-off</th></tr></thead><tbody>
+<tr><th>Pregnancy</th><td><span class="lvl caution">Caution / ask first</span> No pregnancy data. Arbutin can break down to small amounts of hydroquinone, so some dermatologists suggest skipping it until after pregnancy.</td><td class="src">No pregnancy or lactation studies identified by the drafter; classification is precautionary</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+
+<tr><th>Breastfeeding</th><td><span class="lvl caution">Caution / ask first</span> No lactation data; ask first.</td><td class="src">No pregnancy or lactation studies identified by the drafter; classification is precautionary</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+
+</tbody></table>
+<div class="review"><span>☐ Approve entry as written</span><span>☐ Approve with edits</span><span>☐ Don't publish</span><div class="notes">Notes:</div></div>
+</article>
+<article id="p-kojic-acid">
+<h3>P8. Kojic acid <code>kojic-acid</code></h3>
+<p class="meta"><b>Matching patterns:</b> <code>kojic-*</code></p>
+<p class="meta"><b>Catalog slugs matched</b> (products): kojic-acid (29), kojic-acid-dipalmitate (4), kojic-dipalmitate (2)</p>
+<table><thead><tr><th></th><th>Statement shown</th><th>Source note</th><th>Sign-off</th></tr></thead><tbody>
+<tr><th>Pregnancy</th><td><span class="lvl caution">Caution / ask first</span> No pregnancy data for skincare use. Worth asking about before starting it.</td><td class="src">No pregnancy or lactation studies identified by the drafter; classification is precautionary</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+
+<tr><th>Breastfeeding</th><td><span class="lvl caution">Caution / ask first</span> No lactation data; ask first.</td><td class="src">No pregnancy or lactation studies identified by the drafter; classification is precautionary</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+
+</tbody></table>
+<div class="review"><span>☐ Approve entry as written</span><span>☐ Approve with edits</span><span>☐ Don't publish</span><div class="notes">Notes:</div></div>
+</article>
+<article id="p-tranexamic-acid">
+<h3>P9. Tranexamic acid (topical) <code>tranexamic-acid</code></h3>
+<p class="meta"><b>Matching patterns:</b> <code>tranexamic-acid*</code></p>
+<p class="meta"><b>Catalog slugs matched</b> (products): tranexamic-acid (38), tranexamic-acid-allantoin (1)</p>
+<table><thead><tr><th></th><th>Statement shown</th><th>Source note</th><th>Sign-off</th></tr></thead><tbody>
+<tr><th>Pregnancy</th><td><span class="lvl caution">Caution / ask first</span> No data on topical skincare use in pregnancy. Little is expected to be absorbed, but there's no study to point to; ask first.</td><td class="src">No pregnancy or lactation studies identified by the drafter; classification is precautionary</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+
+<tr><th>Breastfeeding</th><td><span class="lvl caution">Caution / ask first</span> No data on topical use while breastfeeding; ask first.</td><td class="src">No pregnancy or lactation studies identified by the drafter; classification is precautionary</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+
+</tbody></table>
+<div class="review"><span>☐ Approve entry as written</span><span>☐ Approve with edits</span><span>☐ Don't publish</span><div class="notes">Notes:</div></div>
+</article>
+<article id="p-bakuchiol">
+<h3>P10. Bakuchiol <code>bakuchiol</code></h3>
+<p class="meta"><b>Matching patterns:</b> <code>bakuchiol</code> <code>*bakuchiol*</code></p>
+<p class="meta"><b>Catalog slugs matched</b> (products): bakuchiol (48), 0-5-bakuchiol (1)</p>
+<table><thead><tr><th></th><th>Statement shown</th><th>Source note</th><th>Sign-off</th></tr></thead><tbody>
+<tr><th>Pregnancy</th><td><span class="lvl caution">Caution / ask first</span> Often marketed as a pregnancy-safe retinol alternative, but there are no pregnancy safety studies behind that claim.</td><td class="src">No pregnancy or lactation studies identified by the drafter; classification is precautionary</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+
+<tr><th>Breastfeeding</th><td><span class="lvl caution">Caution / ask first</span> No lactation data; ask first.</td><td class="src">No pregnancy or lactation studies identified by the drafter; classification is precautionary</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+
+</tbody></table>
+<div class="review"><span>☐ Approve entry as written</span><span>☐ Approve with edits</span><span>☐ Don't publish</span><div class="notes">Notes:</div></div>
+</article>
+<article id="p-salicylic-acid">
+<h3>P11. Salicylic acid (BHA) <code>salicylic-acid</code></h3>
+<p class="meta"><b>Matching patterns:</b> <code>salicylic-acid</code> <code>*salicylic-acid*</code> <code>betaine-salicylate</code> <code>sodium-salicylate</code> <code>salicylic</code></p>
+<p class="meta"><b>Catalog slugs matched</b> (products): salicylic-acid (1299), capryloyl-salicylic-acid (115), sodium-salicylate (57), betaine-salicylate (19), 0-25-salicylic-acid (1), caprylyl-salicylic-acid (1), encapsulated-salicylic-acid (1), sodium-lauroyl-salicylic-acid (1), pentylene-glycol-salicylic-acid (1), salicylic (1), phenoxyethanolsalicylic-acid-sodium-benzoate-tocopherol-parfum-fragrance (1), arginine-salicylic-acid (1), salicylic-acid-2-non-medicinal (1)</p>
+<table><thead><tr><th></th><th>Statement shown</th><th>Source note</th><th>Sign-off</th></tr></thead><tbody>
+<tr><th>Pregnancy</th><td><span class="lvl caution">Caution / ask first</span> Low-strength (up to 2%) products used on limited areas, like the face, are generally considered acceptable. High-strength peels and applying it over large areas or under occlusion are avoided.</td><td class="src">ACOG patient FAQ: Skin Conditions During Pregnancy (acog.org)<br>Bozzo P, Chua-Gocheco A, Einarson A. Safety of skin care products during pregnancy. Can Fam Physician. 2011;57(6):665-7<br>Murase JE, Heller MM, Butler DC. Safety of dermatologic medications in pregnancy and lactation: Part I. Pregnancy. J Am Acad Dermatol. 2014;70(3):401.e1-14<br>Chien AL, Qi J, Rainer B, Sachs DL, Helfrich YR. Treatment of acne in pregnancy. J Am Board Fam Med. 2016;29(2):254-62<br>LactMed, NIH Drugs and Lactation Database: salicylic acid (topical)</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+<tr><th>Pregnancy, rinse-off</th><td><span class="lvl ok">Generally OK</span> Rinse-off cleansers and shampoos with low-strength salicylic acid are generally considered acceptable during pregnancy.</td><td class="src">ACOG patient FAQ: Skin Conditions During Pregnancy (acog.org)<br>Bozzo P, Chua-Gocheco A, Einarson A. Safety of skin care products during pregnancy. Can Fam Physician. 2011;57(6):665-7<br>Murase JE, Heller MM, Butler DC. Safety of dermatologic medications in pregnancy and lactation: Part I. Pregnancy. J Am Acad Dermatol. 2014;70(3):401.e1-14<br>Chien AL, Qi J, Rainer B, Sachs DL, Helfrich YR. Treatment of acne in pregnancy. J Am Board Fam Med. 2016;29(2):254-62<br>LactMed, NIH Drugs and Lactation Database: salicylic acid (topical)</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+<tr><th>Breastfeeding</th><td><span class="lvl ok">Generally OK</span> Topical use is unlikely to affect a breastfed baby. Don't apply it to the breast or nipple area, and keep treated skin from touching the baby's skin.</td><td class="src">ACOG patient FAQ: Skin Conditions During Pregnancy (acog.org)<br>Bozzo P, Chua-Gocheco A, Einarson A. Safety of skin care products during pregnancy. Can Fam Physician. 2011;57(6):665-7<br>Murase JE, Heller MM, Butler DC. Safety of dermatologic medications in pregnancy and lactation: Part I. Pregnancy. J Am Acad Dermatol. 2014;70(3):401.e1-14<br>Chien AL, Qi J, Rainer B, Sachs DL, Helfrich YR. Treatment of acne in pregnancy. J Am Board Fam Med. 2016;29(2):254-62<br>LactMed, NIH Drugs and Lactation Database: salicylic acid (topical)</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+
+</tbody></table>
+<div class="review"><span>☐ Approve entry as written</span><span>☐ Approve with edits</span><span>☐ Don't publish</span><div class="notes">Notes:</div></div>
+</article>
+<article id="p-oxybenzone">
+<h3>P12. Oxybenzone (benzophenone-3) <code>oxybenzone</code></h3>
+<p class="meta"><b>Matching patterns:</b> <code>oxybenzone</code> <code>benzophenone-3</code></p>
+<p class="meta"><b>Catalog slugs matched</b> (products): oxybenzone (1184), benzophenone-3 (3)</p>
+<table><thead><tr><th></th><th>Statement shown</th><th>Source note</th><th>Sign-off</th></tr></thead><tbody>
+<tr><th>Pregnancy</th><td><span class="lvl caution">Caution / ask first</span> It's absorbed in measurable amounts, and a few observational studies have raised questions; the evidence is weak and mixed. Using sunscreen still matters; a mineral or other filter is an easy swap if you'd rather.</td><td class="src">Matta MK, et al. Effect of sunscreen application on plasma concentration of sunscreen active ingredients. JAMA. 2020;323(3):256-267<br>FDA proposed rule on OTC sunscreen drug products, 84 FR 6204 (Feb 26, 2019): only zinc oxide and titanium dioxide proposed GRASE<br>Ghazipura M, et al. Exposure to benzophenone-3 and reproductive toxicity: a systematic review of human and animal studies. Reprod Toxicol. 2017;73:175-183</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+
+<tr><th>Breastfeeding</th><td><span class="lvl ok">Generally OK</span> Small amounts have been found in breast milk; no harm has been shown. A mineral sunscreen is an option if you'd rather avoid it.</td><td class="src">Matta MK, et al. Effect of sunscreen application on plasma concentration of sunscreen active ingredients. JAMA. 2020;323(3):256-267<br>FDA proposed rule on OTC sunscreen drug products, 84 FR 6204 (Feb 26, 2019): only zinc oxide and titanium dioxide proposed GRASE<br>Ghazipura M, et al. Exposure to benzophenone-3 and reproductive toxicity: a systematic review of human and animal studies. Reprod Toxicol. 2017;73:175-183</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+
+</tbody></table>
+<div class="review"><span>☐ Approve entry as written</span><span>☐ Approve with edits</span><span>☐ Don't publish</span><div class="notes">Notes:</div></div>
+</article></section>
+<section id="lvl-ok"><h2>Pregnancy: Generally OK</h2><article id="p-willow-bark">
+<h3>P13. Willow bark extract <code>willow-bark</code></h3>
+<p class="meta"><b>Matching patterns:</b> <code>*willow-bark*</code></p>
+<p class="meta"><b>Catalog slugs matched</b> (products): willow-bark-extract (3), white-willow-bark-extract (3), willow-bark (1)</p>
+<table><thead><tr><th></th><th>Statement shown</th><th>Source note</th><th>Sign-off</th></tr></thead><tbody>
+<tr><th>Pregnancy</th><td><span class="lvl ok">Generally OK</span> A plant extract containing salicin, a salicylic-acid relative, in small amounts. Not the same as a salicylic acid treatment; generally not a concern in skincare amounts.</td><td class="src">No pregnancy or lactation studies identified by the drafter; classification is precautionary</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+
+<tr><th>Breastfeeding</th><td><span class="lvl ok">Generally OK</span> Generally not a concern in skincare amounts.</td><td class="src">No pregnancy or lactation studies identified by the drafter; classification is precautionary</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+
+</tbody></table>
+<div class="review"><span>☐ Approve entry as written</span><span>☐ Approve with edits</span><span>☐ Don't publish</span><div class="notes">Notes:</div></div>
+</article>
+<article id="p-alpha-hydroxy-acids">
+<h3>P14. Glycolic, lactic and mandelic acid (AHAs) <code>alpha-hydroxy-acids</code></h3>
+<p class="meta"><b>Matching patterns:</b> <code>glycolic-acid</code> <code>lactic-acid</code> <code>mandelic-acid</code> <code>l-mandelic-acid</code></p>
+<p class="meta"><b>Catalog slugs matched</b> (products): lactic-acid (799), glycolic-acid (222), mandelic-acid (56), l-mandelic-acid (1)</p>
+<table><thead><tr><th></th><th>Statement shown</th><th>Source note</th><th>Sign-off</th></tr></thead><tbody>
+<tr><th>Pregnancy</th><td><span class="lvl ok">Generally OK</span> OTC-strength AHAs are generally considered acceptable during pregnancy; little is absorbed. In-office peels are a separate question for your doctor.</td><td class="src">ACOG patient FAQ: Skin Conditions During Pregnancy (acog.org)<br>Bozzo P, Chua-Gocheco A, Einarson A. Safety of skin care products during pregnancy. Can Fam Physician. 2011;57(6):665-7<br>Chien AL, Qi J, Rainer B, Sachs DL, Helfrich YR. Treatment of acne in pregnancy. J Am Board Fam Med. 2016;29(2):254-62</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+
+<tr><th>Breastfeeding</th><td><span class="lvl ok">Generally OK</span> Generally considered acceptable while breastfeeding.</td><td class="src">ACOG patient FAQ: Skin Conditions During Pregnancy (acog.org)<br>Bozzo P, Chua-Gocheco A, Einarson A. Safety of skin care products during pregnancy. Can Fam Physician. 2011;57(6):665-7<br>Chien AL, Qi J, Rainer B, Sachs DL, Helfrich YR. Treatment of acne in pregnancy. J Am Board Fam Med. 2016;29(2):254-62</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+
+</tbody></table>
+<div class="review"><span>☐ Approve entry as written</span><span>☐ Approve with edits</span><span>☐ Don't publish</span><div class="notes">Notes:</div></div>
+</article>
+<article id="p-azelaic-acid">
+<h3>P15. Azelaic acid <code>azelaic-acid</code></h3>
+<p class="meta"><b>Matching patterns:</b> <code>azelaic-acid</code></p>
+<p class="meta"><b>Catalog slugs matched</b> (products): azelaic-acid (74)</p>
+<table><thead><tr><th></th><th>Statement shown</th><th>Source note</th><th>Sign-off</th></tr></thead><tbody>
+<tr><th>Pregnancy</th><td><span class="lvl ok">Generally OK</span> Generally considered one of the preferred options for acne and dark spots during pregnancy; little is absorbed.</td><td class="src">ACOG patient FAQ: Skin Conditions During Pregnancy (acog.org)<br>AAD public guidance on treating acne during pregnancy (aad.org)<br>Murase JE, Heller MM, Butler DC. Safety of dermatologic medications in pregnancy and lactation: Part I. Pregnancy. J Am Acad Dermatol. 2014;70(3):401.e1-14<br>Chien AL, Qi J, Rainer B, Sachs DL, Helfrich YR. Treatment of acne in pregnancy. J Am Board Fam Med. 2016;29(2):254-62<br>LactMed, NIH Drugs and Lactation Database: azelaic acid</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+
+<tr><th>Breastfeeding</th><td><span class="lvl ok">Generally OK</span> Considered acceptable while breastfeeding. Don't apply it to the breast or nipple area, and keep treated skin from touching the baby's skin.</td><td class="src">ACOG patient FAQ: Skin Conditions During Pregnancy (acog.org)<br>AAD public guidance on treating acne during pregnancy (aad.org)<br>Murase JE, Heller MM, Butler DC. Safety of dermatologic medications in pregnancy and lactation: Part I. Pregnancy. J Am Acad Dermatol. 2014;70(3):401.e1-14<br>Chien AL, Qi J, Rainer B, Sachs DL, Helfrich YR. Treatment of acne in pregnancy. J Am Board Fam Med. 2016;29(2):254-62<br>LactMed, NIH Drugs and Lactation Database: azelaic acid</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+
+</tbody></table>
+<div class="review"><span>☐ Approve entry as written</span><span>☐ Approve with edits</span><span>☐ Don't publish</span><div class="notes">Notes:</div></div>
+</article>
+<article id="p-benzoyl-peroxide">
+<h3>P16. Benzoyl peroxide <code>benzoyl-peroxide</code></h3>
+<p class="meta"><b>Matching patterns:</b> <code>benzoyl-peroxide</code> <code>benzoyl-peroxide-gel</code></p>
+<p class="meta"><b>Catalog slugs matched</b> (products): benzoyl-peroxide (215), benzoyl-peroxide-gel (1)</p>
+<table><thead><tr><th></th><th>Statement shown</th><th>Source note</th><th>Sign-off</th></tr></thead><tbody>
+<tr><th>Pregnancy</th><td><span class="lvl ok">Generally OK</span> Generally considered acceptable during pregnancy in normal use; only a small amount is absorbed, and the body breaks it down to benzoic acid.</td><td class="src">ACOG patient FAQ: Skin Conditions During Pregnancy (acog.org)<br>AAD public guidance on treating acne during pregnancy (aad.org)<br>Murase JE, Heller MM, Butler DC. Safety of dermatologic medications in pregnancy and lactation: Part I. Pregnancy. J Am Acad Dermatol. 2014;70(3):401.e1-14<br>Chien AL, Qi J, Rainer B, Sachs DL, Helfrich YR. Treatment of acne in pregnancy. J Am Board Fam Med. 2016;29(2):254-62<br>LactMed, NIH Drugs and Lactation Database: benzoyl peroxide</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+
+<tr><th>Breastfeeding</th><td><span class="lvl ok">Generally OK</span> Considered acceptable while breastfeeding. Don't apply it to the breast or nipple area, and keep treated skin from touching the baby's skin.</td><td class="src">ACOG patient FAQ: Skin Conditions During Pregnancy (acog.org)<br>AAD public guidance on treating acne during pregnancy (aad.org)<br>Murase JE, Heller MM, Butler DC. Safety of dermatologic medications in pregnancy and lactation: Part I. Pregnancy. J Am Acad Dermatol. 2014;70(3):401.e1-14<br>Chien AL, Qi J, Rainer B, Sachs DL, Helfrich YR. Treatment of acne in pregnancy. J Am Board Fam Med. 2016;29(2):254-62<br>LactMed, NIH Drugs and Lactation Database: benzoyl peroxide</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+
+</tbody></table>
+<div class="review"><span>☐ Approve entry as written</span><span>☐ Approve with edits</span><span>☐ Don't publish</span><div class="notes">Notes:</div></div>
+</article>
+<article id="p-sulfur">
+<h3>P17. Sulfur <code>sulfur</code></h3>
+<p class="meta"><b>Matching patterns:</b> <code>sulfur</code> <code>colloidal-sulfur</code></p>
+<p class="meta"><b>Catalog slugs matched</b> (products): sulfur (132), colloidal-sulfur (5)</p>
+<table><thead><tr><th></th><th>Statement shown</th><th>Source note</th><th>Sign-off</th></tr></thead><tbody>
+<tr><th>Pregnancy</th><td><span class="lvl ok">Generally OK</span> Topical sulfur is generally considered acceptable during pregnancy.</td><td class="src">Murase JE, Heller MM, Butler DC. Safety of dermatologic medications in pregnancy and lactation: Part I. Pregnancy. J Am Acad Dermatol. 2014;70(3):401.e1-14<br>Chien AL, Qi J, Rainer B, Sachs DL, Helfrich YR. Treatment of acne in pregnancy. J Am Board Fam Med. 2016;29(2):254-62</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+
+<tr><th>Breastfeeding</th><td><span class="lvl ok">Generally OK</span> Generally considered acceptable while breastfeeding.</td><td class="src">Murase JE, Heller MM, Butler DC. Safety of dermatologic medications in pregnancy and lactation: Part I. Pregnancy. J Am Acad Dermatol. 2014;70(3):401.e1-14<br>Chien AL, Qi J, Rainer B, Sachs DL, Helfrich YR. Treatment of acne in pregnancy. J Am Board Fam Med. 2016;29(2):254-62</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+
+</tbody></table>
+<div class="review"><span>☐ Approve entry as written</span><span>☐ Approve with edits</span><span>☐ Don't publish</span><div class="notes">Notes:</div></div>
+</article>
+<article id="p-niacinamide">
+<h3>P18. Niacinamide <code>niacinamide</code></h3>
+<p class="meta"><b>Matching patterns:</b> <code>niacinamide</code></p>
+<p class="meta"><b>Catalog slugs matched</b> (products): niacinamide (1895)</p>
+<table><thead><tr><th></th><th>Statement shown</th><th>Source note</th><th>Sign-off</th></tr></thead><tbody>
+<tr><th>Pregnancy</th><td><span class="lvl ok">Generally OK</span> A form of vitamin B3; generally considered acceptable in skincare during pregnancy.</td><td class="src">Chien AL, Qi J, Rainer B, Sachs DL, Helfrich YR. Treatment of acne in pregnancy. J Am Board Fam Med. 2016;29(2):254-62</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+
+<tr><th>Breastfeeding</th><td><span class="lvl ok">Generally OK</span> Generally considered acceptable while breastfeeding.</td><td class="src">Chien AL, Qi J, Rainer B, Sachs DL, Helfrich YR. Treatment of acne in pregnancy. J Am Board Fam Med. 2016;29(2):254-62</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+
+</tbody></table>
+<div class="review"><span>☐ Approve entry as written</span><span>☐ Approve with edits</span><span>☐ Don't publish</span><div class="notes">Notes:</div></div>
+</article>
+<article id="p-vitamin-c">
+<h3>P19. Vitamin C (ascorbic acid and derivatives) <code>vitamin-c</code></h3>
+<p class="meta"><b>Matching patterns:</b> <code>vitamin-c</code> <code>l-ascorbic-acid</code> <code>ascorbic-acid</code> <code>*ascorb*</code></p>
+<p class="meta"><b>Catalog slugs matched</b> (products): tetrahexyldecyl-ascorbate (493), ascorbyl-palmitate (469), vitamin-c (365), sodium-ascorbyl-phosphate (293), ascorbyl-glucoside (126), magnesium-ascorbyl-phosphate (119), 3-o-ethyl-ascorbic-acid (104), ascorbyl-tetraisopalmitate (43), sodium-ascorbate (19), aminopropyl-ascorbyl-phosphate (12), 3-0-ethyl-ascorbic-acid (9), ascorbyl-propyl-hyaluronate (7), ascorbyl-tocopheryl-maleate (6), l-ascorbic-acid (5), ascorbic-acid-polypeptide (5), potassium-ascorbyl-tocopheryl-phosphate (4), ethyl-ascorbic-acid (4), sodium-ascorbyl-p-hosphate (3), … 34 more</p>
+<table><thead><tr><th></th><th>Statement shown</th><th>Source note</th><th>Sign-off</th></tr></thead><tbody>
+<tr><th>Pregnancy</th><td><span class="lvl ok">Generally OK</span> Generally considered acceptable in skincare during pregnancy.</td><td class="src">Bozzo P, Chua-Gocheco A, Einarson A. Safety of skin care products during pregnancy. Can Fam Physician. 2011;57(6):665-7</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+
+<tr><th>Breastfeeding</th><td><span class="lvl ok">Generally OK</span> Generally considered acceptable while breastfeeding.</td><td class="src">Bozzo P, Chua-Gocheco A, Einarson A. Safety of skin care products during pregnancy. Can Fam Physician. 2011;57(6):665-7</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+
+</tbody></table>
+<div class="review"><span>☐ Approve entry as written</span><span>☐ Approve with edits</span><span>☐ Don't publish</span><div class="notes">Notes:</div></div>
+</article>
+<article id="p-mineral-sunscreen">
+<h3>P20. Mineral sunscreen filters (zinc oxide, titanium dioxide) <code>mineral-sunscreen</code></h3>
+<p class="meta"><b>Matching patterns:</b> <code>zinc-oxide</code> <code>titanium-dioxide</code></p>
+<p class="meta"><b>Catalog slugs matched</b> (products): zinc-oxide (4655), titanium-dioxide (4174)</p>
+<table><thead><tr><th></th><th>Statement shown</th><th>Source note</th><th>Sign-off</th></tr></thead><tbody>
+<tr><th>Pregnancy</th><td><span class="lvl ok">Generally OK</span> Generally considered acceptable, and sun protection matters during pregnancy (melasma often appears or worsens).</td><td class="src">ACOG patient FAQ: Skin Conditions During Pregnancy (acog.org)<br>Bozzo P, Chua-Gocheco A, Einarson A. Safety of skin care products during pregnancy. Can Fam Physician. 2011;57(6):665-7<br>FDA proposed rule on OTC sunscreen drug products, 84 FR 6204 (Feb 26, 2019): only zinc oxide and titanium dioxide proposed GRASE</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+
+<tr><th>Breastfeeding</th><td><span class="lvl ok">Generally OK</span> Generally considered acceptable while breastfeeding.</td><td class="src">ACOG patient FAQ: Skin Conditions During Pregnancy (acog.org)<br>Bozzo P, Chua-Gocheco A, Einarson A. Safety of skin care products during pregnancy. Can Fam Physician. 2011;57(6):665-7<br>FDA proposed rule on OTC sunscreen drug products, 84 FR 6204 (Feb 26, 2019): only zinc oxide and titanium dioxide proposed GRASE</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+
+</tbody></table>
+<div class="review"><span>☐ Approve entry as written</span><span>☐ Approve with edits</span><span>☐ Don't publish</span><div class="notes">Notes:</div></div>
+</article>
+<article id="p-chemical-sunscreen">
+<h3>P21. Other chemical sunscreen filters (avobenzone, homosalate, octisalate, octocrylene, octinoxate, ensulizole) <code>chemical-sunscreen</code></h3>
+<p class="meta"><b>Matching patterns:</b> <code>avobenzone</code> <code>homosalate</code> <code>octisalate</code> <code>octocrylene</code> <code>octinoxate</code> <code>ensulizole</code> <code>meradimate</code></p>
+<p class="meta"><b>Catalog slugs matched</b> (products): octisalate (4463), avobenzone (3785), octocrylene (3485), octinoxate (3042), homosalate (2989), ensulizole (229), meradimate (13)</p>
+<table><thead><tr><th></th><th>Statement shown</th><th>Source note</th><th>Sign-off</th></tr></thead><tbody>
+<tr><th>Pregnancy</th><td><span class="lvl ok">Generally OK</span> Absorbed in small measurable amounts; the FDA has asked for more safety data but hasn't found harm. Generally considered acceptable, and sun protection matters during pregnancy.</td><td class="src">Matta MK, et al. Effect of sunscreen application on plasma concentration of sunscreen active ingredients. JAMA. 2020;323(3):256-267<br>FDA proposed rule on OTC sunscreen drug products, 84 FR 6204 (Feb 26, 2019): only zinc oxide and titanium dioxide proposed GRASE</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+
+<tr><th>Breastfeeding</th><td><span class="lvl ok">Generally OK</span> Generally considered acceptable while breastfeeding.</td><td class="src">Matta MK, et al. Effect of sunscreen application on plasma concentration of sunscreen active ingredients. JAMA. 2020;323(3):256-267<br>FDA proposed rule on OTC sunscreen drug products, 84 FR 6204 (Feb 26, 2019): only zinc oxide and titanium dioxide proposed GRASE</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+
+</tbody></table>
+<div class="review"><span>☐ Approve entry as written</span><span>☐ Approve with edits</span><span>☐ Don't publish</span><div class="notes">Notes:</div></div>
+</article>
+<article id="p-dihydroxyacetone">
+<h3>P22. Dihydroxyacetone (self-tanner) <code>dihydroxyacetone</code></h3>
+<p class="meta"><b>Matching patterns:</b> <code>dihydroxyacetone</code></p>
+<p class="meta"><b>Catalog slugs matched</b> (products): dihydroxyacetone (7)</p>
+<table><thead><tr><th></th><th>Statement shown</th><th>Source note</th><th>Sign-off</th></tr></thead><tbody>
+<tr><th>Pregnancy</th><td><span class="lvl ok">Generally OK</span> Stays in the outer skin layer. Lotions are generally considered acceptable; spray tans are best avoided because the FDA hasn't approved DHA for inhalation.</td><td class="src">Bozzo P, Chua-Gocheco A, Einarson A. Safety of skin care products during pregnancy. Can Fam Physician. 2011;57(6):665-7<br>FDA consumer page on sunless tanners and bronzers (DHA not approved for inhalation or mucous membranes)</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+
+<tr><th>Breastfeeding</th><td><span class="lvl ok">Generally OK</span> Generally considered acceptable; avoid inhaling spray tans.</td><td class="src">Bozzo P, Chua-Gocheco A, Einarson A. Safety of skin care products during pregnancy. Can Fam Physician. 2011;57(6):665-7<br>FDA consumer page on sunless tanners and bronzers (DHA not approved for inhalation or mucous membranes)</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+
+</tbody></table>
+<div class="review"><span>☐ Approve entry as written</span><span>☐ Approve with edits</span><span>☐ Don't publish</span><div class="notes">Notes:</div></div>
+</article>
+<article id="p-dandruff-shampoo-actives">
+<h3>P23. Zinc pyrithione, selenium sulfide and ketoconazole shampoos <code>dandruff-shampoo-actives</code></h3>
+<p class="meta"><b>Matching patterns:</b> <code>pyrithione-zinc</code> <code>zinc-pyrithione</code> <code>selenium-sulfide</code> <code>ketoconazole</code></p>
+<p class="meta"><b>Catalog slugs matched</b> (products): pyrithione-zinc (41), selenium-sulfide (5)</p>
+<table><thead><tr><th></th><th>Statement shown</th><th>Source note</th><th>Sign-off</th></tr></thead><tbody>
+<tr><th>Pregnancy</th><td><span class="lvl ok">Generally OK</span> As a rinse-off shampoo, very little is absorbed; generally considered acceptable during pregnancy.</td><td class="src">Murase JE, Heller MM, Butler DC. Safety of dermatologic medications in pregnancy and lactation: Part I. Pregnancy. J Am Acad Dermatol. 2014;70(3):401.e1-14<br>Butler DC, Heller MM, Murase JE. Safety of dermatologic medications in pregnancy and lactation: Part II. Lactation. J Am Acad Dermatol. 2014;70(3):417.e1-10<br>LactMed, NIH Drugs and Lactation Database: ketoconazole (topical); selenium sulfide</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+
+<tr><th>Breastfeeding</th><td><span class="lvl ok">Generally OK</span> As a rinse-off shampoo, generally considered acceptable while breastfeeding.</td><td class="src">Murase JE, Heller MM, Butler DC. Safety of dermatologic medications in pregnancy and lactation: Part I. Pregnancy. J Am Acad Dermatol. 2014;70(3):401.e1-14<br>Butler DC, Heller MM, Murase JE. Safety of dermatologic medications in pregnancy and lactation: Part II. Lactation. J Am Acad Dermatol. 2014;70(3):417.e1-10<br>LactMed, NIH Drugs and Lactation Database: ketoconazole (topical); selenium sulfide</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+
+</tbody></table>
+<div class="review"><span>☐ Approve entry as written</span><span>☐ Approve with edits</span><span>☐ Don't publish</span><div class="notes">Notes:</div></div>
+</article>
+<article id="p-topical-azoles">
+<h3>P24. Clotrimazole, miconazole and tioconazole <code>topical-azoles</code></h3>
+<p class="meta"><b>Matching patterns:</b> <code>clotrimazole</code> <code>miconazole*</code> <code>tioconazole</code></p>
+<p class="meta"><b>Catalog slugs matched</b> (products): miconazole-nitrate (265), clotrimazole (197), tioconazole (19)</p>
+<table><thead><tr><th></th><th>Statement shown</th><th>Source note</th><th>Sign-off</th></tr></thead><tbody>
+<tr><th>Pregnancy</th><td><span class="lvl ok">Generally OK</span> Topical azole antifungals are the usual choice during pregnancy, including for yeast infections; little is absorbed. Ask your OB before treating a vaginal yeast infection yourself.</td><td class="src">Murase JE, Heller MM, Butler DC. Safety of dermatologic medications in pregnancy and lactation: Part I. Pregnancy. J Am Acad Dermatol. 2014;70(3):401.e1-14<br>CDC Sexually Transmitted Infections Treatment Guidelines, 2021: vulvovaginal candidiasis in pregnancy (topical azoles)<br>LactMed, NIH Drugs and Lactation Database: clotrimazole; miconazole</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+
+<tr><th>Breastfeeding</th><td><span class="lvl ok">Generally OK</span> Considered acceptable while breastfeeding. Don't apply it to the breast or nipple area, and keep treated skin from touching the baby's skin.</td><td class="src">Murase JE, Heller MM, Butler DC. Safety of dermatologic medications in pregnancy and lactation: Part I. Pregnancy. J Am Acad Dermatol. 2014;70(3):401.e1-14<br>CDC Sexually Transmitted Infections Treatment Guidelines, 2021: vulvovaginal candidiasis in pregnancy (topical azoles)<br>LactMed, NIH Drugs and Lactation Database: clotrimazole; miconazole</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+
+</tbody></table>
+<div class="review"><span>☐ Approve entry as written</span><span>☐ Approve with edits</span><span>☐ Don't publish</span><div class="notes">Notes:</div></div>
+</article>
+<article id="p-other-antifungals">
+<h3>P25. Terbinafine, butenafine, tolnaftate and undecylenic acid <code>other-antifungals</code></h3>
+<p class="meta"><b>Matching patterns:</b> <code>terbinafine*</code> <code>butenafine*</code> <code>tolnaftate</code> <code>undecylenic-acid</code></p>
+<p class="meta"><b>Catalog slugs matched</b> (products): tolnaftate (264), undecylenic-acid (132), terbinafine (36), butenafine (22)</p>
+<table><thead><tr><th></th><th>Statement shown</th><th>Source note</th><th>Sign-off</th></tr></thead><tbody>
+<tr><th>Pregnancy</th><td><span class="lvl ok">Generally OK</span> Very little is absorbed from skin use and no harm has been reported, though pregnancy data are limited (more for terbinafine than the others).</td><td class="src">Murase JE, Heller MM, Butler DC. Safety of dermatologic medications in pregnancy and lactation: Part I. Pregnancy. J Am Acad Dermatol. 2014;70(3):401.e1-14<br>Butler DC, Heller MM, Murase JE. Safety of dermatologic medications in pregnancy and lactation: Part II. Lactation. J Am Acad Dermatol. 2014;70(3):417.e1-10<br>LactMed, NIH Drugs and Lactation Database: terbinafine</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+
+<tr><th>Breastfeeding</th><td><span class="lvl ok">Generally OK</span> Generally considered acceptable while breastfeeding. Don't apply it to the breast or nipple area, and keep treated skin from touching the baby's skin.</td><td class="src">Murase JE, Heller MM, Butler DC. Safety of dermatologic medications in pregnancy and lactation: Part I. Pregnancy. J Am Acad Dermatol. 2014;70(3):401.e1-14<br>Butler DC, Heller MM, Murase JE. Safety of dermatologic medications in pregnancy and lactation: Part II. Lactation. J Am Acad Dermatol. 2014;70(3):417.e1-10<br>LactMed, NIH Drugs and Lactation Database: terbinafine</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+
+</tbody></table>
+<div class="review"><span>☐ Approve entry as written</span><span>☐ Approve with edits</span><span>☐ Don't publish</span><div class="notes">Notes:</div></div>
+</article>
+<article id="p-hydrocortisone">
+<h3>P26. Hydrocortisone (OTC 0.5–1%) <code>hydrocortisone</code></h3>
+<p class="meta"><b>Matching patterns:</b> <code>hydrocortisone*</code></p>
+<p class="meta"><b>Catalog slugs matched</b> (products): hydrocortisone (359)</p>
+<table><thead><tr><th></th><th>Statement shown</th><th>Source note</th><th>Sign-off</th></tr></thead><tbody>
+<tr><th>Pregnancy</th><td><span class="lvl ok">Generally OK</span> Low-strength topical steroids like OTC hydrocortisone are generally considered acceptable during pregnancy. Large amounts of strong prescription steroids are a separate question.</td><td class="src">Chi CC, Wang SH, Wojnarowska F, et al. Safety of topical corticosteroids in pregnancy. Cochrane Database Syst Rev. 2015;(10):CD007346<br>Murase JE, Heller MM, Butler DC. Safety of dermatologic medications in pregnancy and lactation: Part I. Pregnancy. J Am Acad Dermatol. 2014;70(3):401.e1-14<br>LactMed, NIH Drugs and Lactation Database: hydrocortisone (topical)</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+
+<tr><th>Breastfeeding</th><td><span class="lvl ok">Generally OK</span> Considered acceptable while breastfeeding; if used on the nipple area, wipe it off before nursing.</td><td class="src">Chi CC, Wang SH, Wojnarowska F, et al. Safety of topical corticosteroids in pregnancy. Cochrane Database Syst Rev. 2015;(10):CD007346<br>Murase JE, Heller MM, Butler DC. Safety of dermatologic medications in pregnancy and lactation: Part I. Pregnancy. J Am Acad Dermatol. 2014;70(3):401.e1-14<br>LactMed, NIH Drugs and Lactation Database: hydrocortisone (topical)</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+
+</tbody></table>
+<div class="review"><span>☐ Approve entry as written</span><span>☐ Approve with edits</span><span>☐ Don't publish</span><div class="notes">Notes:</div></div>
+</article>
+<article id="p-itch-anesthetics">
+<h3>P27. Pramoxine and topical diphenhydramine <code>itch-anesthetics</code></h3>
+<p class="meta"><b>Matching patterns:</b> <code>pramoxine*</code> <code>diphenhydramine*</code></p>
+<p class="meta"><b>Catalog slugs matched</b> (products): pramoxine (87), diphenhydramine (80)</p>
+<table><thead><tr><th></th><th>Statement shown</th><th>Source note</th><th>Sign-off</th></tr></thead><tbody>
+<tr><th>Pregnancy</th><td><span class="lvl ok">Generally OK</span> Generally considered acceptable for short use on small areas; data are limited. Follow the label's limits on area and duration.</td><td class="src">Murase JE, Heller MM, Butler DC. Safety of dermatologic medications in pregnancy and lactation: Part I. Pregnancy. J Am Acad Dermatol. 2014;70(3):401.e1-14</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+
+<tr><th>Breastfeeding</th><td><span class="lvl ok">Generally OK</span> Generally considered acceptable for short use on small areas.</td><td class="src">Murase JE, Heller MM, Butler DC. Safety of dermatologic medications in pregnancy and lactation: Part I. Pregnancy. J Am Acad Dermatol. 2014;70(3):401.e1-14</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+
+</tbody></table>
+<div class="review"><span>☐ Approve entry as written</span><span>☐ Approve with edits</span><span>☐ Don't publish</span><div class="notes">Notes:</div></div>
+</article>
+<article id="p-aluminum-antiperspirant">
+<h3>P28. Aluminum antiperspirant salts <code>aluminum-antiperspirant</code></h3>
+<p class="meta"><b>Matching patterns:</b> <code>aluminum-chlorohydrate</code> <code>aluminum-zirconium-*</code> <code>aluminum-chloride</code></p>
+<p class="meta"><b>Catalog slugs matched</b> (products): aluminum-chlorohydrate (854), aluminum-zirconium-complex (512)</p>
+<table><thead><tr><th></th><th>Statement shown</th><th>Source note</th><th>Sign-off</th></tr></thead><tbody>
+<tr><th>Pregnancy</th><td><span class="lvl ok">Generally OK</span> Very little is absorbed through intact underarm skin; generally considered acceptable.</td><td class="src">Bozzo P, Chua-Gocheco A, Einarson A. Safety of skin care products during pregnancy. Can Fam Physician. 2011;57(6):665-7</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+
+<tr><th>Breastfeeding</th><td><span class="lvl ok">Generally OK</span> Generally considered acceptable while breastfeeding.</td><td class="src">Bozzo P, Chua-Gocheco A, Einarson A. Safety of skin care products during pregnancy. Can Fam Physician. 2011;57(6):665-7</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+
+</tbody></table>
+<div class="review"><span>☐ Approve entry as written</span><span>☐ Approve with edits</span><span>☐ Don't publish</span><div class="notes">Notes:</div></div>
+</article></section>
+
+<section id="escalation"><h2>Part B — When OTC isn't enough</h2>
+<p class="meta">Shown with every concern's panel, under “Get care right away”:</p>
+<table><thead><tr><th>#</th><th>Statement shown</th><th>Source note</th><th>Sign-off</th></tr></thead><tbody>
+<tr><th>U1</th><td>Trouble breathing, or swelling of the lips, tongue, face or throat: call 911.</td><td class="src">AAD public guidance on serious drug reactions (Stevens-Johnson syndrome / TEN warning signs); general emergency-care guidance</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+<tr><th>U2</th><td>A rash with fever plus blistering, peeling or sores in the mouth or eyes, especially after starting a new medicine: get emergency care.</td><td class="src">AAD public guidance on serious drug reactions (Stevens-Johnson syndrome / TEN warning signs); general emergency-care guidance</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+</tbody></table>
+<article id="e-acne">
+<h3>Acne <code>acne</code> <span class="order">fair trial: 12 weeks</span></h3>
+<table><thead><tr><th>#</th><th>Statement shown</th><th>Source note</th><th>Sign-off</th></tr></thead><tbody>
+<tr><th>E1<br><small>Fair OTC trial</small></th><td>Give one routine about 12 weeks before judging it — for example, adapalene 0.1% nightly and/or a benzoyl peroxide wash or gel (2.5–5%), used consistently. Improvement often starts around 6–8 weeks, and the first few weeks can bring dryness or a few new breakouts.</td><td class="src">Reynolds RV, et al. Guidelines of care for the management of acne vulgaris. J Am Acad Dermatol. 2024;90(5):1006.e1-1006.e30<br>AAD public guidance: acne treatment takes time (aad.org)<br>21 CFR 333.350 (topical acne drug products: labeling)</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+<tr><th>E2<br><small>See a dermatologist if</small></th><td>Deep, painful lumps or cysts under the skin.</td><td class="src">Reynolds RV, et al. Guidelines of care for the management of acne vulgaris. J Am Acad Dermatol. 2024;90(5):1006.e1-1006.e30<br>AAD public guidance: acne treatment takes time (aad.org)<br>21 CFR 333.350 (topical acne drug products: labeling)</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+<tr><th>E3<br><small>See a dermatologist if</small></th><td>Acne that leaves scars or pitted marks.</td><td class="src">Reynolds RV, et al. Guidelines of care for the management of acne vulgaris. J Am Acad Dermatol. 2024;90(5):1006.e1-1006.e30<br>AAD public guidance: acne treatment takes time (aad.org)<br>21 CFR 333.350 (topical acne drug products: labeling)</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+<tr><th>E4<br><small>See a dermatologist if</small></th><td>No real improvement after about 12 weeks of consistent OTC treatment.</td><td class="src">Reynolds RV, et al. Guidelines of care for the management of acne vulgaris. J Am Acad Dermatol. 2024;90(5):1006.e1-1006.e30<br>AAD public guidance: acne treatment takes time (aad.org)<br>21 CFR 333.350 (topical acne drug products: labeling)</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+<tr><th>E5<br><small>See a dermatologist if</small></th><td>Acne that starts suddenly in adulthood, especially with irregular periods or new hair growth on the face or body.</td><td class="src">Reynolds RV, et al. Guidelines of care for the management of acne vulgaris. J Am Acad Dermatol. 2024;90(5):1006.e1-1006.e30<br>AAD public guidance: acne treatment takes time (aad.org)<br>21 CFR 333.350 (topical acne drug products: labeling)</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+<tr><th>E6<br><small>See a dermatologist if</small></th><td>Breakouts that began after starting a new medicine or supplement.</td><td class="src">Reynolds RV, et al. Guidelines of care for the management of acne vulgaris. J Am Acad Dermatol. 2024;90(5):1006.e1-1006.e30<br>AAD public guidance: acne treatment takes time (aad.org)<br>21 CFR 333.350 (topical acne drug products: labeling)</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+<tr><th>E7<br><small>See a dermatologist if</small></th><td>Acne that's affecting your mood or how you go about your day.</td><td class="src">Reynolds RV, et al. Guidelines of care for the management of acne vulgaris. J Am Acad Dermatol. 2024;90(5):1006.e1-1006.e30<br>AAD public guidance: acne treatment takes time (aad.org)<br>21 CFR 333.350 (topical acne drug products: labeling)</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+
+</tbody></table>
+<div class="review"><span>☐ Approve concern as written</span><span>☐ Approve with edits</span><span>☐ Don't publish</span><div class="notes">Notes:</div></div>
+</article>
+<article id="e-sun-protection">
+<h3>Sun Protection <code>sun-protection</code> <span class="order">fair trial: n/a</span></h3>
+<table><thead><tr><th>#</th><th>Statement shown</th><th>Source note</th><th>Sign-off</th></tr></thead><tbody>
+<tr><th>E8<br><small>Fair OTC trial</small></th><td>Sunscreen prevents rather than treats, so there's no trial period. What's worth a professional look is a spot that's new or changing, or a reaction to sun that's out of proportion.</td><td class="src">AAD public guidance: what to look for — the ABCDEs of melanoma (aad.org)<br>AAD public guidance on treating sunburn (aad.org)</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+<tr><th>E9<br><small>See a dermatologist if</small></th><td>A mole or spot that's new, changing in size, shape or color, irregular, or looks different from your others.</td><td class="src">AAD public guidance: what to look for — the ABCDEs of melanoma (aad.org)<br>AAD public guidance on treating sunburn (aad.org)</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+<tr><th>E10<br><small>See a dermatologist if</small></th><td>A spot or sore that bleeds, itches or crusts and doesn't heal within a few weeks.</td><td class="src">AAD public guidance: what to look for — the ABCDEs of melanoma (aad.org)<br>AAD public guidance on treating sunburn (aad.org)</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+<tr><th>E11<br><small>See a dermatologist if</small></th><td>A rough, scaly patch on sun-exposed skin that keeps coming back.</td><td class="src">AAD public guidance: what to look for — the ABCDEs of melanoma (aad.org)<br>AAD public guidance on treating sunburn (aad.org)</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+<tr><th>E12<br><small>See a dermatologist if</small></th><td>A rash or burn after only brief sun exposure, especially after starting a new medicine.</td><td class="src">AAD public guidance: what to look for — the ABCDEs of melanoma (aad.org)<br>AAD public guidance on treating sunburn (aad.org)</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+<tr><th>E13<br><small>Get care right away</small></th><td>A sunburn with blistering over a large area, or with fever, chills, headache, confusion or feeling faint: get care the same day.</td><td class="src">AAD public guidance: what to look for — the ABCDEs of melanoma (aad.org)<br>AAD public guidance on treating sunburn (aad.org)</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+</tbody></table>
+<div class="review"><span>☐ Approve concern as written</span><span>☐ Approve with edits</span><span>☐ Don't publish</span><div class="notes">Notes:</div></div>
+</article>
+<article id="e-antifungal">
+<h3>Antifungal <code>antifungal</code> <span class="order">fair trial: 4 weeks</span></h3>
+<table><thead><tr><th>#</th><th>Statement shown</th><th>Source note</th><th>Sign-off</th></tr></thead><tbody>
+<tr><th>E14<br><small>Fair OTC trial</small></th><td>Use the product every day as the label directs: about 2 weeks for jock itch and 4 weeks for athlete's foot or ringworm. Keep going for the full course even once it looks better. If it hasn't improved by then, the label itself says to stop and ask a doctor.</td><td class="src">21 CFR 333.250 (topical antifungal drug products: labeling — 2 weeks jock itch, 4 weeks athlete's foot / ringworm)<br>AAD public guidance on athlete's foot, jock itch and ringworm (aad.org)</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+<tr><th>E15<br><small>See a dermatologist if</small></th><td>No improvement after 2 weeks (jock itch) or 4 weeks (athlete's foot, ringworm).</td><td class="src">21 CFR 333.250 (topical antifungal drug products: labeling — 2 weeks jock itch, 4 weeks athlete's foot / ringworm)<br>AAD public guidance on athlete's foot, jock itch and ringworm (aad.org)</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+<tr><th>E16<br><small>See a dermatologist if</small></th><td>Thick, discolored or crumbling nails — creams don't reach the nail.</td><td class="src">21 CFR 333.250 (topical antifungal drug products: labeling — 2 weeks jock itch, 4 weeks athlete's foot / ringworm)<br>AAD public guidance on athlete's foot, jock itch and ringworm (aad.org)</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+<tr><th>E17<br><small>See a dermatologist if</small></th><td>A ring-shaped or scaly patch on the scalp, or hair loss with scaling, especially in a child; these usually need prescription treatment.</td><td class="src">21 CFR 333.250 (topical antifungal drug products: labeling — 2 weeks jock itch, 4 weeks athlete's foot / ringworm)<br>AAD public guidance on athlete's foot, jock itch and ringworm (aad.org)</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+<tr><th>E18<br><small>See a dermatologist if</small></th><td>A rash that comes back soon after each course, or keeps spreading.</td><td class="src">21 CFR 333.250 (topical antifungal drug products: labeling — 2 weeks jock itch, 4 weeks athlete's foot / ringworm)<br>AAD public guidance on athlete's foot, jock itch and ringworm (aad.org)</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+<tr><th>E19<br><small>See a dermatologist if</small></th><td>Diabetes, poor circulation or a weakened immune system with a foot infection.</td><td class="src">21 CFR 333.250 (topical antifungal drug products: labeling — 2 weeks jock itch, 4 weeks athlete's foot / ringworm)<br>AAD public guidance on athlete's foot, jock itch and ringworm (aad.org)</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+<tr><th>E20<br><small>Get care right away</small></th><td>Spreading redness, warmth, swelling, pus or fever, especially from a crack between the toes: get care promptly.</td><td class="src">21 CFR 333.250 (topical antifungal drug products: labeling — 2 weeks jock itch, 4 weeks athlete's foot / ringworm)<br>AAD public guidance on athlete's foot, jock itch and ringworm (aad.org)</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+</tbody></table>
+<div class="review"><span>☐ Approve concern as written</span><span>☐ Approve with edits</span><span>☐ Don't publish</span><div class="notes">Notes:</div></div>
+</article>
+<article id="e-dandruff-seb-derm">
+<h3>Dandruff &amp; Seborrheic Dermatitis <code>dandruff-seb-derm</code> <span class="order">fair trial: 4 weeks</span></h3>
+<table><thead><tr><th>#</th><th>Statement shown</th><th>Source note</th><th>Sign-off</th></tr></thead><tbody>
+<tr><th>E21<br><small>Fair OTC trial</small></th><td>Use a medicated shampoo (zinc pyrithione, selenium sulfide, ketoconazole, salicylic acid or coal tar) as directed, often 2–3 times a week, for several weeks. Rotating between two actives can help. The label says to see a doctor if it doesn't improve with regular use.</td><td class="src">21 CFR 358.750 (dandruff / seborrheic dermatitis / psoriasis drug products: labeling)<br>AAD public guidance on dandruff (aad.org)</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+<tr><th>E22<br><small>See a dermatologist if</small></th><td>No improvement after about 4 weeks of regular use, or it gets worse.</td><td class="src">21 CFR 358.750 (dandruff / seborrheic dermatitis / psoriasis drug products: labeling)<br>AAD public guidance on dandruff (aad.org)</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+<tr><th>E23<br><small>See a dermatologist if</small></th><td>Thick, well-defined plaques or silvery scale, or scaling beyond the hairline or on the elbows and knees.</td><td class="src">21 CFR 358.750 (dandruff / seborrheic dermatitis / psoriasis drug products: labeling)<br>AAD public guidance on dandruff (aad.org)</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+<tr><th>E24<br><small>See a dermatologist if</small></th><td>Hair loss, or patches of the scalp that are tender, crusted or have pus bumps.</td><td class="src">21 CFR 358.750 (dandruff / seborrheic dermatitis / psoriasis drug products: labeling)<br>AAD public guidance on dandruff (aad.org)</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+<tr><th>E25<br><small>See a dermatologist if</small></th><td>A red, scaly rash spreading across the face, chest or body.</td><td class="src">21 CFR 358.750 (dandruff / seborrheic dermatitis / psoriasis drug products: labeling)<br>AAD public guidance on dandruff (aad.org)</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+
+</tbody></table>
+<div class="review"><span>☐ Approve concern as written</span><span>☐ Approve with edits</span><span>☐ Don't publish</span><div class="notes">Notes:</div></div>
+</article>
+<article id="e-itch-relief">
+<h3>Itch Relief <code>itch-relief</code> <span class="order">fair trial: 1 week</span></h3>
+<table><thead><tr><th>#</th><th>Statement shown</th><th>Source note</th><th>Sign-off</th></tr></thead><tbody>
+<tr><th>E26<br><small>Fair OTC trial</small></th><td>OTC hydrocortisone and other anti-itch labels are for short-term use: stop and ask a doctor if itching lasts more than 7 days, or clears and comes back within a few days.</td><td class="src">OTC hydrocortisone Drug Facts (21 CFR part 348 external analgesics, tentative final monograph): stop use if symptoms persist more than 7 days<br>AAD public guidance on atopic dermatitis / eczema (aad.org)</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+<tr><th>E27<br><small>See a dermatologist if</small></th><td>Itching that lasts more than a week, or keeps coming back.</td><td class="src">OTC hydrocortisone Drug Facts (21 CFR part 348 external analgesics, tentative final monograph): stop use if symptoms persist more than 7 days<br>AAD public guidance on atopic dermatitis / eczema (aad.org)</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+<tr><th>E28<br><small>See a dermatologist if</small></th><td>Itching all over without a visible rash.</td><td class="src">OTC hydrocortisone Drug Facts (21 CFR part 348 external analgesics, tentative final monograph): stop use if symptoms persist more than 7 days<br>AAD public guidance on atopic dermatitis / eczema (aad.org)</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+<tr><th>E29<br><small>See a dermatologist if</small></th><td>Itch that wakes you at night or disrupts your day.</td><td class="src">OTC hydrocortisone Drug Facts (21 CFR part 348 external analgesics, tentative final monograph): stop use if symptoms persist more than 7 days<br>AAD public guidance on atopic dermatitis / eczema (aad.org)</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+<tr><th>E30<br><small>See a dermatologist if</small></th><td>A poison ivy-type rash covering a large area, or on the face, eyes or genitals.</td><td class="src">OTC hydrocortisone Drug Facts (21 CFR part 348 external analgesics, tentative final monograph): stop use if symptoms persist more than 7 days<br>AAD public guidance on atopic dermatitis / eczema (aad.org)</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+<tr><th>E31<br><small>See a dermatologist if</small></th><td>Scratched areas that become crusted, oozing or more painful (possible infection).</td><td class="src">OTC hydrocortisone Drug Facts (21 CFR part 348 external analgesics, tentative final monograph): stop use if symptoms persist more than 7 days<br>AAD public guidance on atopic dermatitis / eczema (aad.org)</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+<tr><th>E32<br><small>Get care right away</small></th><td>Hives with swelling of the lips, tongue or throat, or trouble breathing: call 911.</td><td class="src">OTC hydrocortisone Drug Facts (21 CFR part 348 external analgesics, tentative final monograph): stop use if symptoms persist more than 7 days<br>AAD public guidance on atopic dermatitis / eczema (aad.org)</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+</tbody></table>
+<div class="review"><span>☐ Approve concern as written</span><span>☐ Approve with edits</span><span>☐ Don't publish</span><div class="notes">Notes:</div></div>
+</article>
+<article id="e-dry-skin-eczema">
+<h3>Dry Skin &amp; Eczema <code>dry-skin-eczema</code> <span class="order">fair trial: 2 weeks</span></h3>
+<table><thead><tr><th>#</th><th>Statement shown</th><th>Source note</th><th>Sign-off</th></tr></thead><tbody>
+<tr><th>E33<br><small>Fair OTC trial</small></th><td>Skin protectant labels say to ask a doctor if symptoms last more than 7 days. For eczema-prone skin, give a gentle, fragrance-free routine with a thick moisturizer at least twice a day a couple of weeks; if flares still aren't controlled, prescription treatment usually helps.</td><td class="src">21 CFR 347.50 (skin protectant drug products: labeling — ask a doctor if symptoms last more than 7 days)<br>AAD public guidance on atopic dermatitis / eczema (aad.org)<br>Sidbury R, et al. Guidelines of care for the management of atopic dermatitis in adults with topical therapies. J Am Acad Dermatol. 2023;89(1):e1-e20</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+<tr><th>E34<br><small>See a dermatologist if</small></th><td>Flares that aren't controlled after a couple of weeks of consistent moisturizing and gentle care.</td><td class="src">21 CFR 347.50 (skin protectant drug products: labeling — ask a doctor if symptoms last more than 7 days)<br>AAD public guidance on atopic dermatitis / eczema (aad.org)<br>Sidbury R, et al. Guidelines of care for the management of atopic dermatitis in adults with topical therapies. J Am Acad Dermatol. 2023;89(1):e1-e20</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+<tr><th>E35<br><small>See a dermatologist if</small></th><td>Eczema that disrupts sleep, work or school.</td><td class="src">21 CFR 347.50 (skin protectant drug products: labeling — ask a doctor if symptoms last more than 7 days)<br>AAD public guidance on atopic dermatitis / eczema (aad.org)<br>Sidbury R, et al. Guidelines of care for the management of atopic dermatitis in adults with topical therapies. J Am Acad Dermatol. 2023;89(1):e1-e20</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+<tr><th>E36<br><small>See a dermatologist if</small></th><td>Thickened, cracked or bleeding skin that isn't healing.</td><td class="src">21 CFR 347.50 (skin protectant drug products: labeling — ask a doctor if symptoms last more than 7 days)<br>AAD public guidance on atopic dermatitis / eczema (aad.org)<br>Sidbury R, et al. Guidelines of care for the management of atopic dermatitis in adults with topical therapies. J Am Acad Dermatol. 2023;89(1):e1-e20</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+<tr><th>E37<br><small>See a dermatologist if</small></th><td>Yellow crusts, oozing or pus (possible infection).</td><td class="src">21 CFR 347.50 (skin protectant drug products: labeling — ask a doctor if symptoms last more than 7 days)<br>AAD public guidance on atopic dermatitis / eczema (aad.org)<br>Sidbury R, et al. Guidelines of care for the management of atopic dermatitis in adults with topical therapies. J Am Acad Dermatol. 2023;89(1):e1-e20</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+<tr><th>E38<br><small>Get care right away</small></th><td>Sudden clusters of painful, punched-out blisters or sores on eczema, especially with fever: get care the same day.</td><td class="src">21 CFR 347.50 (skin protectant drug products: labeling — ask a doctor if symptoms last more than 7 days)<br>AAD public guidance on atopic dermatitis / eczema (aad.org)<br>Sidbury R, et al. Guidelines of care for the management of atopic dermatitis in adults with topical therapies. J Am Acad Dermatol. 2023;89(1):e1-e20</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+</tbody></table>
+<div class="review"><span>☐ Approve concern as written</span><span>☐ Approve with edits</span><span>☐ Don't publish</span><div class="notes">Notes:</div></div>
+</article>
+<article id="e-excessive-sweating">
+<h3>Excessive Sweating <code>excessive-sweating</code> <span class="order">fair trial: 4 weeks</span></h3>
+<table><thead><tr><th>#</th><th>Statement shown</th><th>Source note</th><th>Sign-off</th></tr></thead><tbody>
+<tr><th>E39<br><small>Fair OTC trial</small></th><td>Try a clinical-strength antiperspirant applied to dry skin at bedtime, nightly at first, for a few weeks. If sweating still interferes with daily life, there are effective prescription and in-office treatments.</td><td class="src">AAD public guidance on hyperhidrosis (aad.org)<br>International Hyperhidrosis Society patient guidance (sweathelp.org)</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+<tr><th>E40<br><small>See a dermatologist if</small></th><td>Sweating that still interferes with work, school or daily life after a few weeks of clinical-strength antiperspirant.</td><td class="src">AAD public guidance on hyperhidrosis (aad.org)<br>International Hyperhidrosis Society patient guidance (sweathelp.org)</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+<tr><th>E41<br><small>See a dermatologist if</small></th><td>Sweating that started suddenly in adulthood, affects only one side, or is all over the body rather than in specific areas.</td><td class="src">AAD public guidance on hyperhidrosis (aad.org)<br>International Hyperhidrosis Society patient guidance (sweathelp.org)</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+<tr><th>E42<br><small>See a dermatologist if</small></th><td>Night sweats that soak clothes or sheets, especially with fever or unexplained weight loss (see your doctor promptly).</td><td class="src">AAD public guidance on hyperhidrosis (aad.org)<br>International Hyperhidrosis Society patient guidance (sweathelp.org)</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+<tr><th>E43<br><small>Get care right away</small></th><td>Sweating with chest pain, shortness of breath, or feeling lightheaded: call 911.</td><td class="src">AAD public guidance on hyperhidrosis (aad.org)<br>International Hyperhidrosis Society patient guidance (sweathelp.org)</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+</tbody></table>
+<div class="review"><span>☐ Approve concern as written</span><span>☐ Approve with edits</span><span>☐ Don't publish</span><div class="notes">Notes:</div></div>
+</article>
+<article id="e-brightening-texture">
+<h3>Brightening &amp; Texture <code>brightening-texture</code> <span class="order">fair trial: 12 weeks</span></h3>
+<table><thead><tr><th>#</th><th>Statement shown</th><th>Source note</th><th>Sign-off</th></tr></thead><tbody>
+<tr><th>E44<br><small>Fair OTC trial</small></th><td>Brightening ingredients work slowly: expect 8–12 weeks of daily use, together with daily broad-spectrum sunscreen (without sun protection, dark spots tend to come back).</td><td class="src">AAD public guidance on melasma and dark spots (aad.org)<br>AAD public guidance: what to look for — the ABCDEs of melanoma (aad.org)</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+<tr><th>E45<br><small>See a dermatologist if</small></th><td>A dark spot that's new, changing, irregular in shape or color, or looks different from your others.</td><td class="src">AAD public guidance on melasma and dark spots (aad.org)<br>AAD public guidance: what to look for — the ABCDEs of melanoma (aad.org)</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+<tr><th>E46<br><small>See a dermatologist if</small></th><td>Patches that are losing color, or spreading.</td><td class="src">AAD public guidance on melasma and dark spots (aad.org)<br>AAD public guidance: what to look for — the ABCDEs of melanoma (aad.org)</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+<tr><th>E47<br><small>See a dermatologist if</small></th><td>Rough, scaly or bleeding spots that don't heal.</td><td class="src">AAD public guidance on melasma and dark spots (aad.org)<br>AAD public guidance: what to look for — the ABCDEs of melanoma (aad.org)</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+<tr><th>E48<br><small>See a dermatologist if</small></th><td>Dark patches on the face that keep worsening despite sunscreen and 12 weeks of consistent care.</td><td class="src">AAD public guidance on melasma and dark spots (aad.org)<br>AAD public guidance: what to look for — the ABCDEs of melanoma (aad.org)</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+
+</tbody></table>
+<div class="review"><span>☐ Approve concern as written</span><span>☐ Approve with edits</span><span>☐ Don't publish</span><div class="notes">Notes:</div></div>
+</article>
+</section>
+
+<section id="ui-copy"><h2>Fixed UI copy</h2>
+<table><thead><tr><th>Where</th><th>Text</th><th>Sign-off</th></tr></thead><tbody>
+<tr><th style="width:200px">Profile option (profile-editor.tsx)</th><td>Pregnant or trying · Breastfeeding. Optional. Product pages will note ingredients that published guidance suggests avoiding or asking about at this time. It doesn't change match scores, and it isn't medical clearance — talk to your OB or dermatologist.</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+<tr><th style="width:200px">Product notice title (pregnancy-notice.tsx)</th><td>“Contains an ingredient usually avoided during pregnancy” (avoid) / “Worth checking during pregnancy” (caution); “while breastfeeding” variants. Amber box for avoid, neutral for caution, never red.</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+<tr><th style="width:200px">Product notice, nothing flagged</th><td>Nothing in this ingredient list is on our list to avoid or ask about during pregnancy. Generally considered OK: …</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+<tr><th style="width:200px">Product notice footer</th><td>A screen of the published ingredient list against general published guidance, not medical clearance for you. Talk to your OB or dermatologist before starting or stopping anything.</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+<tr><th style="width:200px">Low-on-list hint</th><td>“listed low on the ingredients, likely a small amount” when an ingredient sits past position 12 of a cosmetic list.</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+<tr><th style="width:200px">Listing filter (browse, concern pages)</th><td>Hide products to avoid in pregnancy. Hides products listing an ingredient usually avoided in pregnancy (retinoids, hydroquinone, coal tar), and products without a full ingredient list, since they can't be checked. Not medical clearance — talk to your OB or dermatologist.</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+<tr><th style="width:200px">Guide page /guide/pregnancy-breastfeeding</th><td>Most skincare is fine to keep using. A few ingredients are usually set aside during pregnancy, and a few more are worth a question. … This is general information, not medical clearance. Your situation may differ. Talk to your OB or dermatologist before starting or stopping any product, and don't stop a prescribed medicine on your own.</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+<tr><th style="width:200px">Guide page: sun protection</th><td>Melasma (the “mask of pregnancy”) often appears or darkens during pregnancy, and sun exposure drives it. A broad-spectrum sunscreen every day, plus shade and a hat, is one of the most useful things you can keep doing. Mineral (zinc oxide, titanium dioxide) sunscreens are a common choice if you'd rather skip chemical filters.</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+<tr><th style="width:200px">Escalation footnote (escalation-guidance.tsx)</th><td>General information from OTC labeling and dermatology guidelines, not a diagnosis or advice about your skin.</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+<tr><th style="width:200px">Dermatologist finder link</th><td>Find a board-certified dermatologist → https://find-a-derm.aad.org/. American Academy of Dermatology's free public directory. We have no relationship with any listed practice.</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+<tr><th style="width:200px">Shelf prompt</th><td>Not seeing results? Some products didn't help, by your answers. Here's how long a fair try usually is, and when it's worth seeing a dermatologist. (Shown per concern when the visitor answered “didn't help” for a product they own or finished.)</td><td class="box">☐ Approve<br>☐ Edit<br>☐ Cut</td></tr>
+</tbody></table>
+</section>
+</main></body></html>

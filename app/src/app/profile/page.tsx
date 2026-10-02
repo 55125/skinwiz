@@ -4,6 +4,7 @@ import { PageHeader } from "@/components/page-header";
 import { ProfileEditor } from "@/components/profile-editor";
 import { getIngredientNames, readProfile } from "@/lib/profile";
 import { SITE_NAME } from "@/lib/brand";
+import { FEATURES } from "@/lib/feature-flags";
 
 export const metadata: Metadata = {
   title: "My skin profile",
@@ -22,7 +23,7 @@ export default async function ProfilePage() {
         description="Tell us about your skin and every product gets a match score with the reasons spelled out. Saved in this browser only — no account, nothing sent anywhere."
       />
 
-      <ProfileEditor initial={profile} names={names} />
+      <ProfileEditor initial={profile} names={names} pregnancyMode={FEATURES.PREGNANCY_MODE} />
 
       <div className="space-y-2 rounded-2xl border bg-muted/40 p-4 text-xs leading-relaxed text-muted-foreground">
         <p>

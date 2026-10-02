@@ -9,6 +9,10 @@ import { readSessionId } from "@/lib/session";
 import { getRegimen, guidanceForActives, guidanceForStep, STEP_LABEL, suggestSlot, type RegimenStep } from "@/lib/regimen";
 import { describeStrengths } from "@/lib/strength-display";
 import { displayManufacturer } from "@/lib/format";
+import { FEATURES } from "@/lib/feature-flags";
+import { escalationFor, type EscalationGuidance } from "@/db/escalation-guidance";
+import { EscalationList } from "@/components/escalation-guidance";
+import { getConcerns } from "@/lib/queries";
 
 export const metadata: Metadata = {
   title: "My regimen",
@@ -79,6 +83,14 @@ export default async function RegimenPage() {
   const regimen = sessionId ? getRegimen(sessionId) : { am: [], pm: [], count: 0, conflicts: [] };
   const sameTime = regimen.conflicts.filter((c) => c.status === "same-time");
   const split = regimen.conflicts.filter((c) => c.status === "split");
+  // Gated "When OTC isn't enough" guidance for the concerns this regimen covers.
+  const concernNames = new Map(getConcerns().map((c) => [c.id, c.name]));
+  const escalations = FEATURES.ESCALATION_GUIDANCE
+    ? [...new Set([...regimen.am, ...regimen.pm].map((s) => s.product.concernId))].flatMap((id) => {
+        const guidance = escalationFor(id);
+        return guidance ? [{ guidance, concernName: concernNames.get(id) ?? id }] : ([] as { guidance: EscalationGuidance; concernName: string }[]);
+      })
+    : [];
 
   return (
     <div className="mx-auto max-w-6xl space-y-8 px-4 py-10">
@@ -138,6 +150,12 @@ export default async function RegimenPage() {
             <SlotColumn title="Morning" icon={Sun} steps={regimen.am} empty="Nothing in the morning yet." />
             <SlotColumn title="Night" icon={Moon} steps={regimen.pm} empty="Nothing at night yet." />
           </div>
+
+          <EscalationList
+            title="When OTC isn't enough"
+            intro="For the concerns your regimen covers: how long to give it before judging, and signs that mean seeing a dermatologist."
+            items={escalations}
+          />
 
           <p className="text-xs text-muted-foreground">
             Steps are ordered by formulation, not by importance, and this page doesn&apos;t tell you what to use. Directions are quoted

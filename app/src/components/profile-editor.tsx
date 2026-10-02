@@ -99,7 +99,21 @@ function IngredientPicker({
   );
 }
 
-export function ProfileEditor({ initial, names: initialNames }: { initial: Profile; names: Record<string, string> }) {
+const LIFE_STAGE: { key: "pregnant" | "breastfeeding"; label: string }[] = [
+  { key: "pregnant", label: "Pregnant or trying" },
+  { key: "breastfeeding", label: "Breastfeeding" },
+];
+
+export function ProfileEditor({
+  initial,
+  names: initialNames,
+  pregnancyMode = false,
+}: {
+  initial: Profile;
+  names: Record<string, string>;
+  /** FEATURES.PREGNANCY_MODE, from the server. */
+  pregnancyMode?: boolean;
+}) {
   const router = useRouter();
   const [profile, setProfile] = useState<Profile>(initial);
   const [names, setNames] = useState(initialNames);
@@ -171,6 +185,31 @@ export function ProfileEditor({ initial, names: initialNames }: { initial: Profi
           })}
         </div>
       </fieldset>
+
+      {pregnancyMode && (
+        <fieldset className="space-y-3">
+          <legend className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Pregnancy &amp; breastfeeding</legend>
+          <p className="text-xs text-muted-foreground">
+            Optional. Product pages will note ingredients that published guidance suggests avoiding or asking about at
+            this time. It doesn&apos;t change match scores, and it isn&apos;t medical clearance — talk to your OB or
+            dermatologist.
+          </p>
+          <div className="grid gap-2 sm:grid-cols-2">
+            {LIFE_STAGE.map((o) => {
+              const on = profile[o.key];
+              return (
+                <label key={o.key} className={cn("flex cursor-pointer items-center gap-3 rounded-xl border px-3.5 py-3 text-sm transition-colors", on ? "border-brand/50 bg-brand-soft" : "bg-card hover:bg-muted")}>
+                  <input type="checkbox" className="sr-only" checked={on} onChange={() => update({ [o.key]: !on })} />
+                  <span aria-hidden className={cn("flex h-5 w-5 shrink-0 items-center justify-center rounded-md border", on ? "border-primary bg-primary text-primary-foreground" : "bg-background")}>
+                    {on && <Check className="h-3.5 w-3.5" />}
+                  </span>
+                  <span className="font-medium">{o.label}</span>
+                </label>
+              );
+            })}
+          </div>
+        </fieldset>
+      )}
 
       <div className="grid gap-6 sm:grid-cols-2">
         <IngredientPicker

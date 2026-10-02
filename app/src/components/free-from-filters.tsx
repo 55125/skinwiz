@@ -14,10 +14,13 @@ export async function FreeFromFilters({
   basePath,
   searchParams,
   selected,
+  extra,
 }: {
   basePath: string;
   searchParams: Record<string, string | undefined>;
   selected: string[];
+  /** Extra chips for the top row (e.g. the pregnancy filter), built by the page. */
+  extra?: React.ReactNode;
 }) {
   function hrefWithFree(next: string[]) {
     const params = new URLSearchParams();
@@ -56,6 +59,7 @@ export async function FreeFromFilters({
           {avoidIds.length > 0 ? "Edit my avoid list" : "Set up my avoid list"}
         </Link>
       </div>
+      {extra}
       <FilterGroup
         title="Clean ingredient filters"
         checks={clean}

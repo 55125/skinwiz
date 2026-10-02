@@ -47,6 +47,9 @@ import { productTitle, breadcrumbLd } from "@/lib/seo";
 import { JsonLd } from "@/components/json-ld";
 import { siteUrl } from "@/lib/site-url";
 import { SITE_NAME } from "@/lib/brand";
+import { FEATURES } from "@/lib/feature-flags";
+import { productPregnancyFindings } from "@/lib/pregnancy";
+import { PregnancyNotice } from "@/components/pregnancy-notice";
 
 const FREE_FROM_BADGE = "border-emerald-300 text-emerald-700 dark:border-emerald-900 dark:text-emerald-400";
 
@@ -121,6 +124,8 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
     profile,
     avoidLabelsFor(avoidIds),
   );
+  const showPregnancy = FEATURES.PREGNANCY_MODE && (profile.pregnant || profile.breastfeeding);
+  const pregnancyFound = showPregnancy ? productPregnancyFindings(product, ingredientRows) : [];
   const flaggedSkin = product.freeFromFlags
     ? FREE_FROM_CHECKS.filter((c) => c.category === "skin" && !product.freeFromFlags!.includes(c.id)).map((c) => ({
         check: c,
@@ -239,6 +244,15 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
               Couldn&apos;t check this product against your avoid list — no full ingredient list is available for
               it, so it&apos;s unknown, not clear.
             </p>
+          )}
+
+          {showPregnancy && (
+            <PregnancyNotice
+              findings={pregnancyFound}
+              pregnant={profile.pregnant}
+              breastfeeding={profile.breastfeeding}
+              fullList={product.freeFromFlags !== null}
+            />
           )}
 
           {match ? (

@@ -6,6 +6,7 @@ import { canonicalProductIds, getPublicIngredientIds } from "@/lib/queries";
 import { getTopRoutines } from "@/lib/routines";
 import { FREE_FROM_CHECKS } from "@/db/ingredient-flags";
 import { ALLERGEN_GROUPS, CONTACT_ALLERGENS } from "@/db/contact-allergens";
+import { FEATURES } from "@/lib/feature-flags";
 
 const STATIC_PAGES = ["/browse", "/ingredients", "/allergens", "/routines", "/check", "/about", "/for-clinicians", "/privacy", "/terms"];
 
@@ -31,6 +32,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
   return [
     { url: SITE_URL, changeFrequency: "weekly", priority: 1 },
     ...STATIC_PAGES.map((path) => ({ url: `${SITE_URL}${path}`, changeFrequency: "weekly" as const, priority: 0.7 })),
+    // Gated clinical content: listed only once it's switched on.
+    ...(FEATURES.PREGNANCY_MODE ? [{ url: `${SITE_URL}/guide/pregnancy-breastfeeding`, changeFrequency: "monthly" as const, priority: 0.7 }] : []),
     ...concernRows.map((c) => ({
       url: `${SITE_URL}/concern/${c.id}`,
       changeFrequency: "daily" as const,

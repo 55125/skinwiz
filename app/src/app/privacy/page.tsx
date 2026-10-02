@@ -23,10 +23,12 @@ export default function PrivacyPage() {
             &ldquo;us&rdquo;) collects when you use this website, how we use it, and the choices you have.
           </p>
           <p className="rounded-lg border bg-muted/40 p-4 text-sm">
-            <strong className="text-foreground">The short version.</strong> {SITE_NAME} has no accounts and asks for
-            no name or email to use its tools. Your skin profile and avoid list are stored in cookies on your
-            own device. We do not sell your information, share it for targeted advertising, or run advertising
-            or analytics trackers.
+            <strong className="text-foreground">The short version.</strong> {SITE_NAME} has no accounts or passwords
+            and asks for no name or email to use its tools. Your skin profile and avoid list are stored in cookies
+            on your own device. Adding an email address is optional; if you do, we use it only to keep your shelf
+            across devices and to send the check-ins and safety alerts you choose, and you can delete it at any
+            time. We do not sell your information, share it for targeted advertising, or run advertising or
+            analytics trackers.
           </p>
         </div>
       }
@@ -53,6 +55,17 @@ export default function PrivacyPage() {
           <strong>Outcome reports</strong>: whether a product helped a concern and for how many weeks you used
           it. It is stored in our database, linked to your session identifier. It appears on the site only as
           part of an aggregate User Score, never individually.
+        </li>
+        <li>
+          <strong>Email address (optional)</strong>: if you choose &ldquo;Save your shelf &amp; get alerts,&rdquo;
+          we store your email address, when you confirmed it, which of your browsers are linked to it, and your
+          email preferences. See <a href="#email">Email</a> below.
+        </li>
+        <li>
+          <strong>Check-in answers</strong>: if check-ins are on, your answers to them (better, about the same,
+          worse, or stopped, and whether you had a skin reaction), with the product, the concern, how many weeks
+          you had been using it and when you answered. They are stored with your email record and count only
+          in aggregate.
         </li>
         <li>
           <strong>Routines, votes and reports</strong>: routines you submit, including any display name and
@@ -92,7 +105,7 @@ export default function PrivacyPage() {
         <tbody>
           <tr>
             <td>sw_session</td>
-            <td>A random identifier, created when you first save a shelf item, outcome, routine or vote, that ties those to your browser without an account</td>
+            <td>A random identifier, created when you first save a shelf item, outcome, routine or vote, that ties those to your browser without an account. If you confirm an email address, it also links this browser to that email</td>
             <td>1 year</td>
           </tr>
           <tr>
@@ -112,10 +125,39 @@ export default function PrivacyPage() {
         reports stay in our database, but nothing links them to you any longer.
       </p>
 
+      <h3 id="email">Email</h3>
+      <p>Giving us an email address is optional. Nothing else on {SITE_NAME} requires it. If you add one:</p>
+      <ul>
+        <li>
+          <strong>Sign-in links.</strong> We email a one-time link to confirm the address. It works once and
+          expires after 15 minutes. We store only a scrambled (hashed) form of it, and delete the record about a
+          day after it expires. Opening the link on another device links that browser to the same shelf.
+        </li>
+        <li>
+          <strong>Check-in emails</strong> (on unless you turn them off): when you mark a product on your shelf
+          as opened, we email you a short question 2, 4, 8 and 12 weeks later about how your concern is going.
+          The links in them record your answer without signing in. Your 8-week answer (or the 12-week one, if you
+          skipped week 8) counts toward that product&apos;s aggregate User Score.
+        </li>
+        <li>
+          <strong>Safety-alert emails</strong> (on unless you turn them off): if the FDA announces a recall that
+          matches a product on your shelf (owned or wanted), we email you once about that recall. Recall
+          information comes from the FDA&apos;s public openFDA database; we do not send any of your information to
+          the FDA.
+        </li>
+        <li>
+          Every check-in and safety-alert email has a one-click unsubscribe link, and you can change either
+          setting, sign a device out, or delete your email and everything saved with it on the{" "}
+          <Link href="/account">Email settings</Link> page.
+        </li>
+        <li>We never send marketing email, and never sell, rent or share your address for anyone else&apos;s marketing.</li>
+      </ul>
+
       <h2 id="use">3. How we use information</h2>
       <ul>
         <li>To provide the features you use: match scores, your shelf, ingredient checks and routines.</li>
         <li>To calculate aggregate User Scores and rank community routines.</li>
+        <li>If you add an email: to sign you in by link, keep your shelf across devices, and send the check-ins and safety alerts you have turned on.</li>
         <li>To review clinician applications and reply to people who contact us.</li>
         <li>To keep the site secure and working, and to prevent abuse, fraud and scraping.</li>
         <li>To comply with the law and enforce our <Link href="/terms">Terms of Service</Link>.</li>
@@ -124,7 +166,7 @@ export default function PrivacyPage() {
 
       <h2 id="health-data">4. Consumer health data</h2>
       <p>
-        Your skin concerns, your liked and disliked ingredients, and your outcome reports may count as
+        Your skin concerns, your liked and disliked ingredients, your outcome reports and your check-in answers may count as
         &ldquo;consumer health data&rdquo; under laws such as Washington&apos;s My Health My Data Act,
         Nevada&apos;s consumer health data law, and the {LEGAL_STATE} Data Privacy Act. This section is our
         consumer health data privacy policy. It applies to that information in addition to the rest of this
@@ -141,8 +183,8 @@ export default function PrivacyPage() {
           aggregate User Scores.
         </li>
         <li>
-          <strong>Consent:</strong> nothing is collected until you choose to save a profile or submit an
-          outcome, and each of those is an action you take for that purpose. You can withdraw at any time by
+          <strong>Consent:</strong> nothing is collected until you choose to save a profile, submit an
+          outcome, or answer a check-in, and each of those is an action you take for that purpose. You can withdraw at any time by
           clearing your profile on the <Link href="/profile">My skin</Link> page, clearing your cookies, or
           writing to us.
         </li>
@@ -161,8 +203,9 @@ export default function PrivacyPage() {
       <p>We do not sell personal information. We share it only as follows:</p>
       <ul>
         <li>
-          <strong>Service providers</strong> who run the site for us, such as our hosting provider (Railway).
-          They process data on our instructions.
+          <strong>Service providers</strong> who run the site for us: our hosting provider (Railway) and, if you
+          add an email address, our email delivery provider (Resend), which receives your address and the content
+          of the emails we send you in order to deliver them. They process data on our instructions.
         </li>
         <li>
           <strong>Public content</strong>: routines you submit, including any display name, are visible to
@@ -199,6 +242,13 @@ export default function PrivacyPage() {
           form.
         </li>
         <li>
+          Your email address, preferences, check-in schedule and answers, and the record of which safety alerts we
+          sent you are kept until you delete them on the <Link href="/account">Email settings</Link> page or ask
+          us to. Deleting removes them, along with your shelf, regimen, outcome reports, votes, reports and any
+          routines saved with that email, on every linked device. Sign-in link records are deleted about a day
+          after the link expires. Copies held by our email provider are kept under its own retention limits.
+        </li>
+        <li>
           Clinician applications are kept while we review them and for up to two years afterwards, unless you
           ask us to delete yours sooner.
         </li>
@@ -208,7 +258,8 @@ export default function PrivacyPage() {
       <h2 id="security">7. Security</h2>
       <p>
         We use reasonable safeguards to protect information: encrypted connections (HTTPS), cookies that page
-        scripts cannot read, and limits on who can access our systems. No method of storing or sending data is
+        scripts cannot read, one-time sign-in links stored only in hashed form, signed and expiring links in our
+        emails, and limits on who can access our systems. No method of storing or sending data is
         completely secure, so we cannot guarantee absolute security.
       </p>
 
@@ -217,7 +268,8 @@ export default function PrivacyPage() {
         <li>
           Edit or clear your data at any time on the <Link href="/profile">My skin</Link>,{" "}
           <Link href="/shelf">My shelf</Link> and <Link href="/avoid">My avoid list</Link> pages, or by clearing
-          your cookies.
+          your cookies. If you added an email, the <Link href="/account">Email settings</Link> page lets you turn
+          off check-ins or safety alerts and delete your email and all data saved with it.
         </li>
         <li>
           Depending on where you live (including Connecticut, California, Washington and other US states), you
@@ -230,7 +282,7 @@ export default function PrivacyPage() {
         </li>
       </ul>
       <p>
-        To make a request, email {mail}. Because there are no accounts, we may need details from you, such as
+        To make a request, email {mail}. If you never added an email address, we may need details from you, such as
         what you saved and roughly when, to find information linked to your browser. We will not discriminate
         against you for exercising your rights. We aim to reply within 45 days. If we deny your request, you
         can appeal by replying with &ldquo;Appeal&rdquo; in the subject line. If you disagree with our

@@ -145,7 +145,7 @@ export default async function ConcernPage({
 
       <FreeFromFilters
         basePath={`/concern/${slug}`}
-        searchParams={{ active, free, [PREGNANCY_FILTER_PARAM]: pregnancyHide ? PREGNANCY_FILTER_VALUE : undefined }}
+        searchParams={{ active, free, strength, [PREGNANCY_FILTER_PARAM]: pregnancyHide ? PREGNANCY_FILTER_VALUE : undefined }}
         selected={freeFromIds}
         extra={showPregnancyFilter ? <PregnancyFilter href={pregnancyToggleHref} selected={pregnancyHide} /> : undefined}
       />
@@ -153,7 +153,7 @@ export default async function ConcernPage({
       <div className="space-y-4">
         <AvoidSwitch
           basePath={`/concern/${slug}`}
-          searchParams={{ active, free, [PREGNANCY_FILTER_PARAM]: pregnancyHide ? PREGNANCY_FILTER_VALUE : undefined }}
+          searchParams={{ active, free, strength, [PREGNANCY_FILTER_PARAM]: pregnancyHide ? PREGNANCY_FILTER_VALUE : undefined }}
           selected={freeFromIds}
         />
         <p className="text-sm text-muted-foreground">

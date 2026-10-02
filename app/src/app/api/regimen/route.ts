@@ -28,12 +28,12 @@ export async function POST(request: Request) {
     const r = getOwnedRegimen(sessionId, Number(body.regimenId));
     if (!r || r.kind !== "own") return NextResponse.json({ error: "That regimen can't be edited." }, { status: 400 });
     regimenId = r.id;
-  } else {
-    regimenId = primaryOwnRegimenId(sessionId, body.slot !== null);
   }
-  if (regimenId === null) return NextResponse.json({ ok: true }); // removing from a regimen that doesn't exist
-
   const otc = getProduct(body.productId);
+  // Only an OTC add may create the visitor's first regimen.
+  if (regimenId === null) regimenId = primaryOwnRegimenId(sessionId, !!otc && body.slot !== null);
+  if (regimenId === null) return otc ? NextResponse.json({ ok: true }) : NextResponse.json({ error: "Unknown product." }, { status: 400 });
+
   if (!otc) {
     const rx = getAnyProduct(body.productId);
     if (!rx || getRegimenSlot(regimenId, rx.id) === null) return NextResponse.json({ error: "Unknown product." }, { status: 400 });

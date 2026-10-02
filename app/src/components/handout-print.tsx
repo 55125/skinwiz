@@ -139,7 +139,7 @@ function PrintSheet({ v, patient, link, date }: { v: PrintableVersion; patient: 
         return (
           <section key={title} style={{ marginTop: "4mm" }}>
             <h2 style={{ fontSize: "11.5pt", fontWeight: 600, margin: "0 0 1.5mm", borderBottom: "1.2px solid #000" }}>{title}</h2>
-            <ol style={{ margin: 0, paddingLeft: "5mm" }}>
+            <ol style={{ margin: 0, paddingLeft: "5mm", listStyle: "decimal" }}>
               {steps.map((s) => (
                 <li key={`${title}-${s.key}`} style={{ marginBottom: "1.5mm" }}>
                   <strong>{s.label}</strong>
@@ -160,7 +160,7 @@ function PrintSheet({ v, patient, link, date }: { v: PrintableVersion; patient: 
             Stop and call {v.clinicName}
             {v.clinicPhone ? ` (${v.clinicPhone})` : ""} if:
           </h2>
-          <ul style={{ margin: 0, paddingLeft: "5mm" }}>
+          <ul style={{ margin: 0, paddingLeft: "5mm", listStyle: "disc" }}>
             {v.content.stopRules.map((r) => (
               <li key={r}>{r}</li>
             ))}

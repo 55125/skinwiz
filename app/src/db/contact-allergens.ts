@@ -353,6 +353,45 @@ export const CONTACT_ALLERGENS: ContactAllergen[] = [
     terms: ["chlorocresol", "p-chloro-m-cresol", "4-chloro-3-cresol", "4-chloro-3-methylphenol"],
   },
   { id: "chlorhexidine", name: "Chlorhexidine", section: "preservative", terms: ["chlorhexidine"], note: "An antiseptic, also in first-aid washes and mouthwash; can cause immediate-type reactions as well." },
+  // Below: ACDS Core Allergen Series 2020 (Schalock et al., Dermatitis,
+  // 2020;31(5):279-282) preservatives not covered above.
+  {
+    id: "benzisothiazolinone",
+    name: "Benzisothiazolinone (BIT)",
+    section: "preservative",
+    terms: ["benzisothiazolinone", "1,2-benzisothiazolin-3-one", "1,2-benzisothiazol-3(2h)-one"],
+    aka: ["BIT", "Proxel"],
+    note: "Mostly in household cleaners, paints and slimes, sometimes in cosmetics. Cross-reactions with MI are uncommon, so it is not part of the MI/MCI family here.",
+  },
+  {
+    id: "octylisothiazolinone",
+    name: "Octylisothiazolinone (OIT)",
+    section: "preservative",
+    terms: ["octylisothiazolinone", "2-octyl-4-isothiazolin-3-one", "octhilinone"],
+    aka: ["OIT"],
+    note: "A preservative in leather (furniture, shoes, gloves), paints and some cosmetics.",
+  },
+  {
+    id: "benzalkonium-chloride",
+    name: "Benzalkonium chloride",
+    section: "preservative",
+    terms: ["benzalkonium", "alkyl dimethyl benzyl ammonium chloride", "alkyldimethylbenzylammonium chloride"],
+    note: "An antiseptic and preservative in first-aid products, eye drops, hand sanitizers and some hair conditioners; also an irritant.",
+  },
+  {
+    id: "sorbic-acid",
+    name: "Sorbic acid / sorbates",
+    section: "preservative",
+    terms: ["sorbic acid", "potassium sorbate", "sodium sorbate", "calcium sorbate"],
+    note: "Potassium and other sorbate salts release sorbic acid in the product, so they are flagged too. (Polysorbates are unrelated and are not.)",
+  },
+  {
+    id: "ethylhexylglycerin",
+    name: "Ethylhexylglycerin",
+    section: "preservative",
+    terms: ["ethylhexylglycerin", "octoxyglycerin"],
+    note: "A preservative booster, often paired with phenoxyethanol, including in “preservative-free” claims.",
+  },
 
   // --- 4. Surfactants and emulsifiers ---
   {
@@ -363,7 +402,7 @@ export const CONTACT_ALLERGENS: ContactAllergen[] = [
     note: "The real sensitizers are often manufacturing residues, amidoamine and dimethylaminopropylamine, which aren't listed.",
   },
   { id: "decyl-glucoside", name: "Decyl glucoside", section: "surfactant", terms: ["decyl glucoside"] },
-  { id: "lauryl-glucoside", name: "Lauryl glucoside", section: "surfactant", terms: ["lauryl glucoside"] },
+  { id: "lauryl-glucoside", name: "Lauryl glucoside", section: "surfactant", terms: ["lauryl glucoside", "lauryl polyglucose"], aka: ["Lauryl polyglucose"] },
   { id: "coco-glucoside", name: "Coco glucoside", section: "surfactant", terms: ["coco glucoside", "coco-glucoside"] },
   {
     id: "other-alkyl-glucosides",
@@ -381,6 +420,14 @@ export const CONTACT_ALLERGENS: ContactAllergen[] = [
     note: "Also the emulsifier in patch-test fragrance preparations.",
   },
   { id: "oleamidopropyl-dimethylamine", name: "Oleamidopropyl dimethylamine", section: "surfactant", terms: ["oleamidopropyl dimethylamine"] },
+  // ACDS Core Allergen Series 2020 (Schalock et al., Dermatitis, 2020).
+  {
+    id: "cocamide-dea",
+    name: "Cocamide DEA",
+    section: "surfactant",
+    terms: ["cocamide dea", "cocamide diethanolamine", "coconut diethanolamide", "coconut fatty acid diethanolamide"],
+    note: "A foam booster in shampoos, hand soaps and dish soap; also in industrial cleaners and cutting fluids. Cocamide MEA is a different ingredient and isn't flagged.",
+  },
   {
     id: "laureth-sulfates",
     name: "Laureth and pareth sulfates",
@@ -539,6 +586,16 @@ export const CONTACT_ALLERGENS: ContactAllergen[] = [
     terms: ["*metabisulfite", "*bisulfite", "sodium sulfite", "potassium sulfite", "sulfites"],
     note: "An “Allergen of the Year” nominee; how often a positive patch test explains a rash is still debated.",
   },
+  // BHT and propyl gallate: ACDS Core Allergen Series 2020 (Schalock et al.,
+  // Dermatitis, 2020;31(5):279-282).
+  { id: "bht", name: "BHT (butylated hydroxytoluene)", section: "antioxidant", terms: ["bht", "butylated hydroxytoluene"], note: "A rare sensitizer, but in many lipsticks, creams and sunscreens." },
+  {
+    id: "gallates",
+    name: "Propyl gallate and other gallates",
+    section: "antioxidant",
+    terms: ["propyl gallate", "octyl gallate", "dodecyl gallate", "lauryl gallate"],
+    note: "Gallates cross-react, so octyl and dodecyl (lauryl) gallate are flagged too. In lipsticks and other oil-based products; also a food antioxidant (E310).",
+  },
 
   // --- 9. Hair dyes ---
   {
@@ -571,6 +628,9 @@ export const CONTACT_ALLERGENS: ContactAllergen[] = [
   { id: "polymyxin-b", name: "Polymyxin B", section: "medicament", terms: ["polymyxin"] },
   { id: "mupirocin", name: "Mupirocin", section: "medicament", terms: ["mupirocin"] },
   { id: "clioquinol", name: "Clioquinol", section: "medicament", terms: ["clioquinol", "iodochlorhydroxyquin"] },
+  // With clioquinol, the T.R.U.E. Test quinoline mix (FDA package insert,
+  // T.R.U.E. TEST, rev. 08/2017).
+  { id: "chlorquinaldol", name: "Chlorquinaldol", section: "medicament", terms: ["chlorquinaldol"], note: "A topical antiseptic in some combination steroid creams sold outside the US.", rare: true },
   {
     id: "corticosteroid-class-a",
     name: "Corticosteroids, class A (hydrocortisone type)",
@@ -674,6 +734,14 @@ export const CONTACT_ALLERGENS: ContactAllergen[] = [
     aka: ["Gold sodium thiosulfate"],
     note: "A frequent positive patch test that is often not clinically relevant; reactions mostly come from jewelry and dental work. Gold flakes and colloidal gold turn up in some luxury skincare.",
   },
+  // ACDS Core Allergen Series 2020 (Schalock et al., Dermatitis, 2020).
+  {
+    id: "carmine",
+    name: "Carmine (cochineal)",
+    section: "metal",
+    terms: ["carmine", "ci 75470", "cochineal", "carminic acid", "natural red 4"],
+    note: "A red pigment made from insects, in lipsticks, blushes and eyeshadows (and foods and drinks). Can also cause immediate allergic reactions.",
+  },
 
   // --- 12. Acrylates ---
   {
@@ -682,6 +750,14 @@ export const CONTACT_ALLERGENS: ContactAllergen[] = [
     section: "acrylate",
     terms: ["*acrylat*", "carbomer", "hema", "acrylic acid"],
     note: "Thickeners such as acrylates copolymer and carbomer are in ~79% of best-selling sunscreens; monomers such as HEMA, methyl methacrylate and ethyl cyanoacrylate in nail products and adhesives are the strong sensitizers.",
+  },
+  // ACDS Core Allergen Series 2020 (Schalock et al., Dermatitis, 2020).
+  {
+    id: "shellac",
+    name: "Shellac",
+    section: "acrylate",
+    terms: ["shellac", "laccifer lacca", "kerria lacca"],
+    note: "A natural resin film former in mascara, eyeliner, hairspray and nail polish (including “gel” shellac manicures, whose acrylates are flagged separately).",
   },
 ];
 

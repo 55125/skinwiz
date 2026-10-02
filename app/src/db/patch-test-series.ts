@@ -22,7 +22,11 @@ export const NOT_ON_LABELS: NotOnLabel[] = [
   { id: "epoxy-resin", name: "Epoxy resin", foundIn: "Two-part glues, paints, floor coatings and some electronics; mainly an occupational allergen." },
   { id: "ptbp-formaldehyde-resin", name: "p-tert-Butylphenol formaldehyde resin", foundIn: "Leather and shoe adhesives, watch straps, prosthetics and some nail and wig glues." },
   { id: "disperse-blue-106", name: "Disperse blue 106 (textile dye)", foundIn: "Dark synthetic clothing (polyester, acetate, nylon) in blue, black, brown and green." },
-  { id: "disperse-dye-mix", name: "Disperse dye mix (textile dyes)", foundIn: "Dark synthetic clothing and linings, including swimwear and leggings." },
+  // Id kept from before the rename: it is in IMPORT_CODES and printed links.
+  { id: "disperse-dye-mix", name: "Disperse blue 106/124 mix (textile dyes)", foundIn: "Dark synthetic clothing and linings, including swimwear and leggings." },
+  { id: "diphenylguanidine", name: "1,3-Diphenylguanidine (rubber accelerator)", foundIn: "Rubber and synthetic-rubber gloves, including many nitrile and neoprene gloves, and some shoes." },
+  { id: "disperse-orange-3", name: "Disperse orange 3 (textile dye)", foundIn: "Synthetic clothing dyes; cross-reacts with PPD, so check hair dyes too." },
+  { id: "disperse-yellow-3", name: "Disperse yellow 3 (textile dye)", foundIn: "Synthetic clothing dyes in yellows, oranges, browns and greens." },
 ];
 
 const NOT_ON_LABEL_BY_ID = new Map(NOT_ON_LABELS.map((n) => [n.id, n]));
@@ -50,7 +54,12 @@ const item = (name: string, ...ids: string[]): SeriesItem => ({ name, ids });
 const offLabel = (name: string, id: string): SeriesItem => ({ name, ids: [], notOnLabel: id });
 
 // T.R.U.E. Test (SmartPractice), 35 allergens on three panels in panel order.
-// Position 9 is the negative control, left out.
+// Position 9 is the negative control, left out. Source: FDA package insert,
+// T.R.U.E. TEST, PI rev. 08/2017 (DailyMed setid
+// 2f082b68-dc74-418a-9e6f-b3c285b41d44;
+// https://www.fda.gov/files/vaccines,%20blood%20&%20biologics/published/Package-Insert---T.R.U.E.-TEST.pdf).
+// Quinoline mix is clioquinol and chlorquinaldol in equal parts; caine mix
+// is benzocaine, dibucaine and tetracaine.
 const TRUE_TEST_ITEMS: SeriesItem[] = [
   item("Nickel sulfate", "nickel"),
   item("Wool alcohols", "lanolin"),
@@ -76,7 +85,7 @@ const TRUE_TEST_ITEMS: SeriesItem[] = [
   item("Thimerosal", "thimerosal"),
   offLabel("Thiuram mix", "thiuram-mix"),
   item("Diazolidinyl urea", "diazolidinyl-urea"),
-  item("Quinoline mix", "clioquinol"),
+  item("Quinoline mix", "clioquinol", "chlorquinaldol"),
   item("Tixocortol-21-pivalate", "corticosteroid-class-a"),
   item("Gold sodium thiosulfate", "gold"),
   item("Imidazolidinyl urea", "imidazolidinyl-urea"),
@@ -92,10 +101,14 @@ const TRUE_TEST_ITEMS: SeriesItem[] = [
 // Positions skip 9, the negative control.
 const TRUE_TEST_NUMBERED = TRUE_TEST_ITEMS.map((it, i) => ({ ...it, pos: i < 8 ? i + 1 : i + 2 }));
 
-// Allergens of the NACDG screening series and ACDS Core Allergen Series that
-// a clinician is likely to read positive, grouped like contact-allergens.ts.
-// Not a verbatim copy of either series (they change every cycle); anything
-// missing is in the search.
+// The ACDS Core Allergen Series 2020 Update (Schalock et al., Dermatitis,
+// 2020;31(5):279-282, doi:10.1097/DER.0000000000000621; table at
+// https://www.contactderm.org/UserFiles/file/American_Contact_Dermatitis_Society_Core_Allergen.2-1_v1.pdf),
+// plus common NACDG screening allergens from the Chemotechnique NAC-80 tray,
+// grouped like contact-allergens.ts rather than in tray order. Lanolin
+// alcohol and Amerchol L-101 are separate patches on both trays but mean the
+// same avoidance (lanolin), so they share one row. Anything not here is in
+// the search.
 const CORE_GROUPS: { section: AllergenSectionId | "off-label"; items: SeriesItem[] }[] = [
   {
     section: "fragrance",
@@ -105,13 +118,12 @@ const CORE_GROUPS: { section: AllergenSectionId | "off-label"; items: SeriesItem
       item("Myroxylon pereirae (balsam of Peru)", "balsam-of-peru"),
       item("Cinnamal", "cinnamal"),
       item("Hydroxyisohexyl 3-cyclohexene carboxaldehyde (HICC)", "hicc"),
-      item("Linalool hydroperoxides", "linalool"),
-      item("Limonene hydroperoxides", "limonene"),
+      item("Hydroperoxides of linalool", "linalool"),
+      item("Hydroperoxides of limonene", "limonene"),
       item("Benzyl alcohol", "benzyl-alcohol"),
       item("Benzyl salicylate", "benzyl-salicylate"),
       item("Jasmine absolute", "jasmine"),
       item("Ylang-ylang oil", "ylang-ylang"),
-      item("Sandalwood oil", "sandalwood"),
     ],
   },
   {
@@ -124,6 +136,7 @@ const CORE_GROUPS: { section: AllergenSectionId | "off-label"; items: SeriesItem
       item("DMDM hydantoin", "dmdm-hydantoin"),
       item("2-Bromo-2-nitropropane-1,3-diol (bronopol)", "bronopol"),
       item("Tosylamide formaldehyde resin", "tosylamide-formaldehyde-resin"),
+      item("Ethyleneurea melamine formaldehyde mix", "melamine-formaldehyde"),
     ],
   },
   {
@@ -133,7 +146,16 @@ const CORE_GROUPS: { section: AllergenSectionId | "off-label"; items: SeriesItem
       item("Methylchloroisothiazolinone/methylisothiazolinone", "mci-mi"),
       item("Methyldibromo glutaronitrile", "mdbgn"),
       item("Iodopropynyl butylcarbamate", "iodopropynyl-butylcarbamate"),
+      item("Benzisothiazolinone", "benzisothiazolinone"),
+      item("Octylisothiazolinone", "octylisothiazolinone"),
       item("Paraben mix", "parabens"),
+      item("Phenoxyethanol", "phenoxyethanol"),
+      item("Benzalkonium chloride", "benzalkonium-chloride"),
+      item("Sodium benzoate", "sodium-benzoate"),
+      item("Benzoic acid", "sodium-benzoate"),
+      item("Sorbic acid", "sorbic-acid"),
+      item("Ethylhexylglycerin", "ethylhexylglycerin"),
+      item("p-Chloro-m-cresol (chlorocresol)", "chlorocresol"),
       item("Chloroxylenol (PCMX)", "chloroxylenol"),
     ],
   },
@@ -145,17 +167,24 @@ const CORE_GROUPS: { section: AllergenSectionId | "off-label"; items: SeriesItem
       item("Dimethylaminopropylamine (DMAPA)", "cocamidopropyl-betaine"),
       item("Oleamidopropyl dimethylamine", "oleamidopropyl-dimethylamine"),
       item("Decyl glucoside", "decyl-glucoside"),
-      item("Lauryl glucoside", "lauryl-glucoside"),
+      item("Lauryl polyglucose (glucosides)", "lauryl-glucoside"),
+      item("Cocamide DEA", "cocamide-dea"),
       item("Sorbitan sesquioleate", "sorbitan-sesquioleate"),
+      item("Sorbitan oleate", "sorbitan-sesquioleate"),
+      item("Cetearyl alcohol", "cetearyl-alcohol"),
     ],
   },
   {
     section: "emollient",
-    items: [item("Lanolin alcohol (wool alcohols)", "lanolin"), item("Amerchol L-101", "lanolin"), item("Propylene glycol", "propylene-glycol")],
+    items: [item("Lanolin alcohol (Amerchol L-101)", "lanolin"), item("Propylene glycol", "propylene-glycol")],
   },
   {
     section: "uv-filter",
-    items: [item("Benzophenone-3 (oxybenzone)", "oxybenzone"), item("Benzophenone-4", "benzophenone-4"), item("Octocrylene", "octocrylene")],
+    items: [
+      item("Benzophenone-3 (oxybenzone)", "oxybenzone"),
+      item("Benzophenone-4", "benzophenone-4"),
+      item("Ethylhexyl methoxycinnamate (octinoxate)", "octinoxate"),
+    ],
   },
   {
     section: "botanical",
@@ -166,31 +195,35 @@ const CORE_GROUPS: { section: AllergenSectionId | "off-label"; items: SeriesItem
       item("Propolis", "propolis"),
       item("Colophony", "colophonium"),
       item("Tea tree oil, oxidized", "tea-tree-oil"),
+      item("Lavender absolute (Lavandula angustifolia)", "lavender-oil"),
+      item("Peppermint oil (Mentha piperita)", "peppermint-oil"),
     ],
   },
   {
     section: "antioxidant",
-    items: [item("DL-alpha-tocopherol", "tocopherol"), item("Sodium metabisulfite", "sulfites")],
+    items: [
+      item("DL-alpha-tocopherol", "tocopherol"),
+      item("Sodium metabisulfite", "sulfites"),
+      item("Butylated hydroxytoluene (BHT)", "bht"),
+      item("Propyl gallate", "gallates"),
+    ],
   },
   {
     section: "hair",
-    items: [
-      item("p-Phenylenediamine", "ppd"),
-      item("Toluene-2,5-diamine", "ptd"),
-      item("Glyceryl thioglycolate", "thioglycolates"),
-      item("Ammonium persulfate", "persulfates"),
-    ],
+    items: [item("p-Phenylenediamine", "ppd"), item("Toluene-2,5-diamine", "ptd"), item("Ammonium persulfate", "persulfates")],
   },
   {
     section: "medicament",
     items: [
       item("Neomycin sulfate", "neomycin"),
       item("Bacitracin", "bacitracin"),
+      item("Polymyxin B sulfate", "polymyxin-b"),
       item("Benzocaine", "benzocaine"),
-      item("Dibucaine", "dibucaine"),
       item("Lidocaine", "lidocaine"),
+      item("Pramoxine (pramocaine)", "pramoxine"),
       item("Tixocortol-21-pivalate", "corticosteroid-class-a"),
       item("Budesonide", "corticosteroid-class-b"),
+      item("Triamcinolone acetonide", "corticosteroid-class-b"),
       item("Hydrocortisone-17-butyrate", "corticosteroid-class-d"),
       item("Clobetasol-17-propionate", "corticosteroid-class-d"),
       item("Ethylenediamine dihydrochloride", "ethylenediamine"),
@@ -199,7 +232,13 @@ const CORE_GROUPS: { section: AllergenSectionId | "off-label"; items: SeriesItem
   },
   {
     section: "metal",
-    items: [item("Nickel sulfate", "nickel"), item("Cobalt chloride", "cobalt"), item("Potassium dichromate", "chromium"), item("Gold sodium thiosulfate", "gold")],
+    items: [
+      item("Nickel sulfate", "nickel"),
+      item("Cobalt chloride", "cobalt"),
+      item("Potassium dichromate", "chromium"),
+      item("Gold sodium thiosulfate", "gold"),
+      item("Carmine (CI 75470)", "carmine"),
+    ],
   },
   {
     section: "acrylate",
@@ -208,6 +247,7 @@ const CORE_GROUPS: { section: AllergenSectionId | "off-label"; items: SeriesItem
       item("Methyl methacrylate", "acrylates"),
       item("Ethyl acrylate", "acrylates"),
       item("Ethyl cyanoacrylate", "acrylates"),
+      item("Shellac", "shellac"),
     ],
   },
   {
@@ -221,8 +261,11 @@ const CORE_GROUPS: { section: AllergenSectionId | "off-label"; items: SeriesItem
       offLabel("Black rubber mix", "black-rubber-mix"),
       offLabel("Epoxy resin", "epoxy-resin"),
       offLabel("p-tert-Butylphenol formaldehyde resin", "ptbp-formaldehyde-resin"),
-      offLabel("Disperse dye mix", "disperse-dye-mix"),
+      offLabel("1,3-Diphenylguanidine", "diphenylguanidine"),
+      offLabel("Disperse blue 106/124 mix", "disperse-dye-mix"),
       offLabel("Disperse blue 106", "disperse-blue-106"),
+      offLabel("Disperse orange 3", "disperse-orange-3"),
+      offLabel("Disperse yellow 3", "disperse-yellow-3"),
     ],
   },
 ];
@@ -241,9 +284,9 @@ export const PATCH_TEST_SERIES: PatchTestSeries[] = [
   },
   {
     id: "core",
-    name: "NACDG / ACDS core series",
+    name: "ACDS Core Series (2020) and common NACDG allergens",
     short: "Core series",
-    description: "The screening allergens of the North American and ACDS core series, grouped by type. Anything else is in the search.",
+    description: "ACDS Core Series (2020) and common NACDG allergens, grouped by type — confirm against your tray. Anything else is in the search.",
     groups: CORE_GROUPS.map((g) => ({
       title: g.section === "off-label" ? "Rubber, resins and textile dyes" : ALLERGEN_SECTIONS.find((s) => s.id === g.section)!.title,
       items: g.items,

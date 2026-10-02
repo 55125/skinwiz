@@ -53,7 +53,7 @@ test("unknown ids are dropped on encode and counted on decode", () => {
   assert.deepEqual(decoded.avoidIds, ["lanolin"]);
   assert.deepEqual(decoded.notOnLabel, ["carba-mix"]);
   // A bit past the end of the table: a link from a newer version.
-  const future = decodeImportCode("1" + "A".repeat(23) + "B");
+  const future = decodeImportCode("1" + "A".repeat(39) + "B");
   assert.ok(future.ok);
   assert.equal(future.unknown, 1);
   assert.deepEqual(future.avoidIds, []);

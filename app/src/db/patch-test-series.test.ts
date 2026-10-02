@@ -19,6 +19,35 @@ test("the T.R.U.E. Test has its 35 allergens, each mapped or marked not matchabl
   }
 });
 
+test("every core-series item maps or is marked not matchable", () => {
+  const core = PATCH_TEST_SERIES.find((s) => s.id === "core")!;
+  const items = seriesItems(core);
+  for (const it of items) {
+    assert.ok(it.ids.length > 0 || it.notOnLabel, `${it.name} maps to nothing`);
+    assert.ok(!(it.ids.length > 0 && it.notOnLabel), `${it.name} is both mapped and not matchable`);
+  }
+  const names = items.map((i) => i.name);
+  for (const dropped of ["Sandalwood oil", "Octocrylene", "Glyceryl thioglycolate", "Dibucaine", "Amerchol L-101"]) {
+    assert.ok(!names.includes(dropped), `${dropped} should not be on the core series`);
+  }
+  for (const required of [
+    "Benzisothiazolinone", "Octylisothiazolinone", "Phenoxyethanol", "Benzalkonium chloride", "Sodium benzoate", "Benzoic acid", "Sorbic acid",
+    "Ethylhexylglycerin", "p-Chloro-m-cresol (chlorocresol)", "Ethyleneurea melamine formaldehyde mix", "Lavender absolute (Lavandula angustifolia)",
+    "Peppermint oil (Mentha piperita)", "Cocamide DEA", "Sorbitan oleate", "Cetearyl alcohol", "Butylated hydroxytoluene (BHT)", "Propyl gallate",
+    "Ethylhexyl methoxycinnamate (octinoxate)", "Pramoxine (pramocaine)", "Polymyxin B sulfate", "Triamcinolone acetonide", "Shellac",
+    "Carmine (CI 75470)", "1,3-Diphenylguanidine", "Disperse orange 3", "Disperse yellow 3", "Disperse blue 106/124 mix",
+    "Hydroperoxides of linalool", "Hydroperoxides of limonene", "Lauryl polyglucose (glucosides)", "Lanolin alcohol (Amerchol L-101)",
+  ]) {
+    assert.ok(names.includes(required), `${required} missing from the core series`);
+  }
+  assert.equal(new Set(names).size, names.length, "duplicate core-series row");
+});
+
+test("quinoline mix is clioquinol and chlorquinaldol", () => {
+  const trueTest = PATCH_TEST_SERIES.find((s) => s.id === "true-test")!;
+  assert.deepEqual(seriesItems(trueTest).find((i) => i.name === "Quinoline mix")!.ids, ["clioquinol", "chlorquinaldol"]);
+});
+
 test("every series item points at real ids", () => {
   for (const series of PATCH_TEST_SERIES) {
     for (const it of seriesItems(series)) {
@@ -51,6 +80,37 @@ test("added T.R.U.E. Test allergens match their label names", () => {
     assert.ok(!got.includes("gold") && !got.includes("colophonium"), `${name}: ${got.join(", ")}`);
   }
   assert.deepEqual(parsePatchTestResults("Colophony 20% pet +")[0].ids, ["colophonium"]);
+});
+
+test("added ACDS core allergens match label names without obvious false positives", () => {
+  const hits: [string, string][] = [
+    ["Benzisothiazolinone", "benzisothiazolinone"],
+    ["Octylisothiazolinone", "octylisothiazolinone"],
+    ["Benzalkonium Chloride", "benzalkonium-chloride"],
+    ["Potassium Sorbate", "sorbic-acid"],
+    ["Sorbic Acid", "sorbic-acid"],
+    ["Ethylhexylglycerin", "ethylhexylglycerin"],
+    ["Cocamide DEA", "cocamide-dea"],
+    ["BHT", "bht"],
+    ["Butylated Hydroxytoluene", "bht"],
+    ["Propyl Gallate", "gallates"],
+    ["Carmine (CI 75470)", "carmine"],
+    ["Shellac", "shellac"],
+    ["Chlorquinaldol", "chlorquinaldol"],
+    ["Benzoic Acid", "sodium-benzoate"],
+    ["Lauryl Polyglucose", "lauryl-glucoside"],
+  ];
+  for (const [name, id] of hits) assert.ok(allergensInIngredient(name).includes(id), `${name} -> ${id}`);
+  const misses: [string, string][] = [
+    ["Polysorbate 20", "sorbic-acid"],
+    ["Sorbitol", "sorbic-acid"],
+    ["Benzyl Benzoate", "sodium-benzoate"],
+    ["Methylisothiazolinone", "benzisothiazolinone"],
+    ["Cocamide MEA", "cocamide-dea"],
+    ["Epigallocatechin Gallate", "gallates"],
+    ["BHA", "bht"],
+  ];
+  for (const [name, id] of misses) assert.ok(!allergensInIngredient(name).includes(id), `${name} should not match ${id}`);
 });
 
 test("watch-for names come from label synonyms and family members", () => {

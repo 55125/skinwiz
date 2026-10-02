@@ -31,6 +31,9 @@ export const IMPORT_CODES: readonly string[] = [
   "named-fragrance-allergens", "glucosides", "ppd-type-dyes", "chemical-uv-filters", "corticosteroids", "carba-mix", "thiuram-mix",
   "mercapto-mix", "mbt", "black-rubber-mix", "dialkyl-thioureas", "epoxy-resin", "ptbp-formaldehyde-resin", "disperse-blue-106",
   "disperse-dye-mix",
+  // ACDS 2020 core series and quinoline mix additions
+  "chlorquinaldol", "benzisothiazolinone", "octylisothiazolinone", "benzalkonium-chloride", "sorbic-acid", "ethylhexylglycerin",
+  "cocamide-dea", "bht", "gallates", "carmine", "shellac", "diphenylguanidine", "disperse-orange-3", "disperse-yellow-3",
 ];
 
 const CODE_INDEX = new Map(IMPORT_CODES.map((id, i) => [id, i]));

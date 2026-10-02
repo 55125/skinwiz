@@ -47,6 +47,10 @@ import { productTitle, breadcrumbLd } from "@/lib/seo";
 import { JsonLd } from "@/components/json-ld";
 import { siteUrl } from "@/lib/site-url";
 import { SITE_NAME } from "@/lib/brand";
+import { getEquivalenceGroupForProduct, isHsaEligible } from "@/lib/otc-index";
+import { HSA_GUIDE_PATH, HSA_STORE_AFFILIATE, isSunscreen } from "@/lib/hsa";
+import { HsaBadge } from "@/components/hsa-badge";
+import { EquivalenceExplainer, EquivalenceRows } from "@/components/equivalence-list";
 
 const FREE_FROM_BADGE = "border-emerald-300 text-emerald-700 dark:border-emerald-900 dark:text-emerald-400";
 
@@ -103,7 +107,20 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
   const activeGuidance = guidanceForActives(product.activeIds ?? []);
   const formulationGuidance = guidanceForStep(stepTypeOf(product));
   const myOutcome = sessionId ? getSessionOutcome(product.id, product.concernId, sessionId) : null;
-  const equivalents = getEquivalentProducts(product);
+  // Curated "same active, same strength" group when the product is in one
+  // (lib/equivalence.ts rules); otherwise the raw same-strength-key list,
+  // which is what sunscreens and antiperspirants fall back to.
+  const equivalenceGroup = getEquivalenceGroupForProduct(product.id);
+  // On a name brand's page the store brands are the news, so they lead; on a
+  // store brand's page, the name brands do.
+  const isStoreBrandPage = !!equivalenceGroup?.members.find((m) => m.ids.includes(product.id))?.storeBrand;
+  const groupOthers = equivalenceGroup
+    ? equivalenceGroup.members
+        .filter((m) => !m.ids.includes(product.id))
+        .sort((a, b) => Number(!!a.storeBrand === isStoreBrandPage) - Number(!!b.storeBrand === isStoreBrandPage))
+    : [];
+  const equivalents = equivalenceGroup ? { rows: [], total: 0 } : getEquivalentProducts(product);
+  const hsaEligible = isHsaEligible(product.id);
   const needsSwap = avoid?.status === "conflicts" || avoid?.status === "possible";
   const ingredientRows = getIngredientsForProduct(product.id);
   const isDrugLabel = product.dataSource === "openfda" || product.dataSource === "dailymed";
@@ -172,6 +189,18 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
                 <Badge variant="outline" className={sourceBadge.className}>
                   {sourceBadge.label}
                 </Badge>
+              )}
+              {hsaEligible && (
+                <Link href={HSA_GUIDE_PATH} aria-label="Usually HSA/FSA eligible — how eligibility works">
+                  <HsaBadge />
+                </Link>
+              )}
+              {/* HSA/FSA store affiliate hook: renders nothing until
+                  HSA_STORE_AFFILIATE is set in lib/hsa.ts. */}
+              {hsaEligible && HSA_STORE_AFFILIATE && (
+                <a href={HSA_STORE_AFFILIATE.url} target="_blank" rel="sponsored noopener noreferrer" className="text-xs text-brand underline">
+                  Shop HSA/FSA at {HSA_STORE_AFFILIATE.name} (affiliate link)
+                </a>
               )}
             </div>
           </div>
@@ -513,6 +542,20 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
         </div>
       </section>
 
+      {equivalenceGroup && groupOthers.length > 0 && (
+        <section className="space-y-4">
+          <div className="space-y-1">
+            <h2 className="text-xl font-semibold">Same active, same strength</h2>
+            <EquivalenceExplainer group={equivalenceGroup} />
+          </div>
+          <EquivalenceRows members={groupOthers.slice(0, 8)} compareWith={product.id} />
+          <Link href={`/same/${equivalenceGroup.slug}`} className="inline-block text-sm font-medium text-brand hover:underline">
+            {groupOthers.length > 8 ? `See all ${equivalenceGroup.members.length}` : "All"} {equivalenceGroup.title} products
+            {equivalenceGroup.members.some((m) => m.storeBrand) ? ", including store brands" : ""} →
+          </Link>
+        </section>
+      )}
+
       {equivalents.total > 0 && (
         <section className="space-y-4">
           <div className="space-y-1">
@@ -522,6 +565,8 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
               identical active ingredient{product.activeIds.length > 1 ? "s" : ""} at the identical strength
               {product.dosageForm ? ` in the same form (${product.dosageForm.toLowerCase()})` : ""} on the FDA label — often a
               store brand or generic. Inactive ingredients, texture, and price can still differ.
+              {isSunscreen(product) &&
+                " For sunscreens, SPF and broad-spectrum protection are tested on each finished product, so the same filters don't guarantee the same SPF — check each label."}
             </p>
           </div>
           <ProductGrid products={equivalents.rows} columns="sm:grid-cols-2 lg:grid-cols-4" />

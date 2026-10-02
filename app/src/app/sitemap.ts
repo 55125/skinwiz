@@ -6,8 +6,9 @@ import { canonicalProductIds, getPublicIngredientIds } from "@/lib/queries";
 import { getTopRoutines } from "@/lib/routines";
 import { FREE_FROM_CHECKS } from "@/db/ingredient-flags";
 import { ALLERGEN_GROUPS, CONTACT_ALLERGENS } from "@/db/contact-allergens";
+import { getEquivalenceGroups } from "@/lib/otc-index";
 
-const STATIC_PAGES = ["/browse", "/ingredients", "/allergens", "/routines", "/check", "/about", "/for-clinicians", "/privacy", "/terms"];
+const STATIC_PAGES = ["/browse", "/ingredients", "/allergens", "/same", "/guide/hsa-fsa-eligible", "/routines", "/check", "/about", "/for-clinicians", "/privacy", "/terms"];
 
 // Force dynamic (query the DB per-request) rather than the default static
 // generation: a static sitemap would be computed once at build time,
@@ -40,6 +41,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       url: `${SITE_URL}/guide/${c.id}`,
       changeFrequency: "weekly" as const,
       priority: 0.8,
+    })),
+    // Only groups with 2+ labelers exist at all (lib/equivalence.ts).
+    ...getEquivalenceGroups().map((g) => ({
+      url: `${SITE_URL}/same/${g.slug}`,
+      changeFrequency: "weekly" as const,
+      priority: 0.7,
     })),
     ...[...ALLERGEN_GROUPS, ...CONTACT_ALLERGENS].map((a) => ({
       url: `${SITE_URL}/allergens/${a.id}`,

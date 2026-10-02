@@ -12,6 +12,7 @@ import { MatchBadge } from "@/components/match-badge";
 import type { Match } from "@/lib/profile-shared";
 import { describeStrengths } from "@/lib/strength-display";
 import { displayManufacturer } from "@/lib/format";
+import { HsaBadge } from "@/components/hsa-badge";
 import type { products } from "@/db/schema";
 
 export function ProductCard({
@@ -20,12 +21,14 @@ export function ProductCard({
   ewgScore,
   avoidIds,
   match = null,
+  hsaEligible = false,
 }: {
   product: typeof products.$inferSelect;
   scores: ProductScores;
   ewgScore: EwgScore | null;
   avoidIds: string[];
   match?: Match | null;
+  hsaEligible?: boolean;
 }) {
   const sourceBadge = dataSourceBadge(product.dataSource);
   const avoid = avoidVerdict(product, avoidIds);
@@ -129,8 +132,9 @@ export function ProductCard({
           </div>
         )}
 
-        {(shownFlags.length > 0 || ewgScore || (product.dosageForm && product.imageUrl)) && (
+        {(shownFlags.length > 0 || ewgScore || hsaEligible || (product.dosageForm && product.imageUrl)) && (
           <div className="flex flex-wrap gap-1">
+            {hsaEligible && <HsaBadge />}
             {/* Kept to one line: one named flag plus a count, so the count
                 never wraps onto a row of its own in a 3-column grid. */}
             {product.dosageForm && product.imageUrl && <Badge variant="secondary">{product.dosageForm}</Badge>}

@@ -15,6 +15,8 @@ import {
 import { concernIdToNiche } from "@/db/actives";
 import { getFreeFromCheck } from "@/db/ingredient-flags";
 import { allergenBlockers, resolveAllergenId } from "@/db/contact-allergens";
+import { hsaEligibleIdsJson } from "@/lib/otc-index";
+import { displayablePrice } from "@/lib/equivalence";
 
 // Shared by getProductsForConcern and searchProducts -- one membership
 // check per selected free-from id, ANDed together, so a product must satisfy every
@@ -120,13 +122,16 @@ export function getProductsForConcern(
 // The general catalog browser (/browse) -- every filter here is optional,
 // unlike getProductsForConcern where concernId is required. Same query
 // shape otherwise (paginated rows + a real COUNT(*), not a capped length).
-export type BrowseFilters = { concernId?: string; dataSources?: string[]; activeId?: string; freeFromIds?: string[] };
+export type BrowseFilters = { concernId?: string; dataSources?: string[]; activeId?: string; freeFromIds?: string[]; hsaOnly?: boolean };
 
 export function browseWhere(filters: BrowseFilters): SQL | undefined {
   const clauses = [...freeFromWhereClauses(filters.freeFromIds ?? [])];
   if (filters.concernId) clauses.push(eq(products.concernId, filters.concernId));
   if (filters.dataSources && filters.dataSources.length > 0) clauses.push(inArray(products.dataSource, filters.dataSources));
   if (filters.activeId) clauses.push(jsonArrayContains(products.activeIds, filters.activeId));
+  // The eligible set is computed in lib/otc-index.ts (label-text rules for
+  // sunscreens), bound here as one JSON array parameter.
+  if (filters.hsaOnly) clauses.push(sql`${products.id} IN (SELECT value FROM json_each(${hsaEligibleIdsJson()}))`);
   return clauses.length > 0 ? and(...clauses) : undefined;
 }
 
@@ -246,6 +251,32 @@ export function getEwgScoresForProducts(productIds: string[]): Map<string, EwgSc
   if (productIds.length === 0) return new Map();
   const rows = db.select().from(ewgScores).where(inArray(ewgScores.productId, productIds)).all();
   return new Map(rows.map((r) => [r.productId, r]));
+}
+
+// Live prices only: affiliate rows are synthetic demo data until a real feed
+// is wired in (schema.ts affiliateLinks), and a demo price must never read as
+// a real one -- so this filters isDemo in SQL and again via displayablePrice.
+// Keyed by the caller's group id, lowest price among that group's ids.
+// Empty today, which hides every price column built on it.
+export function getLivePrices(idGroups: Map<string, string[]>): Map<string, number> {
+  const all = [...idGroups.values()].flat();
+  if (all.length === 0) return new Map();
+  const rows = db
+    .select({ productId: affiliateLinks.productId, price: affiliateLinks.price, isDemo: affiliateLinks.isDemo })
+    .from(affiliateLinks)
+    .where(and(inArray(affiliateLinks.productId, all), eq(affiliateLinks.isDemo, false)))
+    .all();
+  const best = new Map<string, number>();
+  for (const r of rows) {
+    const price = displayablePrice(r);
+    if (price != null && price < (best.get(r.productId) ?? Infinity)) best.set(r.productId, price);
+  }
+  const out = new Map<string, number>();
+  for (const [key, ids] of idGroups) {
+    const min = Math.min(...ids.map((id) => best.get(id) ?? Infinity));
+    if (Number.isFinite(min)) out.set(key, min);
+  }
+  return out;
 }
 
 export function getAffiliateLinksForProduct(productId: string) {

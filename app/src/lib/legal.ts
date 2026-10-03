@@ -5,4 +5,4 @@ import { SITE_NAME } from "@/lib/brand";
 export const LEGAL_OPERATOR = SITE_NAME;
 export const LEGAL_EMAIL = "hello@activelyskin.com";
 export const LEGAL_STATE = "Connecticut";
-export const LEGAL_UPDATED = "October 2, 2026";
+export const LEGAL_UPDATED = "October 3, 2026";

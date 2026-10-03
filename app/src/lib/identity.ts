@@ -221,7 +221,7 @@ export function deletePersonAndData(personId: string) {
     // A clinician profile is unlinked, not deleted: handouts already in
     // patients' hands keep working. (It holds only public NPPES data and clinic text.)
     tx.run(sql`UPDATE clinicians SET person_id = NULL WHERE person_id = ${personId}`);
-    for (const table of ["outcome_observations", "recall_notifications", "checkins", "person_avoid_lists", "person_sessions"]) {
+    for (const table of ["outcome_observations", "recall_notifications", "checkins", "person_avoid_lists", "person_profiles", "person_sessions"]) {
       tx.run(sql`DELETE FROM ${sql.identifier(table)} WHERE person_id = ${personId}`);
     }
     tx.run(sql`DELETE FROM email_tokens WHERE email = ${person.email}`);

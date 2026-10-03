@@ -92,6 +92,44 @@ export function hasProfileData(p: Profile): boolean {
   return hasProfile(p) || p.pregnant || p.breastfeeding;
 }
 
+// ---- signed-in sync ------------------------------------------------------
+// A signed-in person's profile is also saved to their account so it follows
+// them to other devices -- except the pregnancy and breastfeeding answers,
+// which are health information and stay in this browser's cookie only (the
+// privacy policy says so). Everything below is pure so it can be tested.
+
+/** The part of a profile that is saved to an account. */
+export function accountPart(p: Profile): Profile {
+  return { ...p, pregnant: false, breastfeeding: false };
+}
+
+/**
+ * The profile to use for a signed-in person: their saved profile, with the
+ * pregnancy and breastfeeding answers taken from this browser's cookie.
+ */
+export function withLocalFlags(saved: Profile, local: Profile): Profile {
+  return { ...saved, pregnant: local.pregnant, breastfeeding: local.breastfeeding };
+}
+
+/**
+ * At sign-in: this browser's profile and the account's become one. Lists are
+ * combined; a single-choice field (skin type) keeps the account's value
+ * unless it has none; a disliked ingredient always beats a liked one.
+ * Pregnancy and breastfeeding come from this browser only.
+ */
+export function mergeProfiles(saved: Profile | null, local: Profile): Profile {
+  if (!saved) return local;
+  const union = (a: string[], b: string[]) => [...new Set([...a, ...b])];
+  return sanitizeProfile({
+    skin: saved.skin ?? local.skin,
+    concerns: union(saved.concerns, local.concerns),
+    likes: union(saved.likes, local.likes),
+    dislikes: union(saved.dislikes, local.dislikes),
+    pregnant: local.pregnant,
+    breastfeeding: local.breastfeeding,
+  });
+}
+
 // ---- scoring -------------------------------------------------------------
 
 export type ProductIngredient = { id: string; position: number; isActive: boolean };

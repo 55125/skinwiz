@@ -25,8 +25,8 @@ export default function PrivacyPage() {
           <p className="rounded-lg border bg-muted/40 p-4 text-sm">
             <strong className="text-foreground">The short version.</strong> {SITE_NAME} has no accounts or passwords
             and asks for no name or email to use its tools. Your skin profile and avoid list are stored in cookies
-            on your own device. Adding an email address is optional; if you do, we use it only to keep your shelf
-            and avoid list across devices and to send the check-ins and safety alerts you choose, and you can delete it at any
+            on your own device. Adding an email address is optional; if you do, we use it only to keep your shelf,
+            avoid list and skin profile (but not any pregnancy or breastfeeding answers) across devices and to send the check-ins and safety alerts you choose, and you can delete it at any
             time. We do not sell your information, share it for targeted advertising, or run advertising or
             analytics trackers.
           </p>
@@ -40,8 +40,10 @@ export default function PrivacyPage() {
           <strong>Skin profile</strong>: your skin type, skin concerns (for example acne or redness),
           ingredients you like or dislike, and, if you choose to tell us, whether you are pregnant, trying to
           conceive or breastfeeding. It is stored in a cookie in your browser. Your browser sends it to
-          our server with each page request so we can personalize match scores. We do not save it in our
-          database.
+          our server with each page request so we can personalize match scores. If you add an email address, your skin type, concerns and liked and
+          disliked ingredients are also saved with your email so they follow you to every device you sign in on.
+          Your pregnancy and breastfeeding answers are never saved in our database: they stay only in your
+          browser&apos;s cookie, and signing out removes them from that browser.
         </li>
         <li>
           <strong>Avoid list</strong>: the ingredient checks and allergens you turn on, including any added from
@@ -124,7 +126,9 @@ export default function PrivacyPage() {
       </table>
       <p>
         If you clear these cookies, the site forgets your profile and avoid list. Any shelf items and outcome
-        reports stay in our database, but nothing links them to you any longer.
+        reports stay in our database, but nothing links them to you any longer. If you have added an email, signing in
+        again brings back your shelf, avoid list and skin profile (but not your pregnancy or breastfeeding answers), and
+        signing out removes the profile and avoid-list cookies from that browser.
       </p>
 
       <h3 id="email">Email</h3>
@@ -133,7 +137,7 @@ export default function PrivacyPage() {
         <li>
           <strong>Sign-in links.</strong> We email a one-time link to confirm the address. It works once and
           expires after 15 minutes. We store only a scrambled (hashed) form of it, and delete the record about a
-          day after it expires. Opening the link on another device links that browser to the same shelf.
+          day after it expires. Opening the link on another device links that browser to the same shelf, avoid list and skin profile.
         </li>
         <li>
           <strong>Check-in emails</strong> (on unless you turn them off): when you mark a product on your shelf
@@ -159,7 +163,7 @@ export default function PrivacyPage() {
       <ul>
         <li>To provide the features you use: match scores, your shelf, ingredient checks and routines.</li>
         <li>To calculate aggregate User Scores and rank community routines.</li>
-        <li>If you add an email: to sign you in by link, keep your shelf and avoid list across devices, and send the check-ins and safety alerts you have turned on.</li>
+        <li>If you add an email: to sign you in by link, keep your shelf, avoid list and skin profile across devices, and send the check-ins and safety alerts you have turned on.</li>
         <li>To review clinician applications and reply to people who contact us.</li>
         <li>To keep the site secure and working, and to prevent abuse, fraud and scraping.</li>
         <li>To comply with the law and enforce our <Link href="/terms">Terms of Service</Link>.</li>

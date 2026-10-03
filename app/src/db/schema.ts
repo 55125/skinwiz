@@ -526,6 +526,18 @@ export const personAvoidLists = sqliteTable("person_avoid_lists", {
   updatedAt: text("updated_at").notNull(),
 });
 
+// A signed-in person's skin profile (lib/profile.ts), so it follows them to
+// any device. Holds skin type, concerns and liked/disliked ingredients only:
+// the pregnancy and breastfeeding answers are never stored here, they stay in
+// the sw_profile cookie of the browser they were entered in.
+export const personProfiles = sqliteTable("person_profiles", {
+  personId: text("person_id")
+    .primaryKey()
+    .references(() => people.id, { onDelete: "cascade" }),
+  profile: text("profile", { mode: "json" }).$type<{ skin: string | null; concerns: string[]; likes: string[]; dislikes: string[] }>().notNull(),
+  updatedAt: text("updated_at").notNull(),
+});
+
 // Browser session (sw_session cookie value) -> person. A session links to
 // at most one person; a person can have many (phone, laptop).
 export const personSessions = sqliteTable(

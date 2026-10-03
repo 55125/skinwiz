@@ -25,7 +25,7 @@ export default async function ProfilePage() {
       <PageHeader
         eyebrow="Your skin"
         title="My skin profile"
-        description="Tell us about your skin and every product gets a match score with the reasons spelled out. Saved in this browser only — no account, nothing sent anywhere."
+        description="Tell us about your skin and every product gets a match score with the reasons spelled out. Saved in this browser, no account needed. Add an email below and your profile follows you to other devices; pregnancy and breastfeeding answers always stay in this browser only."
       />
 
       <ProfileEditor initial={profile} names={names} pregnancyMode={FEATURES.PREGNANCY_MODE} />

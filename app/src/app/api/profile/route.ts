@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import { PROFILE_COOKIE, PROFILE_COOKIE_MAX_AGE, hasProfileData, parseProfile, sanitizeProfile, serializeProfile } from "@/lib/profile";
+import { readProfile, sanitizeProfile, writeProfile } from "@/lib/profile";
 import { rateLimit, readJsonBody } from "@/lib/api-guard";
 
 export async function POST(request: Request) {
@@ -9,13 +8,12 @@ export async function POST(request: Request) {
   const parsed = await readJsonBody(request);
   if (!parsed.ok) return parsed.response;
   const body = parsed.body as Record<string, unknown> | null;
-  const store = await cookies();
 
   let next;
   if (body && body.action === "toggle" && (body.list === "likes" || body.list === "dislikes") && typeof body.id === "string") {
     // Add/remove one ingredient from the liked or disliked list (used by the
     // buttons on ingredient pages); liking removes a dislike and vice versa.
-    const cur = parseProfile(store.get(PROFILE_COOKIE)?.value);
+    const cur = await readProfile();
     const other = body.list === "likes" ? "dislikes" : "likes";
     const has = cur[body.list].includes(body.id);
     next = sanitizeProfile({
@@ -27,7 +25,6 @@ export async function POST(request: Request) {
     next = sanitizeProfile(body);
   }
 
-  if (!hasProfileData(next)) store.delete(PROFILE_COOKIE);
-  else store.set(PROFILE_COOKIE, serializeProfile(next), { httpOnly: true, sameSite: "lax", maxAge: PROFILE_COOKIE_MAX_AGE });
+  await writeProfile(next);
   return NextResponse.json({ ok: true, profile: next });
 }

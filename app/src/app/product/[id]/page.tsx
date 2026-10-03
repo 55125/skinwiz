@@ -63,7 +63,6 @@ import { RecallBanner } from "@/components/recall-banner";
 import { canViewRxReference } from "@/lib/clinicians";
 import { manualLinkLabel } from "@/lib/manual-links";
 import { headers } from "next/headers";
-import { parsePackageDescription } from "@/lib/equivalence";
 import { livePricesEnabled } from "@/lib/prices/config";
 import { getDisplayQuotes, recordProductView } from "@/lib/prices/store";
 import { outboundLink } from "@/lib/prices/redirect";
@@ -660,7 +659,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
       <section className="space-y-4">
         <h2 className="text-xl font-semibold">Where to buy</h2>
         {/* Live prices (lib/prices): only while configured, only quotes under 72h old. */}
-        {quotes.length > 0 && <PriceList quotes={quotes} fallbackPack={parsePackageDescription(product.packageDescription)} />}
+        {quotes.length > 0 && <PriceList quotes={quotes} />}
         {/* Hand-made affiliate links (manual_links.csv): no price, just the store and size. */}
         {manualLinks.length > 0 && (
           <div className="space-y-2">

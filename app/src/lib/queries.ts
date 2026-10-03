@@ -356,7 +356,9 @@ export function getLivePrices(idGroups: Map<string, string[]>, now = new Date())
   for (const q of quotes) {
     const price = displayablePrice({ price: q.price, isDemo: false, fetchedAt: q.fetchedAt }, now);
     if (price == null) continue;
-    const perUnit = unitPrice(price, q.pack ?? parsePackageDescription(packages.get(q.productId)));
+    // Only the offer's own stated size: our first NDC package can be a
+    // sample (Differin's is a 2 g blister), so guessing would skew per-oz.
+    const perUnit = unitPrice(price, q.pack ?? null);
     add({ price, productId: q.productId, perUnit, merchantName: q.merchantName, url: q.url, fetchedAt: q.fetchedAt });
   }
 

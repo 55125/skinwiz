@@ -14,7 +14,7 @@ export function checkedAgo(fetchedAt: string, now = new Date()): string {
 
 // The product page's live prices: one row per merchant, cheapest first, from
 // lib/prices/store.ts getDisplayQuotes (fresh, OTC-only, only while enabled).
-export function PriceList({ quotes, fallbackPack }: { quotes: PriceQuote[]; fallbackPack?: Parameters<typeof unitPrice>[1] }) {
+export function PriceList({ quotes }: { quotes: PriceQuote[] }) {
   if (quotes.length === 0) return null;
   const oldest = quotes.reduce((a, q) => (q.fetchedAt < a ? q.fetchedAt : a), quotes[0].fetchedAt);
   return (
@@ -24,7 +24,8 @@ export function PriceList({ quotes, fallbackPack }: { quotes: PriceQuote[]; fall
         <p className="text-xs text-muted-foreground">Checked {checkedAgo(oldest)}. Prices and stock can change.</p>
       </div>
       {quotes.map((q) => {
-        const per = formatPerUnit(unitPrice(q.price, q.pack ?? fallbackPack ?? null));
+        // Per-unit only when the offer states its size; never guessed from our packages.
+        const per = formatPerUnit(unitPrice(q.price, q.pack ?? null));
         return (
           <div key={`${q.source}-${q.merchantId}`} className="flex items-center justify-between gap-4 rounded-xl border bg-card p-4">
             <div>

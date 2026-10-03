@@ -24,11 +24,11 @@ function setEnv(on: boolean) {
   }
 }
 
-function quote(productId: string, merchant: string, price: number, fetchedAt: string, extra = "") {
+function quote(productId: string, merchant: string, price: number, fetchedAt: string, extra = "", pack?: { amount: number; unit: "g" | "mL" }) {
   db.run(sql`INSERT INTO price_quotes (product_id, source, merchant_id, merchant_name, price, currency, url, affiliatable,
-      match_type, match_confidence, offer_name, fetched_at)
+      match_type, match_confidence, offer_name, pack_amount, pack_unit, fetched_at)
     VALUES (${productId}, 'sovrn', ${merchant}, ${merchant}, ${price}, 'USD', ${`https://x.invalid/${productId}/${merchant}${extra}`}, 1,
-      'barcode', 0.95, NULL, ${fetchedAt})`);
+      'barcode', 0.95, NULL, ${pack?.amount ?? null}, ${pack?.unit ?? null}, ${fetchedAt})`);
 }
 
 before(async () => {
@@ -115,14 +115,16 @@ test("Rx is never shown, even with a stored quote, and never looked up", async (
   assert.deepEqual(store.loadLookupProducts(["rx-1"]), []);
 });
 
-test("group prices pick the lowest price per unit, using the offer's own size first", () => {
+test("group prices use only the offer's own stated size, never our NDC package", () => {
   setEnv(true);
-  quote("otc-1", "Walmart", 12.97, hoursAgo(1)); // 45 g from the NDC package -> $8.17/oz
-  quote("otc-2", "Rite Aid", 6.0, hoursAgo(1)); // 15 g -> $11.34/oz
-  const live = queries.getLivePrices(new Map([["g", ["otc-1", "otc-2"]], ["a", ["otc-2"]]]), NOW);
-  assert.equal(live.get("g")?.productId, "otc-1");
-  assert.equal(live.get("g")?.perUnit?.per, "oz");
+  quote("otc-1", "Walmart", 12.97, hoursAgo(1)); // offer states no size; our NDC package (45 g) is NOT used
+  quote("otc-2", "Rite Aid", 6.0, hoursAgo(1), "", { amount: 15, unit: "g" }); // the offer states 15 g -> $11.34/oz
+  const live = queries.getLivePrices(new Map([["g", ["otc-1", "otc-2"]], ["a", ["otc-2"]], ["b", ["otc-1"]]]), NOW);
+  // A known per-ounce price ranks ahead of one whose size is unknown.
+  assert.equal(live.get("g")?.productId, "otc-2");
   assert.equal(live.get("a")?.perUnit?.value.toFixed(2), "11.34");
+  assert.equal(live.get("b")?.price, 12.97);
+  assert.equal(live.get("b")?.perUnit, null);
 });
 
 test("the refresh stores verified quotes, books a miss, and skips both until due", async () => {

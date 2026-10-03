@@ -371,8 +371,8 @@ export function PatchTestReader() {
 }
 
 // Panels as they sit on the back, seen from behind the patient (see
-// backSpec in lib/patch-test-reading.ts). Rows share the screen's height;
-// a series with many panels scrolls sideways on a narrow screen.
+// backSpec in lib/patch-test-reading.ts). Chambers are square, like the
+// real ones; a series with many panels scrolls sideways on a narrow screen.
 function BackLayout({
   spec,
   chambers,
@@ -388,10 +388,10 @@ function BackLayout({
     <div key={p.group} className="flex min-w-0 flex-1 flex-col gap-1">
       <p className="text-center text-xs font-semibold">Panel {p.label}</p>
       <div
-        className="grid min-h-0 flex-1 gap-1 sm:gap-1.5"
+        className="grid gap-1 sm:gap-1.5"
         style={{
           gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-          gridTemplateRows: `repeat(${spec.rows}, minmax(0, 1fr))`,
+          gridTemplateRows: `repeat(${spec.rows}, auto)`,
           gridAutoFlow: spec.numbering === "columns" ? "column" : "row",
         }}
       >
@@ -406,9 +406,10 @@ function BackLayout({
   );
   const panels = spec.left.length + spec.right.length;
   return (
-    <div className={cn("space-y-2", panels <= 3 && "mx-auto max-w-3xl")}>
+    <div className={cn("space-y-2", panels <= 3 && "mx-auto max-w-2xl")}>
       <div className="overflow-x-auto pb-1">
-        <div className="space-y-2" style={{ minWidth: panels * 84 }}>
+        {/* At least ~46px chambers: room for number and grade, and a fair tap target. */}
+        <div className="space-y-2" style={{ minWidth: panels * 110 }}>
           <div className="flex text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
             <span className="text-center" style={{ flex: spec.left.length }}>
               Patient&apos;s left
@@ -418,7 +419,7 @@ function BackLayout({
               Patient&apos;s right
             </span>
           </div>
-          <div className="flex items-stretch gap-1.5 sm:gap-3" style={{ height: "min(calc(100dvh - 120px), 640px)", minHeight: 260 }}>
+          <div className="flex items-stretch gap-1.5 sm:gap-3">
             {spec.left.map(panel)}
             <div className="flex w-6 shrink-0 flex-col items-center sm:w-12" aria-hidden>
               <span className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground">Spine</span>
@@ -443,12 +444,13 @@ function ChamberBox({ chamber, grade, onTap, compact = false }: { chamber: Chamb
         aria-label={`${chamber.number}. ${name}: ${GRADE_LABEL[grade]}. Tap to change.`}
         title={name}
         className={cn(
-          "@container flex h-full min-h-0 select-none flex-col justify-between rounded-lg border-2 p-1 text-left transition-colors active:scale-[0.97] sm:p-1.5",
+          "@container flex aspect-square w-full select-none flex-col overflow-hidden justify-between rounded-lg border-2 p-1 text-left transition-colors active:scale-[0.97] sm:p-1.5",
           GRADE_STYLE[grade],
           !chamber.item && grade === "neg" && "border-dashed",
         )}
       >
-        <span className="flex items-start justify-between gap-0.5">
+        {/* Grade under the number in small boxes, beside it when there's room. */}
+        <span className="flex flex-col gap-0.5 @[56px]:flex-row @[56px]:items-start @[56px]:justify-between">
           <span className="text-sm font-bold tabular-nums leading-none sm:text-base">{chamber.number}</span>
           <span className="text-xs font-bold leading-none sm:text-sm">{grade === "neg" ? "−" : grade}</span>
         </span>

@@ -16,7 +16,7 @@ Prepared 2026-10-03. **This is a first look, not a clearance.** It has not searc
 | **Actively** (App Store, UK listing) | Unilink Technology Hub Ltd. Lifestyle app, released 2025-10-10: find events and people around your city. Not found in the US store. | Exact name, but different service. Same type of product (a consumer app). |
 | **Actively: Find Gym Buddies** | Francisco Lopez. US App Store, Social Networking. | Contains the exact word. Different service. |
 | **Live Actively** | App Store, Health & Fitness (Active Wellness LLC). | Same root word, health-adjacent field. |
-| **Actively Alive** | Momence, Inc., App Store, Lifestyle (studio and class booking). | Same root word. |
+| **Actively Alive** | Momence, Inc., App Store, Lifestyle. (I did not check what the app does.) | Same root word. |
 | **Actives: Active Ingredients** | ABIB LTD EOOD, App Store. Scans cosmetics for active ingredients. | **Closest in meaning**: skincare ingredient lookup, and the name differs by two letters. Worth a close look. |
 | **Activist Skincare**, **Active Beauty**, **Active Skin Care**, **Activa Pharma**, **Active Concepts** | Skincare and cosmetics-ingredient businesses. | Shows how crowded "Active-" is. They differ from "Actively" in sound and look, but an examiner weighs overall impression. |
 | actively.com, actively.co, active.ly | Registered by others (checked earlier). | You hold activelyskin.com. Not a trademark issue by itself, but it limits what you can use. |

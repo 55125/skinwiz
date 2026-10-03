@@ -15,3 +15,7 @@
   - Product-page copy that states facts about strength ranges, EWG scores or label status
 
   Added 2026-10-02.
+
+## Brand and launch
+
+- [ ] **Trademark: finish the USPTO register search for "Actively"** and get an attorney's read. First-pass web/app-store findings and a step-by-step search checklist are in `review/trademark-knockout-search.md`. Nothing of concern found in skincare so far, but the register itself is unchecked. Decide whether to file an intent-to-use application before launch. Added 2026-10-03.

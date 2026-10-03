@@ -5,6 +5,9 @@ import { PlanStepControls } from "@/components/plan-step-controls";
 import { badgeCredential } from "@/lib/clinicians";
 import { getAffiliateLinksForProducts } from "@/lib/queries";
 import { buildOrderPlan, cartEnvFromProcess, findItAt, RETAILER_NAME, type OrderPlan } from "@/lib/retailer-carts";
+import { getDisplayQuotesFor } from "@/lib/prices/store";
+import { outboundLink } from "@/lib/prices/redirect";
+import { sovrnSiteKey } from "@/lib/prices/config";
 import { rxFulfillmentLink } from "@/lib/rx-fulfillment";
 import { rxPriceCheckUrl } from "@/db/rx";
 import { sectionsOf, type HandoutStep } from "@/lib/handout-types";
@@ -40,9 +43,14 @@ export function ClinicianPlan({
   const hidden = steps.filter((s) => states.get(s.key)?.hidden);
   const otcProducts = steps.filter((s) => s.kind === "otc" && s.productId && products.has(s.productId));
   const links = getAffiliateLinksForProducts(otcProducts.map((s) => s.productId!));
+  // Fresh live-price quotes (OTC only; none while prices are off).
+  const quotes = getDisplayQuotesFor(otcProducts.map((s) => s.productId!));
   const order = buildOrderPlan(
     otcProducts.map((s) => ({ productId: s.productId!, name: s.productName ?? s.label })),
-    links.map((l) => ({ productId: l.productId, network: l.network, buyUrl: l.buyUrl, isDemo: l.isDemo, price: l.price })),
+    [
+      ...links.map((l) => ({ productId: l.productId, network: l.network, buyUrl: l.buyUrl, isDemo: l.isDemo, price: l.price })),
+      ...quotes.map((q) => ({ productId: q.productId, network: q.source, buyUrl: q.url, isDemo: false, price: q.price, retailer: q.merchantName })),
+    ],
     cartEnvFromProcess(),
   );
   const liveByProduct = new Map(order.singles.map((s) => [s.item.productId, s]));
@@ -89,7 +97,7 @@ export function ClinicianPlan({
           </p>
         ) : live ? (
           <p className="text-xs">
-            <a href={live.url} target="_blank" rel="sponsored noopener noreferrer" className="font-medium text-brand hover:underline">
+            <a href={live.url} target="_blank" rel="sponsored nofollow noopener noreferrer" className="font-medium text-brand hover:underline">
               Buy at {RETAILER_NAME[live.retailer] ?? live.retailer}
               {live.price ? ` · $${live.price.toFixed(2)}` : ""}
             </a>{" "}
@@ -231,7 +239,7 @@ function OrderAll({
               key={c.retailer}
               href={c.url}
               target="_blank"
-              rel="sponsored noopener noreferrer"
+              rel="sponsored nofollow noopener noreferrer"
               className="flex items-center justify-between gap-3 rounded-xl border px-4 py-3 text-sm font-medium hover:border-brand"
             >
               <span>
@@ -244,7 +252,7 @@ function OrderAll({
             <ul className="space-y-1 text-sm">
               {order.singles.map((s) => (
                 <li key={s.item.productId}>
-                  <a href={s.url} target="_blank" rel="sponsored noopener noreferrer" className="text-brand hover:underline">
+                  <a href={s.url} target="_blank" rel="sponsored nofollow noopener noreferrer" className="text-brand hover:underline">
                     {s.item.name} at {RETAILER_NAME[s.retailer] ?? s.retailer}
                   </a>
                 </li>
@@ -259,24 +267,33 @@ function OrderAll({
               <ul className="space-y-2 text-sm">
                 {order.unmatched.map((it) => {
                   const p = products.get(it.productId);
+                  // Wrapped through Sovrn when SOVRN_SITE_API_KEY is set; never for an Rx row.
+                  const brand = p?.sourceUrl ? outboundLink(p.sourceUrl, { placement: "plan", rel: "nofollow noopener noreferrer", isRx: p.isRx }) : null;
                   return (
                     <li key={it.productId} className="flex flex-wrap items-baseline gap-x-2">
                       <span className="font-medium">{it.name}</span>
-                      {p?.sourceUrl && (
-                        <a href={p.sourceUrl} target="_blank" rel="nofollow noopener noreferrer" className="text-xs text-brand hover:underline">
+                      {brand && (
+                        <a href={brand.href} target="_blank" rel={brand.rel} className="text-xs text-brand hover:underline">
                           brand site
                         </a>
                       )}
-                      {findItAt(it.name).map((f) => (
-                        <a key={f.retailer} href={f.url} target="_blank" rel="nofollow noopener noreferrer" className="text-xs text-brand hover:underline">
-                          {f.retailer}
-                        </a>
-                      ))}
+                      {findItAt(it.name).map((f) => {
+                        const link = outboundLink(f.url, { placement: "plan", rel: "nofollow noopener noreferrer", isRx: p?.isRx });
+                        return (
+                          <a key={f.retailer} href={link.href} target="_blank" rel={link.rel} className="text-xs text-brand hover:underline">
+                            {f.retailer}
+                          </a>
+                        );
+                      })}
                     </li>
                   );
                 })}
               </ul>
-              <p className="text-xs text-muted-foreground">Plain store searches, not affiliate links. Any equivalent product your clinician named works.</p>
+              <p className="text-xs text-muted-foreground">
+                {sovrnSiteKey()
+                  ? "Store searches and brand pages; these may be affiliate links, so we may earn a commission. Any equivalent product your clinician named works."
+                  : "Plain store searches, not affiliate links. Any equivalent product your clinician named works."}
+              </p>
             </div>
           )}
         </div>

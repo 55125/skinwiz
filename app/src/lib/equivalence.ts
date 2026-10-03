@@ -330,7 +330,18 @@ export function unitPrice(price: number | null | undefined, size: PackageSize | 
   return { value: price / (size.amount / OZ_TO_G), per: "oz" };
 }
 
-/** Only a live (non-demo) affiliate price may ever be shown as a price. */
-export function displayablePrice(link: { price: number | null; isDemo: boolean }): number | null {
-  return !link.isDemo && link.price != null && link.price > 0 ? link.price : null;
+/** A live quote older than this is never shown (lib/prices/config.ts says the same). */
+export const PRICE_MAX_AGE_MS = 72 * 3_600_000;
+
+/**
+ * Only a live (non-demo) affiliate price may ever be shown as a price, and a
+ * dated live quote (lib/prices) only while it is under 72 hours old.
+ */
+export function displayablePrice(link: { price: number | null; isDemo: boolean; fetchedAt?: string | null }, now = new Date()): number | null {
+  if (link.isDemo || link.price == null || !(link.price > 0)) return null;
+  if (link.fetchedAt != null) {
+    const age = now.getTime() - Date.parse(link.fetchedAt);
+    if (!(age <= PRICE_MAX_AGE_MS)) return null;
+  }
+  return link.price;
 }

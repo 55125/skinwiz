@@ -29,6 +29,9 @@ const CATALOG_CSVS = [
   path.join(REPO_ROOT, "tools/catalog_pipeline/output/brand_direct_catalog.csv"),
 ];
 const AFFILIATE_CSV = path.join(REPO_ROOT, "tools/affiliate_feeds/output/matched_catalog.csv");
+// Retail barcodes for the live-price lookups (lib/prices/), from
+// tools/affiliate_feeds/fetch_barcodes.py. Optional.
+const BARCODES_CSV = path.join(REPO_ROOT, "tools/affiliate_feeds/output/product_barcodes.csv");
 const LABEL_SECTIONS_CSV = path.join(REPO_ROOT, "tools/catalog_pipeline/output/label_sections.csv");
 // Hand-made affiliate links (sovrn.co short links), one row per product +
 // retailer link. Committed; header-only until real links are added.
@@ -195,6 +198,7 @@ async function main() {
 
 function reseed() {
   db.delete(schema.affiliateLinks).run();
+  db.delete(schema.productBarcodes).run();
   db.delete(schema.productIngredients).run();
   db.delete(schema.manualAffiliateLinks).run();
   db.delete(schema.ingredients).run();
@@ -378,9 +382,33 @@ function reseed() {
     console.log("  no affiliate output found, skipping (run tools/affiliate_feeds/match_catalog.py first)");
   }
 
+  insertBarcodes(new Set(productBatch.filter((p) => !p.isRx).map((p) => p.id)));
   insertLabelSections();
   insertRxLabelSections();
   reconcileOrphans();
+}
+
+// Lookup order for lib/prices: real retail barcodes first, the NDC-derived
+// guess last (fetch_barcodes.py's header says how reliable each is).
+const BARCODE_RANK: Record<string, number> = { openfda_upc: 0, obf_id: 1, ndc_derived: 2 };
+
+function insertBarcodes(otcIds: Set<string>) {
+  if (!fs.existsSync(BARCODES_CSV)) {
+    console.log("  no product_barcodes.csv, skipping (run tools/affiliate_feeds/fetch_barcodes.py)");
+    return;
+  }
+  const seen = new Set<string>();
+  const rows = readCsv<{ product_id: string; barcode: string; source: string }>(BARCODES_CSV).flatMap((r) => {
+    const barcode = r.barcode?.trim();
+    const rank = BARCODE_RANK[r.source];
+    const key = `${r.product_id}|${barcode}`;
+    if (!barcode || rank === undefined || !otcIds.has(r.product_id) || seen.has(key)) return [];
+    seen.add(key);
+    return [{ productId: r.product_id, barcode, source: r.source, rank }];
+  });
+  const BATCH = 200;
+  for (let i = 0; i < rows.length; i += BATCH) db.insert(schema.productBarcodes).values(rows.slice(i, i + BATCH)).run();
+  console.log(`  inserted ${rows.length} product barcodes`);
 }
 
 // Prescription rows (build_rx_catalog.py). Deliberately bare on everything a
@@ -586,7 +614,7 @@ function insertManualLinks(otcIds: Set<string>) {
 function reconcileOrphans() {
   const missing = (table: string) =>
     sql.raw(`${table}.product_id IS NOT NULL AND ${table}.product_id NOT IN (SELECT id FROM products)`);
-  for (const table of ["ewg_scores", "video_links", "shelf_items", "regimen_items"]) {
+  for (const table of ["ewg_scores", "video_links", "shelf_items", "regimen_items", "price_quotes", "price_checks", "product_views"]) {
     const { changes } = db.run(sql`DELETE FROM ${sql.raw(table)} WHERE ${missing(table)}`);
     if (changes) console.log(`  removed ${changes} orphaned ${table} rows`);
   }

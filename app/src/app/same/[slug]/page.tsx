@@ -6,8 +6,9 @@ import { EquivalenceExplainer, EquivalenceRows } from "@/components/equivalence-
 import { JsonLd } from "@/components/json-ld";
 import { RedFlagBanner } from "@/components/red-flag-banner";
 import { getEquivalenceGroup, getEquivalenceGroups } from "@/lib/otc-index";
-import { getConcern, getLivePrices, getPackageDescriptions } from "@/lib/queries";
-import { parsePackageDescription, unitPrice } from "@/lib/equivalence";
+import { getConcern, getLivePrices } from "@/lib/queries";
+import { formatPerUnit, sortByUnitPrice, storeBrandSavings } from "@/lib/prices/unit";
+import { StoreBrandSavingsNote } from "@/components/price-list";
 import { HSA_GUIDE_PATH } from "@/lib/hsa";
 import { breadcrumbLd } from "@/lib/seo";
 import { siteUrl } from "@/lib/site-url";
@@ -41,16 +42,15 @@ export default async function SamePage({ params }: { params: Promise<{ slug: str
   const named = group.members.filter((m) => !m.storeBrand);
   const reference = named[0] ?? group.members[0];
 
-  // Live prices only (none exist yet, so this stays empty and no price
-  // renders). Per-unit uses the priced listing's own NDC package size.
+  // Live prices only (empty until a live price source is configured, and then
+  // only quotes under 72h old -- so with none, no price renders and the order
+  // is unchanged). Per-unit uses the offer's own size, else the priced
+  // listing's NDC package size; priced rows sort cheapest per unit first.
   const live = getLivePrices(new Map(group.members.map((m) => [m.id, m.ids])));
-  const packages = getPackageDescriptions([...live.values()].map((v) => v.productId));
-  const prices = new Map(
-    [...live].map(([id, { price, productId }]) => {
-      const per = unitPrice(price, parsePackageDescription(packages.get(productId)));
-      return [id, { price, perUnit: per ? `$${per.value.toFixed(2)}/${per.per}` : null }];
-    }),
-  );
+  const prices = new Map([...live].map(([id, p]) => [id, { price: p.price, perUnit: formatPerUnit(p.perUnit) }]));
+  const savings = storeBrandSavings(group.members, live);
+  const namedRows = sortByUnitPrice(named, live);
+  const storeRows = sortByUnitPrice(storeBrands, live);
 
   // Other strengths/forms of the same active(s), for internal linking.
   const related = getEquivalenceGroups()
@@ -107,10 +107,12 @@ export default async function SamePage({ params }: { params: Promise<{ slug: str
 
       <RedFlagBanner />
 
+      {savings && <StoreBrandSavingsNote savings={savings} live={live} />}
+
       {named.length > 0 && (
         <section className="space-y-4">
           <h2 className="text-xl font-semibold">Name brands and generics ({named.length})</h2>
-          <EquivalenceRows members={named} compareWith={storeBrands[0]?.id} prices={prices} />
+          <EquivalenceRows members={namedRows} compareWith={storeBrands[0]?.id} prices={prices} />
         </section>
       )}
 
@@ -122,7 +124,7 @@ export default async function SamePage({ params }: { params: Promise<{ slug: str
               Retailer and pharmacy private labels, identified from the labeler name on the FDA listing.
             </p>
           </div>
-          <EquivalenceRows members={storeBrands} compareWith={reference.id} prices={prices} />
+          <EquivalenceRows members={storeRows} compareWith={reference.id} prices={prices} />
         </section>
       )}
 

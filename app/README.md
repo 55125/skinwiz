@@ -198,6 +198,49 @@ nofollow noopener"`, and no price.
 - Never open these links from a script or test: an automated click can count
   as invalid traffic on the Sovrn account.
 
+### Sovrn: link wrapping and live prices (after approval)
+
+Two independent switches; with neither set, nothing changes on any page and
+no request goes to Sovrn.
+
+| Variable | Turns on |
+|---|---|
+| `SOVRN_SITE_API_KEY` | Outbound retailer/brand links (the brand-direct "Visit page" link, and the "brand site" / store-search links in a clinician plan's "Get everything") go through Sovrn's Redirect API, `https://redirect.viglink.com?key=…&u=<encoded url>&cuid=<page type>` ([docs](https://developer.sovrn.com/reference/building-monetized-urls)), with `rel="sponsored nofollow"` and the disclosure text switched to "affiliate link". The CUID is only the page type (`product`, `plan`). Never wrapped: FDA/NIH/.gov, AAD, GoodRx, Cost Plus, EWG, YouTube, existing affiliate links, anything for an Rx product (`src/lib/prices/redirect.ts`). |
+| `SOVRN_SITE_API_KEY` + `SOVRN_SECRET_KEY` | The Price Comparison API ([docs](https://developer.sovrn.com/reference/product-affiliate-api)): the hourly job looks up live prices, product pages show a "Prices" block (merchants cheapest first, "checked X hours ago", each link `rel="sponsored nofollow"`), equivalence lists and `/same/…` pages show price per unit sorted cheapest first with a "store brand saves X%" line, and a clinician plan's "Get everything" gets per-item buy links. |
+| `SOVRN_MAX_REQUESTS_PER_RUN` | Optional request cap per job run (default 300). |
+
+Both keys are on the Sovrn Platform under Commerce Settings → the key icon
+next to the site ("generate secret key" for the secret,
+[docs](https://developer.sovrn.com/docs/authorization)).
+
+**How the job behaves** (`src/lib/prices/`, run as the `prices` step of
+`/api/cron/run`; migration `0015` adds `product_barcodes`, `price_quotes`,
+`price_checks`, `product_views`):
+
+- Each run picks products that are due, in order: on someone's shelf,
+  regimen or a clinician plan; product pages viewed in the last 7 days
+  (recorded at most once an hour per product, bots ignored, only while
+  enabled); then the rest of the OTC catalog, never-checked first and
+  barcoded/brand-page products ahead of the rest. Rx is never selected.
+- Per product: barcodes in confidence order (`openfda_upc`, `obf_id`, the
+  guessed `ndc_derived` last and only if the offer names the brand or most of
+  the product), then the brand page as `plainlink`, then keyword search as a
+  last resort, kept only if brand, name, strength, SPF, form, variant and size
+  all agree (`match.ts`). Only USD, affiliatable offers with a price.
+- At most 10 requests a second and `SOVRN_MAX_REQUESTS_PER_RUN` a run;
+  429/5xx/network errors back off 1s, 2s, 4s (or Retry-After), then the run
+  stops; a 401/403 stops it at once.
+- A match is checked again after 24h. A miss waits 7 days, doubling per
+  miss up to 90. A quote older than 72h is never displayed, whatever happens
+  to the job. Demo `affiliate_links` rows are never treated as prices.
+- `price_quotes`, `price_checks` and `product_views` are not seeded and
+  survive deploys; `product_barcodes` is reloaded from
+  `../tools/affiliate_feeds/output/product_barcodes.csv` by every seed.
+
+**Backfill** (Railway shell, once the keys are set):
+`npm run prices:backfill -- --top 500` looks up the top 500 due products now,
+same order and rules (`--max-requests N` to cap it; default 4 × top).
+
 ## What's real vs. not
 
 This matters more than usual for a health product — read before demoing.

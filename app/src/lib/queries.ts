@@ -18,7 +18,9 @@ import { concernIdToNiche } from "@/db/actives";
 import { getFreeFromCheck } from "@/db/ingredient-flags";
 import { allergenBlockers, resolveAllergenId } from "@/db/contact-allergens";
 import { hsaEligibleIdsJson } from "@/lib/otc-index";
-import { displayablePrice } from "@/lib/equivalence";
+import { displayablePrice, parsePackageDescription, unitPrice } from "@/lib/equivalence";
+import { getDisplayQuotesFor } from "@/lib/prices/store";
+import { compareLivePrices, type LivePrice } from "@/lib/prices/unit";
 import { RX_CONCERN_ID } from "@/db/rx";
 
 // Prescription rows (products.isRx) are reference/handout data and must never
@@ -319,13 +321,17 @@ export function getEwgScoresForProducts(productIds: string[]): Map<string, EwgSc
 // Live prices only: affiliate rows are synthetic demo data until a real feed
 // is wired in (schema.ts affiliateLinks), and a demo price must never read as
 // a real one -- so this filters isDemo in SQL and again via displayablePrice.
-// Keyed by the caller's group id, lowest price among that group's ids.
-// Empty today, which hides every price column built on it.
-export function getLivePrices(idGroups: Map<string, string[]>): Map<string, { price: number; productId: string }> {
-  const all = [...idGroups.values()].flat();
+// Fresh live-price quotes (lib/prices; only while enabled, never older than
+// 72h) join them. Keyed by the caller's group id: the offer with the lowest
+// price per unit among that group's ids (per ounce before per item), or the
+// lowest price when no size is known. Per-unit uses the offer title's own
+// size, else the priced listing's NDC package size. Empty while no live
+// price exists, which hides every price column built on it.
+export function getLivePrices(idGroups: Map<string, string[]>, now = new Date()): Map<string, LivePrice> {
+  const all = [...new Set([...idGroups.values()].flat())];
   if (all.length === 0) return new Map();
   const rows = db
-    .select({ productId: affiliateLinks.productId, price: affiliateLinks.price, isDemo: affiliateLinks.isDemo })
+    .select({ productId: affiliateLinks.productId, price: affiliateLinks.price, isDemo: affiliateLinks.isDemo, buyUrl: affiliateLinks.buyUrl })
     .from(affiliateLinks)
     .where(
       and(
@@ -335,18 +341,28 @@ export function getLivePrices(idGroups: Map<string, string[]>): Map<string, { pr
       ),
     )
     .all();
-  const best = new Map<string, number>();
+  const quotes = getDisplayQuotesFor(all, now);
+  if (rows.length === 0 && quotes.length === 0) return new Map();
+
+  const packages = getPackageDescriptions([...new Set([...rows.map((r) => r.productId), ...quotes.map((q) => q.productId)])]);
+  const offers = new Map<string, LivePrice[]>();
+  const add = (o: LivePrice) => (offers.get(o.productId) ?? offers.set(o.productId, []).get(o.productId)!).push(o);
   for (const r of rows) {
     const price = displayablePrice(r);
-    if (price != null && price < (best.get(r.productId) ?? Infinity)) best.set(r.productId, price);
+    if (price == null) continue;
+    const perUnit = unitPrice(price, parsePackageDescription(packages.get(r.productId)));
+    add({ price, productId: r.productId, perUnit, merchantName: null, url: r.buyUrl, fetchedAt: null });
   }
-  const out = new Map<string, { price: number; productId: string }>();
+  for (const q of quotes) {
+    const price = displayablePrice({ price: q.price, isDemo: false, fetchedAt: q.fetchedAt }, now);
+    if (price == null) continue;
+    const perUnit = unitPrice(price, q.pack ?? parsePackageDescription(packages.get(q.productId)));
+    add({ price, productId: q.productId, perUnit, merchantName: q.merchantName, url: q.url, fetchedAt: q.fetchedAt });
+  }
+
+  const out = new Map<string, LivePrice>();
   for (const [key, ids] of idGroups) {
-    let pick: { price: number; productId: string } | null = null;
-    for (const id of ids) {
-      const p = best.get(id);
-      if (p !== undefined && (!pick || p < pick.price)) pick = { price: p, productId: id };
-    }
+    const pick = ids.flatMap((id) => offers.get(id) ?? []).sort(compareLivePrices)[0];
     if (pick) out.set(key, pick);
   }
   return out;

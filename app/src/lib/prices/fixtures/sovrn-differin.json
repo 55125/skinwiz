@@ -1,0 +1,50 @@
+[
+  {
+    "id": 9123001,
+    "name": "Differin Adapalene Gel 0.1% Acne Treatment, 45 g",
+    "merchant": { "id": 101, "name": "Walmart", "logo": "https://example.invalid/walmart.png" },
+    "deeplink": "https://sovrn.example.invalid/click?m=101&p=9123001",
+    "image": "https://example.invalid/differin.jpg",
+    "thumbnail": "https://example.invalid/differin-t.jpg",
+    "currency": "USD",
+    "salePrice": 12.97,
+    "retailPrice": 15.49,
+    "discountRate": 16,
+    "affiliatable": true,
+    "epc": 0.12
+  },
+  {
+    "id": 9123002,
+    "name": "Differin Gel 0.1% Adapalene Acne Treatment 1.6 oz",
+    "merchant": { "id": 202, "name": "Target", "logo": "https://example.invalid/target.png" },
+    "deeplink": "https://sovrn.example.invalid/click?m=202&p=9123002",
+    "image": "https://example.invalid/differin2.jpg",
+    "thumbnail": "https://example.invalid/differin2-t.jpg",
+    "currency": "USD",
+    "salePrice": 13.49,
+    "retailPrice": 13.49,
+    "discountRate": 0,
+    "affiliatable": true,
+    "epc": 0.08
+  },
+  {
+    "id": 9123003,
+    "name": "Differin Gel 45g",
+    "merchant": { "id": 303, "name": "Boots UK", "logo": "" },
+    "deeplink": "https://sovrn.example.invalid/click?m=303&p=9123003",
+    "currency": "GBP",
+    "salePrice": 10.99,
+    "retailPrice": 12.99,
+    "affiliatable": true
+  },
+  {
+    "id": 9123004,
+    "name": "Differin Gel 45 g",
+    "merchant": { "id": 404, "name": "Unaffiliated Pharmacy", "logo": "" },
+    "deeplink": "https://sovrn.example.invalid/click?m=404&p=9123004",
+    "currency": "USD",
+    "salePrice": 9.99,
+    "retailPrice": 9.99,
+    "affiliatable": false
+  }
+]

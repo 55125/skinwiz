@@ -824,3 +824,80 @@ export const manualAffiliateLinks = sqliteTable(
   (table) => [index("manual_affiliate_links_product_idx").on(table.productId)],
 );
 
+// ---------------------------------------------------------------------------
+// Live prices (lib/prices/). Dormant until SOVRN_SITE_API_KEY and
+// SOVRN_SECRET_KEY are both set: nothing writes these tables or shows their
+// rows before then. Rx rows never get a quote (every query filters is_rx = 0).
+
+// Retail barcodes per catalog product, from
+// tools/affiliate_feeds/output/product_barcodes.csv (fetch_barcodes.py).
+// Catalog data: wiped and reloaded by every seed. `rank` orders lookups by
+// confidence: 0 openfda_upc, 1 obf_id, 2 ndc_derived (a computed UPC that
+// is right only occasionally, so it is tried last).
+export const productBarcodes = sqliteTable(
+  "product_barcodes",
+  {
+    productId: text("product_id").notNull(),
+    barcode: text("barcode").notNull(),
+    source: text("source").notNull(), // "openfda_upc" | "obf_id" | "ndc_derived"
+    rank: integer("rank").notNull(),
+  },
+  (table) => [uniqueIndex("product_barcodes_product_barcode_idx").on(table.productId, table.barcode)],
+);
+
+// One live offer per product + price source + merchant, upserted by the
+// refresh job (lib/prices/refresh.ts). Not seeded; survives deploys. No FK
+// to products so a reseed never trips over it (seed.ts deletes orphans
+// instead). `url` is the source's own tracked affiliate deeplink. Quotes
+// older than 72h are never shown (lib/prices/store.ts).
+export const priceQuotes = sqliteTable(
+  "price_quotes",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    productId: text("product_id").notNull(),
+    source: text("source").notNull(), // "sovrn" (later "impact" | "cj" | "kroger")
+    merchantId: text("merchant_id").notNull(),
+    merchantName: text("merchant_name").notNull(),
+    price: real("price").notNull(),
+    retailPrice: real("retail_price"),
+    currency: text("currency").notNull(),
+    url: text("url").notNull(),
+    affiliatable: integer("affiliatable", { mode: "boolean" }).notNull(),
+    matchType: text("match_type").notNull(), // "barcode" | "plainlink" | "keywords"
+    matchConfidence: real("match_confidence").notNull(),
+    offerName: text("offer_name"),
+    // Pack size read from the offer's own title, when it states one; the
+    // per-unit price prefers it over the NDC package description.
+    packAmount: real("pack_amount"),
+    packUnit: text("pack_unit"), // "g" | "mL" | "count"
+    fetchedAt: text("fetched_at").notNull(),
+  },
+  (table) => [uniqueIndex("price_quotes_product_source_merchant_idx").on(table.productId, table.source, table.merchantId)],
+);
+
+// Per product + source lookup bookkeeping, so a product with no match isn't
+// re-queried every run: a miss waits until nextCheckAt (backing off), a
+// match is due again after 24h. Not seeded; survives deploys.
+export const priceChecks = sqliteTable(
+  "price_checks",
+  {
+    productId: text("product_id").notNull(),
+    source: text("source").notNull(),
+    checkedAt: text("checked_at").notNull(),
+    status: text("status").notNull(), // "matched" | "miss" | "error"
+    misses: integer("misses").notNull().default(0),
+    nextCheckAt: text("next_check_at").notNull(),
+  },
+  (table) => [
+    uniqueIndex("price_checks_product_source_idx").on(table.productId, table.source),
+    index("price_checks_next_idx").on(table.nextCheckAt),
+  ],
+);
+
+// Recently viewed product pages, so their prices refresh ahead of the
+// catalog sweep. One row per product and no visitor data; written at most
+// once an hour per product, and only while live prices are enabled.
+export const productViews = sqliteTable("product_views", {
+  productId: text("product_id").primaryKey(),
+  lastViewedAt: text("last_viewed_at").notNull(),
+});

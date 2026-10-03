@@ -14,6 +14,7 @@ import {
   getEvidenceNotesForActives,
   getAffiliateLinksForProduct,
   getManualLinksForProduct,
+  getLivePrices,
   getVideoLinksForProduct,
   getEwgScoreForProduct,
   getEquivalentProducts,
@@ -61,6 +62,16 @@ import { recallsForProduct } from "@/lib/recalls";
 import { RecallBanner } from "@/components/recall-banner";
 import { canViewRxReference } from "@/lib/clinicians";
 import { manualLinkLabel } from "@/lib/manual-links";
+import { headers } from "next/headers";
+import { parsePackageDescription } from "@/lib/equivalence";
+import { livePricesEnabled } from "@/lib/prices/config";
+import { getDisplayQuotes, recordProductView } from "@/lib/prices/store";
+import { outboundLink } from "@/lib/prices/redirect";
+import { formatPerUnit, sortByUnitPrice, storeBrandSavings, type LivePrice } from "@/lib/prices/unit";
+import { PriceList, StoreBrandSavingsNote } from "@/components/price-list";
+
+// Crawlers and tools don't count as a "recently viewed" signal for price refreshes.
+const BOT_UA = /bot|crawl|spider|slurp|preview|fetch|curl|wget|python|headless|monitor/i;
 
 const FREE_FROM_BADGE = "border-emerald-300 text-emerald-700 dark:border-emerald-900 dark:text-emerald-400";
 
@@ -135,6 +146,15 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
         .filter((m) => !m.ids.includes(product.id))
         .sort((a, b) => Number(!!a.storeBrand === isStoreBrandPage) - Number(!!b.storeBrand === isStoreBrandPage))
     : [];
+  // Live prices for the group (empty until a price source is configured, so
+  // the rows, their order and the page stay as they were).
+  const groupLive = equivalenceGroup ? getLivePrices(new Map(equivalenceGroup.members.map((m) => [m.id, m.ids]))) : new Map<string, LivePrice>();
+  const groupPrices = new Map([...groupLive].map(([mid, p]) => [mid, { price: p.price, perUnit: formatPerUnit(p.perUnit) }]));
+  const groupSavings = equivalenceGroup ? storeBrandSavings(equivalenceGroup.members, groupLive) : null;
+  const groupRows = sortByUnitPrice(groupOthers, groupLive);
+  const quotes = getDisplayQuotes(product.id);
+  const brandLink = product.sourceUrl ? outboundLink(product.sourceUrl, { placement: "product", rel: "noopener noreferrer" }) : null;
+  if (livePricesEnabled() && !BOT_UA.test((await headers()).get("user-agent") ?? "")) recordProductView(product.id);
   const equivalents = equivalenceGroup ? { rows: [], total: 0 } : getEquivalentProducts(product);
   const hsaEligible = isHsaEligible(product.id);
   const needsSwap = avoid?.status === "conflicts" || avoid?.status === "possible";
@@ -577,7 +597,8 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
             <h2 className="text-xl font-semibold">Same active, same strength</h2>
             <EquivalenceExplainer group={equivalenceGroup} />
           </div>
-          <EquivalenceRows members={groupOthers.slice(0, 8)} compareWith={product.id} />
+          {groupSavings && <StoreBrandSavingsNote savings={groupSavings} live={groupLive} />}
+          <EquivalenceRows members={groupRows.slice(0, 8)} compareWith={product.id} prices={groupPrices} />
           <Link href={`/same/${equivalenceGroup.slug}`} className="inline-block text-sm font-medium text-brand hover:underline">
             {groupOthers.length > 8 ? `See all ${equivalenceGroup.members.length}` : "All"} {equivalenceGroup.title} products
             {equivalenceGroup.members.some((m) => m.storeBrand) ? ", including store brands" : ""} →
@@ -638,6 +659,8 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
 
       <section className="space-y-4">
         <h2 className="text-xl font-semibold">Where to buy</h2>
+        {/* Live prices (lib/prices): only while configured, only quotes under 72h old. */}
+        {quotes.length > 0 && <PriceList quotes={quotes} fallbackPack={parsePackageDescription(product.packageDescription)} />}
         {/* Hand-made affiliate links (manual_links.csv): no price, just the store and size. */}
         {manualLinks.length > 0 && (
           <div className="space-y-2">
@@ -659,7 +682,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
             ))}
           </div>
         )}
-        {affiliateLinks.length > 0 ? (
+        {affiliateLinks.length > 0 && quotes.length === 0 ? (
           <div className="space-y-2">
             {affiliateLinks.map((link) => (
               <div key={link.id} className="flex items-center justify-between gap-4 rounded-xl border bg-card p-4">
@@ -686,25 +709,34 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
               </div>
             ))}
           </div>
-        ) : product.sourceUrl ? (
+        ) : brandLink ? (
           <div className="flex items-center justify-between gap-4 rounded-xl border bg-card p-4">
             <div>
               <p className="font-medium">Buy directly from {product.manufacturer || "the manufacturer"}</p>
               <p className="text-xs text-muted-foreground">
-                Not an affiliate link — we don&apos;t earn a commission on this one. This is the exact
-                manufacturer page this listing&apos;s ingredient data came from.
+                {brandLink.wrapped ? (
+                  <>
+                    Affiliate link — we may earn a commission. This is the exact manufacturer page this
+                    listing&apos;s ingredient data came from.
+                  </>
+                ) : (
+                  <>
+                    Not an affiliate link — we don&apos;t earn a commission on this one. This is the exact
+                    manufacturer page this listing&apos;s ingredient data came from.
+                  </>
+                )}
               </p>
             </div>
             <a
-              href={product.sourceUrl}
+              href={brandLink.href}
               target="_blank"
-              rel="noopener noreferrer"
+              rel={brandLink.rel}
               className={buttonVariants({ variant: "outline", size: "sm" })}
             >
               Visit page <ExternalLink className="ml-1 h-3.5 w-3.5" />
             <span className="sr-only"> (opens in new tab)</span></a>
           </div>
-        ) : manualLinks.length > 0 ? null : (
+        ) : manualLinks.length > 0 || quotes.length > 0 ? null : (
           <Alert>
             <AlertTitle>Retailer links coming soon</AlertTitle>
             <AlertDescription>

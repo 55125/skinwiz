@@ -8,7 +8,8 @@
 // produce a buy link: today every row is synthetic demo data
 // (schema.ts affiliateLinks.isDemo), so this returns no carts and the page
 // shows the per-item "find it at" fallback. It lights up as soon as real
-// Impact / CJ / Amazon feeds are seeded.
+// Impact / CJ / Amazon feeds are seeded, or live-price quotes exist
+// (lib/prices; Sovrn deeplinks become per-item links, cheapest first).
 //
 // Multi-item cart URLs (verify against each program's current terms before
 // switching on -- noted in the review doc):
@@ -23,7 +24,9 @@
 //  - Target, CVS, Ulta, Sephora, Walgreens: no public multi-item cart URL;
 //    per-item links.
 
-export type CartLink = { productId: string; network: string; buyUrl: string; isDemo: boolean; price: number | null };
+// `retailer` is set when the URL is a network deeplink that doesn't name the
+// store (a Sovrn live-price quote: lib/prices); otherwise it's read from the URL.
+export type CartLink = { productId: string; network: string; buyUrl: string; isDemo: boolean; price: number | null; retailer?: string };
 export type CartItem = { productId: string; name: string };
 
 export type RetailerCart = { retailer: string; url: string; items: CartItem[] };
@@ -66,7 +69,7 @@ export function buildOrderPlan(items: CartItem[], links: CartLink[], env: CartEn
   // Cheapest live link per product per retailer.
   const best = new Map<string, Map<string, CartLink>>();
   for (const l of live) {
-    const r = retailerOf(l.buyUrl);
+    const r = l.retailer ?? retailerOf(l.buyUrl);
     const byRetailer = best.get(l.productId) ?? best.set(l.productId, new Map()).get(l.productId)!;
     const prev = byRetailer.get(r);
     if (!prev || (l.price ?? Infinity) < (prev.price ?? Infinity)) byRetailer.set(r, l);

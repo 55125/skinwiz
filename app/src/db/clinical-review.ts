@@ -99,6 +99,23 @@ const UI_COPY: [string, string][] = [
   ["Shelf prompt", "Not seeing results? Some products didn't help, by your answers. Here's how long a fair try usually is, and when it's worth seeing a dermatologist. (Shown per concern when the visitor answered “didn't help” for a product they own or finished.)"],
 ];
 
+// How the screen turns the classifications above into what visitors see.
+// Hand-kept in sync with db/pregnancy-lactation.ts, lib/pregnancy.ts,
+// lib/queries.ts and components/pregnancy-notice.tsx.
+const RULES: [string, string, string][] = [
+  ["C1", "What gets screened", "Every ingredient on a product's published list, at any position, plus the label's canonical active ingredients (treated as position 0). Each ingredient slug is tried against the classifications in order and the <b>first entry that matches claims it</b>, so specific entries must sit before broad ones. Salicylate esters used as emollients, fragrance or sunscreen filters are deliberately <i>not</i> treated as salicylic acid."],
+  ["C2", "What is <i>not</i> screened", `Only ${PREGNANCY_ENTRIES.length} classified groups are checked. Everything else is silently unscreened: fragrance/parfum (a listed allergen or a hidden blend), most preservatives, surfactants, emollients, peptides and plant extracts. “Nothing flagged” therefore means <b>no screened ingredient was found</b>, not that the product is safe, and the notice wording is written to say exactly that.`],
+  ["C3", "Products with no full ingredient list", "Only the label's active ingredients are checked, and the product-page notice says so. The listing filter <b>hides</b> these products, because “couldn't check” is never treated as “clear”."],
+  ["C4", "One level per ingredient, per mode", "Each classified ingredient gets a pregnancy level and a lactation level (avoid / caution / ok). When the visitor has both boxes ticked, the notice shows both lines for every flagged ingredient and sorts by whichever mode is worse."],
+  ["C5", "Rinse-off versus leave-on", "A product whose name or form reads as a cleanser, wash, soap, scrub, bar, micellar water, shampoo, scalp treatment or conditioner is treated as <b>rinse-off</b>, and uses an entry's rinse-off level where one exists. Only <b>salicylic acid</b> has one today (leave-on caution, rinse-off OK). Rinse-off is inferred from the name, so a leave-on scalp serum is treated as rinse-off. The listing filter ignores rinse-off downgrades; none currently applies to an avoid-level entry."],
+  ["C6", "List position", "Position never changes a level. Past position 12 of a cosmetic list the notice adds “listed low on the ingredients, likely a small amount”, but the ingredient is still flagged. The <b>listing filter ignores position entirely</b>: an avoid-level ingredient anywhere on the list hides the product."],
+  ["C7", "What the product-page notice says", "Avoid-level findings: an amber box titled “Contains an ingredient usually avoided during pregnancy” (or “while breastfeeding”). Caution-level only: a neutral box, “Worth checking during pregnancy”. Nothing flagged: “Nothing in this ingredient list is on our list to avoid or ask about…”, followed by “Generally considered OK: …” naming the ok-level ingredients found. Never red, and always footed as a screen of the label, not medical clearance."],
+  ["C8", "The listing filter", "“Hide products to avoid in pregnancy” (browse and concern pages) hides products with an <b>avoid-level pregnancy</b> ingredient, and products with no full list (C3). <b>Caution-level</b> products stay visible; their ingredients appear only in the product-page notice. It looks at pregnancy only: breastfeeding has no listing filter, since nothing is classed avoid for lactation. It is offered only when the profile says pregnant (or via a <code>?pregnancy=hide</code> link), and is never applied silently."],
+  ["C9", "There is no “safe” label", "Nothing on the site marks a product “pregnancy safe”, and there is no positive “show only products with nothing flagged” filter. The closest wording is “Generally considered OK” next to individual ingredients."],
+  ["C10", "Score and storage", "The match score is unchanged by these flags. The two answers live only in the visitor's browser cookie (never stored in the database, even for signed-in visitors) and are read per request to render the page."],
+  ["C11", "Keeping it current", "The classifications are fixed text in the code with the sources they were drafted from. Nothing prompts a re-review when guidance changes (ACOG, AAD, LactMed), and nothing records who signed off on which version."],
+];
+
 const OPEN_QUESTIONS = [
   "Retinyl esters (retinyl palmitate etc.) are classed <b>caution</b>, not avoid, in pregnancy. Some patient guidance lumps every vitamin A derivative together as “avoid”. Retinyl palmitate is in ~285 catalog products, often low on the list as an antioxidant (including sunscreens), so “avoid” would flag many products. Which do you want?",
   "Cosmetic retinol / retinal / HPR are <b>avoid</b> in pregnancy at any list position, with a “likely a small amount” hint past position 12. Should a trace retinoid low on a cosmetic list still read as “usually avoided”?",
@@ -110,6 +127,11 @@ const OPEN_QUESTIONS = [
   "Not classified at all: methyl salicylate (pain-rub use in late pregnancy is an NSAID-like concern; in our catalog it's mostly flavor/fragrance at low levels), essential oils, hair dye / hydrogen peroxide, minoxidil (not in catalog), tea tree. Add any?",
   "The pregnancy listing filter hides only <b>avoid</b> ingredients, and also hides every product without a full ingredient list (consistent with the other filters). On /concern/acne that takes 1,322 products to 775. OK?",
   "Breastfeeding-only users get no listing filter (nothing is classed avoid for lactation). Fine?",
+  "Rules C2/C9: the screen checks only the classified groups, so a product with nothing flagged still contains unscreened ingredients (fragrance, preservatives, surfactants). The notice says “not on our list to avoid or ask about”, and nothing is ever labelled “safe”. Is that the right posture, or should the notice also say how many ingredients were screened?",
+  "Rule C8: the filter ignores <b>caution</b>-level ingredients. Should there be a stricter option that also hides caution products (for example oxybenzone sunscreens), or a positive “nothing flagged” view? Or is hiding avoid-only the right default?",
+  "Rule C6: the filter ignores list position, so a trace retinoid at position 25 hides a product while the notice only adds a “likely a small amount” hint. Should the filter use a cutoff, or is “any amount” the intended conservative rule?",
+  "Rule C7: the notice names ingredients as “Generally considered OK” (benzoyl peroxide, niacinamide, vitamin C, azelaic acid and others). Each ok entry now stands behind a positive statement on a product page. Is that wording acceptable, or should ok-level ingredients not be named?",
+  "Rule C11: should the classifications have a review cadence (for example yearly, or when ACOG/AAD/LactMed change), and should each entry carry a reviewed-by and date?",
   "Escalation: acne fair trial 12 weeks; antifungal 2 weeks (jock itch) / 4 weeks (athlete's foot, ringworm) per 21 CFR 333.250; dandruff ~4 weeks (the monograph only says “if it doesn't improve with regular use”); itch 7 days per the hydrocortisone label; dry skin 7 days per 21 CFR 347.50 but “a couple of weeks” for eczema routines; sweating “a few weeks” (no guideline number found); brightening 8–12 weeks. Please confirm or replace each number.",
   "Acne red flag “acne that starts suddenly in adulthood, especially with irregular periods or new hair growth” hints at hyperandrogenism without naming it. Too close to diagnosis, or useful?",
   "Universal urgent signs (911 for airway swelling; emergency care for rash + fever + blistering/mucosal sores after a new medicine) are shown on every escalation panel. Keep them on every concern?",
@@ -152,10 +174,11 @@ pre{font:13px ui-monospace,monospace;background:#eeece5;padding:10px 12px;border
 <p class="lede">Generated ${today} from <code>app/src/db/pregnancy-lactation.ts</code> and <code>app/src/db/escalation-guidance.ts</code> · ${PREGNANCY_ENTRIES.length} ingredient classifications · ${ESCALATION_GUIDANCE.length} concerns, ${statementCount} escalation statements${dbNote}</p>
 
 <h2>How to review</h2>
-<p>Everything below was drafted by Claude (AI) for your review as the site's board-certified dermatologist. None of it is live in production: both features sit behind flags that are <b>off in production</b> and on only in local development.</p>
+<p>Everything below was drafted by Claude (AI) for your review as the site's board-certified dermatologist. Both features sit behind flags that default to <b>off in production</b> (see the status check below for what is live today).</p>
 <p>Tick one box per row (and per entry) and note edits. Send the marked-up file back, or list row numbers and changes, and the edits get applied before either flag is turned on. This file is regenerated from the source data with <code>npx tsx src/db/clinical-review.ts</code> (run in <code>app/</code>), so it always matches what would ship.</p>
 <p>Drafting rules: mainstream guidance only (ACOG, AAD, peer-reviewed reviews, NIH LactMed, FDA OTC labeling). Levels reflect the evidence rather than blanket caution, and every notice says it isn't medical clearance and to talk to an OB or dermatologist. Escalation text says when to get seen, never what a condition is.</p>
 
+<div class="callout"><b>Status check, ${today}:</b> the live site is currently serving both features, even though the code defaults them to off in production. The pregnancy guide page, the profile checkboxes and the “When OTC isn't enough” panels are all reachable. <code>FEATURE_PREGNANCY_MODE</code> and <code>FEATURE_ESCALATION</code> are set in the production environment (outside the repo); the Rx catalog and clinician handouts are <b>not</b> live (those pages return 404). To switch the two clinical features off until sign-off, set both to <code>off</code> in the hosting environment and redeploy.</div>
 <h2>Turning the features on</h2>
 <p>Flags live in <code>app/src/lib/feature-flags.ts</code>. Each is OFF when <code>NODE_ENV=production</code> and ON otherwise, unless its environment variable overrides it (<code>on</code>/<code>1</code>/<code>true</code> or <code>off</code>/<code>0</code>/<code>false</code>). After sign-off, set the variable on the production service (e.g. Railway → Variables) and redeploy or restart:</p>
 <pre>FEATURE_PREGNANCY_MODE=on   # Part A: profile options, product notices, listing filter, /guide/pregnancy-breastfeeding
@@ -172,11 +195,18 @@ FEATURE_ESCALATION=on       # Part B: "When OTC isn't enough" on concern pages, 
 <div class="callout"><ol>${OPEN_QUESTIONS.map((q) => `<li>${q}</li>`).join("")}</ol></div>
 
 <h2>Contents</h2>
-<nav>${pregnancyByLevel.map((g) => `<div><a href="#lvl-${g.lvl}">Pregnancy: ${LEVEL[g.lvl]}</a> (${g.entries.length})</div>`).join("")}<div><a href="#escalation">When OTC isn't enough</a> (${ESCALATION_GUIDANCE.length})</div><div><a href="#ui-copy">Fixed UI copy</a> (${UI_COPY.length})</div></nav>
+<nav>${pregnancyByLevel.map((g) => `<div><a href="#lvl-${g.lvl}">Pregnancy: ${LEVEL[g.lvl]}</a> (${g.entries.length})</div>`).join("")}<div><a href="#rules">How the screen decides (rules)</a> (${RULES.length})</div><div><a href="#escalation">When OTC isn't enough</a> (${ESCALATION_GUIDANCE.length})</div><div><a href="#ui-copy">Fixed UI copy</a> (${UI_COPY.length})</div></nav>
 
 <h2>Part A — Pregnancy &amp; breastfeeding classifications</h2>
 <p class="meta">Levels: <span class="lvl avoid">Avoid</span> mainstream guidance says don't use it during this time (often precautionary) · <span class="lvl caution">Caution / ask first</span> fine in limited use, or not enough data · <span class="lvl ok">Generally OK</span> acceptable in normal use. Grouped by pregnancy level. The first entry whose patterns match an ingredient slug claims it; salicylate esters (butyloctyl, benzyl, tridecyl, methyl salicylate) deliberately don't match salicylic acid.</p>
 ${pregnancyByLevel.map((g) => `<section id="lvl-${g.lvl}"><h2>Pregnancy: ${LEVEL[g.lvl]}</h2>${g.entries.map(entryHtml).join("\n")}</section>`).join("\n")}
+
+<section id="rules"><h2>Part C — How the screen decides: the rules</h2>
+<p class="meta">The classifications above say what each ingredient is. These rules say how they are applied to a product and what a visitor sees. Please check them as carefully as the entries: they decide what “screened” means.</p>
+<table><thead><tr><th>#</th><th>Rule</th><th>What the code does</th><th>Sign-off</th></tr></thead><tbody>
+${RULES.map(([id, t, d]) => `<tr><th>${id}</th><td><b>${t}</b></td><td>${d}</td>${BOX}</tr>`).join("\n")}
+</tbody></table>
+</section>
 
 <section id="escalation"><h2>Part B — When OTC isn't enough</h2>
 <p class="meta">Shown with every concern's panel, under “Get care right away”:</p>

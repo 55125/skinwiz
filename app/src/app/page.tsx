@@ -24,6 +24,7 @@ import { siteUrl } from "@/lib/site-url";
 import { countProducts, getAllActives, getConcerns, getTopProducts, getTopActives } from "@/lib/queries";
 import { getTopRoutines } from "@/lib/routines";
 import { SITE_NAME } from "@/lib/brand";
+import { DERM_PANEL_LAUNCHED } from "@/lib/scoring";
 import { CONTACT_ALLERGENS } from "@/db/contact-allergens";
 
 // Force dynamic: without this, Next.js statically prerenders "/" once at
@@ -265,13 +266,18 @@ export default function Home() {
 
         <section className="rounded-3xl border bg-gradient-to-br from-brand-soft/70 via-card to-card p-8 sm:p-10">
           <h2 className="text-2xl font-semibold">How scoring works</h2>
-          <div className="mt-8 grid gap-8 sm:grid-cols-3">
+          <div className={`mt-8 grid gap-8 ${DERM_PANEL_LAUNCHED ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}>
             {[
-              {
-                icon: <Stethoscope className="h-5 w-5 text-sky-600" />,
-                title: "Derm Score",
-                body: "Coming soon. Our panel of board-certified dermatologists hasn't launched yet. Once it has, a score shows only after at least 5 have rated a product for a concern.",
-              },
+              // The Derm Score card appears once the dermatologist panel launches.
+              ...(DERM_PANEL_LAUNCHED
+                ? [
+                    {
+                      icon: <Stethoscope className="h-5 w-5 text-sky-600" />,
+                      title: "Derm Score",
+                      body: "From our panel of board-certified dermatologists. A score shows only after at least 5 have rated a product for a concern.",
+                    },
+                  ]
+                : []),
               {
                 icon: <Users className="h-5 w-5 text-violet-600" />,
                 title: "User Score",

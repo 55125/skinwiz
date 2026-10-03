@@ -11,7 +11,7 @@ import { ALLERGEN_GROUPS, CONTACT_ALLERGENS } from "@/db/contact-allergens";
 import { getEquivalenceGroups } from "@/lib/otc-index";
 import { FEATURES } from "@/lib/feature-flags";
 
-const STATIC_PAGES = ["/browse", "/ingredients", "/allergens", "/same", "/guide/hsa-fsa-eligible", "/routines", "/check", "/about", "/for-clinicians", "/clinic-tools", "/privacy", "/terms"];
+const STATIC_PAGES = ["/browse", "/ingredients", "/allergens", "/same", "/guide/hsa-fsa-eligible", "/routines", "/check", "/about", "/for-clinicians", "/clinic-tools", "/contact", "/privacy", "/terms"];
 
 // Force dynamic (query the DB per-request) rather than the default static
 // generation: a static sitemap would be computed once at build time,

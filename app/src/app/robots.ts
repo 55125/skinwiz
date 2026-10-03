@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { siteUrl } from "@/lib/site-url";
+import { openForReview } from "@/lib/review-mode";
 
 // Dynamic so the sitemap URL reflects the runtime environment, not the
 // build container (which has no public domain).
@@ -15,7 +16,8 @@ export default function robots(): MetadataRoute.Robots {
           "GPTBot", "CCBot", "ClaudeBot", "Claude-Web", "anthropic-ai",
           "Bytespider", "Amazonbot", "Google-Extended", "Applebot-Extended",
           "meta-externalagent", "Diffbot", "ImagesiftBot", "Omgilibot", "cohere-ai", "PetalBot",
-          "SemrushBot", "AhrefsBot", "MJ12bot", "DotBot", "DataForSeoBot", "BLEXBot",
+          // SEO crawlers are let in while OPEN_FOR_REVIEW is on (lib/review-mode.ts).
+          ...(openForReview() ? [] : ["SemrushBot", "AhrefsBot", "MJ12bot", "DotBot", "DataForSeoBot", "BLEXBot"]),
         ],
         disallow: "/",
       },

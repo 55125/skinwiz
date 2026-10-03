@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { claimedCrawler, clientIp, judge, verifyCrawler } from "@/lib/anti-scrape";
 import { CRON_PATH_PREFIX, isCronAuthorized } from "@/lib/cron-auth";
+import { openForReview } from "@/lib/review-mode";
 
 export async function proxy(request: NextRequest) {
   // One canonical host: www.activelyskin.com -> activelyskin.com, path intact.
@@ -12,7 +13,9 @@ export async function proxy(request: NextRequest) {
     const { pathname, search } = request.nextUrl;
     return NextResponse.redirect(`https://${host.slice(4)}${pathname}${search}`, 308);
   }
-  if (process.env.ANTI_SCRAPE === "off") return NextResponse.next();
+  // OPEN_FOR_REVIEW (lib/review-mode.ts) is a temporary switch for affiliate
+  // network reviews; it lets everything through like ANTI_SCRAPE=off.
+  if (process.env.ANTI_SCRAPE === "off" || openForReview()) return NextResponse.next();
   // Owner-only escape hatch for our own automated testing: set the secret in
   // the environment and send it as this header. Unset (the default) = disabled.
   const bypass = process.env.ANTI_SCRAPE_BYPASS_TOKEN;

@@ -21,6 +21,20 @@ export default function AboutPage() {
       </div>
 
       <section className="space-y-2">
+        <h2 className="text-lg font-medium">Who runs {SITE_NAME}</h2>
+        <p className="text-sm text-muted-foreground">
+          {SITE_NAME} is run by Michael Tassavor, MD, a board-certified dermatologist. He built it because patients
+          kept asking which drugstore product actually contains the ingredient their dermatologist recommended, and
+          ingredient-list apps answer that with guesses rather than evidence. Questions, corrections and partnership
+          inquiries are welcome on the{" "}
+          <Link href="/contact" className="underline underline-offset-2">
+            contact page
+          </Link>
+          .
+        </p>
+      </section>
+
+      <section className="space-y-2">
         <h2 className="text-lg font-medium">How scoring works</h2>
         <p className="text-sm text-muted-foreground">
           Every product carries two independent scores, shown separately rather than blended into one

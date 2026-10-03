@@ -85,22 +85,20 @@ export function DualScoreBadges({
   audienceScore: ScoreResult;
   compact?: boolean;
 }) {
+  // No Derm Score slot until the dermatologist panel launches: an empty
+  // "coming soon" badge on every product reads as an unfinished site.
+  const showDerm = DERM_PANEL_LAUNCHED || dermScore.status === "scored";
   if (compact) {
     return (
       <div className="flex items-center gap-4 text-xs">
-        <CompactScore icon={<Stethoscope className="h-3.5 w-3.5 text-sky-600" />} label="Derm" result={dermScore} />
+        {showDerm && <CompactScore icon={<Stethoscope className="h-3.5 w-3.5 text-sky-600" />} label="Derm" result={dermScore} />}
         <CompactScore icon={<Users className="h-3.5 w-3.5 text-violet-600" />} label="User" result={audienceScore} hideSmallCounts />
       </div>
     );
   }
   return (
     <div className="flex flex-wrap gap-3">
-      <ScoreBadge
-        icon={<Stethoscope className="h-4 w-4 text-sky-600" />}
-        label="Derm Score"
-        result={dermScore}
-        unscoredText={DERM_PANEL_LAUNCHED ? undefined : "Coming soon · panel not launched yet"}
-      />
+      {showDerm && <ScoreBadge icon={<Stethoscope className="h-4 w-4 text-sky-600" />} label="Derm Score" result={dermScore} />}
       <ScoreBadge icon={<Users className="h-4 w-4 text-violet-600" />} label="User Score" result={audienceScore} hideSmallCounts />
     </div>
   );

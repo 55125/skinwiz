@@ -37,6 +37,7 @@ const FOOTER_LINKS = [
       { href: "/about", label: "About & methodology" },
       { href: "/for-clinicians", label: "For clinicians" },
       { href: "/clinic-tools", label: "Clinic tools" },
+      { href: "/contact", label: "Contact" },
       { href: "/privacy", label: "Privacy policy" },
       { href: "/terms", label: "Terms of service" },
     ],

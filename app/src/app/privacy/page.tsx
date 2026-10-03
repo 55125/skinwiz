@@ -231,7 +231,8 @@ export default function PrivacyPage() {
         Some product links are affiliate links. When you click one, you leave {SITE_NAME}. The retailer or
         affiliate network (for example, impact.com) may set its own cookies to record that you came from
         {SITE_NAME} and whether you bought something. That tracking is governed by their privacy policies. The
-        commission reports we receive do not identify you to us.
+        commission reports we receive do not identify you to us. Outbound shopping links, including links to
+        retailers and brand sites, may go through Sovrn, an affiliate service, which may set its own cookies.
       </p>
       <p>
         Some product images and video thumbnails load directly from outside sources such as Open Beauty

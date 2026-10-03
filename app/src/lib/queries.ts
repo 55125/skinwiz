@@ -11,7 +11,9 @@ import {
   ewgScores,
   ingredients,
   productIngredients,
+  manualAffiliateLinks,
 } from "@/db/schema";
+import { isAllowedManualLinkUrl } from "@/lib/manual-links";
 import { concernIdToNiche } from "@/db/actives";
 import { getFreeFromCheck } from "@/db/ingredient-flags";
 import { allergenBlockers, resolveAllergenId } from "@/db/contact-allergens";
@@ -379,6 +381,19 @@ export function getAffiliateLinksForProducts(productIds: string[]) {
     .from(affiliateLinks)
     .where(and(inArray(affiliateLinks.productId, productIds), sql`${affiliateLinks.productId} IN (SELECT id FROM products WHERE is_rx = 0)`))
     .all();
+}
+
+// Hand-made affiliate links (tools/affiliate_feeds/manual_links.csv). OTC
+// only, and the host allowlist is checked again here, so neither an Rx row
+// nor a non-affiliate URL can reach the page even if one got into the table.
+export function getManualLinksForProduct(productId: string) {
+  return db
+    .select()
+    .from(manualAffiliateLinks)
+    .where(and(eq(manualAffiliateLinks.productId, productId), sql`${manualAffiliateLinks.productId} IN (SELECT id FROM products WHERE is_rx = 0)`))
+    .orderBy(manualAffiliateLinks.retailer, manualAffiliateLinks.id)
+    .all()
+    .filter((l) => isAllowedManualLinkUrl(l.url));
 }
 
 // Real cached YouTube results (see db/fetch-youtube-videos.ts) — empty for

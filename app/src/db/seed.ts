@@ -10,6 +10,7 @@ import { computeAllergenHits } from "./contact-allergens";
 import { parseStrengths, strengthKey } from "./strength";
 import { aliasesFor, canonicalSlug, parseIngredients, pickDisplayName } from "./ingredient-parse";
 import { SITE_NAME } from "@/lib/brand";
+import { validateManualLinks, type ManualLinkRow } from "@/lib/manual-links";
 import { RX_CONCERN } from "./rx";
 import { steroidPotencyClass, type Ingredient } from "./steroid-potency";
 
@@ -29,6 +30,9 @@ const CATALOG_CSVS = [
 ];
 const AFFILIATE_CSV = path.join(REPO_ROOT, "tools/affiliate_feeds/output/matched_catalog.csv");
 const LABEL_SECTIONS_CSV = path.join(REPO_ROOT, "tools/catalog_pipeline/output/label_sections.csv");
+// Hand-made affiliate links (sovrn.co short links), one row per product +
+// retailer link. Committed; header-only until real links are added.
+const MANUAL_LINKS_CSV = path.join(REPO_ROOT, "tools/affiliate_feeds/manual_links.csv");
 // Optional side files: package descriptions + marketing category for the OTC
 // rows, and the Rx catalog with its prescribing-information sections. The
 // seed works without any of them (see each loader). RX_CATALOG_CSV can point
@@ -192,6 +196,7 @@ async function main() {
 function reseed() {
   db.delete(schema.affiliateLinks).run();
   db.delete(schema.productIngredients).run();
+  db.delete(schema.manualAffiliateLinks).run();
   db.delete(schema.ingredients).run();
   db.delete(schema.evidenceNotes).run();
   db.delete(schema.products).run();
@@ -347,6 +352,7 @@ function reseed() {
   console.log(`  inserted ${inserted} products, skipped ${skippedNoActive} with no recognized active ingredient`);
 
   insertIngredients(memberships);
+  insertManualLinks(new Set(productBatch.filter((p) => !p.isRx).map((p) => p.id)));
 
   console.log(`Reading affiliate demo data from ${AFFILIATE_CSV}...`);
   if (fs.existsSync(AFFILIATE_CSV)) {
@@ -556,6 +562,19 @@ function insertIngredients(
   const LINK_BATCH = 150; // 5 bound params per row, under better-sqlite3's variable ceiling
   for (let i = 0; i < links.length; i += LINK_BATCH) db.insert(schema.productIngredients).values(links.slice(i, i + LINK_BATCH)).run();
   console.log(`  indexed ${rows.length} distinct ingredients across ${links.length} product-ingredient links`);
+}
+
+// Only allowlisted affiliate hosts and OTC products (lib/manual-links.ts);
+// a rejected row is logged, never seeded.
+function insertManualLinks(otcIds: Set<string>) {
+  if (!fs.existsSync(MANUAL_LINKS_CSV)) {
+    console.log("  no manual_links.csv, skipping");
+    return;
+  }
+  const { links, rejected } = validateManualLinks(readCsv<ManualLinkRow>(MANUAL_LINKS_CSV), otcIds);
+  for (const r of rejected) console.warn(`  WARNING: manual_links.csv line ${r.row} skipped: ${r.reason}`);
+  if (links.length) db.insert(schema.manualAffiliateLinks).values(links).run();
+  console.log(`  inserted ${links.length} manual affiliate links`);
 }
 
 // Products that dropped out of the catalog CSVs leave rows pointing at ids

@@ -178,6 +178,26 @@ Schedule it hourly — not set up yet. Either:
    `npm run recalls:backfill` once in the Railway shell (or let the first
    cron run fetch the same 3 years), then add the hourly cron.
 
+## Affiliate links and live prices
+
+### Manual affiliate links (no env vars needed)
+
+Before Sovrn approves a site it offers no API key, script or price API, only
+short links made by hand in its dashboard (`https://sovrn.co/<code>`), and
+the approval review starts after the first real click on one. Those links
+live in `../tools/affiliate_feeds/manual_links.csv`
+(`product_id,retailer,url,size_label,added_at`), which `npm run db:seed`
+loads into `manual_affiliate_links` (migration `0014`) on every deploy. A
+product with rows shows them in its "Where to buy" section as
+"Buy at Walmart (8 oz)" with the affiliate disclosure, `rel="sponsored
+nofollow noopener"`, and no price.
+
+- Only `https://sovrn.co/...` URLs are accepted (`MANUAL_LINK_HOSTS` in
+  `src/lib/manual-links.ts`); the seed logs and skips anything else, an
+  unknown product, or an Rx product, and the page read checks again.
+- Never open these links from a script or test: an automated click can count
+  as invalid traffic on the Sovrn account.
+
 ## What's real vs. not
 
 This matters more than usual for a health product — read before demoing.

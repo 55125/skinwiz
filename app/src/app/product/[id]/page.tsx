@@ -13,6 +13,7 @@ import {
   getCanonicalProductId,
   getEvidenceNotesForActives,
   getAffiliateLinksForProduct,
+  getManualLinksForProduct,
   getVideoLinksForProduct,
   getEwgScoreForProduct,
   getEquivalentProducts,
@@ -59,6 +60,7 @@ import { PregnancyNotice } from "@/components/pregnancy-notice";
 import { recallsForProduct } from "@/lib/recalls";
 import { RecallBanner } from "@/components/recall-banner";
 import { canViewRxReference } from "@/lib/clinicians";
+import { manualLinkLabel } from "@/lib/manual-links";
 
 const FREE_FROM_BADGE = "border-emerald-300 text-emerald-700 dark:border-emerald-900 dark:text-emerald-400";
 
@@ -101,6 +103,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
   const concern = getConcern(product.concernId);
   const evidenceNotes = getEvidenceNotesForActives(product.activeIds as string[], product.concernId);
   const affiliateLinks = getAffiliateLinksForProduct(product.id);
+  const manualLinks = getManualLinksForProduct(product.id);
   const videoLinks = getVideoLinksForProduct(product.id);
   const videoSearchLinks = getVideoSearchLinks(product.brandName);
   const { derm: dermScore, audience: audienceScore } = getScoresForProducts([
@@ -635,6 +638,27 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
 
       <section className="space-y-4">
         <h2 className="text-xl font-semibold">Where to buy</h2>
+        {/* Hand-made affiliate links (manual_links.csv): no price, just the store and size. */}
+        {manualLinks.length > 0 && (
+          <div className="space-y-2">
+            {manualLinks.map((link) => (
+              <div key={link.id} className="flex items-center justify-between gap-4 rounded-xl border bg-card p-4">
+                <div>
+                  <p className="font-medium">{manualLinkLabel(link)}</p>
+                  <p className="text-xs text-muted-foreground">Affiliate link — we may earn a commission.</p>
+                </div>
+                <a
+                  href={link.url}
+                  target="_blank"
+                  rel="sponsored nofollow noopener"
+                  className={buttonVariants({ variant: "outline", size: "sm" })}
+                >
+                  Buy <ExternalLink className="ml-1 h-3.5 w-3.5" />
+                <span className="sr-only"> (opens in new tab)</span></a>
+              </div>
+            ))}
+          </div>
+        )}
         {affiliateLinks.length > 0 ? (
           <div className="space-y-2">
             {affiliateLinks.map((link) => (
@@ -680,7 +704,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
               Visit page <ExternalLink className="ml-1 h-3.5 w-3.5" />
             <span className="sr-only"> (opens in new tab)</span></a>
           </div>
-        ) : (
+        ) : manualLinks.length > 0 ? null : (
           <Alert>
             <AlertTitle>Retailer links coming soon</AlertTitle>
             <AlertDescription>

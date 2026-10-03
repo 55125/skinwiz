@@ -804,3 +804,23 @@ export const handoutInstances = sqliteTable(
   },
   (table) => [index("handout_instances_version_idx").on(table.versionId), index("handout_instances_claimed_idx").on(table.claimedSessionId)],
 );
+
+// Hand-made affiliate links (e.g. Sovrn's sovrn.co short links, the only
+// tool Sovrn offers before a site is approved), from the committed
+// tools/affiliate_feeds/manual_links.csv. Catalog data: wiped and reloaded
+// by every seed. The seed and the read both accept only URLs on
+// lib/manual-links.ts's affiliate-host allowlist, and only OTC products --
+// an Rx row never gets one. No price: just "Buy at {retailer} ({size})".
+export const manualAffiliateLinks = sqliteTable(
+  "manual_affiliate_links",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    productId: text("product_id").notNull(),
+    retailer: text("retailer").notNull(),
+    url: text("url").notNull(),
+    sizeLabel: text("size_label"),
+    addedAt: text("added_at"),
+  },
+  (table) => [index("manual_affiliate_links_product_idx").on(table.productId)],
+);
+

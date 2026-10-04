@@ -6,7 +6,8 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { isAllowedManualLinkUrl, manualLinkLabel, validateManualLinks } from "./manual-links";
+import { isAllowedManualLinkUrl, isAmazonLink, manualLinkHref, manualLinkLabel, validateManualLinks } from "./manual-links";
+import { isWrappable } from "./prices/redirect";
 
 const FAKE = "https://sovrn.co/test123";
 
@@ -90,4 +91,22 @@ test("the product page read: OTC only, allowlisted hosts only", () => {
     [["Walmart", FAKE]],
   );
   assert.deepEqual(q.getManualLinksForProduct("rx-1"), []);
+});
+
+test("Amazon product links are allowed only as amazon.com/dp/<ASIN> and always carry our tag", () => {
+  assert.equal(isAllowedManualLinkUrl("https://www.amazon.com/dp/B07L1PHSY9"), true);
+  assert.equal(isAllowedManualLinkUrl("https://www.amazon.com/Differin-Adapalene-Gel/dp/B07L1PHSY9/ref=sr_1_1"), true);
+  assert.equal(isAllowedManualLinkUrl("https://www.amazon.com/s?k=differin"), false);
+  assert.equal(isAllowedManualLinkUrl("http://www.amazon.com/dp/B07L1PHSY9"), false);
+  assert.equal(isAllowedManualLinkUrl("https://amazon.evil.com/dp/B07L1PHSY9"), false);
+  assert.equal(manualLinkHref("https://www.amazon.com/Differin/dp/B07L1PHSY9/ref=x?tag=someoneelse-20"), "https://www.amazon.com/dp/B07L1PHSY9?tag=mtass-20");
+  assert.equal(manualLinkHref("https://sovrn.co/test123"), "https://sovrn.co/test123");
+  assert.equal(isAmazonLink("https://www.amazon.com/dp/B07L1PHSY9"), true);
+  assert.equal(isAmazonLink("https://sovrn.co/test123"), false);
+});
+
+test("Amazon links are never rewrapped by Sovrn", () => {
+  assert.equal(isWrappable("https://www.amazon.com/dp/B07L1PHSY9?tag=mtass-20"), false);
+  assert.equal(isWrappable("https://amzn.to/abc"), false);
+  assert.equal(isWrappable("https://www.walmart.com/ip/123"), true);
 });

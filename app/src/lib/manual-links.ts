@@ -5,13 +5,36 @@
 //
 // Only https URLs on an affiliate host we have an account with are
 // accepted, so a typo or a pasted plain retailer URL can never render as
-// an affiliate link. Sovrn short links (sovrn.co) are the only host today.
+// an affiliate link: Sovrn short links (sovrn.co), and Amazon product pages
+// (amazon.com/dp/<ASIN>), which get our Associates tag added at render.
 // Never request these URLs from code or tests: an automated hit could count
 // as invalid traffic on the account.
 
 export const MANUAL_LINK_HOSTS = ["sovrn.co"];
 
+// Amazon Associates store ID. Not a secret (it's in every link); the env var
+// only exists so a different ID can be used without a code change.
+export function amazonTag(): string {
+  return process.env.AMAZON_ASSOCIATE_TAG?.trim() || "mtass-20";
+}
+
+const AMAZON_HOSTS = ["amazon.com", "www.amazon.com"];
+const ASIN_PATH = /^\/(?:[^/]+\/)?dp\/([A-Z0-9]{10})(?:[/?]|$)/;
+
+/** The ASIN of an amazon.com product-page URL, or null. */
+export function amazonAsin(url: string): string | null {
+  let u: URL;
+  try {
+    u = new URL(url.trim());
+  } catch {
+    return null;
+  }
+  if (u.protocol !== "https:" || !AMAZON_HOSTS.includes(u.hostname.toLowerCase())) return null;
+  return ASIN_PATH.exec(u.pathname)?.[1] ?? null;
+}
+
 export function isAllowedManualLinkUrl(url: string): boolean {
+  if (amazonAsin(url)) return true;
   let u: URL;
   try {
     u = new URL(url.trim());
@@ -20,6 +43,20 @@ export function isAllowedManualLinkUrl(url: string): boolean {
   }
   if (u.protocol !== "https:" || u.username || u.password || u.port) return false;
   return MANUAL_LINK_HOSTS.includes(u.hostname.toLowerCase()) && u.pathname.length > 1;
+}
+
+/**
+ * The href to render. Amazon links are rebuilt as a clean
+ * amazon.com/dp/<ASIN>?tag=<our tag> (Amazon requires the tag and forbids
+ * cloaking, so it's never shortened or wrapped); other hosts pass through.
+ */
+export function manualLinkHref(url: string): string {
+  const asin = amazonAsin(url);
+  return asin ? `https://www.amazon.com/dp/${asin}?tag=${encodeURIComponent(amazonTag())}` : url;
+}
+
+export function isAmazonLink(url: string): boolean {
+  return amazonAsin(url) !== null;
 }
 
 export type ManualLinkRow = { product_id?: string; retailer?: string; url?: string; size_label?: string; added_at?: string };

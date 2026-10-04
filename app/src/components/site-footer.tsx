@@ -105,7 +105,7 @@ export function SiteFooter() {
             <strong className="text-foreground">Affiliate disclosure.</strong> Some product links on this site
             are affiliate links — we may earn a commission if you buy through them, at no extra cost to you.
             This never affects Derm Score or User Score, which are independent of any commercial
-            relationship.
+            relationship. As an Amazon Associate I earn from qualifying purchases.
           </p>
         </div>
       </div>

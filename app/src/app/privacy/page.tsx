@@ -229,7 +229,7 @@ export default function PrivacyPage() {
       <h3>Affiliate links and third-party content</h3>
       <p>
         Some product links are affiliate links. When you click one, you leave {SITE_NAME}. The retailer or
-        affiliate network (for example, impact.com) may set its own cookies to record that you came from
+        affiliate network (for example, Amazon, Sovrn or CJ) may set its own cookies to record that you came from
         {SITE_NAME} and whether you bought something. That tracking is governed by their privacy policies. The
         commission reports we receive do not identify you to us. Outbound shopping links, including links to
         retailers and brand sites, may go through Sovrn, an affiliate service, which may set its own cookies.

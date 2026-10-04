@@ -61,7 +61,7 @@ import { PregnancyNotice } from "@/components/pregnancy-notice";
 import { recallsForProduct } from "@/lib/recalls";
 import { RecallBanner } from "@/components/recall-banner";
 import { canViewRxReference } from "@/lib/clinicians";
-import { manualLinkLabel } from "@/lib/manual-links";
+import { isAmazonLink, manualLinkHref, manualLinkLabel } from "@/lib/manual-links";
 import { headers } from "next/headers";
 import { livePricesEnabled } from "@/lib/prices/config";
 import { getDisplayQuotes, recordProductView } from "@/lib/prices/store";
@@ -667,10 +667,14 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
               <div key={link.id} className="flex items-center justify-between gap-4 rounded-xl border bg-card p-4">
                 <div>
                   <p className="font-medium">{manualLinkLabel(link)}</p>
-                  <p className="text-xs text-muted-foreground">Affiliate link — we may earn a commission.</p>
+                  <p className="text-xs text-muted-foreground">
+                    {isAmazonLink(link.url)
+                      ? "As an Amazon Associate I earn from qualifying purchases."
+                      : "Affiliate link — we may earn a commission."}
+                  </p>
                 </div>
                 <a
-                  href={link.url}
+                  href={manualLinkHref(link.url)}
                   target="_blank"
                   rel="sponsored nofollow noopener"
                   className={buttonVariants({ variant: "outline", size: "sm" })}

@@ -28,6 +28,9 @@ const NEVER_WRAP: RegExp[] = [
   /(^|\.)sovrn\.(com|co)$/,
   /(^|\.)ewg\.org$/,
   /(^|\.)youtube\.com$/,
+  // Amazon links carry our own Associates tag; Amazon forbids rewrapping.
+  /(^|\.)amazon\.[a-z.]+$/,
+  /^amzn\.to$/,
 ];
 
 const CUID_RE = /^[A-Za-z0-9]{1,32}$/;

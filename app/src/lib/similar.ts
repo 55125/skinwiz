@@ -1,8 +1,8 @@
-import { and, eq, inArray, sql } from "drizzle-orm";
+import { and, inArray, sql } from "drizzle-orm";
 import { db } from "@/db/client";
 import { products } from "@/db/schema";
 import { avoidConflicts } from "@/lib/avoid-shared";
-import { browseProducts } from "@/lib/queries";
+import { LISTED_OTC, browseProducts } from "@/lib/queries";
 
 // Formula similarity by ingredient overlap. Every ingredient is weighted by
 // how rare it is across the catalog (ln(N / products-with-it)), so sharing
@@ -48,6 +48,7 @@ export function findSimilarProducts(
   const hits = db.all<{ pid: string; iid: string }>(sql`
     SELECT product_id AS pid, ingredient_id AS iid FROM product_ingredients
     WHERE position > 0 AND ingredient_id IN (${sql.join(seeds.map((i) => sql`${i}`), sql`, `)})
+      AND product_id IN (SELECT id FROM products WHERE is_rx = 0 AND canonical_id IS NULL)
   `);
   const cand = new Map<string, number>();
   for (const h of hits) if (h.pid !== excludeId) cand.set(h.pid, (cand.get(h.pid) ?? 0) + (wOf.get(h.iid) ?? 0));
@@ -90,7 +91,7 @@ export function findSimilarProducts(
   const rows = db
     .select()
     .from(products)
-    .where(and(inArray(products.id, best.map((b) => b.pid)), eq(products.isRx, false)))
+    .where(and(inArray(products.id, best.map((b) => b.pid)), LISTED_OTC))
     .all();
   const byId = new Map(rows.map((r) => [r.id, r]));
   return best.flatMap((b) => {

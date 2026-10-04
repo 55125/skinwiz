@@ -42,7 +42,7 @@ export default async function GuidePage({ params }: { params: Promise<{ slug: st
   const byConcern = db.all<{ id: string; name: string; n: number }>(sql`
     SELECT c.id AS id, c.name AS name, COUNT(*) AS n
     FROM products p JOIN concerns c ON c.id = p.concern_id
-    WHERE p.is_rx = 0 AND p.free_from_flags LIKE ${`%"${slug}"%`}
+    WHERE p.is_rx = 0 AND p.canonical_id IS NULL AND p.free_from_flags LIKE ${`%"${slug}"%`}
     GROUP BY c.id ORDER BY n DESC
   `);
   const looksFor = [...check.avoidSubstrings].filter((s) => s.trim().length > 2);

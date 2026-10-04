@@ -241,3 +241,41 @@ heuristic chose the best available image in 26; the last tuning round
 covering several products (Lamisil foot vs. jock itch), where images aren't
 matched to NDCs. These are FDA label artwork, not retail photos, and the UI
 captions them "Package image: FDA label via DailyMed".
+
+# build_product_merges.py: duplicate listings (2026-10-04)
+
+Finds catalog rows that are the same retail product (any pack size): one FDA
+product under several NDCs, near-duplicate names, and the same product as an
+FDA listing, an Open Beauty Facts entry and/or a brand-site page. Reads the
+seeded app DB (`app/data/skinwiz.db`, run `npm run db:seed` first) and
+`../affiliate_feeds/output/product_barcodes.csv`. Rules live in
+`product_merge.py` and are tested in `tests/test_product_merges.py`.
+
+```bash
+JEV_KEY_FILE=/path/to/.env python3 build_product_merges.py   # scores new pairs with Jev
+python3 build_product_merges.py --no-jev                      # cached scores only
+```
+
+1. Candidates by blocks (exact name+labeler+form+strength, a shared real
+   barcode or an OBF barcode that encodes an NDC, brand-anchor and
+   same-strength buckets with similar names), never all pairs.
+2. Exclusions: strength, SPF, percent, dosage form, brand, variant words
+   (tinted, kids/baby, fragrance-free/scented, shades, flavors, skin type)
+   and shade/model numbers.
+3. Formula check on the full ingredient lists: differing allergen hits or
+   low overlap = different (reformulated), whatever the names say.
+4. Jev (`typesafe/jev-1.13`, OpenRouter `/systemone`), A/B and B/A. Auto:
+   both runs >= 0.90 with matching lists, or a reliable shared barcode
+   (>= 0.75, or >= 0.50 with identical names). Flagged: 0.50-0.90 or runs
+   more than 0.2 apart. Exact-rule groups need no Jev call.
+5. Union-find over auto pairs; a group with any conflicting pair is not
+   merged. Canonical: full ingredient list > FDA label sections > retail
+   photo > DailyMed artwork > source (openfda, dailymed, brand_direct,
+   open_beauty_facts) > longer list > smallest id.
+
+Outputs: `product_merges.csv` (auto tier; the seed sets
+`products.canonical_id` from it), `product_merge_flagged.csv` (not merged;
+blank `decision` / `decided_canonical_id` / `reviewer_notes` columns for a
+reviewer), `product_merge_pairs.csv` (every scored pair; doubles as the Jev
+cache) and `product_merge_summary.json`. Undo a merge by deleting its row
+and reseeding.

@@ -15,6 +15,7 @@ import { RX_CONCERN } from "./rx";
 import { steroidPotencyClass, type Ingredient } from "./steroid-potency";
 import { drugInactiveList, groupSplInactive, type SplInactiveCsvRow } from "./spl-inactive";
 import { linkAllDailymedImages } from "@/lib/product-images/link";
+import { resolveMerges, type MergeRow } from "./product-merges";
 
 const REPO_ROOT = path.resolve(process.cwd(), "..");
 // Four sources: the primary openFDA catalog, the DailyMed resolution pass
@@ -48,6 +49,10 @@ const RX_LABEL_SECTIONS_CSV = path.join(REPO_ROOT, "tools/catalog_pipeline/outpu
 // Inactive-ingredient lists from the SPL XML for FDA rows whose catalog CSV
 // row has none (fetch_dailymed_inactive.py). Optional.
 const SPL_INACTIVE_CSV = path.join(REPO_ROOT, "tools/catalog_pipeline/output/dailymed_inactive_ingredients.csv");
+// Duplicate listings of one retail product (build_product_merges.py, auto
+// tier only): duplicate_id -> canonical_id, applied as products.canonical_id.
+// Optional; removing a row (or the file) and reseeding undoes that merge.
+const PRODUCT_MERGES_CSV = path.join(REPO_ROOT, "tools/catalog_pipeline/output/product_merges.csv");
 
 type CatalogRow = {
   product_ndc: string;
@@ -360,6 +365,7 @@ function reseed() {
   // Affiliate rows may only ever attach to these (never a prescription).
   const otcNdc = new Set(seenNdc);
   productBatch.push(...rxProducts(seenNdc));
+  const duplicateIds = applyProductMerges(productBatch);
 
   // better-sqlite3 has a bound-parameter ceiling per statement — batch inserts.
   const BATCH_SIZE = 500;
@@ -370,7 +376,7 @@ function reseed() {
   console.log(`  inserted ${inserted} products, skipped ${skippedNoActive} with no recognized active ingredient`);
   console.log(`  drug inactive lists by source: ${JSON.stringify(inactiveSources)}`);
 
-  insertIngredients(memberships);
+  insertIngredients(memberships, duplicateIds);
   insertManualLinks(new Set(productBatch.filter((p) => !p.isRx).map((p) => p.id)));
 
   console.log(`Reading affiliate demo data from ${AFFILIATE_CSV}...`);
@@ -568,8 +574,25 @@ function insertLabelSections() {
   console.log(`  inserted ${rows.length} FDA label sections`);
 }
 
+// Sets canonicalId on each merged duplicate in the batch (lib/canonical.ts);
+// returns the duplicates' ids.
+function applyProductMerges(batch: (typeof schema.products.$inferInsert)[]): Set<string> {
+  if (!fs.existsSync(PRODUCT_MERGES_CSV)) {
+    console.log("  no product_merges.csv, every listing stays separate (run tools/catalog_pipeline/build_product_merges.py)");
+    return new Set();
+  }
+  const catalog = new Map(batch.map((p) => [p.id, { isRx: !!p.isRx }]));
+  const { canonicalOf, skipped } = resolveMerges(readCsv<MergeRow>(PRODUCT_MERGES_CSV), catalog);
+  for (const p of batch) p.canonicalId = canonicalOf.get(p.id) ?? null;
+  console.log(`  merged ${canonicalOf.size} duplicate listings into ${new Set(canonicalOf.values()).size} products`);
+  for (const s of skipped.slice(0, 20)) console.warn(`  WARNING: merge ${s.duplicateId} -> ${s.canonicalId} skipped: ${s.reason}`);
+  if (skipped.length > 20) console.warn(`  WARNING: ${skipped.length - 20} more merge rows skipped`);
+  return new Set(canonicalOf.keys());
+}
+
 function insertIngredients(
   raw: { productId: string; position: number; slug: string; rawName: string; isActive: boolean }[],
+  duplicateIds: Set<string>,
 ) {
   // Misspelled labels link to the correct spelling's page. Their spellings are
   // kept on the link (rawName) but don't feed the page's name or "also listed as".
@@ -595,7 +618,8 @@ function insertIngredients(
   for (const m of memberships) {
     variants.set(m.slug, cleanVariants.get(m.slug) ?? typoVariants.get(m.slug)!);
     const p = products.get(m.slug) ?? new Set<string>();
-    p.add(m.productId);
+    // counted over listed products, like the ingredient page's own list
+    if (!duplicateIds.has(m.productId)) p.add(m.productId);
     products.set(m.slug, p);
   }
   const names = new Map<string, string>();

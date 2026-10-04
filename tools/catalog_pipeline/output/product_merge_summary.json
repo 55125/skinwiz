@@ -1,0 +1,48 @@
+{
+  "otc_products": 18226,
+  "candidate_pairs": 165512,
+  "candidates_by_block": {
+    "exact_pairs": 1306,
+    "barcode_pairs": 659,
+    "name_pairs": 165358
+  },
+  "excluded_by_rule": {
+    "SPF differs": 486,
+    "actives differ": 2309,
+    "body area differs": 28,
+    "different brand": 12933,
+    "dosage form differs": 6344,
+    "form words differ": 351,
+    "percent differs": 26,
+    "shade/model numbers differ": 5215,
+    "strength differs": 101140,
+    "variant words": 12520
+  },
+  "pairs_considered": 24160,
+  "pairs_by_tier": {
+    "auto": 3482,
+    "different": 2189,
+    "different_reformulated": 15212,
+    "flagged": 3277
+  },
+  "pairs_by_method_auto": {
+    "exact": 673,
+    "name": 2740,
+    "barcode": 69
+  },
+  "chain_demotions": 0,
+  "merge_groups": 591,
+  "products_removed_from_listings": 1020,
+  "listed_products_after": 17206,
+  "removed_by_source": {
+    "open_beauty_facts": 39,
+    "openfda": 693,
+    "dailymed": 277,
+    "brand_direct": 11
+  },
+  "jev_pairs_scored_this_run": 0,
+  "jev_cost_usd_this_run": 0.0,
+  "jev_cost_usd_total": 0.4418,
+  "jev_scored_pairs_cached": 8250,
+  "canonical_rule": "full ingredient list > FDA label sections > retail photo > DailyMed artwork > source (openfda, dailymed, brand_direct, open_beauty_facts) > longer list > smallest id"
+}

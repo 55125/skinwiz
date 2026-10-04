@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { notFound, redirect } from "next/navigation";
+import { notFound, permanentRedirect, redirect } from "next/navigation";
 import { AlertTriangle, ChevronLeft, ExternalLink, FlaskConical, Info, PlaySquare, Music2, Camera, ShieldCheck } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
@@ -20,6 +20,9 @@ import {
   getEquivalentProducts,
   getConcern,
   getIngredientsForProduct,
+  getMergedDuplicates,
+  getRetailBarcodes,
+  bestProductImage,
 } from "@/lib/queries";
 import { getScoresForProducts } from "@/lib/scoring";
 import { getVideoSearchLinks } from "@/lib/video-links";
@@ -110,6 +113,15 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
     if (getRxProduct(decodeURIComponent(id)) && (await canViewRxReference())) redirect(`/rx/${encodeURIComponent(decodeURIComponent(id))}`);
     notFound();
   }
+  // A merged duplicate listing (lib/canonical.ts) is the same product as its
+  // canonical: one URL per product, permanently.
+  if (product.canonicalId) permanentRedirect(`/product/${encodeURIComponent(product.canonicalId)}`);
+
+  // Its other listings: their barcodes/NDCs as aliases, and the best photo.
+  const duplicates = getMergedDuplicates(product.id);
+  const imageUrl = bestProductImage(product, duplicates);
+  const aliasCodes = [...duplicates.map((d) => d.id), ...getRetailBarcodes([product.id, ...duplicates.map((d) => d.id)])]
+    .filter((c, i, all) => c !== product.id && !c.startsWith("http") && all.indexOf(c) === i);
 
   const concern = getConcern(product.concernId);
   const evidenceNotes = getEvidenceNotesForActives(product.activeIds as string[], product.concernId);
@@ -207,13 +219,13 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
         </Link>
       )}
 
-      <div className={product.imageUrl ? "grid gap-8 md:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] md:items-start" : ""}>
-        {product.imageUrl && (
+      <div className={imageUrl ? "grid gap-8 md:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] md:items-start" : ""}>
+        {imageUrl && (
           <figure className="space-y-2 md:sticky md:top-24">
             <div className="flex aspect-[4/3] items-center justify-center overflow-hidden rounded-3xl border bg-white dark:bg-gradient-to-br dark:from-muted dark:to-secondary md:aspect-square">
               {/* eslint-disable-next-line @next/next/no-img-element -- mix of self-hosted (brand-direct, pre-rendered DailyMed WebP) and external OBF-hosted photos; not worth a next/image remotePatterns allowlist for the OBF case alone */}
               <img
-                src={product.imageUrl}
+                src={imageUrl}
                 alt={productImageAlt(product)}
                 width={800}
                 height={800}
@@ -221,7 +233,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
                 decoding="async"
               />
             </div>
-            {isDailymedImageUrl(product.imageUrl) && (
+            {isDailymedImageUrl(imageUrl) && (
               <figcaption className="text-center text-xs text-muted-foreground">{DAILYMED_IMAGE_CAPTION}</figcaption>
             )}
           </figure>
@@ -824,6 +836,13 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
           content. Only the scores above come from feedback collected on {SITE_NAME}.
         </p>
       </section>
+
+      {aliasCodes.length > 0 && (
+        <p className="text-xs text-muted-foreground">
+          Also listed under {aliasCodes.length === 1 ? "code" : "codes"} {aliasCodes.slice(0, 12).join(", ")}
+          {aliasCodes.length > 12 ? ` and ${aliasCodes.length - 12} more` : ""} (other pack sizes or listings of this product).
+        </p>
+      )}
 
       {product.splSetId && (
         <p className="text-xs text-muted-foreground">

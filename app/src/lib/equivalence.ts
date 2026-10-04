@@ -34,14 +34,18 @@ export type EquivalenceRow = {
   // ...); null/absent when the directory doesn't list the NDC.
   marketingCategory?: string | null;
   isRx?: boolean;
+  // Set when this row is a merged duplicate (lib/canonical.ts): the listed
+  // product it stands for.
+  canonicalId?: string | null;
 };
 
 export type EquivalenceMember = {
-  // Lowest product id among this listing's pack-size duplicates -- the same
-  // canonical id queries.ts getCanonicalProductId() resolves to.
+  // The listed product (lib/canonical.ts) for this listing's rows: the
+  // lowest id among them that isn't a merged duplicate, else the canonical
+  // the duplicates were merged into.
   id: string;
-  // Every product id that collapses to this listing (pack sizes), so a page
-  // for any of them can find its group.
+  // Every product id that collapses to this listing (pack sizes, merged
+  // duplicates), so a page for any of them can find its group.
   ids: string[];
   brandName: string;
   manufacturer: string | null;
@@ -247,10 +251,17 @@ export function buildEquivalenceGroups(rows: EquivalenceRow[], minLabelers = 2):
     if (sortedIds.length > 1) slug = slug.replace(/-percent-(?=[a-z])/, "-percent-and-");
     if (splitByUse) slug += `-for-${bucket}`;
 
-    const out: EquivalenceMember[] = [...listings.values()].map((rs) => {
+    const byId = new Map<string, EquivalenceMember>();
+    for (const rs of listings.values()) {
       const ids = rs.map((r) => r.id).sort();
-      return { id: ids[0], ids, brandName: rs[0].brandName, manufacturer: rs[0].manufacturer, storeBrand: storeBrandFor(rs[0].manufacturer) };
-    });
+      const listed = rs.filter((r) => !r.canonicalId).map((r) => r.id).sort();
+      const id = listed[0] ?? [...rs].sort((a, b) => a.id.localeCompare(b.id))[0].canonicalId!;
+      // two listings merged into one product (a relabeler's copy) are one member
+      const prev = byId.get(id);
+      if (prev) prev.ids = [...new Set([...prev.ids, ...ids])].sort();
+      else byId.set(id, { id, ids, brandName: rs[0].brandName, manufacturer: rs[0].manufacturer, storeBrand: storeBrandFor(rs[0].manufacturer) });
+    }
+    const out: EquivalenceMember[] = [...byId.values()];
     out.sort(
       (a, b) =>
         Number(!!a.storeBrand) - Number(!!b.storeBrand) ||

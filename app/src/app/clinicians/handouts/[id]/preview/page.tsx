@@ -2,9 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { ChevronLeft, Eye } from "lucide-react";
-import { inArray } from "drizzle-orm";
-import { db } from "@/db/client";
-import { products } from "@/db/schema";
+import { productsByStoredId } from "@/lib/canonical";
 import { ClinicianPlan } from "@/components/clinician-plan";
 import { canViewRxReference, currentClinician } from "@/lib/clinicians";
 import { getOwnedHandout, getVersion } from "@/lib/handouts";
@@ -23,7 +21,7 @@ export default async function HandoutPreviewPage({ params, searchParams }: { par
   const version = getVersion(id, Number(v) || handout.latestVersion);
   if (!version) notFound();
   const ids = version.content.steps.map((s) => s.productId).filter((x): x is string => !!x);
-  const prods = new Map((ids.length ? db.select().from(products).where(inArray(products.id, ids)).all() : []).map((p) => [p.id, p]));
+  const prods = productsByStoredId(ids); // merged duplicates show as their canonical (lib/canonical.ts)
 
   return (
     <div className="mx-auto max-w-6xl space-y-6 px-4 py-10">

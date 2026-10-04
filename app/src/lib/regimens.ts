@@ -3,10 +3,11 @@
 // shelf, so a plan follows a signed-in person across their devices and is
 // never readable by anyone else. Every function takes the resolved session
 // id and refuses a regimen that isn't that session's.
-import { and, desc, eq, inArray, ne } from "drizzle-orm";
+import { and, desc, eq, ne } from "drizzle-orm";
 import { db } from "@/db/client";
 import { handoutInstances, handoutVersions, products, regimenItems, regimens, regimenStepStates } from "@/db/schema";
 import { iso } from "@/lib/identity";
+import { productsByStoredId } from "@/lib/canonical";
 import { badgeCredential } from "@/lib/clinicians";
 import { setRegimenItem, type Slot } from "@/lib/regimen";
 import type { HandoutStep } from "@/lib/handout-types";
@@ -164,7 +165,7 @@ export function getClinicianPlan(sessionId: string, regimenId: number): Clinicia
     db.select().from(regimenStepStates).where(eq(regimenStepStates.regimenId, regimenId)).all().map((s) => [s.stepKey, s]),
   );
   const ids = row.v.content.steps.map((s) => s.productId).filter((v): v is string => !!v);
-  const prods = new Map((ids.length ? db.select().from(products).where(inArray(products.id, ids)).all() : []).map((p) => [p.id, p]));
+  const prods = productsByStoredId(ids); // merged duplicates show as their canonical (lib/canonical.ts)
   return { regimen: row.r, version: row.v, states, products: prods };
 }
 

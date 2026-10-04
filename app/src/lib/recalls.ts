@@ -2,9 +2,10 @@
 // matching to the catalog (pure rules in recall-match.ts), shelf alerts and
 // one-time emails. Driven by the cron job (lib/jobs.ts) and the backfill
 // script (db/backfill-recalls.ts).
-import { and, desc, eq, gte, inArray, ne, sql } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, ne, sql, type SQLWrapper } from "drizzle-orm";
 import { db } from "@/db/client";
 import { jobState, people, products, recallMatches, recallNotifications, recalls, shelfItems } from "@/db/schema";
+import { inProductGroup, resolvedProductId } from "@/lib/canonical";
 import { iso } from "@/lib/identity";
 import { sendEmail, SEND_SPACING_MS } from "@/lib/email";
 import { recallEmail } from "@/lib/email-templates";
@@ -235,22 +236,30 @@ export function recallsForProduct(productId: string): ProductRecall[] {
     .select(recallFields)
     .from(recallMatches)
     .innerJoin(recalls, eq(recalls.recallNumber, recallMatches.recallNumber))
-    .where(eq(recallMatches.productId, productId))
+    .where(inProductGroup(recallMatches.productId, productId))
     .orderBy(desc(recallMatches.confidence), desc(recalls.reportDate))
-    .all();
+    .all()
+    .filter((r, i, all) => all.findIndex((x) => x.recallNumber === r.recallNumber) === i);
 }
+
+// Recall matches are computed per listing (rematchAll). A merged duplicate
+// (lib/canonical.ts) is the same product as its canonical, so shelf rows and
+// matches are joined on the listed id each resolves to: a recall matched to
+// either listing reaches a shelf row saved under either id.
+const sameProduct = (a: SQLWrapper, b: SQLWrapper) => sql`${resolvedProductId(a)} = ${resolvedProductId(b)}`;
 
 /** Recalls touching products on this shelf (owned or wanted). */
 export function shelfRecallAlerts(sessionId: string) {
   return db
     .select({ ...recallFields, productId: products.id, brandName: products.brandName, shelfStatus: shelfItems.status })
     .from(shelfItems)
-    .innerJoin(recallMatches, eq(recallMatches.productId, shelfItems.productId))
+    .innerJoin(recallMatches, sameProduct(recallMatches.productId, shelfItems.productId))
     .innerJoin(recalls, eq(recalls.recallNumber, recallMatches.recallNumber))
-    .innerJoin(products, eq(products.id, shelfItems.productId))
+    .innerJoin(products, eq(products.id, resolvedProductId(shelfItems.productId)))
     .where(and(eq(shelfItems.sessionId, sessionId), inArray(shelfItems.status, ["own", "want"])))
     .orderBy(desc(recallMatches.confidence), desc(recalls.reportDate))
-    .all();
+    .all()
+    .filter((r, i, all) => all.findIndex((x) => x.recallNumber === r.recallNumber && x.productId === r.productId) === i);
 }
 
 // --- emails ---------------------------------------------------------------
@@ -280,9 +289,9 @@ export async function notifyRecalls(now: Date, opts: { maxEmails?: number; spaci
     })
     .from(people)
     .innerJoin(shelfItems, and(eq(shelfItems.sessionId, people.homeSessionId), inArray(shelfItems.status, ["own", "want"])))
-    .innerJoin(recallMatches, and(eq(recallMatches.productId, shelfItems.productId), gte(recallMatches.confidence, EMAIL_CONFIDENCE)))
+    .innerJoin(recallMatches, and(sameProduct(recallMatches.productId, shelfItems.productId), gte(recallMatches.confidence, EMAIL_CONFIDENCE)))
     .innerJoin(recalls, eq(recalls.recallNumber, recallMatches.recallNumber))
-    .innerJoin(products, eq(products.id, shelfItems.productId))
+    .innerJoin(products, eq(products.id, resolvedProductId(shelfItems.productId)))
     .leftJoin(recallNotifications, and(eq(recallNotifications.personId, people.id), eq(recallNotifications.recallNumber, recalls.recallNumber)))
     .where(
       and(

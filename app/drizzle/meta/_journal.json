@@ -120,6 +120,13 @@
       "when": 1791134976661,
       "tag": "0016_dailymed_images",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "6",
+      "when": 1791152253922,
+      "tag": "0017_product_canonical_id",
+      "breakpoints": true
     }
   ]
 }

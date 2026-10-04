@@ -5,6 +5,7 @@
 import { and, eq, inArray, sql } from "drizzle-orm";
 import { db } from "@/db/client";
 import { priceChecks, priceQuotes, productBarcodes, products, productViews } from "@/db/schema";
+import { inProductGroup, productGroupsFor } from "@/lib/canonical";
 import {
   ERROR_RETRY_MS,
   livePricesEnabled,
@@ -54,12 +55,16 @@ const displayable = (cutoff: string) =>
 export function getDisplayQuotes(productId: string, now = new Date()): PriceQuote[] {
   if (!livePricesEnabled()) return [];
   const cutoff = new Date(now.getTime() - PRICE_DISPLAY_MAX_AGE_MS).toISOString();
+  // The product's merged duplicates (lib/canonical.ts) are the same product:
+  // their quotes count too, the cheapest per merchant.
+  const seen = new Set<string>();
   return db
     .select()
     .from(priceQuotes)
-    .where(and(eq(priceQuotes.productId, productId), displayable(cutoff)))
+    .where(and(inProductGroup(priceQuotes.productId, productId), displayable(cutoff)))
     .orderBy(priceQuotes.price, priceQuotes.merchantName)
     .all()
+    .filter((r) => !seen.has(r.merchantId) && !!seen.add(r.merchantId))
     .map(fromRow);
 }
 
@@ -191,16 +196,21 @@ export function loadLookupProducts(ids: string[]): LookupProduct[] {
     .from(products)
     .where(and(inArray(products.id, ids), eq(products.isRx, false)))
     .all();
+  // A product's merged duplicates' barcodes are its aliases (lib/canonical.ts).
+  const groups = productGroupsFor(ids);
+  const ownerOf = new Map<string, string>();
+  for (const [c, members] of groups) for (const m of members) if (!ownerOf.has(m)) ownerOf.set(m, c);
   const codes = db
     .select()
     .from(productBarcodes)
-    .where(inArray(productBarcodes.productId, ids))
-    .orderBy(productBarcodes.rank)
+    .where(inArray(productBarcodes.productId, [...ownerOf.keys()]))
+    .orderBy(productBarcodes.rank, productBarcodes.productId)
     .all();
   const byProduct = new Map<string, { barcode: string; source: string }[]>();
   for (const c of codes) {
-    const list = byProduct.get(c.productId) ?? byProduct.set(c.productId, []).get(c.productId)!;
-    list.push({ barcode: c.barcode, source: c.source });
+    const owner = ownerOf.get(c.productId)!;
+    const list = byProduct.get(owner) ?? byProduct.set(owner, []).get(owner)!;
+    if (!list.some((x) => x.barcode === c.barcode)) list.push({ barcode: c.barcode, source: c.source });
   }
   const byId = new Map(rows.map((r) => [r.id, { ...r, barcodes: byProduct.get(r.id) ?? [] }]));
   return ids.flatMap((id) => (byId.has(id) ? [byId.get(id)!] : []));

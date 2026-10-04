@@ -29,7 +29,10 @@ export type PriceRefreshReport = {
 
 const SOURCE = "sovrn";
 
-const due = (now: string) => sql`p.is_rx = 0 AND NOT EXISTS (
+// Listed products only: a merged duplicate's barcodes are looked up as its
+// canonical's aliases (lib/canonical.ts), and user rows saved under a
+// duplicate's id stand for the canonical.
+const due = (now: string) => sql`p.is_rx = 0 AND p.canonical_id IS NULL AND NOT EXISTS (
   SELECT 1 FROM price_checks c WHERE c.product_id = p.id AND c.source = ${SOURCE} AND c.next_check_at > ${now})`;
 
 /** Due product ids in priority order, at most `limit`. Exported for tests. */
@@ -52,10 +55,12 @@ export function pickDueProducts(now: Date, limit: number, opts: { sweep?: boolea
   add(
     db.all<{ id: string }>(sql`
       SELECT p.id FROM products p WHERE ${due(at)} AND p.id IN (
-        SELECT product_id FROM shelf_items WHERE status IN ('own', 'want')
-        UNION SELECT product_id FROM regimen_items
-        UNION SELECT json_extract(s.value, '$.productId') FROM handout_versions v, json_each(v.content, '$.steps') s
-          WHERE json_extract(s.value, '$.kind') = 'otc')
+        SELECT COALESCE(d.canonical_id, u.pid) FROM (
+          SELECT product_id AS pid FROM shelf_items WHERE status IN ('own', 'want')
+          UNION SELECT product_id FROM regimen_items
+          UNION SELECT json_extract(s.value, '$.productId') FROM handout_versions v, json_each(v.content, '$.steps') s
+            WHERE json_extract(s.value, '$.kind') = 'otc'
+        ) u LEFT JOIN products d ON d.id = u.pid)
       ORDER BY p.id LIMIT ${limit}`),
   );
   if (out.length < limit) {

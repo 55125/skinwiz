@@ -1,6 +1,7 @@
 import { and, eq, inArray } from "drizzle-orm";
 import { db } from "@/db/client";
 import { labelSections, products, regimenItems } from "@/db/schema";
+import { inProductGroup, resolvedProductId } from "@/lib/canonical";
 import { ACTIVE_DEFINITIONS } from "@/db/actives";
 import { CLASS_IDS, classesOf, findRoutineConflicts, type ClassId, type RoutineConflict } from "@/lib/routine-conflicts";
 import { ACTIVE_GUIDANCE, FORMULATION_GUIDANCE, type ActiveGuidance, type FormulationGuidance } from "@/db/usage-guidance";
@@ -108,8 +109,10 @@ export function getRegimenSlot(regimenId: number | null, productId: string): Slo
   const row = db
     .select({ slot: regimenItems.slot })
     .from(regimenItems)
-    .where(and(eq(regimenItems.regimenId, regimenId), eq(regimenItems.productId, productId)))
-    .get();
+    .where(and(eq(regimenItems.regimenId, regimenId), inProductGroup(regimenItems.productId, productId)))
+    .orderBy(regimenItems.id)
+    .all()
+    .at(-1);
   return row && isSlot(row.slot) ? row.slot : null;
 }
 
@@ -123,12 +126,20 @@ export function setRegimenItem(
   slot: Slot | null,
   directions: string | null = null,
 ): "ok" | "full" {
+  // Items keep the id they were saved with; a merged duplicate's row is this
+  // product's row (lib/canonical.ts), so it's matched, updated or removed.
+  const group = inProductGroup(regimenItems.productId, productId);
   if (slot === null) {
-    db.delete(regimenItems).where(and(eq(regimenItems.regimenId, regimenId), eq(regimenItems.productId, productId))).run();
+    db.delete(regimenItems).where(and(eq(regimenItems.regimenId, regimenId), group)).run();
     return "ok";
   }
   const count = db.select({ id: regimenItems.id }).from(regimenItems).where(eq(regimenItems.regimenId, regimenId)).all().length;
-  if (!getRegimenSlot(regimenId, productId) && count >= MAX_REGIMEN) return "full";
+  const existing = db.select({ id: regimenItems.id }).from(regimenItems).where(and(eq(regimenItems.regimenId, regimenId), group)).get();
+  if (existing) {
+    db.update(regimenItems).set({ slot }).where(eq(regimenItems.id, existing.id)).run();
+    return "ok";
+  }
+  if (count >= MAX_REGIMEN) return "full";
   db.insert(regimenItems)
     .values({ sessionId, regimenId, productId, slot, directions })
     .onConflictDoUpdate({ target: [regimenItems.regimenId, regimenItems.productId], set: { slot } })
@@ -161,10 +172,12 @@ export function getRegimen(regimenId: number | null): Regimen {
   const rows = db
     .select({ slot: regimenItems.slot, createdAt: regimenItems.createdAt, directions: regimenItems.directions, product: products })
     .from(regimenItems)
-    .innerJoin(products, eq(products.id, regimenItems.productId))
+    .innerJoin(products, eq(products.id, resolvedProductId(regimenItems.productId)))
     .where(eq(regimenItems.regimenId, regimenId))
     .orderBy(regimenItems.createdAt)
-    .all();
+    .all()
+    // a duplicate and its canonical both saved: one step
+    .filter((r, i, all) => all.findIndex((x) => x.product.id === r.product.id) === i);
 
   const setIds = [...new Set(rows.map((r) => r.product.splSetId).filter((v): v is string => !!v))];
   const labels = new Map(

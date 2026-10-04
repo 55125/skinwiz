@@ -167,8 +167,17 @@ export const products = sqliteTable("products", {
   steroidPotencyClass: integer("steroid_potency_class"),
   // Isotretinoin: a reference page only, never addable to a handout (iPLEDGE).
   informationalOnly: integer("informational_only", { mode: "boolean" }).notNull().default(false),
+  // Set on a duplicate listing only: the id of the product it is the same
+  // retail product as (tools/catalog_pipeline/output/product_merges.csv,
+  // applied by the seed; chains are already flattened, so this always points
+  // at a row whose own canonical_id is null). Null = a listed product.
+  // Listings, search, counts and the sitemap skip rows with one; the
+  // product page 308s to the canonical; user rows keep the duplicate's id
+  // and resolve through this at read time (lib/canonical.ts).
+  canonicalId: text("canonical_id"),
 }, (table) => [
   index("products_strength_key_idx").on(table.strengthKey),
+  index("products_canonical_id_idx").on(table.canonicalId),
   // label sections and package photos are joined by set id
   index("products_spl_set_id_idx").on(table.splSetId),
 ]);

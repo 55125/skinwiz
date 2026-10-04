@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { FREE_FROM_CHECKS } from "@/db/ingredient-flags";
 import { getAllergen } from "@/db/contact-allergens";
 import { getProduct, getIngredientsForProduct, getEwgScoreForProduct } from "@/lib/queries";
+import { canonicalIdOf } from "@/lib/canonical";
 import { getScoresForProducts } from "@/lib/scoring";
 import { ewgHazardBadge } from "@/lib/ewg";
 import { dataSourceBadge } from "@/lib/data-source";
@@ -23,7 +24,7 @@ type Search = { a?: string; b?: string };
 
 function load(id: string | undefined) {
   if (!id) return null;
-  const product = getProduct(id);
+  const product = getProduct(canonicalIdOf(id)); // a merged duplicate compares as its canonical
   if (!product) return null;
   const ingredients = getIngredientsForProduct(product.id).filter((r) => r.position > 0);
   const scores = getScoresForProducts([{ productId: product.id, concernId: product.concernId }]).get(product.id)!;

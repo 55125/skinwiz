@@ -12,6 +12,7 @@ import {
   ingredients,
   productIngredients,
   manualAffiliateLinks,
+  productBarcodes,
 } from "@/db/schema";
 import { isAllowedManualLinkUrl } from "@/lib/manual-links";
 import { concernIdToNiche } from "@/db/actives";
@@ -22,6 +23,8 @@ import { displayablePrice, parsePackageDescription, unitPrice } from "@/lib/equi
 import { getDisplayQuotesFor } from "@/lib/prices/store";
 import { compareLivePrices, type LivePrice } from "@/lib/prices/unit";
 import { RX_CONCERN_ID } from "@/db/rx";
+import { isDailymedImageUrl } from "@/lib/image-urls";
+import { LISTED, inProductGroup } from "@/lib/canonical";
 
 // Prescription rows (products.isRx) are reference/handout data and must never
 // reach a consumer listing, search, count, score, equivalence list or the
@@ -29,6 +32,13 @@ import { RX_CONCERN_ID } from "@/db/rx";
 // twin `is_rx = 0`); rx-exclusion.test.ts seeds an Rx row and checks each
 // one. Rx rows are read only through getRxProduct / lib/rx-catalog.ts.
 export const OTC_ONLY: SQL = sql`${products.isRx} = 0`;
+
+// What a listing may show: OTC and not a merged duplicate (lib/canonical.ts).
+// Every listing, search, count and the sitemap uses this (raw-SQL twin:
+// `is_rx = 0 AND canonical_id IS NULL`); product-merges.test.ts seeds a
+// duplicate and checks each one. getProduct() still finds duplicates, so
+// their pages can redirect and user rows saved under them keep resolving.
+export const LISTED_OTC: SQL = and(OTC_ONLY, LISTED)!;
 
 // Shared by getProductsForConcern and searchProducts -- one membership
 // check per selected free-from id, ANDed together, so a product must satisfy every
@@ -73,7 +83,7 @@ export function getAllIngredientIds(): string[] {
 export function getAllergenProductCounts(): Map<string, number> {
   const rows = db.all<{ id: string; n: number }>(sql`
     SELECT json_each.value AS id, COUNT(*) AS n FROM products, json_each(products.allergen_hits)
-    WHERE products.is_rx = 0 GROUP BY json_each.value
+    WHERE products.is_rx = 0 AND products.canonical_id IS NULL GROUP BY json_each.value
   `);
   return new Map(rows.map((r) => [r.id, r.n]));
 }
@@ -83,7 +93,7 @@ export function getFreeOfAllergenByConcern(id: string): { id: string; name: stri
   return db.all<{ id: string; name: string; n: number }>(sql`
     SELECT c.id AS id, c.name AS name, COUNT(*) AS n
     FROM products JOIN concerns c ON c.id = products.concern_id
-    WHERE ${and(OTC_ONLY, ...freeFromWhereClauses([id]))}
+    WHERE ${and(LISTED_OTC, ...freeFromWhereClauses([id]))}
     GROUP BY c.id ORDER BY n DESC
   `);
 }
@@ -94,13 +104,13 @@ export function getSafeProductsByConcern(ids: string[]): { id: string; name: str
   return db.all<{ id: string; name: string; n: number }>(sql`
     SELECT c.id AS id, c.name AS name, COUNT(*) AS n
     FROM products JOIN concerns c ON c.id = products.concern_id
-    WHERE ${and(...freeFromWhereClauses(ids))}
+    WHERE ${and(LISTED_OTC, ...freeFromWhereClauses(ids))}
     GROUP BY c.id ORDER BY n DESC
   `);
 }
 
 export function getAssessedProductCount(): number {
-  return db.get<{ n: number }>(sql`SELECT COUNT(*) AS n FROM products WHERE allergen_hits IS NOT NULL AND is_rx = 0`)!.n;
+  return db.get<{ n: number }>(sql`SELECT COUNT(*) AS n FROM products WHERE allergen_hits IS NOT NULL AND is_rx = 0 AND canonical_id IS NULL`)!.n;
 }
 
 // Exact membership test on a JSON-array text column, so URL-supplied ids
@@ -151,7 +161,7 @@ export function getProductsForConcern(
   excludeIngredientIds?: string[],
 ) {
   const offset = (page - 1) * PAGE_SIZE;
-  const clauses = [OTC_ONLY, eq(products.concernId, concernId), ...freeFromWhereClauses(freeFromIds)];
+  const clauses = [LISTED_OTC, eq(products.concernId, concernId), ...freeFromWhereClauses(freeFromIds)];
   if (excludeIngredientIds) clauses.push(excludesIngredientsClause(excludeIngredientIds));
   if (activeId) {
     clauses.push(jsonArrayContains(products.activeIds, activeId));
@@ -178,7 +188,7 @@ export type BrowseFilters = {
 };
 
 export function browseWhere(filters: BrowseFilters): SQL | undefined {
-  const clauses = [OTC_ONLY, ...freeFromWhereClauses(filters.freeFromIds ?? [])];
+  const clauses = [LISTED_OTC, ...freeFromWhereClauses(filters.freeFromIds ?? [])];
   if (filters.excludeIngredientIds) clauses.push(excludesIngredientsClause(filters.excludeIngredientIds));
   if (filters.concernId) clauses.push(eq(products.concernId, filters.concernId));
   if (filters.dataSources && filters.dataSources.length > 0) clauses.push(inArray(products.dataSource, filters.dataSources));
@@ -227,7 +237,7 @@ export function getAllActives() {
 }
 
 export function countProducts(): number {
-  return db.select({ count: sql<number>`count(*)` }).from(products).where(OTC_ONLY).get()!.count;
+  return db.select({ count: sql<number>`count(*)` }).from(products).where(LISTED_OTC).get()!.count;
 }
 
 /** An OTC/cosmetic product by id -- undefined for an Rx row, so every consumer page and API refuses them. */
@@ -253,7 +263,7 @@ export function getStrengthOptionsForActive(concernId: string, activeId: string)
   return db
     .select({ pct: sql<number>`${expr}`, count: sql<number>`count(*)` })
     .from(products)
-    .where(and(OTC_ONLY, eq(products.concernId, concernId), sql`${expr} IS NOT NULL`))
+    .where(and(LISTED_OTC, eq(products.concernId, concernId), sql`${expr} IS NOT NULL`))
     .groupBy(expr)
     .orderBy(expr)
     .all();
@@ -266,7 +276,7 @@ export function getStrengthOptionsForActive(concernId: string, activeId: string)
 // brand's other package sizes.
 export function getEquivalentProducts(product: typeof products.$inferSelect, limit = 8) {
   if (!product.strengthKey) return { rows: [], total: 0 };
-  const clauses = [OTC_ONLY, eq(products.strengthKey, product.strengthKey), sql`${products.id} != ${product.id}`];
+  const clauses = [LISTED_OTC, eq(products.strengthKey, product.strengthKey), sql`${products.id} != ${product.id}`];
   if (product.dosageForm) clauses.push(eq(products.dosageForm, product.dosageForm));
   const whereClause = and(...clauses);
   const sameMaker = sql`CASE WHEN ${products.manufacturer} = ${product.manufacturer ?? ""} THEN 1 ELSE 0 END`;
@@ -383,12 +393,28 @@ export function getPackageDescriptions(ids: string[]): Map<string, string> {
 
 // Never for a prescription row: no buy or affiliate link on Rx, ever
 // (business-plan.md §3). The seed never inserts one; this is the second lock.
+// Covers the product's merged duplicates too (lib/canonical.ts): a buy link
+// recorded against any listing of the product belongs on its one page.
 export function getAffiliateLinksForProduct(productId: string) {
-  return db
-    .select()
-    .from(affiliateLinks)
-    .where(and(eq(affiliateLinks.productId, productId), sql`${affiliateLinks.productId} IN (SELECT id FROM products WHERE is_rx = 0)`))
-    .all();
+  return dedupeBy(
+    db
+      .select()
+      .from(affiliateLinks)
+      .where(and(inProductGroup(affiliateLinks.productId, productId), sql`${affiliateLinks.productId} IN (SELECT id FROM products WHERE is_rx = 0)`))
+      .orderBy(affiliateLinks.id)
+      .all(),
+    (l) => l.buyUrl,
+  );
+}
+
+function dedupeBy<T>(rows: T[], key: (r: T) => string): T[] {
+  const seen = new Set<string>();
+  return rows.filter((r) => {
+    const k = key(r);
+    if (seen.has(k)) return false;
+    seen.add(k);
+    return true;
+  });
 }
 
 /** Affiliate rows for many products at once (OTC only, same lock as above). */
@@ -404,20 +430,24 @@ export function getAffiliateLinksForProducts(productIds: string[]) {
 // Hand-made affiliate links (tools/affiliate_feeds/manual_links.csv). OTC
 // only, and the host allowlist is checked again here, so neither an Rx row
 // nor a non-affiliate URL can reach the page even if one got into the table.
+// Also the merged duplicates' links (union, one per URL).
 export function getManualLinksForProduct(productId: string) {
-  return db
-    .select()
-    .from(manualAffiliateLinks)
-    .where(and(eq(manualAffiliateLinks.productId, productId), sql`${manualAffiliateLinks.productId} IN (SELECT id FROM products WHERE is_rx = 0)`))
-    .orderBy(manualAffiliateLinks.retailer, manualAffiliateLinks.id)
-    .all()
-    .filter((l) => isAllowedManualLinkUrl(l.url));
+  return dedupeBy(
+    db
+      .select()
+      .from(manualAffiliateLinks)
+      .where(and(inProductGroup(manualAffiliateLinks.productId, productId), sql`${manualAffiliateLinks.productId} IN (SELECT id FROM products WHERE is_rx = 0)`))
+      .orderBy(manualAffiliateLinks.retailer, manualAffiliateLinks.id)
+      .all()
+      .filter((l) => isAllowedManualLinkUrl(l.url)),
+    (l) => l.url,
+  );
 }
 
 // Real cached YouTube results (see db/fetch-youtube-videos.ts) — empty for
 // almost every product until that script has been run with a real API key.
 export function getVideoLinksForProduct(productId: string) {
-  return db.select().from(videoLinks).where(eq(videoLinks.productId, productId)).all();
+  return dedupeBy(db.select().from(videoLinks).where(inProductGroup(videoLinks.productId, productId)).all(), (v) => v.videoId);
 }
 
 // Plain substring search, not FTS5 — at ~16k rows a LIKE scan is still fast
@@ -434,7 +464,7 @@ function buildSearchWhere(q: string, filters: { concernId?: string; dataSources?
   // literally contain the ingredient name. Caught by testing the search
   // page with a real ingredient query before considering this done.
   const clauses = [
-    OTC_ONLY,
+    LISTED_OTC,
     sql`(${products.brandName} LIKE ${needle} ESCAPE '\\' OR ${products.manufacturer} LIKE ${needle} ESCAPE '\\' OR ${products.activeIngredientText} LIKE ${needle} ESCAPE '\\')`,
     ...freeFromWhereClauses(filters.freeFromIds ?? []),
   ];
@@ -497,7 +527,7 @@ export function suggestProducts(q: string, limit = 6) {
       dataSource: products.dataSource,
     })
     .from(products)
-    .where(and(OTC_ONLY, sql`(${products.brandName} LIKE ${needle} ESCAPE '\\' OR ${products.manufacturer} LIKE ${needle} ESCAPE '\\')`))
+    .where(and(LISTED_OTC, sql`(${products.brandName} LIKE ${needle} ESCAPE '\\' OR ${products.manufacturer} LIKE ${needle} ESCAPE '\\')`))
     .orderBy(
       sql`CASE WHEN ${products.brandName} LIKE ${prefix} ESCAPE '\\' THEN 0 WHEN ${products.manufacturer} LIKE ${prefix} ESCAPE '\\' THEN 1 ELSE 2 END`,
       sql`CASE ${products.dataSource} WHEN 'brand_direct' THEN 0 WHEN 'openfda' THEN 1 WHEN 'dailymed' THEN 2 ELSE 3 END`,
@@ -544,7 +574,7 @@ export function getTopProducts(limit = 8) {
   return db
     .select()
     .from(products)
-    .where(OTC_ONLY)
+    .where(LISTED_OTC)
     .orderBy(
       sql`CASE ${products.dataSource} WHEN 'brand_direct' THEN 0 WHEN 'openfda' THEN 1 WHEN 'dailymed' THEN 2 ELSE 3 END`,
       sql`RANDOM()`,
@@ -561,7 +591,7 @@ export function getTopActives(limit = 8) {
     SELECT a.id as activeId, a.canonical_name as canonicalName, COUNT(*) as productCount
     FROM products p, json_each(p.active_ids) je
     JOIN actives a ON a.id = je.value
-    WHERE p.is_rx = 0
+    WHERE p.is_rx = 0 AND p.canonical_id IS NULL
     GROUP BY a.id
     ORDER BY productCount DESC
     LIMIT ${limit}
@@ -608,12 +638,12 @@ export function getIngredientsForProduct(productId: string) {
 export function getProductsForIngredient(id: string, page: number, concernId?: string) {
   const offset = (page - 1) * INGREDIENT_PAGE_SIZE;
   const membership = sql`${products.id} IN (SELECT product_id FROM product_ingredients WHERE ingredient_id = ${id})`;
-  const where = concernId ? and(OTC_ONLY, membership, eq(products.concernId, concernId)) : and(OTC_ONLY, membership);
+  const where = concernId ? and(LISTED_OTC, membership, eq(products.concernId, concernId)) : and(LISTED_OTC, membership);
   const rows = db
     .select({ product: products, position: productIngredients.position, isActive: productIngredients.isActive })
     .from(productIngredients)
     .innerJoin(products, eq(products.id, productIngredients.productId))
-    .where(and(OTC_ONLY, eq(productIngredients.ingredientId, id), concernId ? eq(products.concernId, concernId) : undefined))
+    .where(and(LISTED_OTC, eq(productIngredients.ingredientId, id), concernId ? eq(products.concernId, concernId) : undefined))
     .orderBy(
       sql`${productIngredients.isActive} DESC`,
       sql`CASE ${products.dataSource} WHEN 'brand_direct' THEN 0 WHEN 'openfda' THEN 1 WHEN 'dailymed' THEN 2 ELSE 3 END`,
@@ -633,7 +663,7 @@ export function getIngredientConcernCounts(id: string) {
     FROM product_ingredients pi
     JOIN products p ON p.id = pi.product_id
     JOIN concerns c ON c.id = p.concern_id
-    WHERE pi.ingredient_id = ${id} AND p.is_rx = 0
+    WHERE pi.ingredient_id = ${id} AND p.is_rx = 0 AND p.canonical_id IS NULL
     GROUP BY c.id
     ORDER BY count DESC
   `);
@@ -661,7 +691,7 @@ export function getIngredientStats(id: string) {
       '' AS bySource
     FROM product_ingredients pi
     JOIN products p ON p.id = pi.product_id
-    WHERE pi.ingredient_id = ${id} AND p.is_rx = 0
+    WHERE pi.ingredient_id = ${id} AND p.is_rx = 0 AND p.canonical_id IS NULL
   `)!;
   return s;
 }
@@ -671,7 +701,7 @@ export function getIngredientTopBrands(id: string, limit = 8) {
     SELECT p.manufacturer AS manufacturer, COUNT(*) AS count
     FROM product_ingredients pi
     JOIN products p ON p.id = pi.product_id
-    WHERE pi.ingredient_id = ${id} AND p.is_rx = 0 AND p.manufacturer IS NOT NULL AND p.manufacturer != ''
+    WHERE pi.ingredient_id = ${id} AND p.is_rx = 0 AND p.canonical_id IS NULL AND p.manufacturer IS NOT NULL AND p.manufacturer != ''
     GROUP BY LOWER(p.manufacturer)
     ORDER BY count DESC, p.manufacturer
     LIMIT ${limit}
@@ -683,7 +713,7 @@ export function getIngredientTopBrands(id: string, limit = 8) {
 export function getActiveStrengthStats(activeId: string) {
   const expr = strengthExpr(activeId);
   return db.get<{ n: number; min: number | null; max: number | null }>(sql`
-    SELECT COUNT(${expr}) AS n, MIN(${expr}) AS min, MAX(${expr}) AS max FROM products WHERE is_rx = 0
+    SELECT COUNT(${expr}) AS n, MIN(${expr}) AS min, MAX(${expr}) AS max FROM products WHERE is_rx = 0 AND canonical_id IS NULL
   `)!;
 }
 
@@ -719,7 +749,8 @@ export function getIngredientEwgSummary(id: string) {
     SELECT COUNT(*) AS n, AVG(e.ewg_score) AS avg, MIN(e.ewg_score) AS min, MAX(e.ewg_score) AS max
     FROM product_ingredients pi
     JOIN ewg_scores e ON e.product_id = pi.product_id
-    WHERE pi.ingredient_id = ${id}
+    JOIN products p ON p.id = pi.product_id
+    WHERE pi.ingredient_id = ${id} AND p.canonical_id IS NULL
   `)!;
 }
 
@@ -771,25 +802,48 @@ export function getPublicIngredientIds(): { id: string }[] {
     .all();
 }
 
-// The FDA lists one product under several codes (usually pack sizes), which
-// makes identical pages. Listings with the same name, labeler, form and
-// strength collapse to the lowest id: that page is the canonical URL and the
-// only one in the sitemap. Same SQL as canonicalProductIds() below.
+// One product, one URL: a merged duplicate's canonical is the row it was
+// merged into (tools/catalog_pipeline/build_product_merges.py, which also
+// folds in the old exact-match rule -- same name, labeler, form and strength
+// -- after checking the ingredient lists agree). Only listed rows are in the
+// sitemap.
 export function getCanonicalProductId(p: typeof products.$inferSelect): string {
-  const row = db.get<{ id: string }>(sql`
-    SELECT min(id) AS id FROM products
-    WHERE is_rx = ${p.isRx ? 1 : 0}
-      AND brand_name = ${p.brandName}
-      AND manufacturer IS ${p.manufacturer}
-      AND dosage_form IS ${p.dosageForm}
-      AND strength_key IS ${p.strengthKey}`);
-  return row?.id ?? p.id;
+  return p.canonicalId ?? p.id;
 }
 
 export function canonicalProductIds(): string[] {
   return db
-    .all<{ id: string }>(
-      sql`SELECT min(id) AS id FROM products WHERE is_rx = 0 GROUP BY brand_name, manufacturer, dosage_form, strength_key`,
-    )
+    .select({ id: products.id })
+    .from(products)
+    .where(LISTED_OTC)
+    .orderBy(products.id)
+    .all()
     .map((r) => r.id);
+}
+
+/** Rows merged into this product (lib/canonical.ts): its other listings, for aliases and the best image. */
+export function getMergedDuplicates(id: string) {
+  return db.select().from(products).where(and(eq(products.canonicalId, id), OTC_ONLY)).orderBy(products.id).all();
+}
+
+/** Retail barcodes (not the NDC-derived guesses) recorded for any of these ids. */
+export function getRetailBarcodes(ids: string[]): string[] {
+  if (ids.length === 0) return [];
+  return db
+    .selectDistinct({ barcode: productBarcodes.barcode })
+    .from(productBarcodes)
+    .where(and(inArray(productBarcodes.productId, ids), sql`${productBarcodes.source} != 'ndc_derived'`))
+    .orderBy(productBarcodes.barcode)
+    .all()
+    .map((r) => r.barcode);
+}
+
+/**
+ * The image a merged product's page shows: a retail photo (Open Beauty Facts
+ * or the brand's site) from any of its listings before DailyMed label
+ * artwork, the canonical's own first within each kind.
+ */
+export function bestProductImage(product: { imageUrl: string | null }, duplicates: { imageUrl: string | null }[]): string | null {
+  const all = [product, ...duplicates].filter((p) => p.imageUrl);
+  return (all.find((p) => !isDailymedImageUrl(p.imageUrl)) ?? all[0])?.imageUrl ?? null;
 }

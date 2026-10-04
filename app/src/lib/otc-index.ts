@@ -34,6 +34,7 @@ function build(): Index {
     dosageForm: string | null;
     strengthKey: string | null;
     activeIds: string;
+    canonicalId: string | null;
     concernId: string;
     dataSource: string;
     marketingCategory: string | null;
@@ -42,7 +43,7 @@ function build(): Index {
     sunburnOnly: number | null;
   }>(sql`
     SELECT p.id, p.brand_name AS brandName, p.manufacturer, p.dosage_form AS dosageForm,
-      p.strength_key AS strengthKey, p.active_ids AS activeIds, p.concern_id AS concernId,
+      p.strength_key AS strengthKey, p.active_ids AS activeIds, p.canonical_id AS canonicalId, p.concern_id AS concernId,
       p.data_source AS dataSource, p.marketing_category AS marketingCategory, l.spl_set_id IS NOT NULL AS hasLabel,
       (${likeAny("l.directions", BROAD_SPECTRUM_15_PHRASES)} OR ${likeAny("l.warnings", BROAD_SPECTRUM_15_PHRASES)}) AS bs15,
       (${likeAny("l.warnings", SUNBURN_ONLY_PHRASES)} OR ${likeAny("l.directions", SUNBURN_ONLY_PHRASES)}) AS sunburnOnly
@@ -56,8 +57,10 @@ function build(): Index {
   const byProductId = new Map<string, EquivalenceGroup>();
   for (const g of groups) for (const m of g.members) for (const id of m.ids) byProductId.set(id, g);
 
+  // Listed rows only: the HSA set feeds listing filters and counts.
   const hsaIds = new Set(
     parsed
+      .filter((r) => !r.canonicalId)
       .filter(
         (r) =>
           hsaStatus({

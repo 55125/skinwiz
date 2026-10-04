@@ -1,6 +1,7 @@
 import { and, eq, sql } from "drizzle-orm";
 import { db } from "@/db/client";
 import { routines, routineSteps, routineVotes, routineReports, concerns, products } from "@/db/schema";
+import { resolvedProductId } from "@/lib/canonical";
 
 // Vote score is computed on read (SUM of routine_votes.value), never
 // stored as a column on routines — see schema.ts's comment on why: a
@@ -77,12 +78,12 @@ export function getRoutine(id: number) {
       id: routineSteps.id,
       stepOrder: routineSteps.stepOrder,
       description: routineSteps.description,
-      productId: routineSteps.productId,
+      productId: sql<string | null>`coalesce(${products.id}, ${routineSteps.productId})`,
       productBrandName: products.brandName,
       productConcernId: products.concernId,
     })
     .from(routineSteps)
-    .leftJoin(products, eq(products.id, routineSteps.productId))
+    .leftJoin(products, eq(products.id, resolvedProductId(routineSteps.productId))) // merged duplicates show as their canonical
     .where(eq(routineSteps.routineId, id))
     .orderBy(routineSteps.stepOrder)
     .all();

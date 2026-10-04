@@ -24,14 +24,20 @@ Pipeline (logic in product_merge.py, tested in tests/test_product_merges.py):
       name     same brand anchor (labeler / brand words) or same active
                strengths, and similar names (trigram / token overlap)
  2. Exclusions: strength, SPF, percent, dosage-form family, variant words
-    (tinted, kids, fragrance-free, shades, flavors...), shade numbers.
+    (tinted, kids, fragrance-free, shades, flavors...), shade numbers, and
+    the same checks on the two labels' SPL titles (output/spl_titles.csv)
+    and artwork shade numbers; a brand-only name ("Dove") without a usable
+    title never merges.
  3. Formula check: the two full ingredient lists (actives removed) must
     overlap; differing allergen hits = different (reformulated).
  4. Jev (typesafe/jev-1.13 via OpenRouter /systemone), two runs with A/B
     swapped. Tiers: auto (both >= 0.90, or a reliable shared barcode),
     flagged (0.50-0.90 or runs disagree by > 0.2), different (< 0.50).
- 5. Union-find over auto edges; a group with any conflicting pair is not
-    merged (its edges go to flagged). Canonical = product_merge.canonical_key.
+ 5. Auto also needs matching lists after naming noise and the review rules
+    (product_merge_review.decide) to say merge, for the pair and for every
+    pair in its union-find group; otherwise the edges go to flagged.
+    Canonical = product_merge.canonical_key. review_product_merges.py then
+    decides the flagged pairs.
 
 Rx rows are never loaded, so they can never merge.
 
@@ -56,9 +62,10 @@ import urllib.request
 from collections import Counter, defaultdict
 
 from product_merge import (
-    FDA_SOURCES, Product, UnionFind, brand_tokens, choose_canonical, core_tokens, exclusion_reason,
-    formula_check, group_conflicts, jaccard, name_tokens, names_match, tier_for, trigrams,
+    FDA_SOURCES, Product, UnionFind, artwork_shades, brand_tokens, choose_canonical, core_tokens, exclusion_reason,
+    formula_check, group_conflicts, jaccard, name_tokens, names_match, tier_for, title_conflict, trigrams,
 )
+from product_merge_review import decide, list_difference, shade_split_ids
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.abspath(os.path.join(HERE, "..", ".."))
@@ -66,6 +73,8 @@ OUT = os.path.join(HERE, "output")
 DB_DEFAULT = os.path.join(REPO, "app", "data", "skinwiz.db")
 BARCODES_CSV = os.path.join(REPO, "tools", "affiliate_feeds", "output", "product_barcodes.csv")
 SPL_MEDIA_CSV = os.path.join(OUT, "spl_media.csv")
+SPL_TITLES_CSV = os.path.join(OUT, "spl_titles.csv")  # build_spl_titles.py
+SPL_MEDIA_CANDIDATES_CSV = os.path.join(OUT, "spl_media_candidates.csv")
 
 JEV_URL = "https://openrouter.ai/api/v1/systemone"
 JEV_MODEL = "typesafe/jev-1.13"
@@ -86,6 +95,15 @@ def load_products(db_path: str) -> dict[str, Product]:
     if os.path.exists(SPL_MEDIA_CSV):
         with open(SPL_MEDIA_CSV, newline="", encoding="utf-8") as f:
             photo_sets = {r["setid"] for r in csv.DictReader(f) if r.get("chosen_url")}
+    artwork: dict[str, list[str]] = defaultdict(list)
+    if os.path.exists(SPL_MEDIA_CANDIDATES_CSV):
+        with open(SPL_MEDIA_CANDIDATES_CSV, newline="", encoding="utf-8") as f:
+            for r in csv.DictReader(f):
+                artwork[r["setid"]].append(r["image_name"])
+    titles: dict[str, str] = {}
+    if os.path.exists(SPL_TITLES_CSV):
+        with open(SPL_TITLES_CSV, newline="", encoding="utf-8") as f:
+            titles = {r["setid"]: r["title"] for r in csv.DictReader(f)}
     prods: dict[str, Product] = {}
     for r in con.execute("SELECT * FROM products WHERE is_rx = 0"):
         src = r["data_source"]
@@ -107,6 +125,8 @@ def load_products(db_path: str) -> dict[str, Product]:
             label_photo=src in FDA_SOURCES and bool(r["spl_set_id"]) and r["spl_set_id"] in photo_sets,
             image_url=r["image_url"] or "",
             active_text=r["active_ingredient_text"] or "",
+            spl_title=titles.get(r["spl_set_id"] or "", "") if src in FDA_SOURCES else "",
+            artwork_shades=artwork_shades(artwork.get(r["spl_set_id"] or "", [])) if src in FDA_SOURCES else frozenset(),
         )
     for r in con.execute(
         "SELECT pi.product_id, pi.ingredient_id, pi.raw_name FROM product_ingredients pi "
@@ -384,16 +404,28 @@ def main() -> None:
     print(f"{len(pairs)} candidate pairs {cstats}", file=sys.stderr)
 
     excluded = Counter()
+    excluded_why: dict[tuple[str, str], str] = {}
     live: dict[tuple[str, str], dict] = {}
     for (a, b), info in pairs.items():
         pa, pb = prods[a], prods[b]
         why = exclusion_reason(pa, pb)
         if why and info["method"] == "exact" and why.startswith(("variant", "shade")):
-            why = None  # identical names: the "variant" is the same on both sides
+            # identical names: the "variant" is the same on both sides, so
+            # only the SPL titles can still tell the two apart
+            why = title_conflict(pa, pb)
         if why:
             excluded[why.split(":")[0]] += 1
+            excluded_why[(a, b)] = why
             continue
         f, note = formula_check(pa, pb)
+        if f == "ok":
+            # overlap alone is not enough for an automatic merge: any item left
+            # once naming noise is removed (a dye, a preservative, a botanical)
+            # sends the pair to review instead
+            ra, rb = list_difference(pa, pb)
+            if ra or rb:
+                f = "minor"
+                note += "; lists differ: " + ", ".join(sorted(ra | rb)[:6])
         live[(a, b)] = {**info, "formula": f, "formula_note": note}
 
     # Jev cache = the committed pairs file
@@ -434,13 +466,39 @@ def main() -> None:
             uf.union(r["a"], r["b"])
         return uf.groups()
 
+    # The reviewer's rules (product_merge_review.decide) hold for automatic
+    # merges too: an auto pair they would not merge (a name that differs by
+    # identity words, a list that differs, a list missing on one side) goes
+    # to review instead.
+    review_cache: dict[tuple[str, str], str] = {}
+    shade_split = shade_split_ids(prods)
+
+    def review_decision(x: str, y: str) -> str:
+        k = (x, y) if x < y else (y, x)
+        if k not in review_cache:
+            review_cache[k] = decide(prods[k[0]], prods[k[1]], shade_split)[0]
+        return review_cache[k]
+
+    def conflicts(g: list[str]) -> bool:
+        if group_conflicts([prods[x] for x in g]):
+            return True
+        return any(review_decision(x, y) != "merge" for i, x in enumerate(g) for y in g[i + 1:])
+
     auto = [r for r in rows if r["tier"] == "auto"]
     demoted = 0
+    review_demoted = 0
+    for r in auto:
+        d = review_decision(r["a"], r["b"])
+        if d != "merge":
+            r["tier"] = "flagged"
+            r["formula_note"] += f"; review rules say {d}"
+            review_demoted += 1
+    auto = [r for r in rows if r["tier"] == "auto"]
     for _ in range(5):
         groups = build_groups(auto)
         bad: set[str] = set()
         for g in groups:
-            if group_conflicts([prods[x] for x in g]):
+            if conflicts(g):
                 bad |= set(g)
         if not bad:
             break
@@ -453,7 +511,7 @@ def main() -> None:
         # an exact-only group can still conflict (same name, different lists): demote those too
         groups = build_groups(auto)
         for g in groups:
-            if group_conflicts([prods[x] for x in g]):
+            if conflicts(g):
                 for r in auto:
                     if r["a"] in g:
                         r["tier"] = "flagged"
@@ -521,6 +579,13 @@ def main() -> None:
             w.writerow({"id_a": r["a"], "id_b": r["b"], "method": r["method"], "tier": r["tier"],
                         "p_ab": fmt(c.get("p_ab")), "p_ba": fmt(c.get("p_ba")), "formula": r["formula"],
                         "notes": r["formula_note"]})
+        # keep paid Jev scores for pairs a newer rule excludes, so relaxing the
+        # rule later needs no new calls
+        for (a, b) in sorted(set(cache) - set(live)):
+            c = cache[(a, b)]
+            w.writerow({"id_a": a, "id_b": b, "method": pairs.get((a, b), {}).get("method", ""),
+                        "tier": "excluded", "p_ab": fmt(c.get("p_ab")), "p_ba": fmt(c.get("p_ba")),
+                        "formula": "", "notes": excluded_why.get((a, b), "no longer a candidate")})
 
     tiers = Counter(r["tier"] for r in rows)
     prev_total_usd = 0.0
@@ -537,6 +602,7 @@ def main() -> None:
         "pairs_by_tier": dict(sorted(tiers.items())),
         "pairs_by_method_auto": dict(Counter(r["method"] for r in rows if r["tier"] == "auto")),
         "chain_demotions": demoted,
+        "review_rule_demotions": review_demoted,
         "merge_groups": len(groups),
         "products_removed_from_listings": len(merges),
         "listed_products_after": len(prods) - len(merges),

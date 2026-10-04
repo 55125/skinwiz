@@ -274,8 +274,43 @@ python3 build_product_merges.py --no-jev                      # cached scores on
    open_beauty_facts) > longer list > smallest id.
 
 Outputs: `product_merges.csv` (auto tier; the seed sets
-`products.canonical_id` from it), `product_merge_flagged.csv` (not merged;
-blank `decision` / `decided_canonical_id` / `reviewer_notes` columns for a
-reviewer), `product_merge_pairs.csv` (every scored pair; doubles as the Jev
-cache) and `product_merge_summary.json`. Undo a merge by deleting its row
-and reseeding.
+`products.canonical_id` from it), `product_merge_flagged.csv` (blank
+`decision` / `decided_canonical_id` / `reviewer_notes` columns, filled by
+`review_product_merges.py`), `product_merge_pairs.csv` (every scored pair;
+doubles as the Jev cache, and keeps the scores of pairs a newer rule
+excludes as tier `excluded`) and `product_merge_summary.json`. Undo a merge
+by deleting its row (or setting a reviewed row's decision to
+`keep_separate`) and reseeding.
+
+## SPL titles and the review pass (2026-10-04)
+
+openFDA's `brand_name` is often only the brand ("Dove", "Degree", "Cream"),
+so every scent or shade of a line looked identical and the exact rule merged
+them. `build_spl_titles.py` reads the DailyMed SPL document title of every
+set id from the XML cache (`output/spl_titles.csv`, no network), and the
+merge rules now use it: different variant words, numbers or (for identical
+names) any identity word in the two titles = different products; a
+brand-only name with no usable title is never merged; shade numbers in the
+label artwork file names (`spl_media_candidates.csv`, "Shade 29.jpg") split
+shade families. An automatic merge also needs the two ingredient lists to
+match once naming noise is removed (INCI vs common names, UNII pigment names,
+glued "Inactive ingredients:" prefixes, lot codes), and must pass the review
+rules below for every pair in its group.
+
+```bash
+DAILYMED_CACHE_DIR=/path/to/cache python3 build_spl_titles.py   # only when the catalog's set ids change
+python3 build_product_merges.py --no-jev
+python3 review_product_merges.py     # decides every flagged pair, fills the decision columns
+```
+
+`review_product_merges.py` applies the documented rules in
+`product_merge_review.py` (rule ids R1-R9, explained in `RULES` there and
+in `output/product_merge_review.md`) and writes `decision`,
+`decided_canonical_id` (the canonical of the whole final group) and
+`reviewer_notes` ("<rule id>: <reason>"). Merges are transitive, so a merge
+row that would join two products the rules keep apart goes to `needs_owner`
+(R9). The seed applies `merge` rows from the flagged file on top of
+`product_merges.csv` (`app/src/db/product-merges.ts`); `keep_separate`,
+`reformulated` and `needs_owner` rows are never applied. Rerun the review
+after every `build_product_merges.py` run (the build rewrites the flagged
+file with empty decision columns).

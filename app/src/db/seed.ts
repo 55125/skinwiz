@@ -15,7 +15,7 @@ import { RX_CONCERN } from "./rx";
 import { steroidPotencyClass, type Ingredient } from "./steroid-potency";
 import { drugInactiveList, groupSplInactive, type SplInactiveCsvRow } from "./spl-inactive";
 import { linkAllDailymedImages } from "@/lib/product-images/link";
-import { resolveMerges, type MergeRow } from "./product-merges";
+import { resolveMerges, reviewedMergeRows, type FlaggedRow, type MergeRow } from "./product-merges";
 
 const REPO_ROOT = path.resolve(process.cwd(), "..");
 // Four sources: the primary openFDA catalog, the DailyMed resolution pass
@@ -49,10 +49,13 @@ const RX_LABEL_SECTIONS_CSV = path.join(REPO_ROOT, "tools/catalog_pipeline/outpu
 // Inactive-ingredient lists from the SPL XML for FDA rows whose catalog CSV
 // row has none (fetch_dailymed_inactive.py). Optional.
 const SPL_INACTIVE_CSV = path.join(REPO_ROOT, "tools/catalog_pipeline/output/dailymed_inactive_ingredients.csv");
-// Duplicate listings of one retail product (build_product_merges.py, auto
-// tier only): duplicate_id -> canonical_id, applied as products.canonical_id.
-// Optional; removing a row (or the file) and reseeding undoes that merge.
+// Duplicate listings of one retail product: the auto tier
+// (build_product_merges.py, duplicate_id -> canonical_id) plus the reviewed
+// "merge" decisions in the flagged file (review_product_merges.py), applied
+// as products.canonical_id. Both optional; removing a row (or a file), or
+// changing a reviewed decision, and reseeding undoes that merge.
 const PRODUCT_MERGES_CSV = path.join(REPO_ROOT, "tools/catalog_pipeline/output/product_merges.csv");
+const PRODUCT_MERGE_FLAGGED_CSV = path.join(REPO_ROOT, "tools/catalog_pipeline/output/product_merge_flagged.csv");
 
 type CatalogRow = {
   product_ndc: string;
@@ -577,14 +580,21 @@ function insertLabelSections() {
 // Sets canonicalId on each merged duplicate in the batch (lib/canonical.ts);
 // returns the duplicates' ids.
 function applyProductMerges(batch: (typeof schema.products.$inferInsert)[]): Set<string> {
-  if (!fs.existsSync(PRODUCT_MERGES_CSV)) {
-    console.log("  no product_merges.csv, every listing stays separate (run tools/catalog_pipeline/build_product_merges.py)");
+  const auto = fs.existsSync(PRODUCT_MERGES_CSV) ? readCsv<MergeRow>(PRODUCT_MERGES_CSV) : [];
+  const reviewed = fs.existsSync(PRODUCT_MERGE_FLAGGED_CSV)
+    ? reviewedMergeRows(readCsv<FlaggedRow>(PRODUCT_MERGE_FLAGGED_CSV))
+    : [];
+  if (auto.length === 0 && reviewed.length === 0) {
+    console.log("  no product merges, every listing stays separate (run tools/catalog_pipeline/build_product_merges.py)");
     return new Set();
   }
   const catalog = new Map(batch.map((p) => [p.id, { isRx: !!p.isRx }]));
-  const { canonicalOf, skipped } = resolveMerges(readCsv<MergeRow>(PRODUCT_MERGES_CSV), catalog);
+  const { canonicalOf, skipped } = resolveMerges([...auto, ...reviewed], catalog);
   for (const p of batch) p.canonicalId = canonicalOf.get(p.id) ?? null;
-  console.log(`  merged ${canonicalOf.size} duplicate listings into ${new Set(canonicalOf.values()).size} products`);
+  console.log(
+    `  merged ${canonicalOf.size} duplicate listings into ${new Set(canonicalOf.values()).size} products ` +
+      `(${auto.length} auto rows, ${reviewed.length} reviewed merge rows)`,
+  );
   for (const s of skipped.slice(0, 20)) console.warn(`  WARNING: merge ${s.duplicateId} -> ${s.canonicalId} skipped: ${s.reason}`);
   if (skipped.length > 20) console.warn(`  WARNING: ${skipped.length - 20} more merge rows skipped`);
   return new Set(canonicalOf.keys());

@@ -1,24 +1,54 @@
-// Turns tools/catalog_pipeline/output/product_merges.csv (duplicate_id ->
-// canonical_id, written by build_product_merges.py) into products.canonical_id.
+// Turns the de-duplication pipeline's output into products.canonical_id:
+//
+//  - tools/catalog_pipeline/output/product_merges.csv: the "auto" tier
+//    (duplicate_id -> canonical_id, written by build_product_merges.py);
+//  - tools/catalog_pipeline/output/product_merge_flagged.csv: pairs a reviewer
+//    decided (review_product_merges.py). Only rows whose decision is "merge"
+//    are applied, folded into decided_canonical_id; keep_separate,
+//    reformulated, needs_owner and undecided rows never merge.
+//
 // Pure, so product-merges.test.ts can check it without a database.
 //
-// - Only the "auto" tier is applied; flagged pairs live in another file and
-//   are never merged here.
 // - A row is skipped (and reported) when either id isn't in the catalog,
 //   when either side is a prescription row (Rx never merges with OTC), or
 //   when it points a product at itself.
-// - Chains and conflicting rows are resolved with union-find: every product
-//   connected by a merge row ends up in one group, and the whole group points
-//   at a single canonical -- the CSV's canonical when the group has exactly
-//   one id that is never a duplicate, otherwise the smallest such id (or the
-//   smallest id when every member was listed as a duplicate). The result is
-//   flat: a canonical never has a canonical of its own.
+// - Chains and conflicting rows are resolved with union-find across both
+//   files: every product connected by a merge row ends up in one group, and
+//   the whole group points at a single canonical -- a reviewer's decided
+//   canonical when the group has one, else the CSV's canonical when the group
+//   has exactly one id that is never a duplicate, otherwise the smallest such
+//   id (or the smallest id when every member was listed as a duplicate). The
+//   result is flat: a canonical never has a canonical of its own.
 //
-// Reversible: delete rows from the CSV (or the whole file) and reseed; the
-// seed rebuilds products from scratch, so canonical_id goes back to null.
+// Reversible: delete rows from the CSVs (or set a reviewed row's decision to
+// keep_separate) and reseed; the seed rebuilds products from scratch, so
+// canonical_id goes back to null.
 
 export type MergeRow = { duplicate_id: string; canonical_id: string; tier?: string; method?: string };
 export type MergeSkip = { duplicateId: string; canonicalId: string; reason: string };
+export type FlaggedRow = { id_a: string; id_b: string; decision?: string; decided_canonical_id?: string };
+
+/** Tiers resolveMerges applies: the pipeline's auto tier and reviewed merge decisions. */
+const APPLIED_TIERS = new Set(["auto", "reviewed"]);
+
+/**
+ * Reviewed "merge" rows of product_merge_flagged.csv as merge rows (tier
+ * "reviewed"): each id of the pair that isn't the decided canonical becomes a
+ * duplicate of it. Every other decision, and a merge without a decided
+ * canonical, yields nothing.
+ */
+export function reviewedMergeRows(rows: FlaggedRow[]): MergeRow[] {
+  const out: MergeRow[] = [];
+  for (const r of rows) {
+    if ((r.decision ?? "").trim() !== "merge") continue;
+    const can = (r.decided_canonical_id ?? "").trim();
+    if (!can) continue;
+    for (const id of [r.id_a, r.id_b].map((x) => (x ?? "").trim())) {
+      if (id && id !== can) out.push({ duplicate_id: id, canonical_id: can, tier: "reviewed" });
+    }
+  }
+  return out;
+}
 
 export function resolveMerges(
   rows: MergeRow[],
@@ -49,11 +79,13 @@ export function resolveMerges(
   };
 
   const duplicates = new Set<string>();
+  const decided = new Set<string>();
   for (const r of rows) {
     const dup = (r.duplicate_id ?? "").trim();
     const can = (r.canonical_id ?? "").trim();
+    const tier = r.tier ?? "auto";
     const skip = (reason: string) => skipped.push({ duplicateId: dup, canonicalId: can, reason });
-    if ((r.tier ?? "auto") !== "auto") {
+    if (!APPLIED_TIERS.has(tier)) {
       skip(`tier ${r.tier} is not applied`);
       continue;
     }
@@ -72,6 +104,7 @@ export function resolveMerges(
       continue;
     }
     duplicates.add(dup);
+    if (tier === "reviewed") decided.add(can);
     union(dup, can);
   }
 
@@ -84,7 +117,7 @@ export function resolveMerges(
   for (const members of groups.values()) {
     members.sort();
     const heads = members.filter((m) => !duplicates.has(m));
-    const head = heads[0] ?? members[0];
+    const head = heads.find((m) => decided.has(m)) ?? heads[0] ?? members[0];
     for (const m of members) if (m !== head) canonicalOf.set(m, head);
   }
   return { canonicalOf, skipped };

@@ -50,6 +50,12 @@ class Product:
     image_url: str = ""
     active_text: str = ""
     barcodes: list[str] = field(default_factory=list)
+    # DailyMed SPL document title (output/spl_titles.csv). openFDA's brand_name
+    # is often only the brand ("Dove"); the title names the variant.
+    spl_title: str = ""
+    # shade numbers in the label's DailyMed artwork file names ("Shade 29
+    # Carton.jpg"): shades that the title leaves out
+    artwork_shades: frozenset[str] = frozenset()
 
     @property
     def is_fda(self) -> bool:
@@ -106,6 +112,8 @@ VARIANT_WORDS = {
     "rich", "buff", "natural", "pink", "red", "coral", "peach", "berry", "plum", "brown", "black", "white",
     "clear", "translucent", "olive", "chestnut", "sable", "cocoa", "toffee", "suede", "linen", "porcelaine",
     "fairly", "petal", "cashew", "vanille", "sienna", "amber", "ebony", "mahogany", "walnut", "pecan",
+    # route-specific label of one active
+    "vaginal",
 }
 # Body areas only conflict when both names name one ("face" vs "body"); a
 # name that just omits "facial" is the same product more often than not.
@@ -370,6 +378,105 @@ def exclusion_reason(a: Product, b: Product) -> str | None:
     nums = {t for t in ua | ub if any(c.isdigit() for c in t)}
     if nums:
         return "shade/model numbers differ: " + ",".join(sorted(nums))
+    return title_conflict(a, b)
+
+
+# ---------------------------------------------------------------------------
+# SPL titles
+# ---------------------------------------------------------------------------
+
+# Title words that name the document, not the product.
+TITLE_NEUTRAL = {"drug", "fact", "facts", "active", "ingredient", "ingredients", "label", "labeling", "spl",
+                 "principal", "display", "panel", "package", "carton", "antiperspirant", "deodorant", "otc",
+                 "product", "products", "cosmetic", "cosmetics", "usp", "rx", "only", "bonu", "antifungal",
+                 "update", "ea", "cmo"}
+_JUNK_TITLE = re.compile(r"^\s*(?:active ingredients?|drug facts|principal display panel|package label|"
+                         r"formula\s*#|spl unclassified|indications)", re.I)
+# NDC codes ("71927-015", "53208-052-01"), label-revision dates ("20260702")
+_TITLE_CODES = re.compile(r"\b\d{4,5}-\d{3,4}(?:-\d{1,2})?\b|\b(?:19|20)\d{6}\b")
+
+
+ARTWORK_SHADE_RE = re.compile(r"(?:^|[^a-z])shade[\s_-]*(\d{1,3})(?!\d)", re.I)
+
+
+def artwork_shades(image_names: list[str]) -> frozenset[str]:
+    """Shade numbers named in a label's artwork file names ("Shade13.jpg", "The Uniform_Shade 02.jpg")."""
+    return frozenset(str(int(m)) for n in image_names for m in ARTWORK_SHADE_RE.findall(n))
+
+
+def title_tokens(p: Product, brand: set[str], strict: bool = False) -> list[str] | None:
+    """Identity words of the SPL title, or None when there is no usable title.
+    strict drops form words too (the dosage forms are checked separately)."""
+    if not p.spl_title or _JUNK_TITLE.match(p.spl_title):
+        return None
+    title = _TITLE_CODES.sub(" ", p.spl_title)
+    toks = [t for t in name_tokens(title) if t not in brand and t not in TITLE_NEUTRAL
+            and not (strict and t in FORM_WORDS)]
+    return toks or None
+
+
+def shared_brand_tokens(a: Product, b: Product) -> set[str]:
+    """Labeler words the two records have in common ("cetaphil" for Cetaphil / Cetaphil, Galderma)."""
+    return {t for t in brand_tokens(a.manufacturer) & brand_tokens(b.manufacturer) if len(t) >= 3}
+
+
+def brand_neutral(a: Product, b: Product, ua: set[str], ub: set[str]) -> set[str]:
+    """Labeler words that may appear in one name only. When only one name has extra words, any labeler word is
+    the brand spelled out ("Cetaphil Gentle Skin Cleanser" / "Gentle Skin Cleanser"); when both do, only words the
+    labelers share -- "Leader Tolnaftate" and "Meijer Tolnaftate" are two store brands' products."""
+    if ua and ub:
+        return shared_brand_tokens(a, b)
+    return {t for t in brand_tokens(a.manufacturer, b.manufacturer) if len(t) >= 3}
+
+
+def uninformative_name(p: Product) -> bool:
+    """A name that is only the brand, the labeler or a form word ("Dove", "Cremo Company", "Cream"), not a drug
+    name ("Clotrimazole")."""
+    toks = name_tokens(p.brand_name)
+    if not toks:
+        return True
+    actives = {w for a in p.active_ids for w in a.split("-")}
+    if any(t in actives or fuzzy_partner(t, actives) for t in toks):
+        return False
+    return len(toks) == 1 or set(toks) <= brand_tokens(p.manufacturer) | {"company"}
+
+
+def title_conflict(a: Product, b: Product) -> str | None:
+    """Two FDA labels whose SPL titles name different variants.
+
+    When the two product names are the same once normalized ("Dove" and
+    "Dove"), the title is the only place the variant shows, so any identity
+    word on one title only means a different product (scent, shade,
+    indication, store brand). Otherwise only variant words and shade/model
+    numbers in the titles count, as they do for names."""
+    if a.spl_set_id and a.spl_set_id == b.spl_set_id:
+        return None
+    if a.artwork_shades and b.artwork_shades and not a.artwork_shades & b.artwork_shades:
+        return "SPL artwork shades differ: " + ",".join(sorted(a.artwork_shades ^ b.artwork_shades))
+    brand = brand_tokens(a.manufacturer) | brand_tokens(b.manufacturer)
+    ta, tb = title_tokens(a, brand), title_tokens(b, brand)
+    if (ta is None or tb is None) and a.is_fda and b.is_fda and uninformative_name(a) and uninformative_name(b):
+        # "Dove", "Cremo Company", "Cream": every scent / shade is filed under
+        # the one name, so two labels can only be matched through their titles
+        return "brand-only name and no SPL title to tell variants apart"
+    if ta is None or tb is None:
+        return None
+    ua, ub = name_diff(ta, tb)
+    if not ua and not ub:
+        return None
+    var = (ua | ub) & VARIANT_WORDS
+    if var:
+        return "SPL title variant words: " + ",".join(sorted(var))
+    nums = {t for t in ua | ub if any(c.isdigit() for c in t)}
+    if nums:
+        return "SPL title numbers differ: " + ",".join(sorted(nums))
+    na, nb = name_diff(name_tokens(a.brand_name), name_tokens(b.brand_name))
+    if not na and not nb:
+        sa, sb = name_diff(title_tokens(a, set(), True) or [], title_tokens(b, set(), True) or [])
+        neutral = brand_neutral(a, b, sa, sb)
+        sa, sb = sa - neutral, sb - neutral
+        if sa or sb:
+            return "SPL titles differ: " + ",".join(sorted(sa | sb))
     return None
 
 

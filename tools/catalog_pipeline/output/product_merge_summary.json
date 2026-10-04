@@ -8,8 +8,13 @@
   },
   "excluded_by_rule": {
     "SPF differs": 486,
+    "SPL artwork shades differ": 132,
+    "SPL title numbers differ": 790,
+    "SPL title variant words": 13866,
+    "SPL titles differ": 1727,
     "actives differ": 2309,
     "body area differs": 28,
+    "brand-only name and no SPL title to tell variants apart": 156,
     "different brand": 12933,
     "dosage form differs": 6344,
     "form words differ": 351,
@@ -18,27 +23,28 @@
     "strength differs": 101140,
     "variant words": 12520
   },
-  "pairs_considered": 24160,
+  "pairs_considered": 7489,
   "pairs_by_tier": {
-    "auto": 3482,
-    "different": 2189,
-    "different_reformulated": 15212,
-    "flagged": 3277
+    "auto": 1063,
+    "different": 1765,
+    "different_reformulated": 2497,
+    "flagged": 2164
   },
   "pairs_by_method_auto": {
-    "exact": 673,
-    "name": 2740,
-    "barcode": 69
+    "exact": 333,
+    "name": 684,
+    "barcode": 46
   },
-  "chain_demotions": 0,
-  "merge_groups": 591,
-  "products_removed_from_listings": 1020,
-  "listed_products_after": 17206,
+  "chain_demotions": 2,
+  "review_rule_demotions": 317,
+  "merge_groups": 382,
+  "products_removed_from_listings": 521,
+  "listed_products_after": 17705,
   "removed_by_source": {
-    "open_beauty_facts": 39,
-    "openfda": 693,
-    "dailymed": 277,
-    "brand_direct": 11
+    "open_beauty_facts": 26,
+    "openfda": 258,
+    "dailymed": 228,
+    "brand_direct": 9
   },
   "jev_pairs_scored_this_run": 0,
   "jev_cost_usd_this_run": 0.0,

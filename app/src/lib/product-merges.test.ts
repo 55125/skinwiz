@@ -8,7 +8,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { resolveMerges } from "@/db/product-merges";
+import { resolveMerges, reviewedMergeRows } from "@/db/product-merges";
 
 type Q = typeof import("./queries");
 let q: Q;
@@ -74,6 +74,38 @@ test("resolveMerges: chains flatten, Rx and unknown ids are skipped, flagged row
   assert.deepEqual(Object.fromEntries(canonicalOf), { b: "a", c: "a", d: "a" });
   for (const target of canonicalOf.values()) assert.equal(canonicalOf.has(target), false, "a canonical never has a canonical");
   assert.deepEqual(skipped.map((s) => s.reason).sort(), ["gone is not in the catalog", "prescription rows are never merged", "tier flagged is not applied"]);
+});
+
+test("reviewed merge decisions are applied; needs_owner and the rest are not", () => {
+  const catalog = new Map(
+    ["a", "b", "c", "d", "e", "f", "g", "h", "x"].map((id) => [id, { isRx: false }] as [string, { isRx: boolean }]),
+  );
+  const reviewed = reviewedMergeRows([
+    { id_a: "c", id_b: "d", decision: "merge", decided_canonical_id: "a" }, // joins the auto group a <- b
+    { id_a: "e", id_b: "f", decision: "needs_owner", decided_canonical_id: "" },
+    { id_a: "e", id_b: "g", decision: "keep_separate", decided_canonical_id: "" },
+    { id_a: "f", id_b: "g", decision: "reformulated", decided_canonical_id: "" },
+    { id_a: "g", id_b: "h", decision: "", decided_canonical_id: "" },
+    { id_a: "h", id_b: "x", decision: "merge", decided_canonical_id: "" }, // no canonical: not applied
+  ]);
+  assert.deepEqual(reviewed, [
+    { duplicate_id: "c", canonical_id: "a", tier: "reviewed" },
+    { duplicate_id: "d", canonical_id: "a", tier: "reviewed" },
+  ]);
+  const { canonicalOf } = resolveMerges([{ duplicate_id: "b", canonical_id: "a", tier: "auto" }, ...reviewed], catalog);
+  assert.deepEqual(Object.fromEntries(canonicalOf), { b: "a", c: "a", d: "a" });
+  for (const id of ["e", "f", "g", "h", "x"]) assert.equal(canonicalOf.has(id), false, `${id} must stay listed`);
+
+  // a reviewer's decided canonical wins over the auto canonical when the review joins two auto groups
+  const joined = resolveMerges(
+    [
+      { duplicate_id: "b", canonical_id: "a", tier: "auto" },
+      { duplicate_id: "d", canonical_id: "c", tier: "auto" },
+      ...reviewedMergeRows([{ id_a: "b", id_b: "d", decision: "merge", decided_canonical_id: "c" }]),
+    ],
+    catalog,
+  );
+  assert.deepEqual(Object.fromEntries(joined.canonicalOf), { a: "c", b: "c", d: "c" });
 });
 
 test("listings, counts, search and autocomplete leave the duplicate out", () => {

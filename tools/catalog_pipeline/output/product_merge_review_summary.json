@@ -1,0 +1,25 @@
+{
+  "flagged_pairs": 2164,
+  "decisions": {
+    "keep_separate": 945,
+    "merge": 1060,
+    "needs_owner": 3,
+    "reformulated": 156
+  },
+  "rules": {
+    "R1-same-name-same-list": 196,
+    "R1a-white-label": 628,
+    "R1b-brand-only-fda-name": 39,
+    "R1c-generic-name": 1,
+    "R2-neutral-name-words": 16,
+    "R3-spl-coding-white-label": 178,
+    "R4-same-name-list-differs": 151,
+    "R5-different-name": 945,
+    "R7a-single-ingredient": 1,
+    "R8-dailymed-checked": 6,
+    "R9-chain-conflict": 3
+  },
+  "final_merge_groups": 584,
+  "products_removed_from_listings": 822,
+  "listed_products_after": 17404
+}

@@ -258,3 +258,11 @@ python3 build_product_merges.py --no-jev                         # cached Jev sc
 python3 review_product_merges.py                                 # decisions + product_merge_review_summary.json
 cd ../../app && npm run db:seed                                  # applies auto + reviewed merges
 ```
+
+## Owner decisions (2026-10-04)
+
+Applied by hand to the committed CSVs. **Re-apply these after any re-run of `build_product_merges.py` / `review_product_merges.py`**, which regenerate both files:
+
+- `0363-0721` ↔ `0363-1804` Walgreens Petroleum Jelly: **merge** into `0363-0721` (same 100% petrolatum; "801A"/"804A" are pack codes).
+- `54473-407` ↔ `54473-408` and `59735-891` ↔ `59735-892` Sei Bella Tinted BB Moisturizing Cream: **keep separate**, and the auto rows `54473-407 → 54473-406` and `59735-891 → 59735-890` were removed from `product_merges.csv` (listing has no shade name; don't guess a shade).
+- Policy: store-brand generics with the same formula stay as separate pages; hidden shade/flavor families with identical data stay merged.

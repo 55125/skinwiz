@@ -14,6 +14,7 @@ import { describeStrengths } from "@/lib/strength-display";
 import { displayManufacturer } from "@/lib/format";
 import { HsaBadge } from "@/components/hsa-badge";
 import type { products } from "@/db/schema";
+import { productImageAlt, thumbnailUrl } from "@/lib/image-urls";
 
 export function ProductCard({
   product,
@@ -47,19 +48,24 @@ export function ProductCard({
       href={`/product/${encodeURIComponent(product.id)}`}
       className="group flex h-full flex-col overflow-hidden rounded-2xl border bg-card transition-all hover:-translate-y-0.5 hover:border-brand/40 hover:shadow-lg hover:shadow-brand/5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
     >
-      {/* Only openBeautyFacts/brand_direct rows have a real photo (see
-          schema.ts's products.imageUrl comment). FDA-sourced products, the
-          large majority, get no image band at all -- a grid of identical
-          grey placeholders reads as missing content, so the dosage form
-          moves into the text block instead. */}
+      {/* Photos: OBF/brand_direct retail shots, or the FDA label's package
+          image from DailyMed once the image sync has fetched it (see
+          schema.ts's products.imageUrl comment). Products without one get
+          no image band at all -- a grid of identical grey placeholders
+          reads as missing content, so the dosage form moves into the text
+          block instead. The 4:3 box reserves the space before the lazy
+          image loads, so nothing shifts. */}
       {product.imageUrl && (
         <div className="relative flex aspect-[4/3] w-full items-center justify-center overflow-hidden bg-white dark:bg-gradient-to-br dark:from-muted dark:to-secondary">
-          {/* eslint-disable-next-line @next/next/no-img-element -- mix of same-origin (brand-direct, self-hosted -- see tools/catalog_pipeline/build_brand_direct_catalog.py) and external OBF-hosted photos; not worth a next/image remotePatterns allowlist for the OBF case alone */}
+          {/* eslint-disable-next-line @next/next/no-img-element -- mix of self-hosted (brand-direct, pre-rendered DailyMed WebP thumbnails) and external OBF-hosted photos; not worth a next/image remotePatterns allowlist for the OBF case alone */}
           <img
-            src={product.imageUrl}
-            alt={product.brandName}
+            src={thumbnailUrl(product.imageUrl)}
+            alt={productImageAlt(product)}
+            width={320}
+            height={240}
             className="h-full w-full object-contain p-4 transition-transform duration-300 group-hover:scale-[1.03]"
             loading="lazy"
+            decoding="async"
           />
           {sourceBadge && (
             <Badge variant="outline" className={`absolute left-3 top-3 bg-card/90 backdrop-blur ${sourceBadge.className}`}>

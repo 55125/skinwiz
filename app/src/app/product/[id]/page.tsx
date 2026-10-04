@@ -58,6 +58,7 @@ import { EquivalenceExplainer, EquivalenceRows } from "@/components/equivalence-
 import { FEATURES } from "@/lib/feature-flags";
 import { productPregnancyFindings } from "@/lib/pregnancy";
 import { PregnancyNotice } from "@/components/pregnancy-notice";
+import { DAILYMED_IMAGE_CAPTION, isDailymedImageUrl, productImageAlt } from "@/lib/image-urls";
 import { recallsForProduct } from "@/lib/recalls";
 import { RecallBanner } from "@/components/recall-banner";
 import { canViewRxReference } from "@/lib/clinicians";
@@ -208,10 +209,22 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
 
       <div className={product.imageUrl ? "grid gap-8 md:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] md:items-start" : ""}>
         {product.imageUrl && (
-          <div className="flex aspect-[4/3] items-center justify-center overflow-hidden rounded-3xl border bg-white dark:bg-gradient-to-br dark:from-muted dark:to-secondary md:sticky md:top-24 md:aspect-square">
-            {/* eslint-disable-next-line @next/next/no-img-element -- mix of same-origin (brand-direct, self-hosted) and external OBF-hosted photos; not worth a next/image remotePatterns allowlist for the OBF case alone */}
-            <img src={product.imageUrl} alt={product.brandName} className="h-full w-full object-contain p-8" />
-          </div>
+          <figure className="space-y-2 md:sticky md:top-24">
+            <div className="flex aspect-[4/3] items-center justify-center overflow-hidden rounded-3xl border bg-white dark:bg-gradient-to-br dark:from-muted dark:to-secondary md:aspect-square">
+              {/* eslint-disable-next-line @next/next/no-img-element -- mix of self-hosted (brand-direct, pre-rendered DailyMed WebP) and external OBF-hosted photos; not worth a next/image remotePatterns allowlist for the OBF case alone */}
+              <img
+                src={product.imageUrl}
+                alt={productImageAlt(product)}
+                width={800}
+                height={800}
+                className="h-full w-full object-contain p-8"
+                decoding="async"
+              />
+            </div>
+            {isDailymedImageUrl(product.imageUrl) && (
+              <figcaption className="text-center text-xs text-muted-foreground">{DAILYMED_IMAGE_CAPTION}</figcaption>
+            )}
+          </figure>
         )}
 
         <div className="space-y-6">

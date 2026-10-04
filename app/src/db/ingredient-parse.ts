@@ -1,5 +1,6 @@
 import { ACTIVE_DEFINITIONS } from "./actives";
 import typoAliases from "./ingredient-aliases.json";
+import uniiLabelNames from "./unii-label-names.json";
 
 // Turns the free-text ingredient lists in the catalog CSVs (FDA "Inactive
 // ingredients ..." lines, OBF/brand INCI lists) into normalized ingredients,
@@ -168,6 +169,41 @@ export function parseIngredients(text: string | null | undefined): ParsedIngredi
   const seen = new Set<string>();
   const out: ParsedIngredient[] = [];
   for (const raw of splitIngredientList(text)) {
+    const key = ingredientKey(raw);
+    const slug = key ? slugFor(key) : "";
+    if (!slug || seen.has(slug)) continue;
+    seen.add(slug);
+    out.push({ raw, slug, key });
+  }
+  return out;
+}
+
+// FDA substance-registry names carry form qualifiers after a comma
+// ("LACTIC ACID, UNSPECIFIED FORM", "TOCOPHEROL, DL-") that labels never print.
+const SRS_QUALIFIER = /,\s*(?:unspecified(?:\s+form)?|dl-|d-|l-|\(\+\/-\)-?|\(\+\)-?|\(-\)-?)\s*$/i;
+
+export function cleanStructuredName(raw: string): string {
+  return cleanToken(decodeEntities(raw).replace(SRS_QUALIFIER, ""));
+}
+
+const UNII_LABEL_NAMES: Record<string, string> = uniiLabelNames;
+
+// Structured lists (the SPL's <ingredient classCode="IACT"> names, from
+// tools/catalog_pipeline/fetch_dailymed_inactive.py): every entry is already
+// one ingredient, so nothing is split on commas ("SODIUM PHOSPHATE, DIBASIC"
+// is one substance). Same keys/slugs as parseIngredients, so a structured
+// "GLYCERIN" and a label's "glycerin" land on the same ingredient page.
+// Registry names that labels spell differently ("VITAMIN A PALMITATE" for
+// retinyl palmitate, "EDETATE DISODIUM" for disodium EDTA) are swapped for
+// the label spelling by UNII code (unii-label-names.json, learned from the
+// openFDA rows that have both -- tools/catalog_pipeline/build_unii_label_names.py),
+// so they reach the same ingredient page and the pregnancy matcher.
+export function parseIngredientNames(names: string[], uniis: string[] = []): ParsedIngredient[] {
+  const seen = new Set<string>();
+  const out: ParsedIngredient[] = [];
+  for (const [i, name] of names.entries()) {
+    const raw = cleanStructuredName(UNII_LABEL_NAMES[uniis[i] ?? ""] ?? name);
+    if (!raw || !/[a-z]/i.test(raw)) continue;
     const key = ingredientKey(raw);
     const slug = key ? slugFor(key) : "";
     if (!slug || seen.has(slug)) continue;

@@ -3,9 +3,10 @@ import { isCronAuthorized } from "@/lib/cron-auth";
 import { ALL_JOBS, runJobs, type JobName } from "@/lib/jobs";
 
 // The hourly job: recall sync + alerts, due check-ins, token cleanup, live
-// price refresh (a no-op until the Sovrn keys are set).
+// price refresh (a no-op until the Sovrn keys are set), and a capped batch
+// of DailyMed package-photo downloads (up to ~4 minutes).
 //   curl -X POST -H "Authorization: Bearer $CRON_SECRET" https://activelyskin.com/api/cron/run
-// Optional query: ?jobs=checkins,recalls,cleanup,prices  ?forceRecallSync=1
+// Optional query: ?jobs=checkins,recalls,cleanup,prices,images  ?forceRecallSync=1
 // Outside production only: ?now=2026-12-01T00:00:00Z to run against a faked
 // clock (for testing check-in schedules).
 export async function POST(request: Request) {

@@ -59,6 +59,8 @@ needs `tools/` alongside `app/` for that to keep working unchanged.
 - **Persistent volume** mounted at `/data`; `DATABASE_PATH=/data/skinwiz.db`
   env var (see `src/db/client.ts`) points SQLite at it instead of the
   container's ephemeral filesystem, which is wiped on every redeploy.
+  DailyMed package photos go on the same volume (`/data/images`, or
+  `IMAGE_DIR`), ~0.9 GB when fully synced.
 - **Startup command** runs `db:migrate` (applies pending `drizzle/`
   migrations; a database created by the old `db:push` flow is adopted by
   marking the baseline as applied) then `db:seed` then `next start` on
@@ -133,8 +135,9 @@ accounts or passwords.
 ### The cron job
 
 `POST /api/cron/run` with `Authorization: Bearer $CRON_SECRET` runs the
-recall sync + alerts, sends due check-ins and purges expired sign-in
-tokens. Idempotent and safe to call every hour (rows are claimed before
+recall sync + alerts, sends due check-ins, purges expired sign-in
+tokens, refreshes live prices and downloads a capped batch of DailyMed
+package photos (see "Package photos from DailyMed"). Idempotent and safe to call every hour (rows are claimed before
 sending; a second overlapping call gets 409). The anti-scrape proxy lets
 `/api/cron/*` through only when the bearer secret is correct. Outside
 production, `?now=2026-12-01T00:00:00Z` fakes the clock; `?jobs=checkins`
@@ -177,6 +180,59 @@ Schedule it hourly — not set up yet. Either:
 4. Deploy (migration `0008` adds the new tables), run
    `npm run recalls:backfill` once in the Railway shell (or let the first
    cron run fetch the same 3 years), then add the hourly cron.
+
+## Package photos from DailyMed
+
+FDA-sourced products (openFDA, DailyMed-resolved, Rx) show the package
+image from their FDA label (SPL) on DailyMed — public-domain FDA labeling.
+Mostly flat label artwork or carton dielines rather than retail photos, so
+the product page captions it "Package image: FDA label via DailyMed".
+Open Beauty Facts / brand-direct photos are never replaced.
+
+- **Which image**: `tools/catalog_pipeline/fetch_dailymed_media.py` ranks
+  each label's images (display-panel section, front/carton/tube words up;
+  DISC, drug facts, back, side, barcode, insert, structure down) into the
+  committed `spl_media.csv` / `spl_media_candidates.csv`.
+- **Sync** (`src/lib/product-images/sync.ts`): downloads the top candidate
+  per set id (falls back to the next if it 404s, isn't an image, or is
+  under 300 px), trims white margins, writes `<=800px` and `<=320px` WebP
+  to `$IMAGE_DIR/dailymed/{setid}/{key}-{full|thumb}.webp`, records the
+  result in the `dailymed_images` table (migration `0016`) and points the
+  products' `image_url` at it. Polite to DailyMed: <= 4 requests/s,
+  identified User-Agent, failed downloads retried with backoff (1h, 2h, 4h
+  ... up to a week) on later runs.
+- **Serving**: `GET /img/dm/{setid}/{key}/{full|thumb}.webp`
+  (`src/app/img/dm/...`), read from the volume, `Cache-Control: public,
+  max-age=31536000, immutable` (the key changes when the image does), 404
+  in a few ms otherwise. Not `next/image`: its optimizer cache lives in
+  `.next/` inside the container and would be rebuilt (re-encoding thousands
+  of images) after every deploy. The `.webp` suffix keeps these requests
+  out of the anti-scrape proxy, and `judge()` exempts `/img/*.webp` too, so
+  a grid of thumbnails never counts as page views.
+- **Seed**: rebuilds products with FDA `image_url` null, then re-links every
+  synced image whose files are on disk — a missing file means the no-photo
+  layout, never a broken image.
+- **Cards** use the 320px thumbnail, `loading="lazy"`, inside the existing
+  fixed 4:3 box (no layout shift); the product page uses the 800px one.
+
+Filling the volume:
+
+```bash
+npm run images:sync                 # one-off backfill of everything missing (resumable)
+npm run images:sync -- --limit 100  # a sample
+```
+
+The hourly cron job also runs a capped batch (`images` step, last in
+`ALL_JOBS`): 300 images or 4 minutes per run, whichever first, so a fresh
+volume fills in about two days without anyone running the backfill. Disk:
+50-60 KB per label for both renditions, about 0.9 GB for all ~15.5k labels.
+
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `IMAGE_DIR` | `dirname(DATABASE_PATH)/images` (`/data/images` on Railway) | Where renditions live; must be on the persistent volume. |
+| `IMAGE_SYNC_PER_RUN` | `300` | Max downloads per cron run. |
+| `IMAGE_SYNC_SECONDS` | `240` | Wall-clock cap per cron run. |
+| `IMAGE_SYNC` | on | `off` skips the cron step (backfill script still works). |
 
 ## Affiliate links and live prices
 

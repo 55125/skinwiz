@@ -11,6 +11,7 @@ import { POTENCY_LABEL, type PotencyClass } from "@/db/steroid-potency";
 import { displayManufacturer } from "@/lib/format";
 import { SITE_NAME } from "@/lib/brand";
 import { canViewRxReference } from "@/lib/clinicians";
+import { DAILYMED_IMAGE_CAPTION, isDailymedImageUrl, productImageAlt, thumbnailUrl } from "@/lib/image-urls";
 
 // Prescription reference page: what the FDA label says, never a
 // recommendation. Verified clinicians only (lib/clinicians.ts canViewRxReference;
@@ -51,6 +52,18 @@ export default async function RxProductPage({ params }: { params: Promise<{ id: 
       <Link href="/rx" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
         <ChevronLeft className="h-4 w-4" /> Prescription reference
       </Link>
+
+      {/* Package label image (DailyMed, via the image sync) helps match the
+          product a patient brings in; absent until synced. */}
+      {p.imageUrl && (
+        <figure className="float-right ml-6 w-40 space-y-1 sm:w-56">
+          <div className="flex aspect-square items-center justify-center overflow-hidden rounded-2xl border bg-white">
+            {/* eslint-disable-next-line @next/next/no-img-element -- pre-rendered self-hosted WebP; next/image adds nothing here */}
+            <img src={thumbnailUrl(p.imageUrl)} alt={productImageAlt(p)} width={320} height={320} className="h-full w-full object-contain p-2" decoding="async" />
+          </div>
+          {isDailymedImageUrl(p.imageUrl) && <figcaption className="text-center text-[11px] text-muted-foreground">{DAILYMED_IMAGE_CAPTION}</figcaption>}
+        </figure>
+      )}
 
       <header className="space-y-3">
         <p className="text-xs font-semibold uppercase tracking-wider text-brand">{rxGroupLabel(p.rxGroup)} · prescription reference</p>

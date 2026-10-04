@@ -91,13 +91,13 @@ export const products = sqliteTable("products", {
   activeIngredientText: text("active_ingredient_text"), // exact FDA label text, incl. %, or raw OBF ingredients_text
   activeIds: text("active_ids", { mode: "json" }).$type<string[]>().notNull().default(sql`'[]'`),
   splSetId: text("spl_set_id"), // DailyMed backlink: dailymed.nlm.nih.gov/dailymed/lookup.cfm?setid=
-  // Only populated for open_beauty_facts (OBF's own image_front_url) and
-  // brand_direct (the manufacturer page's own product photo) rows -- openFDA
-  // and DailyMed have no product-photo field anywhere in their data, so the
-  // ~15k FDA-sourced rows (the large majority of the catalog) stay null.
-  // That's a real, disclosed data gap, not a bug -- the UI must show a plain
-  // placeholder rather than a broken image or a stock photo standing in for
-  // an unverified product.
+  // open_beauty_facts (OBF's own image_front_url) and brand_direct (the
+  // manufacturer page's own product photo) rows carry their photo from the
+  // CSV. FDA-sourced rows get the package image from their own DailyMed SPL
+  // label once the image sync has put it on the volume
+  // (/img/dm/{setid}/{key}/full.webp -- see dailymedImages below and
+  // lib/product-images/); until then they stay null. Never a stock photo
+  // standing in for an unverified product: the UI shows the no-photo layout.
   imageUrl: text("image_url"),
   // Only populated for dataSource="brand_direct" -- the exact manufacturer
   // page a product's ingredient list/photo was scraped from. Surfaced as a
@@ -109,9 +109,9 @@ export const products = sqliteTable("products", {
   sourceUrl: text("source_url"),
   // "Clean ingredient" / common-contact-allergen-avoidance flags -- see
   // db/ingredient-flags.ts for the full rationale and check list. null means
-  // "not enough ingredient text to assess" (most openfda-only rows before
-  // DailyMed resolution, and dailymed-resolved rows, which have no inactive-
-  // ingredient data at all) -- the UI must treat null as "unknown," never as
+  // "not enough ingredient text to assess" (drug rows with neither a label
+  // inactive-ingredient line nor an SPL inactive list -- db/spl-inactive.ts)
+  // -- the UI must treat null as "unknown," never as
   // "assumed clean." A non-null value is computed from the actual published
   // ingredient list, not a brand's own marketing claim.
   freeFromFlags: text("free_from_flags", { mode: "json" }).$type<string[] | null>(),
@@ -167,7 +167,11 @@ export const products = sqliteTable("products", {
   steroidPotencyClass: integer("steroid_potency_class"),
   // Isotretinoin: a reference page only, never addable to a handout (iPLEDGE).
   informationalOnly: integer("informational_only", { mode: "boolean" }).notNull().default(false),
-}, (table) => [index("products_strength_key_idx").on(table.strengthKey)]);
+}, (table) => [
+  index("products_strength_key_idx").on(table.strengthKey),
+  // label sections and package photos are joined by set id
+  index("products_spl_set_id_idx").on(table.splSetId),
+]);
 
 // One row per distinct normalized ingredient across every product's full
 // ingredient list (db/ingredient-parse.ts), so each gets its own
@@ -901,3 +905,30 @@ export const productViews = sqliteTable("product_views", {
   productId: text("product_id").primaryKey(),
   lastViewedAt: text("last_viewed_at").notNull(),
 });
+
+// Package photos from DailyMed SPL labels (public-domain FDA labeling), one
+// per SPL set id: the image sync (lib/product-images/sync.ts) downloads the
+// candidate ranked best by tools/catalog_pipeline/fetch_dailymed_media.py,
+// writes WebP renditions under IMAGE_DIR on the volume, and records the
+// result here. Not seeded -- sync state survives deploys; the seed reads the
+// "ok" rows to point FDA products' image_url at /img/dm/{setid}/{key}/...
+// `rejected` holds candidate names that turned out unusable (404, not an
+// image, too small) so the next candidate is tried instead.
+export const dailymedImages = sqliteTable(
+  "dailymed_images",
+  {
+    splSetId: text("spl_set_id").primaryKey(),
+    status: text("status").notNull(), // "ok" | "error" | "none" (no usable candidate left)
+    imageName: text("image_name"),
+    imageKey: text("image_key"), // short hash of set id + image name; versions the URL
+    width: integer("width"),
+    height: integer("height"),
+    bytes: integer("bytes"), // both renditions together
+    rejected: text("rejected", { mode: "json" }).$type<string[]>().notNull().default(sql`'[]'`),
+    attempts: integer("attempts").notNull().default(0),
+    lastError: text("last_error"),
+    updatedAt: text("updated_at").notNull(),
+    retryAfter: text("retry_after"),
+  },
+  (table) => [index("dailymed_images_status_idx").on(table.status)],
+);

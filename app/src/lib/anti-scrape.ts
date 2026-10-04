@@ -193,6 +193,7 @@ export type RequestInfo = {
 
 const DETAIL_PATH = /^\/(product|ingredient)\//;
 const DATA_API = /^\/api\/(search|products)\//;
+const IMAGE_PATH = /^\/img\/[^?]*\.webp$/;
 
 export function judge(req: RequestInfo): Verdict {
   const now = req.now ?? Date.now();
@@ -209,6 +210,11 @@ export function judge(req: RequestInfo): Verdict {
     // a bare "Java/17.0.2"-style UA is tooling too, not a browser
     automated = AUTOMATION_UA.test(ua) || ua.trim().length < 12;
   }
+
+  // Self-hosted product images: a product grid loads ~24 thumbnails at once,
+  // so they never count as page views. The proxy matcher already skips
+  // .webp paths (src/proxy.ts); this keeps that true if the matcher changes.
+  if (IMAGE_PATH.test(path) && (req.method === "GET" || req.method === "HEAD")) return { action: "allow" };
 
   // The JSON endpoints exist for our own pages. Browsers label those calls
   // same-origin; a script scraping them directly generally won't.

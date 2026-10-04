@@ -10,3 +10,6 @@ __pycache__/
 .DS_Store
 dist/
 build/
+
+# DailyMed SPL XML cache (tools/catalog_pipeline/fetch_dailymed_spl.py)
+tools/catalog_pipeline/cache/

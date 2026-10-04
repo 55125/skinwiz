@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Trimmed, hand-edited SPL in DailyMed's real shape, for tests/test_spl_parse.py -->
+<document xmlns="urn:hl7-org:v3" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <setId root="11111111-2222-3333-4444-555555555555"/>
+  <versionNumber value="7"/>
+  <effectiveTime value="20250102"/>
+  <component>
+    <structuredBody>
+      <component>
+        <section>
+          <code code="48780-1" codeSystem="2.16.840.1.113883.6.1" displayName="SPL PRODUCT DATA ELEMENTS SECTION"/>
+          <subject>
+            <manufacturedProduct>
+              <manufacturedProduct>
+                <code code="12345-0678" codeSystem="2.16.840.1.113883.6.69"/>
+                <name>Clear Day Acne Gel</name>
+                <ingredient classCode="ACTIB">
+                  <ingredientSubstance>
+                    <code code="O414PZ4LPZ" codeSystem="2.16.840.1.113883.4.9"/>
+                    <name>SALICYLIC ACID</name>
+                  </ingredientSubstance>
+                </ingredient>
+                <ingredient classCode="IACT">
+                  <ingredientSubstance>
+                    <code code="059QF0KO0R" codeSystem="2.16.840.1.113883.4.9"/>
+                    <name>WATER</name>
+                  </ingredientSubstance>
+                </ingredient>
+                <ingredient classCode="IACT">
+                  <ingredientSubstance>
+                    <code code="33X04XA5AT" codeSystem="2.16.840.1.113883.4.9"/>
+                    <name>LACTIC ACID, UNSPECIFIED FORM</name>
+                  </ingredientSubstance>
+                </ingredient>
+                <ingredient classCode="IACT">
+                  <ingredientSubstance>
+                    <code code="229D0E1QFA" codeSystem="2.16.840.1.113883.4.9"/>
+                    <name>METHYLISOTHIAZOLINONE</name>
+                  </ingredientSubstance>
+                </ingredient>
+                <ingredient classCode="IACT">
+                  <ingredientSubstance>
+                    <code code="059QF0KO0R" codeSystem="2.16.840.1.113883.4.9"/>
+                    <name>WATER</name>
+                  </ingredientSubstance>
+                </ingredient>
+              </manufacturedProduct>
+            </manufacturedProduct>
+          </subject>
+          <subject>
+            <manufacturedProduct>
+              <manufacturedProduct>
+                <code code="12345-0999" codeSystem="2.16.840.1.113883.6.69"/>
+                <name>Clear Day Night Gel</name>
+                <ingredient classCode="IACT">
+                  <ingredientSubstance>
+                    <code code="PDC6A3C0OX" codeSystem="2.16.840.1.113883.4.9"/>
+                    <name>GLYCERIN</name>
+                  </ingredientSubstance>
+                </ingredient>
+              </manufacturedProduct>
+            </manufacturedProduct>
+          </subject>
+        </section>
+      </component>
+      <component>
+        <section>
+          <code code="34089-3" codeSystem="2.16.840.1.113883.6.1" displayName="DESCRIPTION SECTION"/>
+          <title>DESCRIPTION</title>
+          <component>
+            <observationMedia ID="M1">
+              <text>Structural formula</text>
+              <value mediaType="image/jpeg" xsi:type="ED"><reference value="structure.jpg"/></value>
+            </observationMedia>
+          </component>
+        </section>
+      </component>
+      <component>
+        <section>
+          <code code="51727-6" codeSystem="2.16.840.1.113883.6.1" displayName="INACTIVE INGREDIENT SECTION"/>
+          <title>Inactive ingredients</title>
+          <text><paragraph>Inactive ingredients water, lactic acid, methylisothiazolinone</paragraph></text>
+        </section>
+      </component>
+      <component>
+        <section>
+          <code code="51945-4" codeSystem="2.16.840.1.113883.6.1" displayName="PACKAGE LABEL.PRINCIPAL DISPLAY PANEL"/>
+          <title>PRINCIPAL DISPLAY PANEL - 45 g Tube Carton</title>
+          <component>
+            <observationMedia ID="M2">
+              <text>Drug Facts panel</text>
+              <value mediaType="image/jpeg" xsi:type="ED"><reference value="carton-drug-facts.jpg"/></value>
+            </observationMedia>
+          </component>
+          <component>
+            <observationMedia ID="M3">
+              <text>45 g Carton - DISC</text>
+              <value mediaType="image/jpeg" xsi:type="ED"><reference value="old-carton-DISC.jpg"/></value>
+            </observationMedia>
+          </component>
+          <component>
+            <section>
+              <title/>
+              <text>
+                <renderMultiMedia referencedObject="M4"/>
+                <observationMedia ID="M4">
+                  <text>Carton Front</text>
+                  <value mediaType="image/jpeg" xsi:type="ED"><reference value="carton-front.jpg"/></value>
+                </observationMedia>
+              </text>
+            </section>
+          </component>
+        </section>
+      </component>
+    </structuredBody>
+  </component>
+</document>

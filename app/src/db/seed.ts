@@ -13,6 +13,8 @@ import { SITE_NAME } from "@/lib/brand";
 import { validateManualLinks, type ManualLinkRow } from "@/lib/manual-links";
 import { RX_CONCERN } from "./rx";
 import { steroidPotencyClass, type Ingredient } from "./steroid-potency";
+import { drugInactiveList, groupSplInactive, type SplInactiveCsvRow } from "./spl-inactive";
+import { linkAllDailymedImages } from "@/lib/product-images/link";
 
 const REPO_ROOT = path.resolve(process.cwd(), "..");
 // Four sources: the primary openFDA catalog, the DailyMed resolution pass
@@ -43,6 +45,9 @@ const MANUAL_LINKS_CSV = path.join(REPO_ROOT, "tools/affiliate_feeds/manual_link
 const OTC_PACKAGE_INFO_CSV = path.join(REPO_ROOT, "tools/catalog_pipeline/output/otc_package_info.csv");
 const RX_CATALOG_CSV = process.env.RX_CATALOG_CSV ?? path.join(REPO_ROOT, "tools/catalog_pipeline/output/rx_catalog.csv");
 const RX_LABEL_SECTIONS_CSV = path.join(REPO_ROOT, "tools/catalog_pipeline/output/rx_label_sections.csv");
+// Inactive-ingredient lists from the SPL XML for FDA rows whose catalog CSV
+// row has none (fetch_dailymed_inactive.py). Optional.
+const SPL_INACTIVE_CSV = path.join(REPO_ROOT, "tools/catalog_pipeline/output/dailymed_inactive_ingredients.csv");
 
 type CatalogRow = {
   product_ndc: string;
@@ -68,19 +73,18 @@ type CatalogRow = {
   // directly rather than re-deriving via matchActiveIds().
   source?: "open_beauty_facts" | "brand_direct";
   verified?: "true" | "false";
-  // Also only present in those two CSVs — openFDA/DailyMed have no
-  // product-photo field at all, so this is undefined for the bulk of rows
-  // and products.imageUrl stays null for them (see schema.ts's comment).
+  // Also only present in those two CSVs. FDA rows get their DailyMed
+  // package image linked after insert instead (linkPackageImages below).
   image_url?: string;
   // Only present in brand_direct_catalog.csv -- the exact page scraped,
   // reused as a "Buy directly" link (see schema.ts's sourceUrl comment).
   source_url?: string;
   // Populated for ~99.8% of acne_sun_catalog.csv rows (the SPL label's own
   // Inactive Ingredients section) but 0% of dailymed_resolved_catalog.csv
-  // (that resolution pass never recovered it) -- a real, full ingredient
-  // list when present, not a guess. Combined with active_ingredient_text to
-  // feed computeFreeFromFlags() below; never previously read at all before
-  // the free-from-flags feature.
+  // (that resolution pass never recovered it -- those rows take theirs from
+  // the SPL XML, dailymed_inactive_ingredients.csv / spl-inactive.ts) -- a
+  // real, full ingredient list when present, not a guess. Combined with
+  // active_ingredient_text to feed computeFreeFromFlags() below.
   inactive_ingredient_text?: string;
   marketing_category?: string;
   product_type?: string;
@@ -251,6 +255,12 @@ function reseed() {
     console.log("  no otc_package_info.csv, skipping (run tools/catalog_pipeline/fetch_otc_package_info.py)");
   }
 
+  const splInactive = fs.existsSync(SPL_INACTIVE_CSV)
+    ? groupSplInactive(readCsv<SplInactiveCsvRow>(SPL_INACTIVE_CSV))
+    : new Map();
+  console.log(`  ${splInactive.size} SPL inactive-ingredient lists (DailyMed)`);
+  const inactiveSources: Record<string, number> = {};
+
   for (const csvPath of CATALOG_CSVS) {
     if (!fs.existsSync(csvPath)) {
       console.log(`Skipping ${csvPath} (not found — run its generating script first)`);
@@ -281,11 +291,15 @@ function reseed() {
       // is deliberately just the active-ingredient line for display. Using
       // that alone here would wrongly mark almost everything "paraben-free"
       // etc. just because an active-ingredient line never mentions parabens.
+      // Drug rows: the label's own inactive text, else the SPL XML's list
+      // (spl-inactive.ts). Neither = unknown, not "clean".
+      const inactive = isPreMatched ? null : drugInactiveList(row.inactive_ingredient_text, splInactive.get(row.product_ndc));
+      if (inactive) inactiveSources[inactive.source ?? "none"] = (inactiveSources[inactive.source ?? "none"] ?? 0) + 1;
       const fullIngredientText = isPreMatched
         ? row.active_ingredient_text || null
-        : row.inactive_ingredient_text
-          ? `${row.active_ingredient_text || ""} ${row.inactive_ingredient_text}`
-          : null; // dailymed-resolved rows and any acne_sun row missing it: unknown, not "clean"
+        : inactive?.text
+          ? `${row.active_ingredient_text || ""} ${inactive.text}`
+          : null;
       // Cosmetic sources never disclose concentrations, so only the FDA
       // label line is parsed -- see db/strength.ts.
       const strengths = isPreMatched
@@ -306,7 +320,7 @@ function reseed() {
           listed.add(id);
           memberships.push({ productId: row.product_ndc, position: -i, slug: id, rawName: id, isActive: true });
         });
-        parseIngredients(row.inactive_ingredient_text).forEach((ing, i) => {
+        inactive!.parsed.forEach((ing, i) => {
           if (!listed.has(ing.slug)) memberships.push({ productId: row.product_ndc, position: i + 1, slug: ing.slug, rawName: ing.raw, isActive: false });
         });
       }
@@ -354,6 +368,7 @@ function reseed() {
     inserted += Math.min(BATCH_SIZE, productBatch.length - i);
   }
   console.log(`  inserted ${inserted} products, skipped ${skippedNoActive} with no recognized active ingredient`);
+  console.log(`  drug inactive lists by source: ${JSON.stringify(inactiveSources)}`);
 
   insertIngredients(memberships);
   insertManualLinks(new Set(productBatch.filter((p) => !p.isRx).map((p) => p.id)));
@@ -385,7 +400,22 @@ function reseed() {
   insertBarcodes(new Set(productBatch.filter((p) => !p.isRx).map((p) => p.id)));
   insertLabelSections();
   insertRxLabelSections();
+  linkPackageImages();
   reconcileOrphans();
+}
+
+// DailyMed package photos already synced to IMAGE_DIR (lib/product-images/).
+// Products are rebuilt above with image_url null for FDA rows; this points
+// them back at their photo. Rows still waiting for the hourly sync stay null
+// and render with the no-photo layout.
+function linkPackageImages() {
+  const hasTable = db.get(sql`SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'dailymed_images'`);
+  if (!hasTable) {
+    console.log("  no dailymed_images table (run db:migrate), skipping package photos");
+    return;
+  }
+  const { sets, products, missingFiles } = linkAllDailymedImages();
+  console.log(`  linked ${products} FDA products to ${sets} DailyMed package photos${missingFiles ? ` (${missingFiles} synced photos missing on disk; the image sync will refetch them)` : ""}`);
 }
 
 // Lookup order for lib/prices: real retail barcodes first, the NDC-derived

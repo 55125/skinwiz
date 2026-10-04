@@ -173,3 +173,71 @@ category for the OTC drug rows, from the NDC directory, written to
 price per ounce, the homeopathic HSA exclusion and NDA/ANDA detection).
 2026-10-02: 10,586 of 15,384 NDCs found (most DailyMed-resolved NDCs aren't
 in the NDC directory; those stay unknown).
+
+# DailyMed SPL pass: package images + inactive ingredients (2026-10-04)
+
+Phase 1 catalog coverage for the FDA rows, from DailyMed's SPL XML
+(public-domain FDA labeling). Stdlib only.
+
+```bash
+python3 fetch_dailymed_spl.py        # 1 request per set id, <=4.5/s, ~1 hour; resumable
+python3 fetch_dailymed_media.py      # offline: output/spl_media.csv + spl_media_candidates.csv
+python3 fetch_dailymed_inactive.py   # offline: output/dailymed_inactive_ingredients.csv
+python3 build_unii_label_names.py    # offline: app/src/db/unii-label-names.json
+python3 -m unittest discover -s tests   # also run by `npm test` in app/
+```
+
+- **`fetch_dailymed_spl.py`** downloads `/services/v2/spls/{setid}.xml` for
+  every set id in `acne_sun_catalog.csv`, `dailymed_resolved_catalog.csv`
+  and `rx_catalog.csv` into `cache/spl_xml/` (gzipped, ~100 MB, not
+  committed). The cache is the checkpoint: re-running fetches only what's
+  missing; 404s go to `cache/spl_missing.txt`. User-Agent
+  `Actively catalog pipeline (hello@activelyskin.com)`, shared rate limiter,
+  backoff on 429/5xx. One XML per label replaces a media.json pass: the XML
+  lists the same image files plus the section each sits in and its caption
+  (most of the signal), and carries the structured ingredient list too.
+- **`fetch_dailymed_media.py`** scores every image (`spl_parse.score_candidate`):
+  +10 inside the Package Label / Principal Display Panel section (LOINC
+  51945-4), -10 in any other section unless it's a photo/render; name and
+  caption words front/PDP, carton/container/product up, photo/render +12;
+  DISC(ontinued), drug facts/DFB, back, side, barcode, insert,
+  structure/figure down; a small penalty per position in the section. Score
+  < 0 = nothing usable. The top 4 per label go to `spl_media_candidates.csv`;
+  the app's image sync tries them in order (skipping any that 404 or are
+  under 300 px). DailyMed only serves the newest SPL version, so every
+  candidate is from the current label.
+- **`fetch_dailymed_inactive.py`** targets catalog rows with no usable
+  inactive list (every DailyMed-resolved row; openFDA rows with no text or a
+  run-on line with no separators) and writes the structured
+  `<ingredient classCode="IACT">` list of the product whose NDC matches (or
+  the label's only list), in label order with UNII codes, plus the Inactive
+  Ingredients section text (source `section_text`, position 0) when present.
+  The seed builds `product_ingredients` from the structured names and runs
+  allergen / free-from matching over names + section text
+  (`app/src/db/spl-inactive.ts`).
+- **`build_unii_label_names.py`** learns label spellings for registry names
+  ("VITAMIN A PALMITATE" -> retinyl palmitate, "EDETATE DISODIUM" -> disodium
+  EDTA, ".ALPHA.-TOCOPHEROL ACETATE" -> tocopheryl acetate) from openFDA rows
+  whose label text and SPL list line up position by position; only
+  recurring, common spellings are kept, minus a hand-reviewed deny list.
+  101 mappings from 826 aligned labels.
+
+Run 2026-10-04: 15,846 set ids, 15,787 fetched, 59 gone from DailyMed (404).
+Every fetched label embeds at least one image; 15,643 have a usable pick
+(4,183 DailyMed-resolved, 10,522 openFDA, 938 Rx); 144 have only negative
+candidates (drug-facts panels, inserts, structures). 10,532 labels have a
+single candidate, 5,111 several. Inactive lists: 5,379 products gained one
+(5,106 structured IACT matched by NDC, 272 section text only, 1 single-list
+label); 11 labels have neither.
+
+Pick quality, checked by eye on 60 random picks: ~65% show the product
+front clearly at card size, ~20% are legible but busy (whole carton
+dielines, front and Drug Facts side by side), ~15% poor (mostly blank
+dielines, Drug Facts only). Every poor one was a label with a single image,
+where no heuristic can do better. On 30 random multi-image labels the
+heuristic chose the best available image in 26; the last tuning round
+(front renders filed outside the display section, "product" over
+"carton") fixed 3 of the 4 misses. The remaining kind of miss is a label
+covering several products (Lamisil foot vs. jock itch), where images aren't
+matched to NDCs. These are FDA label artwork, not retail photos, and the UI
+captions them "Package image: FDA label via DailyMed".

@@ -36,6 +36,7 @@ const AFFILIATE_CSV = path.join(REPO_ROOT, "tools/affiliate_feeds/output/matched
 // tools/affiliate_feeds/fetch_barcodes.py. Optional.
 const BARCODES_CSV = path.join(REPO_ROOT, "tools/affiliate_feeds/output/product_barcodes.csv");
 const LABEL_SECTIONS_CSV = path.join(REPO_ROOT, "tools/catalog_pipeline/output/label_sections.csv");
+const IMAGE_OVERRIDES_CSV = path.join(REPO_ROOT, "tools/catalog_pipeline/output/image_overrides.csv");
 // Hand-made affiliate links (sovrn.co short links), one row per product +
 // retailer link. Committed; header-only until real links are added.
 const MANUAL_LINKS_CSV = path.join(REPO_ROOT, "tools/affiliate_feeds/manual_links.csv");
@@ -410,6 +411,7 @@ function reseed() {
   insertLabelSections();
   insertRxLabelSections();
   linkPackageImages();
+  applyImageOverrides();
   reconcileOrphans();
 }
 
@@ -425,6 +427,27 @@ function linkPackageImages() {
   }
   const { sets, products, missingFiles } = linkAllDailymedImages();
   console.log(`  linked ${products} FDA products to ${sets} DailyMed package photos${missingFiles ? ` (${missingFiles} synced photos missing on disk; the image sync will refetch them)` : ""}`);
+}
+
+// Hand-picked product photos (image_overrides.csv), e.g. the manufacturer's
+// own shot where the DailyMed label has no usable image. Files live in
+// public/product-images/manufacturer/, committed like the brand-direct ones.
+// Applied after the DailyMed link so a real photo always wins.
+function applyImageOverrides() {
+  if (!fs.existsSync(IMAGE_OVERRIDES_CSV)) return;
+  let applied = 0;
+  for (const r of readCsv<{ product_id: string; image_path: string }>(IMAGE_OVERRIDES_CSV)) {
+    const id = r.product_id?.trim();
+    const imagePath = r.image_path?.trim();
+    if (!id || !imagePath?.startsWith("/product-images/")) continue;
+    if (!fs.existsSync(path.join(process.cwd(), "public", imagePath))) {
+      console.log(`  image override for ${id}: ${imagePath} not found, skipped`);
+      continue;
+    }
+    const res = db.run(sql`UPDATE products SET image_url = ${imagePath} WHERE id = ${id} AND is_rx = 0`);
+    applied += res.changes;
+  }
+  console.log(`  applied ${applied} image overrides`);
 }
 
 // Lookup order for lib/prices: real retail barcodes first, the NDC-derived

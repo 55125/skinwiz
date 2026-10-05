@@ -202,9 +202,14 @@ python3 -m unittest discover -s tests   # also run by `npm test` in app/
   caption words front/PDP, carton/container/product up, photo/render +12;
   DISC(ontinued), drug facts/DFB, back, side, barcode, insert,
   structure/figure down; a small penalty per position in the section. Score
-  < 0 = nothing usable. The top 4 per label go to `spl_media_candidates.csv`;
-  the app's image sync tries them in order (skipping any that 404 or are
-  under 300 px). DailyMed only serves the newest SPL version, so every
+  < 0 = nothing usable, with one exception (`spl_parse.usable_images`): when
+  every packaging image in a label is marked DISC (the rest only inserts,
+  structures, drug facts or barcodes -- Differin gel's label), the DISC
+  images are usable anyway, since old artwork of the same product beats no
+  photo. The top 4 per label go to `spl_media_candidates.csv`, with a
+  `usable` flag; the app's image sync tries the usable ones in order
+  (skipping any that 404 or are under 300 px). Hand-picked manufacturer
+  photos in `image_overrides.csv` win over all of this at seed. DailyMed only serves the newest SPL version, so every
   candidate is from the current label.
 - **`fetch_dailymed_inactive.py`** targets catalog rows with no usable
   inactive list (every DailyMed-resolved row; openFDA rows with no text or a

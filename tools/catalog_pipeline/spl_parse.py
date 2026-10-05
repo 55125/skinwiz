@@ -177,6 +177,36 @@ def rank_media(cands: list[MediaCandidate]) -> list[MediaCandidate]:
     return sorted(cands, key=lambda c: (-c.score, c.order))
 
 
+# Images that are never the product's packaging: they don't stop the all-DISC
+# fallback below (Differin's gel label = two DISC cartons + an insert).
+NOT_PACKAGING = {"insert", "figure", "drug-facts", "barcode"}
+
+
+def usable_images(ranked: list[MediaCandidate], min_score: float = 0) -> tuple[list[MediaCandidate], bool]:
+    """The images the app may show for a label, best first (rank_media's
+    order), and whether they come from the all-DISC fallback.
+
+    Normally every candidate scoring at least min_score. But when nothing
+    does and every packaging image in the label is marked DISC(ontinued) --
+    the rest, if any, being inserts, structures/figures, drug-facts panels or
+    barcodes -- the DISC images are still the real product's artwork (older
+    packaging beats no picture), so they are usable whatever their score."""
+    good = [c for c in ranked if c.score >= min_score]
+    if good:
+        return good, False
+    disc = [c for c in ranked if "discontinued" in c.reasons]
+    if disc and all("discontinued" in c.reasons or NOT_PACKAGING & set(c.reasons) for c in ranked):
+        return disc, True
+    return [], False
+
+
+def choose_image(ranked: list[MediaCandidate], min_score: float = 0) -> tuple[MediaCandidate | None, bool]:
+    """The one image for a label (see usable_images), and whether it is the
+    all-DISC fallback."""
+    usable, fallback = usable_images(ranked, min_score)
+    return (usable[0] if usable else None), fallback
+
+
 # ---------------------------------------------------------------- inactive ingredients
 
 

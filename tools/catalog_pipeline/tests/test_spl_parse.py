@@ -16,8 +16,8 @@ sys.path.insert(0, os.path.dirname(HERE))
 
 from fetch_dailymed_inactive import rows_for  # noqa: E402
 from spl_parse import (  # noqa: E402
-    MediaCandidate, inactive_section_text, media_candidates, parse_xml, product_inactive_lists, rank_media,
-    spl_version,
+    MediaCandidate, choose_image, inactive_section_text, media_candidates, parse_xml, product_inactive_lists, rank_media,
+    spl_version, usable_images,
 )
 
 
@@ -61,6 +61,43 @@ class ImageHeuristic(unittest.TestCase):
         ranked = rank_media(cands)
         self.assertEqual(ranked[0].name, "051887 P57217-0 Differin Gel 45g Carton (Tube) - DISC.jpg")
         self.assertEqual(ranked[-1].name, "P56836-0 Insert.jpg")
+
+    def test_all_disc_label_falls_back_to_best_disc_image(self):
+        # Differin gel's real label: both cartons are "- DISC", filed in the
+        # product-data section with the package insert, so everything scores
+        # < 0. The old carton artwork beats no picture; the insert never shows.
+        def other(name: str, order: int) -> MediaCandidate:
+            return MediaCandidate(name=name, caption=name, section_code="48780-1", order=order, order_in_section=order)
+
+        ranked = rank_media([
+            other("052149 P56853-0 Differin Gel 45g Carton (Pump) - DISC.jpg", 1),
+            other("051887 P57217-0 Differin Gel 45g Carton (Tube) - DISC.jpg", 0),
+            other("P56836-0 Insert.jpg", 2),
+        ])
+        self.assertTrue(all(c.score < 0 for c in ranked))
+        best, fallback = choose_image(ranked)
+        self.assertTrue(fallback)
+        self.assertEqual(best.name, "051887 P57217-0 Differin Gel 45g Carton (Tube) - DISC.jpg")
+        usable, _ = usable_images(ranked)
+        self.assertEqual([c.name for c in usable], [
+            "051887 P57217-0 Differin Gel 45g Carton (Tube) - DISC.jpg",
+            "052149 P56853-0 Differin Gel 45g Carton (Pump) - DISC.jpg",
+        ])
+
+    def test_no_disc_fallback_when_current_packaging_exists(self):
+        # A current (non-DISC) carton filed outside the display panel: that is
+        # a scoring question, not a DISC one -- no fallback, nothing chosen.
+        def other(name: str, order: int) -> MediaCandidate:
+            return MediaCandidate(name=name, caption=name, section_code="34068-7", order=order, order_in_section=order)
+
+        ranked = rank_media([other("Carton - DISC.jpg", 0), other("Carton.jpg", 1)])
+        self.assertTrue(all(c.score < 0 for c in ranked))
+        self.assertEqual(choose_image(ranked), (None, False))
+        # a usable current image is chosen normally, never the DISC one
+        best, fallback = choose_image(rank_media([pdp("Carton - DISC.jpg", order=0), pdp("Front.jpg", order=1)]))
+        self.assertEqual((best.name, fallback), ("Front.jpg", False))
+        self.assertEqual(choose_image([]), (None, False))
+        self.assertEqual(choose_image(rank_media([other("Insert.jpg", 0)])), (None, False))
 
     def test_dfb_abbreviation_and_caption_count(self):
         cands = [

@@ -15,13 +15,19 @@ candidate is from the current label.
 Scoring (spl_parse.score_candidate): +10 inside the display-panel section,
 -10 in any other section; file name/caption words: front/PDP/carton/tube/
 bottle/... up, DISC(ontinued)/drug facts/back/side/barcode/insert/structure
-down; a small penalty for position within the section. Image size isn't
+down; a small penalty for position within the section. The top candidate
+is chosen if it scores >= 0; otherwise none, except when every image in the
+packaging image in the label is marked DISC (discontinued packaging; the
+rest only inserts/structures/drug facts/barcodes): then the best DISC image
+is chosen anyway (spl_parse.usable_images) -- old artwork of the same
+product beats no photo. The candidates CSV's `usable` column tells the
+app's image sync which images it may try. Image size isn't
 known until download, so the app's image sync (app/src/lib/product-images/
 sync.ts) rejects tiny images and falls back to the next-ranked candidate.
 
 Outputs (committed):
   output/spl_media.csv             setid, chosen_image_name, chosen_url, score, n_candidates, spl_version
-  output/spl_media_candidates.csv  setid, rank, image_name, score, section_code, caption, reasons (top 4 per set id)
+  output/spl_media_candidates.csv  setid, rank, image_name, score, section_code, caption, reasons, usable (top 4 per set id)
 """
 from __future__ import annotations
 
@@ -32,7 +38,7 @@ import sys
 from collections import Counter
 
 from dailymed_spl import OUT_DIR, catalog_setids, image_url, read_cached_xml
-from spl_parse import media_candidates, parse_xml, rank_media, spl_version
+from spl_parse import media_candidates, parse_xml, rank_media, spl_version, usable_images
 
 TOP_CANDIDATES = 4
 MIN_SCORE = 0  # below this, nothing in the label looks like a package photo
@@ -64,16 +70,23 @@ def main() -> None:
             stats["no_images"] += 1
             continue
         stats["with_images"] += 1
+        usable, disc_fallback = usable_images(ranked, MIN_SCORE)
+        usable_names = {c.name for c in usable}
+        best = usable[0] if usable else None
         for i, c in enumerate(ranked[:TOP_CANDIDATES]):
             cand_rows.append({
                 "setid": setid, "rank": i + 1, "image_name": c.name, "score": c.score,
                 "section_code": c.section_code, "caption": c.caption[:120], "reasons": " ".join(c.reasons),
+                # what the app's image sync may try, in rank order: score >= 0,
+                # or the DISC images of an all-DISC label (usable_images)
+                "usable": int(c.name in usable_names),
             })
-        best = ranked[0]
-        if best.score < MIN_SCORE:
+        if best is None:
             stats["no_usable_image"] += 1
             continue
         stats["chosen"] += 1
+        if disc_fallback:
+            stats["chosen_all_disc_fallback"] += 1
         by_source[source] += 1
         chosen_rows.append({
             "setid": setid, "chosen_image_name": best.name, "chosen_url": image_url(setid, best.name),
@@ -96,7 +109,7 @@ def main() -> None:
         w.writeheader()
         w.writerows(chosen_rows)
     with open(os.path.join(OUT_DIR, "spl_media_candidates.csv"), "w", newline="") as f:
-        w = csv.DictWriter(f, fieldnames=["setid", "rank", "image_name", "score", "section_code", "caption", "reasons"])
+        w = csv.DictWriter(f, fieldnames=["setid", "rank", "image_name", "score", "section_code", "caption", "reasons", "usable"])
         w.writeheader()
         w.writerows(cand_rows)
     print(f"{dict(stats)}; chosen by source {dict(by_source)}", file=sys.stderr)

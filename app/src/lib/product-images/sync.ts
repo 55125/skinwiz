@@ -47,7 +47,12 @@ export function dailymedImageSource(setid: string, name: string): string {
   return `${IMAGE_BASE}?${new URLSearchParams({ setid, name })}`;
 }
 
-/** setid -> usable candidates, best first (score >= 0; negative = drug facts, inserts, structures). */
+/**
+ * setid -> usable candidates, best first. The pipeline's `usable` column
+ * decides (score >= 0, plus every image of a label whose images are all
+ * DISC(ontinued) packaging); older CSVs without it fall back to score >= 0
+ * (negative = drug facts, inserts, structures).
+ */
 export function loadCandidates(csvPath = CANDIDATES_CSV): Map<string, Candidate[]> {
   const out = new Map<string, Candidate[]>();
   if (!fs.existsSync(csvPath)) return out;
@@ -56,11 +61,13 @@ export function loadCandidates(csvPath = CANDIDATES_CSV): Map<string, Candidate[
     rank: string;
     image_name: string;
     score: string;
+    usable?: string;
   }[];
   rows.sort((a, b) => a.setid.localeCompare(b.setid) || Number(a.rank) - Number(b.rank));
   for (const r of rows) {
     const score = Number(r.score);
-    if (!r.image_name || !(score >= 0)) continue;
+    const usable = r.usable === undefined || r.usable === "" ? score >= 0 : r.usable === "1";
+    if (!r.image_name || !usable) continue;
     const list = out.get(r.setid.toLowerCase()) ?? [];
     list.push({ name: r.image_name, score });
     out.set(r.setid.toLowerCase(), list);

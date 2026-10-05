@@ -113,3 +113,29 @@ test("sync downloads, falls back past bad candidates, links FDA products, and re
   assert.equal(linked.sets, 1);
   assert.equal(img("a-1"), `/img/dm/${A}/${rowA.imageKey}/full.webp`);
 });
+
+test("loadCandidates follows the pipeline's usable column (all-DISC labels), else score >= 0", async () => {
+  const { loadCandidates } = await import("@/lib/product-images/sync");
+  const csvPath = path.join(tmp, "cands.csv");
+  fs.writeFileSync(
+    csvPath,
+    [
+      "setid,rank,image_name,score,section_code,caption,reasons,usable",
+      `${A},1,front.jpg,12,51945-4,,pdp-section front,1`,
+      `${A},2,facts.jpg,-3,51945-4,,pdp-section drug-facts,0`,
+      `${B},2,Carton (Pump) - DISC.jpg,-12.5,48780-1,,carton discontinued,1`,
+      `${B},1,Carton (Tube) - DISC.jpg,-12,48780-1,,carton discontinued,1`,
+      `${C},1,insert.jpg,-9,48780-1,,insert,0`,
+    ].join("\n"),
+  );
+  const got = loadCandidates(csvPath);
+  assert.deepEqual(got.get(A)?.map((c) => c.name), ["front.jpg"]);
+  assert.deepEqual(got.get(B)?.map((c) => c.name), ["Carton (Tube) - DISC.jpg", "Carton (Pump) - DISC.jpg"]);
+  assert.equal(got.has(C), false);
+
+  // An older CSV without the column: score >= 0 only.
+  fs.writeFileSync(csvPath, ["setid,rank,image_name,score", `${A},1,front.jpg,12`, `${B},1,disc.jpg,-12`].join("\n"));
+  const legacy = loadCandidates(csvPath);
+  assert.deepEqual(legacy.get(A)?.map((c) => c.name), ["front.jpg"]);
+  assert.equal(legacy.has(B), false);
+});

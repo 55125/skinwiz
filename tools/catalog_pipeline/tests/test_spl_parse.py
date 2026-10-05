@@ -153,6 +153,103 @@ class ImageHeuristic(unittest.TestCase):
         self.assertEqual(spl_version(root), "7")
 
 
+def data_el(name: str, caption: str = "", order: int = 0) -> MediaCandidate:
+    """An image in the SPL PRODUCT DATA ELEMENTS section (48780-1)."""
+    return MediaCandidate(name=name, caption=caption, section_code="48780-1", order=order, order_in_section=order)
+
+
+class ProductDataSection(unittest.TestCase):
+    """Galderma (every Cetaphil and Differin label), Mayne and several Rx
+    generics file their carton art in 48780-1 and have no display-panel
+    section; a flat -10 there used to leave all of them without an image."""
+
+    def test_galderma_like_label_chooses_the_carton_from_48780_1(self):
+        root = parse_xml(fixture("spl_product_data_media.xml"))
+        cands = media_candidates(root)
+        self.assertEqual({c.section_code for c in cands}, {"48780-1", "34089-3"})
+        ranked = rank_media(cands)
+        best, fallback = choose_image(ranked)
+        self.assertFalse(fallback)
+        self.assertEqual(best.name, "084088 P56660-0 Differin Acne Body Wash 10oz Tube.jpg")
+        self.assertGreaterEqual(best.score, 0)
+        # structures, the Drug Facts panel and the bare labeler logo are not usable
+        usable, _ = usable_images(ranked)
+        self.assertEqual([c.name for c in usable], [best.name])
+        scores = {c.name: c.score for c in ranked}
+        for name in ("chem structure.jpg", "P56660-0 Drug Facts.jpg", "galderma.jpg", "adap-chem-struct.jpg"):
+            self.assertLess(scores[name], 0, name)
+
+    def test_drug_facts_panels_in_48780_1_are_still_rejected(self):
+        ranked = rank_media([
+            data_el("Small8ozCapDrug facts.jpg", "Total White 8 oz. Cream Drug Facts", 0),
+            data_el("DFP.jpg", "image of DFP", 1),
+            data_el("back.jpg", "Back panel", 2),
+            data_el("how-to-apply.jpg", "how-to-apply", 3),
+            data_el("Figure1.jpg", "Figure 1", 4),
+        ])
+        self.assertTrue(all(c.score < 0 for c in ranked), [(c.name, c.score) for c in ranked])
+        self.assertEqual(choose_image(ranked), (None, False))
+
+    def test_48780_1_carton_beats_drug_facts_and_needs_a_package_word(self):
+        ranked = rank_media([
+            data_el("xiromed.jpg", "xiromed", 0),
+            data_el("Small8ozCapDrug facts.jpg", "Drug Facts", 1),
+            data_el("label.jpg", "Label", 2),
+            data_el("betamethasone-50g-carton.jpg", "betamethasone-50g-carton", 3),
+        ])
+        self.assertEqual(ranked[0].name, "betamethasone-50g-carton.jpg")
+        usable, _ = usable_images(ranked)
+        # "label" counts as a package word outside the display panel; a logo doesn't
+        self.assertEqual([c.name for c in usable], ["betamethasone-50g-carton.jpg", "label.jpg"])
+
+    def test_numbered_and_combined_names_in_48780_1(self):
+        # "carton1sez", "container1", "carton50g": the only package word is glued to a number
+        for name in ("carton1sez.jpg", "container1.jpg", "carton50g.jpg"):
+            best, _ = choose_image(rank_media([data_el("structure.jpg", "structure", 0), data_el(name, name[:-4], 1)]))
+            self.assertEqual(best.name if best else None, name)
+        # one image of both panels still shows the front
+        best, _ = choose_image(rank_media([data_el("new front and back P57613-0.jpg", "P57613-0 new front and back")]))
+        self.assertIsNotNone(best)
+
+    def test_display_panel_still_outranks_48780_1(self):
+        ranked = rank_media([data_el("carton.jpg", "Carton", 0), pdp("label.jpg", order=1)])
+        self.assertEqual(ranked[0].name, "label.jpg")
+
+    def test_other_sections_keep_their_penalty(self):
+        # a carton filed under Dosage & Administration is still not chosen
+        c = MediaCandidate(name="Carton.jpg", caption="Carton", section_code="34068-7")
+        self.assertEqual(choose_image(rank_media([c])), (None, False))
+
+
+class NameNormalisation(unittest.TestCase):
+    def test_numbered_weak_words_in_the_display_panel_keep_document_order(self):
+        # "Label2 / Tube2" are panels of one dieline set: no reason to reorder them
+        self.assertEqual(rank_media([pdp("Label2.jpg", order=0), pdp("Tube2.jpg", order=1)])[0].name, "Label2.jpg")
+        # strong signals glued to a number still count
+        self.assertEqual(rank_media([pdp("Label3.jpg", order=0), pdp("Label18Front.jpg", order=1)])[0].name, "Label18Front.jpg")
+        self.assertEqual(rank_media([pdp("label.jpg", order=0), pdp("product1.jpg", order=1)])[0].name, "product1.jpg")
+
+    def test_hex_ids_dont_spell_drug_facts(self):
+        c = rank_media([pdp("1766110479706-27a7df84-dff0-43ee-bccd-91c9fdbcde45_.jpg", "Even & Clear Kit")])[0]
+        self.assertNotIn("drug-facts", c.reasons)
+        c = rank_media([pdp("163dc662-0414-4df6-aa07-0541cd1b4161-02.jpg", "figure")])[0]
+        self.assertNotIn("drug-facts", c.reasons)
+
+    def test_false_negatives_fixed(self):
+        fig = rank_media([pdp("Garden Tea PartyVelvet Fig Bloom- Front and Back Label.jpg", "Label")])[0]
+        self.assertNotIn("figure", fig.reasons)
+        size = rank_media([pdp("noon-02.jpg", "PRINCIPAL DISPLAY PANEL - 5 gr Bottle Carton")])[0]
+        self.assertNotIn("side", size.reasons)
+        self.assertIn("side", rank_media([pdp("x.jpg", "Panel 2")])[0].reasons)
+        self.assertIn("figure", rank_media([pdp("fig1.jpg", "Fig. 1")])[0].reasons)
+
+    def test_multipack_is_not_a_package_signal(self):
+        ranked = rank_media([pdp("SB Lip Balm 3 Pack.jpg", order=0), pdp("Lip Balm Coconut.jpg", order=0)])
+        self.assertEqual(ranked[0].name, "SB Lip Balm 3 Pack.jpg")  # tie: document order
+        self.assertNotIn("package", ranked[0].reasons)
+        self.assertEqual(ranked[0].score, ranked[1].score)
+
+
 class InactiveIngredients(unittest.TestCase):
     def setUp(self):
         self.root = parse_xml(fixture("spl_kit.xml"))

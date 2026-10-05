@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Trimmed, hand-edited SPL in the shape of Galderma's Cetaphil/Differin labels (and Mayne's
+     Rx generics): no Package Label / Principal Display Panel section at all; the carton art,
+     a Drug Facts panel and a chemical structure all sit in the SPL PRODUCT DATA ELEMENTS
+     section (48780-1), with another structure in DESCRIPTION. For tests/test_spl_parse.py -->
+<document xmlns="urn:hl7-org:v3" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <setId root="22222222-3333-4444-5555-666666666666"/>
+  <versionNumber value="3"/>
+  <effectiveTime value="20250601"/>
+  <component>
+    <structuredBody>
+      <component>
+        <section>
+          <code code="48780-1" codeSystem="2.16.840.1.113883.6.1" displayName="SPL PRODUCT DATA ELEMENTS SECTION"/>
+          <title/>
+          <subject>
+            <manufacturedProduct>
+              <manufacturedProduct>
+                <code code="0299-1234" codeSystem="2.16.840.1.113883.6.69"/>
+                <name>Differin Acne Body Wash</name>
+              </manufacturedProduct>
+            </manufacturedProduct>
+          </subject>
+          <component>
+            <observationMedia ID="MM1">
+              <text>adapalene-chem-structure</text>
+              <value mediaType="image/jpeg" xsi:type="ED"><reference value="chem structure.jpg"/></value>
+            </observationMedia>
+          </component>
+          <component>
+            <observationMedia ID="MM2">
+              <text>Drug Facts panel</text>
+              <value mediaType="image/jpeg" xsi:type="ED"><reference value="P56660-0 Drug Facts.jpg"/></value>
+            </observationMedia>
+          </component>
+          <component>
+            <observationMedia ID="MM3">
+              <text>084088 P56660-0 Differin Acne Body Wash 10oz Tube</text>
+              <value mediaType="image/jpeg" xsi:type="ED"><reference value="084088 P56660-0 Differin Acne Body Wash 10oz Tube.jpg"/></value>
+            </observationMedia>
+          </component>
+          <component>
+            <observationMedia ID="MM4">
+              <text>galderma</text>
+              <value mediaType="image/jpeg" xsi:type="ED"><reference value="galderma.jpg"/></value>
+            </observationMedia>
+          </component>
+        </section>
+      </component>
+      <component>
+        <section>
+          <code code="34089-3" codeSystem="2.16.840.1.113883.6.1" displayName="DESCRIPTION SECTION"/>
+          <title>11 DESCRIPTION</title>
+          <text>
+            <renderMultiMedia referencedObject="SPLSERV-1"/>
+          </text>
+          <component>
+            <observationMedia ID="SPLSERV-1">
+              <text>Structural formula</text>
+              <value mediaType="image/jpeg" xsi:type="ED"><reference value="adap-chem-struct.jpg"/></value>
+            </observationMedia>
+          </component>
+        </section>
+      </component>
+    </structuredBody>
+  </component>
+</document>

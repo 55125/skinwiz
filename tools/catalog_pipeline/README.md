@@ -198,8 +198,11 @@ python3 -m unittest discover -s tests   # also run by `npm test` in app/
   (most of the signal), and carries the structured ingredient list too.
 - **`fetch_dailymed_media.py`** scores every image (`spl_parse.score_candidate`):
   +10 inside the Package Label / Principal Display Panel section (LOINC
-  51945-4), -10 in any other section unless it's a photo/render; name and
-  caption words front/PDP, carton/container/product up, photo/render +12;
+  51945-4), -1 in the SPL product data elements section (48780-1, where
+  Galderma, Mayne and some Rx generics file all their carton art), -10 in
+  any other section unless it's a photo/render; name and
+  caption words front/PDP, carton/container/product up, photo/render +12,
+  "label" +1.5 outside the display panel;
   DISC(ontinued), drug facts/DFB, back, side, barcode, insert,
   structure/figure down; a small penalty per position in the section. Score
   < 0 = nothing usable, with one exception (`spl_parse.usable_images`): when
@@ -246,6 +249,29 @@ heuristic chose the best available image in 26; the last tuning round
 covering several products (Lamisil foot vs. jock itch), where images aren't
 matched to NDCs. These are FDA label artwork, not retail photos, and the UI
 captions them "Package image: FDA label via DailyMed".
+
+Re-tune 2026-10-05 (section 48780-1): 15,644 -> 15,702 labels with a pick.
+58 previously imageless labels recovered, 31 of them Galderma (Cetaphil,
+Differin), the rest Mayne / Dr. Reddy's / Xiromed / Nizoral / Lamisil Rx and
+OTC cartons; every one checked by eye was real carton, tube or label art
+(sample: `output/picker_samples/recovered.png`). In 48780-1 the order
+penalty is off (structures often come first). Names are now split at
+letter/digit boundaries ("carton1sez", "carton50g", "Label18Front"),
+except that carton/container/package words glued to a number don't count
+inside the display panel (see below). Outside the display panel a single
+"front and back" image keeps most of its front credit. Elsewhere:
+hex/UUID file names no longer spell "df" (drug facts), "Velvet Fig" isn't a
+figure, "Panel - 5 gr" isn't a side panel, "how to apply" / "step 3" count
+as instructions, a "3 Pack" multipack doesn't earn the package bonus.
+Only 3 existing picks changed (product photo over a blank dieline, a front
+over an unnumbered label, a single lip balm over a 3-pack; see
+`picker_samples/changed.png`). Counting numbered "Tube2" / "Box2" /
+"Outer12" as carton/container words inside the display panel was tried
+and dropped: it flipped 56 picks, about as many worse as better
+(`picker_samples/rejected.png`). 85 labels still have no usable image:
+mostly single images filed under Active Ingredient / Dosage sections
+(PurMinerals compact dielines, drug-facts panels, blank dielines), which
+stay at -10.
 
 # build_product_merges.py: duplicate listings (2026-10-04)
 

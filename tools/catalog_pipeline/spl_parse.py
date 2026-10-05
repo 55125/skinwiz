@@ -27,6 +27,11 @@ from dataclasses import dataclass, field
 
 NS = "{urn:hl7-org:v3}"
 PDP_CODE = "51945-4"  # PACKAGE LABEL.PRINCIPAL DISPLAY PANEL
+# SPL PRODUCT DATA ELEMENTS / "SPL listing data elements" section. Some
+# labelers (Galderma: every Cetaphil and Differin label; Mayne; several Rx
+# generics) file all their carton and tube art here instead of in a display
+# panel section, next to chemical structures.
+PRODUCT_DATA_CODE = "48780-1"
 INACTIVE_SECTION_CODE = "51727-6"
 NDC_SYSTEM = "2.16.840.1.113883.6.69"
 UNII_SYSTEM = "2.16.840.1.113883.4.9"
@@ -102,12 +107,25 @@ def media_candidates(root: ET.Element) -> list[MediaCandidate]:
 
 
 # Word-ish matching: labelers write "Front", "FRONT_PANEL", "frt", "PDP".
-def _norm(s: str) -> str:
+def _norm(s: str, split_digits: bool = True) -> str:
     s = re.sub(r"\.(jpe?g|png|gif)$", "", s, flags=re.I)
+    # UUIDs and long hex ids carry no words, but split into letters and
+    # digits they would spell "df", "fb", ... ("27a7df84")
+    s = re.sub(r"[0-9a-fA-F]{8}(-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}", " ", s)
+    s = re.sub(r"\b(?=[0-9a-fA-F]*[0-9])(?=[0-9a-fA-F]*[a-fA-F])[0-9a-fA-F]{8,}\b", " ", s)
     s = re.sub(r"([a-z])([A-Z])", r"\1 \2", s)  # camelCase -> words
+    if split_digits:  # carton1, 50g, Label18Front -> words
+        s = re.sub(r"(?<=[A-Za-z])(?=[0-9])|(?<=[0-9])(?=[A-Za-z])", " ", s)
     return " " + re.sub(r"[^a-z0-9]+", " ", s.lower()).strip() + " "
 
 
+# The weak package-type words (WEAK) don't count when glued to a number inside
+# the display-panel section: there "Label2 / Tube2", "Label3 / Box2",
+# "Bottle2 / Outer Package2" are numbered panels of one dieline set, and which
+# one shows the front is a coin flip (checked by eye on 56 labels: as many
+# got worse as better). In the product-data section "carton1.jpg" or
+# "carton50g.jpg" is often the only package word a label has.
+WEAK = {"carton", "container", "package"}
 POSITIVE = [
     (r" (principal display|pdp|main panel|display panel)", 3, "pdp"),
     (r" (front|frt|fr|face panel|front panel)( |$)", 4, "front"),
@@ -116,21 +134,30 @@ POSITIVE = [
     # "product" usually names the primary container itself, which reads
     # better at card size than a carton dieline
     (r" product( |$)", 3, "product"),
-    (r" (package|packaging|pack)( |$)", 1, "package"),
+    # not "6pack": a multipack is a worse picture than the single unit
+    (r"(?<![0-9]) (package|packaging|pack)( |$)", 1, "package"),
     # A real photo or 3D render of the product is the best image a label
     # can have -- worth more than sitting in the display-panel section.
     (r" (photo|photograph|render(ing)?|3d|mock ?up)( |$)", 12, "photo"),
+    # e-commerce hero shots some labelers upload ("Carousel 1 Front")
+    (r" carousel( |$)", 4, "carousel"),
 ]
+FRONT_AND_BACK = re.compile(r" (front|frt) (and |n |amp )?(back|bk)( |$)")
+# Inside the display-panel section every image is a label, so the word says
+# nothing there; elsewhere it is what separates package art from a logo, a
+# diagram or a structure.
+LABEL_WORD = re.compile(r" (label|labels|lbl|labeling|labelling)( |$)")
 PHOTO = re.compile(r" (photo|photograph|render(ing)?|3d|mock ?up)( |$)")
 NEGATIVE = [
     (r" disc(ontinued)?( |$)", -6, "discontinued"),
-    (r" (drug facts?|df|dfp|dfb|facts? panel|facts)( |$)", -7, "drug-facts"),
+    (r" (drug facts?|df(?! [0-9])|dfp|dfb|facts? panel|facts)( |$)", -7, "drug-facts"),
     (r" (back|bk|rear|reverse)( |$)", -6, "back"),
-    (r" (side|sides|left|right|top|bottom|end|flap|panel [2-9]|panel ?(two|three|four))( |$)", -4, "side"),
+    (r" (side|sides|left|right|top|bottom|end|flap|panel [2-9](?! (oz|g|gr|gm|grams?|ml|fl|ct|mg|count|lbs?)( |$))|panel ?(two|three|four))( |$)", -4, "side"),
     (r" (label text|text|copy|artwork text|ingredients?|directions|warnings?)( |$)", -2, "text"),
     (r" (barcode|bar code|upc|ean|lot|exp|expiry|crimp)( |$)", -6, "barcode"),
-    (r" (insert|leaflet|outsert|pi|package insert|patient information|instructions?|ifu|medguide|medication guide)( |$)", -7, "insert"),
-    (r" (structure|structural|formula|chemical|molecule|figure|fig|chart|graph|diagram|table)( |$)", -8, "figure"),
+    (r" (insert|leaflet|outsert|pi|package insert|patient information|instructions?|ifu|medguide|medication guide|how to (apply|use)|step [0-9]+)( |$)", -7, "insert"),
+    # "fig" only with a number: "Velvet Fig Bloom" is a fragrance
+    (r" (structure|structural|formula|chemical|molecule|figure|fig [0-9]+|chart|graph|diagram|table)( |$)", -8, "figure"),
     (r" (inner|inside|interior)( |$)", -3, "inner"),
     (r" (shipper|case|tray|display box|counter display|bulk)( |$)", -3, "shipper"),
     (r" (spl|logo)( |$)", -2, "logo"),
@@ -140,31 +167,51 @@ NEGATIVE = [
 def score_candidate(c: MediaCandidate) -> MediaCandidate:
     score = 0.0
     reasons: list[str] = []
-    if c.section_code == PDP_CODE:
+    own = _norm(c.name) + _norm(c.caption)
+    in_pdp = c.section_code == PDP_CODE
+    own_weak = _norm(c.name, False) + _norm(c.caption, False) if in_pdp else own
+    if in_pdp:
         score += 10
         reasons.append("pdp-section")
-    elif c.section_code and not PHOTO.search(_norm(c.name) + _norm(c.caption)):
+    elif c.section_code == PRODUCT_DATA_CODE:
+        # Neutral-ish: the file name and caption decide. The -1 keeps an image
+        # with no signal at all (a labeler logo, "picture.jpg") below 0; any
+        # package word (carton, tube, label, ...) lifts it, and drug facts,
+        # structures and inserts filed here stay well below 0.
+        score -= 1
+        reasons.append("product-data-section")
+    elif c.section_code and not PHOTO.search(own):
         # chemical structures, application diagrams, etc. live in other
         # sections (labelers do sometimes file product renders elsewhere)
         score -= 10
         reasons.append(f"section-{c.section_code}")
     # The file name and caption describe this image; the section title often
     # names several packages, so it only counts at half weight.
-    own = _norm(c.name) + _norm(c.caption)
     title = _norm(c.section_title)
     for pattern, weight, label in POSITIVE:
-        if re.search(pattern, own):
+        if re.search(pattern, own_weak if label in WEAK else own):
             score += weight
             reasons.append(label)
         elif re.search(pattern, title):
             score += weight / 2
             reasons.append(f"title:{label}")
+    if c.section_code != PDP_CODE and LABEL_WORD.search(own):
+        score += 1.5  # a little under carton/container: any panel is a "label"
+        reasons.append("label")
     for pattern, weight, label in NEGATIVE:
         if re.search(pattern, own):
+            if label == "back" and not in_pdp and FRONT_AND_BACK.search(own):
+                # one image of both panels: the front is in it. (Not in the
+                # display panel, which usually also has a carton or front of
+                # its own; there it changed 3 picks, none for the better.)
+                weight, label = -2, "front-and-back"
             score += weight
             reasons.append(label)
-    # Labelers usually lead the display-panel section with the front.
-    score -= min(c.order_in_section, 5) * 0.5
+    # Labelers usually lead the display-panel section with the front. In the
+    # product-data section the order means nothing (structures often come
+    # first), so it's left to the document-order tie-break.
+    if c.section_code != PRODUCT_DATA_CODE:
+        score -= min(c.order_in_section, 5) * 0.5
     c.score = round(score, 2)
     c.reasons = reasons
     return c

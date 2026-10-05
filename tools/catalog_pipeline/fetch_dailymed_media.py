@@ -12,11 +12,14 @@ of the signal. Image URLs are DailyMed's image.cfm?setid=&name=, the same URLs
 media.json returns. DailyMed serves only the newest SPL version, so every
 candidate is from the current label.
 
-Scoring (spl_parse.score_candidate): +10 inside the display-panel section,
--10 in any other section; file name/caption words: front/PDP/carton/tube/
-bottle/... up, DISC(ontinued)/drug facts/back/side/barcode/insert/structure
-down; a small penalty for position within the section. The top candidate
-is chosen if it scores >= 0; otherwise none, except when every image in the
+Scoring (spl_parse.score_candidate): +10 inside the display-panel section;
+-1 in the SPL product data elements section (48780-1), where Galderma,
+Mayne and some Rx generics file all their carton art, so the file name and
+caption decide there; -10 in any other section; file name/caption words:
+front/PDP/carton/tube/bottle/... (and, outside the display panel, "label")
+up, DISC(ontinued)/drug facts/back/side/barcode/insert/structure down; a
+small penalty for position within the display-panel section. The top
+candidate is chosen if it scores >= 0; otherwise none, except when every
 packaging image in the label is marked DISC (discontinued packaging; the
 rest only inserts/structures/drug facts/barcodes): then the best DISC image
 is chosen anyway (spl_parse.usable_images) -- old artwork of the same

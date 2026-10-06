@@ -30,7 +30,7 @@ const RULES: { a: ClassId; b: ClassId; note: string }[] = [
   {
     a: "retinoid",
     b: "benzoyl-peroxide",
-    note: "Benzoyl peroxide adds to retinoid irritation, and it can break down tretinoin specifically. Often used at different times of day.",
+    note: "Benzoyl peroxide adds to retinoid irritation, and it can break down tretinoin and retinol (tazarotene's label warns it may too). Adapalene is stable with it. Often used at different times of day.",
   },
   {
     a: "benzoyl-peroxide",

@@ -25,8 +25,9 @@ export type FreeFromCheck = {
 };
 
 export const FREE_FROM_CHECKS: FreeFromCheck[] = [
-  // Overlaps both categories -- fragrance is the single most common contact
-  // allergen (NACDG/ACDS data) and the most commonly avoided "clean beauty" ingredient.
+  // Overlaps both categories -- fragrance is the most common cause of cosmetic
+  // contact allergy (nickel is the most common contact allergen overall, per
+  // NACDG/ACDS data) and the most commonly avoided "clean beauty" ingredient.
   { id: "fragrance-free", label: "Fragrance-free", category: "clean", avoidSubstrings: ["fragrance", "parfum", "perfume"] },
   { id: "paraben-free", label: "Paraben-free", category: "clean", avoidSubstrings: ["paraben"] },
   {

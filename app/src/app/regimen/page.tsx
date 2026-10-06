@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { AlertTriangle, ArrowRight, CheckCircle2, Moon, Sun } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
+import { MySkinTabs } from "@/components/my-skin-tabs";
 import { RedFlagBanner } from "@/components/red-flag-banner";
 import { RegimenButton } from "@/components/regimen-button";
 import { HowToUse } from "@/components/how-to-use";
@@ -144,7 +145,8 @@ export default async function RegimenPage({ searchParams }: { searchParams: Prom
     const person = device ? personForSession(device) : null;
     return (
       <div className="mx-auto max-w-6xl space-y-8 px-4 py-10">
-        <PageHeader eyebrow="Your plans" title="My regimen" />
+        <MySkinTabs />
+        <PageHeader title="My regimen" />
         {saved && (
           <p role="status" className="rounded-xl border border-emerald-300 bg-emerald-50 p-4 text-sm text-emerald-900 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-200">
             Saved. This plan is now in your regimens, private to this browser
@@ -189,8 +191,8 @@ export default async function RegimenPage({ searchParams }: { searchParams: Prom
 
   return (
     <div className="mx-auto max-w-6xl space-y-8 px-4 py-10">
+      <MySkinTabs />
       <PageHeader
-        eyebrow="Your products"
         title={selected && list.length > 1 ? selected.name : "My regimen"}
         description="What you use morning and night, in the order to apply it: thinnest to thickest, with sunscreen last in the morning. Saved in this browser with no account. Add an email in Email settings if you want it on other devices too."
       />

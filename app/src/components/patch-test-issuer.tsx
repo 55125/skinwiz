@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { PatchTestChecklist } from "@/components/patch-test-checklist";
 import { QrCode } from "@/components/qr-code";
 import { resolveAllergenId } from "@/db/contact-allergens";
-import { getNotOnLabel, importItemName, watchForNames } from "@/db/patch-test-series";
+import { getNotOnLabel, importItemName, mainlyOffLabel, watchForNames } from "@/db/patch-test-series";
 import { MAX_NOTE_LENGTH, buildImportPath, cleanDetails } from "@/lib/avoid-import";
 import { SITE_NAME } from "@/lib/brand";
 
@@ -237,7 +237,10 @@ export function PrintSheet({
               {ids.map((id) => (
                 <tr key={id} style={{ borderBottom: "0.5px solid #999", verticalAlign: "top" }}>
                   <td style={{ padding: "1.2mm 2mm 1.2mm 0", fontWeight: 600 }}>{importItemName(id)}</td>
-                  <td style={{ padding: "1.2mm 0" }}>{watchForNames(id).join(", ") || "—"}</td>
+                  <td style={{ padding: "1.2mm 0" }}>
+                    {watchForNames(id).join(", ") || (mainlyOffLabel(id) ? null : "—")}
+                    {mainlyOffLabel(id) && <span style={{ display: "block" }}>{mainlyOffLabel(id)}</span>}
+                  </td>
                 </tr>
               ))}
             </tbody>

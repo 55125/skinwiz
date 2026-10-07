@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { ArrowLeft, Check, ClipboardCopy, Copy, Mail, Printer, RotateCcw, Smartphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -58,6 +58,24 @@ function loadTrayLayouts(): TrayLayouts {
   }
 }
 
+// The reading in progress (series, day, date, grades; never the patient's
+// name), kept for this tab only so an accidental reload or swipe-back
+// doesn't wipe a half-graded panel. Cleared by "New reading".
+const READING_KEY = "actively.reader.reading";
+type SavedReading = { seriesId: string; day: ReadingDay; readDate: string; grades: Record<string, Grade> };
+
+function loadReading(): SavedReading | null {
+  try {
+    const raw = sessionStorage.getItem(READING_KEY);
+    const v = raw ? (JSON.parse(raw) as Partial<SavedReading>) : null;
+    if (!v || typeof v.seriesId !== "string" || !PATCH_TEST_SERIES.some((x) => x.id === v.seriesId)) return null;
+    if (!READING_DAYS.some((d) => d.id === v.day) || typeof v.readDate !== "string" || !v.grades || typeof v.grades !== "object") return null;
+    return v as SavedReading;
+  } catch {
+    return null;
+  }
+}
+
 const todayIso = () => {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -80,6 +98,27 @@ export function PatchTestReader() {
   const [includeDoubtful, setIncludeDoubtful] = useState(false);
   const [patient, setPatient] = useState("");
   const [copied, setCopied] = useState<"note" | "link" | null>(null);
+
+  // Restore after mount (the server render can't see sessionStorage), then
+  // save on every change.
+  const restored = useRef(false);
+  useEffect(() => {
+    const saved = loadReading();
+    restored.current = true;
+    if (!saved) return;
+    /* eslint-disable react-hooks/set-state-in-effect -- one-time restore from tab storage */
+    setSeriesId(saved.seriesId);
+    setDay(saved.day);
+    setReadDate(saved.readDate);
+    setGrades(saved.grades);
+    /* eslint-enable react-hooks/set-state-in-effect */
+  }, []);
+  useEffect(() => {
+    if (!restored.current) return;
+    try {
+      sessionStorage.setItem(READING_KEY, JSON.stringify({ seriesId, day, readDate, grades } satisfies SavedReading));
+    } catch {}
+  }, [seriesId, day, readDate, grades]);
 
   const series = getSeries(seriesId);
   const acds = trayLayouts[series.id] ?? defaultTrayLayout(series);

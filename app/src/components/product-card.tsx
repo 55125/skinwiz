@@ -46,7 +46,7 @@ export function ProductCard({
   return (
     <Link
       href={`/product/${encodeURIComponent(product.id)}`}
-      className="group flex h-full flex-col overflow-hidden rounded-2xl border bg-card transition-all hover:-translate-y-0.5 hover:border-brand/40 hover:shadow-lg hover:shadow-brand/5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+      className="group flex h-full flex-col overflow-hidden rounded-2xl border bg-card transition-all hover:-translate-y-0.5 hover:border-brand/40 hover:shadow-lg hover:shadow-brand/5 focus-visible:border-brand focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-brand"
     >
       {/* Photos: OBF/brand_direct retail shots, or the FDA label's package
           image from DailyMed once the image sync has fetched it (see

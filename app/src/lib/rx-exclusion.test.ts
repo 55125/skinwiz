@@ -112,6 +112,14 @@ test("affiliate links and prices never attach to Rx", () => {
   noRx([...q.getPackageDescriptions(["otc-1", ...RX]).keys()], "getPackageDescriptions");
 });
 
+test("demo affiliate rows never reach a page", () => {
+  db.run(sql`INSERT INTO affiliate_links (product_id, network, price, currency, buy_url, is_demo) VALUES ('otc-2', 'cj', 1.23, 'USD', 'https://example.com/demo', 1)`);
+  const urls = (rows: { buyUrl: string }[]) => rows.map((l) => l.buyUrl);
+  assert.deepEqual(urls(q.getAffiliateLinksForProduct("otc-2")), ["https://example.com"]);
+  assert.ok(!urls(q.getAffiliateLinksForProducts(["otc-1", "otc-2"])).includes("https://example.com/demo"));
+  db.run(sql`DELETE FROM affiliate_links WHERE is_demo = 1`);
+});
+
 test("equivalence groups (/same) and HSA tags", async () => {
   const idx = await import("./otc-index");
   for (const g of idx.getEquivalenceGroups()) noRx(g.members.flatMap((m) => m.ids), `group ${g.slug}`);

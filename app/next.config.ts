@@ -11,8 +11,22 @@ const securityHeaders = [
   { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), interest-cohort=()" },
 ];
 
+// Addresses people guess or type that would otherwise 404.
+const HSA_GUIDE = "/guide/hsa-fsa-eligible";
+const guessedUrls = [
+  { source: "/ingredient/retinol", destination: "/ingredient/retinol-cosmetic", permanent: true },
+  ...["/hsa", "/fsa", "/hsa-fsa", "/guide/hsa", "/guide/fsa", "/guide/hsa-fsa"].map((source) => ({
+    source,
+    destination: HSA_GUIDE,
+    permanent: true,
+  })),
+];
+
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  async redirects() {
+    return guessedUrls;
+  },
   async headers() {
     return [
       { source: "/:path*", headers: securityHeaders },

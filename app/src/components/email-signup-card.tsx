@@ -14,12 +14,15 @@ export function EmailSignupCard({
   next,
   title = "Save your shelf & get alerts",
   blurb = "Optional. Add an email to keep your shelf on any device, get a short check-in at 2, 4, 8 and 12 weeks after you open a product, and hear about FDA recalls of anything on your shelf. No password; we send a one-time link.",
+  footnote = "We only email you sign-in links and the check-ins and recall alerts you choose. Turn any of it off or delete everything at any time.",
 }: {
   signedInAs: string | null;
   /** Where the emailed link lands after confirming (allow-listed server-side). */
   next?: string;
   title?: string;
   blurb?: string;
+  /** The small print under the form: what we'll email this person about. */
+  footnote?: string;
 }) {
   const [email, setEmail] = useState("");
   const [state, setState] = useState<"idle" | "sending" | "sent">("idle");
@@ -93,7 +96,7 @@ export function EmailSignupCard({
         </p>
       )}
       <p className="text-xs text-muted-foreground">
-        We only email about your shelf. Turn any of it off or delete everything at any time.{" "}
+        {footnote}{" "}
         <Link href="/privacy#email" className="underline">
           Privacy
         </Link>

@@ -222,9 +222,9 @@ export const productIngredients = sqliteTable(
 // Real affiliate integration exists (tools/affiliate_feeds/) but no network
 // account is approved yet (project.md §11 open decision), so this table is
 // seeded from SYNTHETIC mock-feed data for a small demo subset only.
-// isDemo must stay true for all rows until a real feed is wired in —
-// the UI enforces a visible "demo" label whenever isDemo is true so this
-// never gets presented as a live price to a real user.
+// isDemo must stay true for all rows until a real feed is wired in. Queries
+// (lib/queries.ts) drop demo rows, so they never reach a page: their prices
+// are invented and their buy URLs are placeholders.
 export const affiliateLinks = sqliteTable("affiliate_links", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   productId: text("product_id").notNull().references(() => products.id),
@@ -456,6 +456,10 @@ export const regimens = sqliteTable(
     instanceId: integer("instance_id").references(() => handoutInstances.id),
     active: integer("active", { mode: "boolean" }).notNull().default(false),
     createdAt: text("created_at").notNull(),
+    // "I also use a prescription retinoid from my doctor": am/pm/both, or
+    // null. No product and no dosing; it only lets the retinoid cautions
+    // (lib/routine-conflicts.ts) account for it. Own regimens only.
+    rxRetinoidSlot: text("rx_retinoid_slot"),
   },
   (table) => [index("regimens_session_idx").on(table.sessionId), uniqueIndex("regimens_instance_idx").on(table.instanceId)],
 );

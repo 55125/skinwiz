@@ -23,9 +23,9 @@ export default function PrivacyPage() {
             &ldquo;us&rdquo;) collects when you use this website, how we use it, and the choices you have.
           </p>
           <p className="rounded-lg border bg-muted/40 p-4 text-sm">
-            <strong className="text-foreground">The short version.</strong> {SITE_NAME} has no accounts or passwords
-            and asks for no name or email to use its tools. Your skin profile and avoid list are stored in cookies
-            on your own device. Adding an email address is optional; if you do, we use it only to keep your shelf,
+            <strong className="text-foreground">The short version.</strong> You don&apos;t need an account, a password, your name
+            or an email to use {SITE_NAME}&apos;s tools. Your skin profile and avoid list are stored in cookies
+            on your own device. Adding an email address is optional (it becomes a password-free sign-in by one-time link); if you do, we use it only to keep your shelf,
             avoid list and skin profile (but not any pregnancy or breastfeeding answers) across devices and to send the check-ins and safety alerts you choose, and you can delete it at any
             time. We do not sell your information, share it for targeted advertising, or run advertising or
             analytics trackers.
@@ -80,6 +80,13 @@ export default function PrivacyPage() {
           <strong>Clinician applications</strong>: if you apply on the{" "}
           <Link href="/for-clinicians">For clinicians</Link> page, we collect your name, email address,
           credentials (such as board certification and NPI number) and your message.
+        </li>
+        <li>
+          <strong>Clinician accounts</strong>: clinicians who sign in to make patient handouts give us their
+          email address, NPI number, name and clinic details (name, phone and website). We check the NPI
+          against the public NPPES registry and keep what it lists (credential, specialty and state). We store
+          the handouts and practice avoid lists they save, and anonymous counts of how often a handout is
+          printed, opened or saved. Patient names typed for printing stay in the browser and never reach us.
         </li>
         <li>
           <strong>Messages</strong>: if you email us, we keep your email address and what you send.
@@ -229,7 +236,7 @@ export default function PrivacyPage() {
       <h3>Affiliate links and third-party content</h3>
       <p>
         Some product links are affiliate links. When you click one, you leave {SITE_NAME}. The retailer or
-        affiliate network (for example, Amazon, Sovrn or CJ) may set its own cookies to record that you came from
+        affiliate network (for example, Amazon, Sovrn or CJ) may set its own cookies to record that you came from{" "}
         {SITE_NAME} and whether you bought something. That tracking is governed by their privacy policies. The
         commission reports we receive do not identify you to us. Outbound shopping links, including links to
         retailers and brand sites, may go through Sovrn, an affiliate service, which may set its own cookies.

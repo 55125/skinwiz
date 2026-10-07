@@ -11,7 +11,7 @@ export function RoutineDisclaimer() {
     <Alert className="border-amber-300 bg-amber-50 dark:border-amber-900 dark:bg-amber-950/40">
       <AlertTitle>User-submitted, not reviewed by {SITE_NAME}</AlertTitle>
       <AlertDescription>
-        Routines are posted directly by other visitors and are not checked by dermatologists or
+        Routines are posted directly by other visitors and are not checked by dermatologists or{" "}
         {SITE_NAME} staff. Vote score reflects community opinion, not clinical accuracy. Don&apos;t
         treat a routine as medical advice — see a board-certified dermatologist for guidance
         specific to you.

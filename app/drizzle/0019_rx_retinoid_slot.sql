@@ -1,0 +1,1 @@
+ALTER TABLE `regimens` ADD `rx_retinoid_slot` text;

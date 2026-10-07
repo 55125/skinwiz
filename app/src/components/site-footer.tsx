@@ -17,6 +17,7 @@ function footerLinks() {
       links: [
         ...CONCERN_DEFINITIONS.map((c) => ({ href: `/concern/${c.id}`, label: c.name })),
         { href: "/browse", label: "All products" },
+        { href: "/guide/hsa-fsa-eligible", label: "HSA/FSA-eligible skincare" },
       ],
     },
     { heading: "Ingredients", links: INGREDIENT_ITEMS },

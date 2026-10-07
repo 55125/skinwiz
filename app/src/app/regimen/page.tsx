@@ -13,7 +13,8 @@ import { EmailSignupCard } from "@/components/email-signup-card";
 import { readDeviceSessionId, readSessionId } from "@/lib/session";
 import { personForSession } from "@/lib/identity";
 import { EMPTY_REGIMEN, getRegimen, guidanceForActives, guidanceForStep, STEP_LABEL, suggestSlot, type RegimenStep } from "@/lib/regimen";
-import { getClinicianPlan, listRegimens, type RegimenSummary } from "@/lib/regimens";
+import { getClinicianPlan, getOwnedRegimen, listRegimens, type RegimenSummary } from "@/lib/regimens";
+import { RxRetinoidCard } from "@/components/rx-retinoid-card";
 import { describeStrengths } from "@/lib/strength-display";
 import { displayManufacturer } from "@/lib/format";
 import { FEATURES } from "@/lib/feature-flags";
@@ -177,7 +178,8 @@ export default async function RegimenPage({ searchParams }: { searchParams: Prom
   }
 
   const regimenId = selected?.kind === "own" ? selected.id : null;
-  const regimen = regimenId !== null ? getRegimen(regimenId) : EMPTY_REGIMEN;
+  const own = regimenId !== null && sessionId ? getOwnedRegimen(sessionId, regimenId) : null;
+  const regimen = regimenId !== null ? getRegimen(regimenId, own?.rxRetinoidSlot ?? null) : EMPTY_REGIMEN;
   const sameTime = regimen.conflicts.filter((c) => c.status === "same-time");
   const split = regimen.conflicts.filter((c) => c.status === "split");
   // Gated "When OTC isn't enough" guidance for the concerns this regimen covers.
@@ -218,7 +220,9 @@ export default async function RegimenPage({ searchParams }: { searchParams: Prom
           </Link>
           {selected && list.length > 1 && <RegimenActions regimenId={selected.id} kind="own" active={selected.active} name={selected.name} />}
         </div>
-      ) : (
+      ) : null}
+      {regimenId !== null && <RxRetinoidCard key={regimenId} regimenId={regimenId} initialSlot={regimen.rxRetinoid} />}
+      {regimenId === null || regimen.count === 0 ? null : (
         <>
           {sameTime.length > 0 && (
             <div className="space-y-2 rounded-2xl border border-amber-200 bg-amber-50/60 p-4 dark:border-amber-900/60 dark:bg-amber-950/20">

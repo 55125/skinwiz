@@ -13,17 +13,29 @@ export const RETAILER_SEARCHES: { name: string; url: (q: string) => string }[] =
 
 const MAX_QUERY = 80;
 
-/** The search text for a product name: whitespace collapsed, capped at a word boundary. */
-export function retailerQuery(name: string): string {
-  const q = name.replace(/\s+/g, " ").trim();
+/**
+ * The search text: the product name, led by the brand when the name doesn't
+ * already contain it, whitespace collapsed, capped at a word boundary. Only
+ * pass a real brand (brand-direct and Open Beauty Facts rows): an FDA
+ * labeler like "L'OREAL USA PRODUCTS" would make store results worse.
+ */
+export function retailerQuery(name: string, brand?: string | null): string {
+  const n = name.replace(/\s+/g, " ").trim();
+  // Open Beauty Facts lists brands comma-separated ("CeraVe,L'Oréal"); the first is the label brand.
+  const b = brand?.split(",")[0].replace(/\s+/g, " ").trim() ?? "";
+  const q = b && n && !n.toLowerCase().includes(b.toLowerCase()) ? `${b} ${n}` : n;
   if (q.length <= MAX_QUERY) return q;
   const cut = q.slice(0, MAX_QUERY);
   const space = cut.lastIndexOf(" ");
   return (space > 0 ? cut.slice(0, space) : cut).trim();
 }
 
-export function retailerSearchLinks(name: string, env: NodeJS.ProcessEnv = process.env): ({ name: string } & OutboundLink)[] {
-  const q = retailerQuery(name);
+export function retailerSearchLinks(
+  name: string,
+  brand?: string | null,
+  env: NodeJS.ProcessEnv = process.env,
+): ({ name: string } & OutboundLink)[] {
+  const q = retailerQuery(name, brand);
   if (!q) return [];
   return RETAILER_SEARCHES.map((r) => ({
     name: r.name,

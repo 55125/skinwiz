@@ -176,7 +176,11 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
   const groupSavings = equivalenceGroup ? storeBrandSavings(equivalenceGroup.members, groupLive) : null;
   const groupRows = sortByUnitPrice(groupOthers, groupLive);
   const quotes = getDisplayQuotes(product.id);
-  const retailerSearches = retailerSearchLinks(product.brandName);
+  const retailerSearches = retailerSearchLinks(
+    product.brandName,
+    // Only these sources carry the brand in `manufacturer`; FDA rows carry the labeler.
+    product.dataSource === "brand_direct" || product.dataSource === "open_beauty_facts" ? product.manufacturer : null,
+  );
   const brandLink = product.sourceUrl ? outboundLink(product.sourceUrl, { placement: "product", rel: "noopener noreferrer" }) : null;
   if (livePricesEnabled() && !BOT_UA.test((await headers()).get("user-agent") ?? "")) recordProductView(product.id);
   const equivalents = equivalenceGroup ? { rows: [], total: 0 } : getEquivalentProducts(product);

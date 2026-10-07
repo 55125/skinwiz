@@ -22,6 +22,8 @@ import { hsaEligibleIdsJson } from "@/lib/otc-index";
 import { displayablePrice, parsePackageDescription, unitPrice } from "@/lib/equivalence";
 import { getDisplayQuotesFor } from "@/lib/prices/store";
 import { compareLivePrices, type LivePrice } from "@/lib/prices/unit";
+import { parseSearch, type SearchTerm } from "@/lib/search-terms";
+import { POTENT_RETINOIDS } from "@/lib/retinoids";
 import { RX_CONCERN_ID } from "@/db/rx";
 import { isDailymedImageUrl } from "@/lib/image-urls";
 import { LISTED, inProductGroup } from "@/lib/canonical";
@@ -491,16 +493,27 @@ export function getVideoLinksForProduct(productId: string) {
 // order of magnitude or search feels slow in practice.
 const SEARCH_LIMIT = 40;
 
-function buildSearchWhere(q: string, filters: { concernId?: string; dataSources?: string[]; freeFromIds?: string[] }) {
-  const needle = likeContains(q);
-  // Also matches activeIngredientText (the raw FDA/manufacturer ingredient
-  // list) -- without this, searching "niacinamide" found the active-
-  // ingredient badge but zero products, since most product names don't
-  // literally contain the ingredient name. Caught by testing the search
-  // page with a real ingredient query before considering this done.
+type SearchFilters = { concernId?: string; dataSources?: string[]; freeFromIds?: string[] };
+
+// One parsed word (lib/search-terms.ts) against one column: any alternative,
+// as a substring or, for short words, at the start of a word.
+function termMatches(col: SQLWrapper, term: SearchTerm): SQL {
+  const ors = term.alts.flatMap((alt) => {
+    const esc = alt.replace(/[\\%_]/g, (c) => `\\${c}`);
+    if (!term.wordStart) return [sql`${col} LIKE ${`%${esc}%`} ESCAPE '\\'`];
+    return [`${esc}%`, `% ${esc}%`, `%-${esc}%`, `%(${esc}%`, `%,${esc}%`, `%/${esc}%`].map((p) => sql`${col} LIKE ${p} ESCAPE '\\'`);
+  });
+  return sql`(${sql.join(ors, sql` OR `)})`;
+}
+
+const SEARCH_COLUMNS = [products.brandName, products.manufacturer, products.activeIngredientText];
+
+function buildSearchWhere(terms: SearchTerm[], filters: SearchFilters) {
+  // Every word has to match somewhere: the product name, the brand, or the
+  // raw ingredient text (so "niacinamide" finds products that contain it).
   const clauses = [
     LISTED_OTC,
-    sql`(${products.brandName} LIKE ${needle} ESCAPE '\\' OR ${products.manufacturer} LIKE ${needle} ESCAPE '\\' OR ${products.activeIngredientText} LIKE ${needle} ESCAPE '\\')`,
+    ...(terms.length ? terms.map((t) => sql`(${sql.join(SEARCH_COLUMNS.map((c) => termMatches(c, t)), sql` OR `)})`) : [sql`0`]),
     ...freeFromWhereClauses(filters.freeFromIds ?? []),
   ];
   if (filters.concernId) clauses.push(eq(products.concernId, filters.concernId));
@@ -508,14 +521,61 @@ function buildSearchWhere(q: string, filters: { concernId?: string; dataSources?
   return and(...clauses);
 }
 
-export function searchProducts(
-  q: string,
-  filters: { concernId?: string; dataSources?: string[]; freeFromIds?: string[] } = {},
-) {
+// Ingredient ids a word names ("retinol" -> retinol-cosmetic), so results
+// that really contain it rank above ones that only mention it in their name
+// (retinol-branded acne patches whose active is salicylic acid).
+function ingredientIdsFor(term: SearchTerm): string[] {
+  if (term.wordStart) return [];
+  return db
+    .select({ id: ingredients.id })
+    .from(ingredients)
+    .where(and(termMatches(ingredients.name, term), sql`${ingredients.productCount} >= ${MIN_PUBLIC_PRODUCTS}`))
+    .limit(40)
+    .all()
+    .map((r) => r.id);
+}
+
+function searchOrder(terms: SearchTerm[]): SQL[] {
+  // A whole-word hit in the name or brand beats a substring ("the ordinary"
+  // is The Ordinary, not "Extraordinary Oils").
+  const inName = terms.flatMap((t) => {
+    const word = { ...t, wordStart: true };
+    return [
+      sql`CASE WHEN ${termMatches(products.brandName, word)} THEN 2 WHEN ${termMatches(products.brandName, t)} THEN 1 ELSE 0 END`,
+      sql`CASE WHEN ${termMatches(products.manufacturer, word)} THEN 2 ELSE 0 END`,
+    ];
+  });
+  const contains = terms.flatMap((t) => {
+    const ids = ingredientIdsFor(t);
+    if (!ids.length) return [];
+    return [
+      sql`CASE WHEN EXISTS (SELECT 1 FROM product_ingredients pi WHERE pi.product_id = ${products.id} AND (pi.position <= 15 OR pi.is_active = 1 OR pi.ingredient_id IN ${RETINOID_IDS_SQL}) AND pi.ingredient_id IN (${sql.join(
+        ids.map((id) => sql`${id}`),
+        sql`, `,
+      )})) THEN 3 ELSE 0 END`,
+    ];
+  });
+  const relevance = [...inName, ...contains];
+  return [
+    ...(relevance.length ? [sql`(${sql.join(relevance, sql` + `)}) DESC`] : []),
+    sql`CASE ${products.dataSource} WHEN 'brand_direct' THEN 0 WHEN 'openfda' THEN 1 WHEN 'dailymed' THEN 2 ELSE 3 END`,
+    sql`LENGTH(${products.brandName})`,
+  ];
+}
+
+const RETINOID_IDS_SQL = sql`(${sql.join(
+  POTENT_RETINOIDS.map((id) => sql`${id}`),
+  sql`, `,
+)})`;
+
+export function searchProducts(q: string, filters: SearchFilters = {}) {
+  const { terms } = parseSearch(q);
+  if (!terms.length) return [];
   return db
     .select()
     .from(products)
-    .where(buildSearchWhere(q, filters))
+    .where(buildSearchWhere(terms, filters))
+    .orderBy(...searchOrder(terms))
     .limit(SEARCH_LIMIT)
     .all();
 }
@@ -526,14 +586,13 @@ export function searchProducts(
 // "40" whether 40 or 4,000 products match). Real bug: the search page
 // never had this, so a filter chip visibly doing nothing to the count made
 // filtering look broken even when the underlying query was correct.
-export function searchProductsCount(
-  q: string,
-  filters: { concernId?: string; dataSources?: string[]; freeFromIds?: string[] } = {},
-) {
+export function searchProductsCount(q: string, filters: SearchFilters = {}) {
+  const { terms } = parseSearch(q);
+  if (!terms.length) return 0;
   const [{ count }] = db
     .select({ count: sql<number>`count(*)` })
     .from(products)
-    .where(buildSearchWhere(q, filters))
+    .where(buildSearchWhere(terms, filters))
     .all();
   return count;
 }

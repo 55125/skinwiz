@@ -9,6 +9,8 @@ import { TRUST_TIERS } from "@/lib/trust-tiers";
 import type { Metadata } from "next";
 import { parseFreeParam } from "@/lib/avoid-shared";
 import { AvoidSwitch } from "@/components/avoid-switch";
+import { SearchHints } from "@/components/search-hints";
+import { parseSearch } from "@/lib/search-terms";
 
 export async function generateMetadata({
   searchParams,
@@ -37,6 +39,7 @@ export default async function SearchPage({
   const activeResults = query ? searchActives(query) : [];
   const productResults = query ? searchProducts(query, searchFilters) : [];
   const productTotal = query ? searchProductsCount(query, searchFilters) : 0;
+  const hints = query ? parseSearch(query).hints : [];
 
   function hrefWith(overrides: Record<string, string | undefined>) {
     const params = new URLSearchParams();
@@ -91,7 +94,9 @@ export default async function SearchPage({
         </div>
       )}
 
-      {query && activeResults.length === 0 && productResults.length === 0 && (
+      <SearchHints hints={hints} />
+
+      {query && activeResults.length === 0 && productResults.length === 0 && hints.length === 0 && (
         <div className="rounded-2xl border border-dashed p-10 text-center text-muted-foreground">
           No results for &quot;{query}&quot;.
         </div>

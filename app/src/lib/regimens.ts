@@ -143,6 +143,14 @@ export function renameRegimen(sessionId: string, regimenId: number, name: string
   return true;
 }
 
+/** Marks (or with null, clears) a prescription retinoid on one of the visitor's own regimens. */
+export function setRxRetinoid(sessionId: string, regimenId: number, slot: Slot | null): boolean {
+  const r = getOwnedRegimen(sessionId, regimenId);
+  if (!r || r.kind !== "own") return false;
+  db.update(regimens).set({ rxRetinoidSlot: slot }).where(eq(regimens.id, regimenId)).run();
+  return true;
+}
+
 // --- clinician plans --------------------------------------------------------
 
 export type ClinicianPlan = {

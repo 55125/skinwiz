@@ -1,4 +1,5 @@
 import { getIngredientsForProduct } from "@/lib/queries";
+import { RETINOIDS, countsAtAnyPosition } from "@/lib/retinoids";
 
 // Rule-of-thumb interaction checks for the products linked in a routine.
 // These are irritation-stacking and stability cautions widely repeated in
@@ -8,7 +9,7 @@ import { getIngredientsForProduct } from "@/lib/queries";
 export type ClassId = "retinoid" | "exfoliant" | "benzoyl-peroxide" | "vitamin-c";
 
 export const CLASS_IDS: Record<ClassId, string[]> = {
-  retinoid: ["retinol-cosmetic", "retinal", "adapalene", "hydroxypinacolone-retinoate", "tretinoin", "tazarotene", "trifarotene"],
+  retinoid: RETINOIDS,
   exfoliant: ["glycolic-acid", "lactic-acid", "mandelic-acid", "salicylic-acid", "lactobionic-acid", "gluconolactone"],
   "benzoyl-peroxide": ["benzoyl-peroxide"],
   "vitamin-c": ["vitamin-c", "l-ascorbic-acid"],
@@ -47,13 +48,18 @@ const RULES: { a: ClassId; b: ClassId; note: string }[] = [
 export type RoutineConflict = { a: { productId: string; brand: string; cls: string }; b: { productId: string; brand: string; cls: string }; note: string };
 
 // A trace amount far down a cosmetic list isn't a meaningful dose; drug-label
-// actives (position <= 0) always count.
+// actives (position <= 0) and potent retinoids (lib/retinoids.ts) always count.
 const MAX_COSMETIC_POSITION = 12;
 
 export function classesOf(productId: string): Set<ClassId> {
+  return classesFromIngredients(getIngredientsForProduct(productId));
+}
+
+/** classesOf for an ingredient list already in hand (pure, for tests). */
+export function classesFromIngredients(rows: { ingredientId: string; position: number }[]): Set<ClassId> {
   const out = new Set<ClassId>();
-  for (const r of getIngredientsForProduct(productId)) {
-    if (r.position > MAX_COSMETIC_POSITION) continue;
+  for (const r of rows) {
+    if (r.position > MAX_COSMETIC_POSITION && !countsAtAnyPosition(r.ingredientId)) continue;
     for (const [cls, ids] of Object.entries(CLASS_IDS) as [ClassId, string[]][]) {
       if (ids.includes(r.ingredientId)) out.add(cls);
     }
@@ -61,11 +67,18 @@ export function classesOf(productId: string): Set<ClassId> {
   return out;
 }
 
-export function findRoutineConflicts(steps: { productId: string | null; productBrandName: string | null }[]): RoutineConflict[] {
+/**
+ * `classes` stands in for the ingredient list when a step has none, like the
+ * regimen's "prescription retinoid from my doctor" (productId is then just a
+ * key for the step).
+ */
+export function findRoutineConflicts(
+  steps: { productId: string | null; productBrandName: string | null; classes?: Set<ClassId> }[],
+): RoutineConflict[] {
   const linked = new Map<string, { brand: string; classes: Set<ClassId> }>();
   for (const s of steps) {
     if (s.productId && !linked.has(s.productId)) {
-      linked.set(s.productId, { brand: s.productBrandName ?? "a linked product", classes: classesOf(s.productId) });
+      linked.set(s.productId, { brand: s.productBrandName ?? "a linked product", classes: s.classes ?? classesOf(s.productId) });
     }
   }
   const entries = [...linked.entries()];

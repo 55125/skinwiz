@@ -20,7 +20,7 @@ export default async function AvoidPage({ searchParams }: { searchParams: Promis
       <MySkinTabs />
       <PageHeader
         title="Ingredients I avoid"
-        description="Pick what you steer clear of. Every product card and page will then flag anything on your list, and listing pages get a one-click filter. Saved in this browser only — no account, nothing sent anywhere."
+        description="Pick what you steer clear of. Every product card and page will then flag anything on your list, and listing pages get a one-click filter. Each choice saves as you make it. No account needed."
       />
 
       <ShareAvoidList ids={ids} />

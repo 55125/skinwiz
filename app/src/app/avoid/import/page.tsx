@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { PageHeader } from "@/components/page-header";
 import { AvoidImportButton } from "@/components/avoid-import-button";
-import { getNotOnLabel, importItemName, watchForNames } from "@/db/patch-test-series";
+import { getNotOnLabel, importItemName, mainlyOffLabel, watchForNames } from "@/db/patch-test-series";
 import { avoidedIngredientName, readAvoidIds } from "@/lib/avoid";
 import { cleanDetails, decodeImportCode, mergeAvoidIds } from "@/lib/avoid-import";
 import { getSafeProductsByConcern } from "@/lib/queries";
@@ -108,6 +108,7 @@ export default async function AvoidImportPage({ searchParams }: { searchParams: 
                       {names.join(", ")}
                     </p>
                   )}
+                  {mainlyOffLabel(id) && <p className="text-sm text-muted-foreground">{mainlyOffLabel(id)}</p>}
                 </li>
               );
             })}

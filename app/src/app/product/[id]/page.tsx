@@ -295,9 +295,12 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
           />
 
           <ShelfButton
-            key={`${shelfEntry?.status ?? "none"}-${shelfEntry?.opened ?? false}`}
+            key={`${shelfEntry?.status ?? "none"}-${shelfEntry?.opened ?? false}-${regimenSlot ?? "out"}`}
             productId={product.id}
-            initialStatus={shelfEntry?.status ?? null} initialOpened={shelfEntry?.opened ?? false} />
+            initialStatus={shelfEntry?.status ?? null}
+            initialOpened={shelfEntry?.opened ?? false}
+            inRegimen={regimenSlot !== null}
+          />
 
           {avoid?.status === "conflicts" && (
             <Alert className="border-red-300 bg-red-50 dark:border-red-900 dark:bg-red-950/40">
@@ -499,24 +502,27 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
                 Ingredient-based filters this matches
               </h2>
               {/* First 6 inline, the rest behind a native disclosure -- 20+
-                  chips in a block buried the ingredient list above. */}
-              <details className="group/ff">
-                <summary className="flex cursor-pointer list-none flex-wrap gap-1.5 [&::-webkit-details-marker]:hidden">
-                  {product.freeFromFlags.slice(0, 6).map((id) => (
-                    <FreeFromLink key={id} id={id} />
-                  ))}
-                  {product.freeFromFlags.length > 6 && (
-                    <span className="text-xs font-medium text-brand group-open/ff:hidden">
-                      Show all {product.freeFromFlags.length} →
-                    </span>
-                  )}
-                </summary>
-                <div className="mt-1.5 flex flex-wrap gap-1.5">
-                  {product.freeFromFlags.slice(6).map((id) => (
-                    <FreeFromLink key={id} id={id} />
-                  ))}
-                </div>
-              </details>
+                  chips in a block buried the ingredient list above. The
+                  summary is only the toggle: links inside a summary are
+                  nested interactive controls (axe nested-interactive). */}
+              <div className="flex flex-wrap gap-1.5">
+                {product.freeFromFlags.slice(0, 6).map((id) => (
+                  <FreeFromLink key={id} id={id} />
+                ))}
+              </div>
+              {product.freeFromFlags.length > 6 && (
+                <details className="group/ff mt-1.5">
+                  <summary className="w-fit cursor-pointer list-none text-xs font-medium text-brand [&::-webkit-details-marker]:hidden">
+                    <span className="group-open/ff:hidden">Show all {product.freeFromFlags.length} →</span>
+                    <span className="hidden group-open/ff:inline">Show fewer</span>
+                  </summary>
+                  <div className="mt-1.5 flex flex-wrap gap-1.5">
+                    {product.freeFromFlags.slice(6).map((id) => (
+                      <FreeFromLink key={id} id={id} />
+                    ))}
+                  </div>
+                </details>
+              )}
               {flaggedSkin.some((f) => f.hits.length > 0) && (
                 <div className="mt-3 space-y-1.5 text-xs text-muted-foreground">
                   {flaggedSkin
@@ -734,11 +740,6 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
                   <p className="font-medium">
                     {link.price ? `$${link.price.toFixed(2)}` : "See retailer"}{" "}
                     <span className="text-xs text-muted-foreground">via {link.network}</span>
-                    {link.isDemo && (
-                      <Badge variant="outline" className="ml-2 border-dashed text-amber-700 dark:text-amber-400">
-                        Demo — not a live price
-                      </Badge>
-                    )}
                   </p>
                   <p className="text-xs text-muted-foreground">Affiliate link — we may earn a commission.</p>
                 </div>

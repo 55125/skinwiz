@@ -619,3 +619,15 @@ export function watchForNames(id: string, max = 6): string[] {
   if (getAllergenGroup(id)) return allergenMembers(id).map((m) => getAllergen(m)!.name);
   return [];
 }
+
+// Allergens a label can list but that people mostly meet elsewhere. Shown
+// next to the label names on the patient's sheet and import page, so a
+// positive nickel test doesn't read as "check your moisturizer" alone.
+const MAINLY_OFF_LABEL: Record<string, string> = {
+  nickel:
+    "Mostly from metal, not product labels: jewelry, belt buckles, jeans buttons, eyeglass frames, keys and metal tools like eyelash curlers.",
+};
+
+export function mainlyOffLabel(id: string): string | undefined {
+  return MAINLY_OFF_LABEL[id];
+}

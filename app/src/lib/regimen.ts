@@ -162,13 +162,20 @@ export type Regimen = {
   pm: RegimenStep[];
   count: number;
   conflicts: SlotConflict[];
+  /** "I also use a prescription retinoid": its slot, or null. */
+  rxRetinoid: Slot | null;
 };
 
-export const EMPTY_REGIMEN: Regimen = { am: [], pm: [], count: 0, conflicts: [] };
+export const EMPTY_REGIMEN: Regimen = { am: [], pm: [], count: 0, conflicts: [], rxRetinoid: null };
+
+/** Step key and name the prescription-retinoid marker uses in cautions. */
+export const RX_RETINOID_KEY = "rx-retinoid";
+export const RX_RETINOID_NAME = "Your prescription retinoid";
 
 /** One own regimen's items. The caller has already checked it belongs to the session (lib/regimens.ts). */
-export function getRegimen(regimenId: number | null): Regimen {
+export function getRegimen(regimenId: number | null, rxRetinoidSlot: string | null = null): Regimen {
   if (regimenId === null) return EMPTY_REGIMEN;
+  const rxRetinoid = isSlot(rxRetinoidSlot) ? rxRetinoidSlot : null;
   const rows = db
     .select({ slot: regimenItems.slot, createdAt: regimenItems.createdAt, directions: regimenItems.directions, product: products })
     .from(regimenItems)
@@ -197,13 +204,15 @@ export function getRegimen(regimenId: number | null): Regimen {
   // The same cautions the shelf and community routines use, told apart by
   // whether the two products are ever in the same slot.
   const slotOf = new Map(steps.map((s) => [s.product.id, s.slot]));
+  if (rxRetinoid) slotOf.set(RX_RETINOID_KEY, rxRetinoid);
   const shareTime = (a: Slot, b: Slot) => a === "both" || b === "both" || a === b;
   // Cleansers are left out: a wash-off product is on the skin for a minute,
   // so pairing it with a leave-on isn't the stacking these cautions are about.
   const leaveOn = steps.filter((s) => s.step !== "cleanser");
-  const conflicts = findRoutineConflicts(leaveOn.map((s) => ({ productId: s.product.id, productBrandName: s.product.brandName }))).map(
-    (c): SlotConflict => ({ ...c, status: shareTime(slotOf.get(c.a.productId)!, slotOf.get(c.b.productId)!) ? "same-time" : "split" }),
-  );
+  const conflicts = findRoutineConflicts([
+    ...leaveOn.map((s) => ({ productId: s.product.id, productBrandName: s.product.brandName })),
+    ...(rxRetinoid ? [{ productId: RX_RETINOID_KEY, productBrandName: RX_RETINOID_NAME, classes: new Set<ClassId>(["retinoid"]) }] : []),
+  ]).map((c): SlotConflict => ({ ...c, status: shareTime(slotOf.get(c.a.productId)!, slotOf.get(c.b.productId)!) ? "same-time" : "split" }));
 
-  return { am: bySlot("am"), pm: bySlot("pm"), count: steps.length, conflicts };
+  return { am: bySlot("am"), pm: bySlot("pm"), count: steps.length, conflicts, rxRetinoid };
 }

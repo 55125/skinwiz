@@ -289,9 +289,12 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
           />
 
           <ShelfButton
-            key={`${shelfEntry?.status ?? "none"}-${shelfEntry?.opened ?? false}`}
+            key={`${shelfEntry?.status ?? "none"}-${shelfEntry?.opened ?? false}-${regimenSlot ?? "out"}`}
             productId={product.id}
-            initialStatus={shelfEntry?.status ?? null} initialOpened={shelfEntry?.opened ?? false} />
+            initialStatus={shelfEntry?.status ?? null}
+            initialOpened={shelfEntry?.opened ?? false}
+            inRegimen={regimenSlot !== null}
+          />
 
           {avoid?.status === "conflicts" && (
             <Alert className="border-red-300 bg-red-50 dark:border-red-900 dark:bg-red-950/40">

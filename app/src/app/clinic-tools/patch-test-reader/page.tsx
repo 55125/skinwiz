@@ -21,7 +21,7 @@ export default function PatchTestReaderPage() {
       />
       <PatchTestReader />
       <p className="text-xs text-muted-foreground">
-        Grades are recorded as read; clinical relevance is the clinician&apos;s call. Reloading the page clears the reading.{" "}
+        Grades are recorded as read; clinical relevance is the clinician&apos;s call. The reading survives a reload in this tab, and only in this tab; New reading clears it.{" "}
         <Link href="/clinic-tools" className="font-medium text-brand hover:underline">
           More clinic tools →
         </Link>

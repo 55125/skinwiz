@@ -59,12 +59,17 @@ function IngredientPicker({
         <input
           value={q}
           onChange={(e) => setQ(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Escape") setQ("");
+          }}
           placeholder="Search an ingredient…"
           aria-label={`${title}: search ingredients`}
           className="h-10 w-full rounded-xl border bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
         />
+        {/* In the page flow, not floating: a floating list sat on top of the
+            Save button below and blocked it. */}
         {shown.length > 0 && (
-          <ul className="absolute z-10 mt-1 w-full overflow-hidden rounded-xl border bg-popover shadow-lg">
+          <ul className="mt-1 w-full overflow-hidden rounded-xl border bg-popover shadow-sm">
             {shown.map((r) => (
               <li key={r.id}>
                 <button

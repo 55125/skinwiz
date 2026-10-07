@@ -47,4 +47,7 @@ EXPOSE 3000
 # the app from starting, unlike db:migrate/db:seed which the app actually
 # needs. Idempotent (skips actives already in active_chem_data), so this
 # is a no-op after the first successful run.
-CMD npm run db:migrate && npm run db:seed && (npm run enrich:pubchem || true) && npm start
+# db:backup snapshots the volume database first (src/db/backup.ts, keeps the
+# last 5); `|| true` so a failed snapshot never stops the app from starting.
+# db:seed skips itself when its inputs haven't changed since the last run.
+CMD (npm run db:backup || true) && npm run db:migrate && npm run db:seed && (npm run enrich:pubchem || true) && npm start

@@ -53,7 +53,7 @@ function IngredientPicker({
 
   return (
     <div className="space-y-2">
-      <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{title}</h3>
+      <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{title}</h2>
       <p className="text-xs text-muted-foreground">{hint}</p>
       <div className="relative">
         <input

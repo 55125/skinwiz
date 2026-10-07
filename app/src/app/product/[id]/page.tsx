@@ -493,24 +493,27 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
                 Ingredient-based filters this matches
               </h2>
               {/* First 6 inline, the rest behind a native disclosure -- 20+
-                  chips in a block buried the ingredient list above. */}
-              <details className="group/ff">
-                <summary className="flex cursor-pointer list-none flex-wrap gap-1.5 [&::-webkit-details-marker]:hidden">
-                  {product.freeFromFlags.slice(0, 6).map((id) => (
-                    <FreeFromLink key={id} id={id} />
-                  ))}
-                  {product.freeFromFlags.length > 6 && (
-                    <span className="text-xs font-medium text-brand group-open/ff:hidden">
-                      Show all {product.freeFromFlags.length} →
-                    </span>
-                  )}
-                </summary>
-                <div className="mt-1.5 flex flex-wrap gap-1.5">
-                  {product.freeFromFlags.slice(6).map((id) => (
-                    <FreeFromLink key={id} id={id} />
-                  ))}
-                </div>
-              </details>
+                  chips in a block buried the ingredient list above. The
+                  summary is only the toggle: links inside a summary are
+                  nested interactive controls (axe nested-interactive). */}
+              <div className="flex flex-wrap gap-1.5">
+                {product.freeFromFlags.slice(0, 6).map((id) => (
+                  <FreeFromLink key={id} id={id} />
+                ))}
+              </div>
+              {product.freeFromFlags.length > 6 && (
+                <details className="group/ff mt-1.5">
+                  <summary className="w-fit cursor-pointer list-none text-xs font-medium text-brand [&::-webkit-details-marker]:hidden">
+                    <span className="group-open/ff:hidden">Show all {product.freeFromFlags.length} →</span>
+                    <span className="hidden group-open/ff:inline">Show fewer</span>
+                  </summary>
+                  <div className="mt-1.5 flex flex-wrap gap-1.5">
+                    {product.freeFromFlags.slice(6).map((id) => (
+                      <FreeFromLink key={id} id={id} />
+                    ))}
+                  </div>
+                </details>
+              )}
               {flaggedSkin.some((f) => f.hits.length > 0) && (
                 <div className="mt-3 space-y-1.5 text-xs text-muted-foreground">
                   {flaggedSkin

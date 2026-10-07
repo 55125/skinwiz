@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { AlertTriangle, ShieldAlert } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
+import { MySkinTabs } from "@/components/my-skin-tabs";
 import { ProductGrid } from "@/components/product-grid";
 import { readDeviceSessionId, readSessionId } from "@/lib/session";
 import { getShelf } from "@/lib/shelf";
@@ -77,8 +78,8 @@ export default async function ShelfPage() {
 
   return (
     <div className="mx-auto max-w-6xl space-y-8 px-4 py-10">
+      <MySkinTabs />
       <PageHeader
-        eyebrow="Your products"
         title="My shelf"
         description="Track what you own, what you want and what you've finished. Saved against an anonymous cookie in this browser — no account. Add an email if you want it on other devices too."
       />

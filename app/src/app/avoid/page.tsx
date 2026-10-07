@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { PageHeader } from "@/components/page-header";
+import { MySkinTabs } from "@/components/my-skin-tabs";
 import { AvoidListEditor } from "@/components/avoid-list-editor";
 import { ShareAvoidList } from "@/components/share-avoid-list";
 import { readAvoidIds } from "@/lib/avoid";
@@ -16,8 +17,8 @@ export default async function AvoidPage({ searchParams }: { searchParams: Promis
   const ids = await readAvoidIds();
   return (
     <div className="mx-auto max-w-3xl space-y-8 px-4 py-10">
+      <MySkinTabs />
       <PageHeader
-        eyebrow="Your list"
         title="Ingredients I avoid"
         description="Pick what you steer clear of. Every product card and page will then flag anything on your list, and listing pages get a one-click filter. Saved in this browser only — no account, nothing sent anywhere."
       />

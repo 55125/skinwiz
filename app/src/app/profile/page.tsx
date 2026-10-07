@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { PageHeader } from "@/components/page-header";
+import { MySkinTabs } from "@/components/my-skin-tabs";
 import { ProfileEditor } from "@/components/profile-editor";
 import { getIngredientNames, readProfile } from "@/lib/profile";
 import { SITE_NAME } from "@/lib/brand";
@@ -22,8 +23,8 @@ export default async function ProfilePage() {
   const person = device ? personForSession(device) : null;
   return (
     <div className="mx-auto max-w-3xl space-y-8 px-4 py-10">
+      <MySkinTabs />
       <PageHeader
-        eyebrow="Your skin"
         title="My skin profile"
         description="Tell us about your skin and every product gets a match score with the reasons spelled out. Saved in this browser, no account needed. Add an email below and your profile follows you to other devices; pregnancy and breastfeeding answers always stay in this browser only."
       />

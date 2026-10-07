@@ -14,15 +14,18 @@ import { INGREDIENT_ITEMS, MY_SKIN_ITEMS, isActive, type NavItem } from "@/lib/n
 
 type Concern = { id: string; name: string };
 
+const HSA_GUIDE = "/guide/hsa-fsa-eligible";
+
 function concernItems(concerns: Concern[]): NavItem[] {
   return [
     ...concerns.map((c) => ({ href: `/concern/${c.id}`, label: c.name })),
     { href: "/browse", label: "All products", hint: "Filter the full catalog", divider: true },
     { href: "/same", label: "Store-brand equivalents", hint: "Same active, same strength, lower price" },
+    { href: HSA_GUIDE, label: "HSA/FSA-eligible skincare", hint: "What your spending account usually covers" },
   ];
 }
 
-const CONCERN_PREFIXES = ["/concern", "/browse", "/product", "/same"];
+const CONCERN_PREFIXES = ["/concern", "/browse", "/product", "/same", HSA_GUIDE];
 
 function useDismiss(open: boolean, close: () => void, ref: React.RefObject<HTMLElement | null>) {
   useEffect(() => {
@@ -207,7 +210,10 @@ export function SiteNav({ concerns }: { concerns: Concern[] }) {
           label="Ingredients"
           items={INGREDIENT_ITEMS}
           pathname={pathname}
-          active={[...INGREDIENT_ITEMS.map((i) => i.href), "/ingredient", "/guide"].some((h) => isActive(pathname, h))}
+          active={
+            !isActive(pathname, HSA_GUIDE) &&
+            [...INGREDIENT_ITEMS.map((i) => i.href), "/ingredient", "/guide"].some((h) => isActive(pathname, h))
+          }
         />
         {pill("/routines", "Routines", isActive(pathname, "/routines"))}
         {pill(

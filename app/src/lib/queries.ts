@@ -416,12 +416,20 @@ export function getPackageDescriptions(ids: string[]): Map<string, string> {
 // (business-plan.md §3). The seed never inserts one; this is the second lock.
 // Covers the product's merged duplicates too (lib/canonical.ts): a buy link
 // recorded against any listing of the product belongs on its one page.
+// Live rows only. Demo rows (schema.ts affiliateLinks) carry made-up prices
+// and placeholder URLs that 404 at the network, so they never reach a page.
 export function getAffiliateLinksForProduct(productId: string) {
   return dedupeBy(
     db
       .select()
       .from(affiliateLinks)
-      .where(and(inProductGroup(affiliateLinks.productId, productId), sql`${affiliateLinks.productId} IN (SELECT id FROM products WHERE is_rx = 0)`))
+      .where(
+        and(
+          inProductGroup(affiliateLinks.productId, productId),
+          eq(affiliateLinks.isDemo, false),
+          sql`${affiliateLinks.productId} IN (SELECT id FROM products WHERE is_rx = 0)`,
+        ),
+      )
       .orderBy(affiliateLinks.id)
       .all(),
     (l) => l.buyUrl,
@@ -444,7 +452,13 @@ export function getAffiliateLinksForProducts(productIds: string[]) {
   return db
     .select()
     .from(affiliateLinks)
-    .where(and(inArray(affiliateLinks.productId, productIds), sql`${affiliateLinks.productId} IN (SELECT id FROM products WHERE is_rx = 0)`))
+    .where(
+      and(
+        inArray(affiliateLinks.productId, productIds),
+        eq(affiliateLinks.isDemo, false),
+        sql`${affiliateLinks.productId} IN (SELECT id FROM products WHERE is_rx = 0)`,
+      ),
+    )
     .all();
 }
 

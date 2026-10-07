@@ -222,9 +222,9 @@ export const productIngredients = sqliteTable(
 // Real affiliate integration exists (tools/affiliate_feeds/) but no network
 // account is approved yet (project.md §11 open decision), so this table is
 // seeded from SYNTHETIC mock-feed data for a small demo subset only.
-// isDemo must stay true for all rows until a real feed is wired in —
-// the UI enforces a visible "demo" label whenever isDemo is true so this
-// never gets presented as a live price to a real user.
+// isDemo must stay true for all rows until a real feed is wired in. Queries
+// (lib/queries.ts) drop demo rows, so they never reach a page: their prices
+// are invented and their buy URLs are placeholders.
 export const affiliateLinks = sqliteTable("affiliate_links", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   productId: text("product_id").notNull().references(() => products.id),

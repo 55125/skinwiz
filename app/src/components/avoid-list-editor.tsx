@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Check, Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -20,40 +20,76 @@ import { PatchTestPaste } from "@/components/patch-test-paste";
 import { PatchTestSeriesPicker } from "@/components/patch-test-checklist";
 import { cn } from "@/lib/utils";
 
+// Every tick saves itself (debounced), so "saved in this browser" is true the
+// moment you pick something; there is no Save button to forget. While a save
+// is still in flight, leaving the page asks first.
+const SAVE_DELAY_MS = 500;
+
+function post(ids: Set<string>, keepalive = false) {
+  return fetch("/api/avoid", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ids: [...ids] }),
+    keepalive,
+  }).catch(() => null);
+}
+
 export function AvoidListEditor({ initialIds, pasteOpen, seriesOpen }: { initialIds: string[]; pasteOpen?: boolean; seriesOpen?: boolean }) {
   const router = useRouter();
   const [ids, setIds] = useState<Set<string>>(new Set(initialIds));
-  const [saved, setSaved] = useState(true);
-  const [isPending, startTransition] = useTransition();
+  const [status, setStatus] = useState<"saved" | "saving" | "error">("saved");
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const latest = useRef(0);
+  const pending = useRef<Set<string> | null>(null);
 
-  function toggle(id: string) {
-    setIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-    setSaved(false);
+  useEffect(() => {
+    if (status === "saved") return;
+    const warn = (e: BeforeUnloadEvent) => e.preventDefault();
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [status]);
+
+  // Leaving through an in-app link unmounts the editor: send a save that is
+  // still waiting on the debounce right away instead of dropping it.
+  useEffect(() => () => {
+    if (!timer.current || !pending.current) return;
+    clearTimeout(timer.current);
+    void post(pending.current, true);
+  }, []);
+
+  async function persist(next: Set<string>) {
+    timer.current = null;
+    pending.current = null;
+    const seq = ++latest.current;
+    const res = await post(next);
+    if (seq !== latest.current) return; // a newer save is on its way
+    if (res?.ok) {
+      setStatus("saved");
+      router.refresh();
+    } else {
+      setStatus("error");
+    }
   }
 
-  function save(next: Set<string> = ids) {
-    startTransition(async () => {
-      const res = await fetch("/api/avoid", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ids: [...next] }),
-      });
-      if (res.ok) {
-        setSaved(true);
-        router.refresh();
-      }
-    });
+  function save(next: Set<string>, delay = SAVE_DELAY_MS) {
+    setStatus("saving");
+    pending.current = next;
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = setTimeout(() => void persist(next), delay);
+  }
+
+  function toggle(id: string) {
+    const next = new Set(ids);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    setIds(next);
+    save(next);
   }
 
   function addAndSave(picked: string[]) {
     const next = new Set([...ids, ...picked]);
     setIds(next);
-    save(next);
+    save(next, 0);
   }
 
   const groups = [
@@ -81,17 +117,22 @@ export function AvoidListEditor({ initialIds, pasteOpen, seriesOpen }: { initial
         </fieldset>
       ))}
 
-      <div className={cn("flex items-center gap-3", !saved && "sticky bottom-4 z-10")}>
-        <Button type="button" onClick={() => save()} disabled={saved || isPending} className="rounded-full px-5 shadow-md">
-          {saved ? (
+      <div className={cn("flex items-center gap-3", status !== "saved" && "sticky bottom-4 z-10")}>
+        <p role="status" className="flex items-center gap-2 rounded-full border bg-card px-4 py-2 text-sm shadow-sm">
+          {status === "saving" && "Saving…"}
+          {status === "saved" && (
             <>
-              <Check className="h-4 w-4" /> Saved
+              <Check className="h-4 w-4 text-brand" aria-hidden />
+              {ids.size === 0 ? "Your list is empty" : `Saved: ${ids.size} ${ids.size === 1 ? "item" : "items"}`}
             </>
-          ) : (
-            `Save ${ids.size} ${ids.size === 1 ? "item" : "items"}`
           )}
-        </Button>
-        {ids.size === 0 && !saved && <p className="text-sm text-muted-foreground">Saving with nothing selected clears your list.</p>}
+          {status === "error" && <span className="text-destructive">Couldn&apos;t save.</span>}
+        </p>
+        {status === "error" && (
+          <Button type="button" variant="outline" size="sm" onClick={() => save(ids, 0)} className="rounded-full">
+            Try again
+          </Button>
+        )}
       </div>
     </div>
   );

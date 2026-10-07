@@ -47,6 +47,7 @@ export default async function CliniciansPage({ searchParams }: { searchParams: P
           next="/clinicians"
           title="Sign in with your email"
           blurb="We send a one-time sign-in link. No password. Your email identifies your clinician account; it's never shown to patients."
+          footnote="We only email you sign-in links and notices about your clinician account. Delete the account and everything in it at any time."
         />
       </div>
     );

@@ -728,11 +728,6 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
                   <p className="font-medium">
                     {link.price ? `$${link.price.toFixed(2)}` : "See retailer"}{" "}
                     <span className="text-xs text-muted-foreground">via {link.network}</span>
-                    {link.isDemo && (
-                      <Badge variant="outline" className="ml-2 border-dashed text-amber-700 dark:text-amber-400">
-                        Demo — not a live price
-                      </Badge>
-                    )}
                   </p>
                   <p className="text-xs text-muted-foreground">Affiliate link — we may earn a commission.</p>
                 </div>

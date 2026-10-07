@@ -57,6 +57,7 @@ import { SITE_NAME } from "@/lib/brand";
 import { getEquivalenceGroupForProduct, isHsaEligible } from "@/lib/otc-index";
 import { HSA_GUIDE_PATH, HSA_STORE_AFFILIATE, isSunscreen } from "@/lib/hsa";
 import { HsaBadge } from "@/components/hsa-badge";
+import { retailerSearchLinks } from "@/lib/retailer-search";
 import { EquivalenceExplainer, EquivalenceRows } from "@/components/equivalence-list";
 import { FEATURES } from "@/lib/feature-flags";
 import { productPregnancyFindings } from "@/lib/pregnancy";
@@ -175,6 +176,11 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
   const groupSavings = equivalenceGroup ? storeBrandSavings(equivalenceGroup.members, groupLive) : null;
   const groupRows = sortByUnitPrice(groupOthers, groupLive);
   const quotes = getDisplayQuotes(product.id);
+  const retailerSearches = retailerSearchLinks(
+    product.brandName,
+    // Only these sources carry the brand in `manufacturer`; FDA rows carry the labeler.
+    product.dataSource === "brand_direct" || product.dataSource === "open_beauty_facts" ? product.manufacturer : null,
+  );
   const brandLink = product.sourceUrl ? outboundLink(product.sourceUrl, { placement: "product", rel: "noopener noreferrer" }) : null;
   if (livePricesEnabled() && !BOT_UA.test((await headers()).get("user-agent") ?? "")) recordProductView(product.id);
   const equivalents = equivalenceGroup ? { rows: [], total: 0 } : getEquivalentProducts(product);
@@ -775,14 +781,32 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
               Visit page <ExternalLink className="ml-1 h-3.5 w-3.5" />
             <span className="sr-only"> (opens in new tab)</span></a>
           </div>
-        ) : manualLinks.length > 0 || quotes.length > 0 ? null : (
-          <Alert>
-            <AlertTitle>Retailer links coming soon</AlertTitle>
-            <AlertDescription>
-              We&apos;re still setting up affiliate partnerships. In the meantime, check this product
-              directly with your preferred retailer or the manufacturer&apos;s site.
-            </AlertDescription>
-          </Alert>
+        ) : null}
+        {/* No price or store link yet: search the big drugstore retailers for it,
+            so the page is never a dead end (lib/retailer-search). */}
+        {quotes.length === 0 && manualLinks.length === 0 && affiliateLinks.length === 0 && (
+          <div className="space-y-2 rounded-xl border bg-card p-4">
+            <p className="font-medium">Check at a store</p>
+            <div className="flex flex-wrap gap-2">
+              {retailerSearches.map((r) => (
+                <a
+                  key={r.name}
+                  href={r.href}
+                  target="_blank"
+                  rel={r.rel}
+                  className={buttonVariants({ variant: "outline", size: "sm" })}
+                >
+                  {r.name} <ExternalLink className="ml-1 h-3.5 w-3.5" />
+                  <span className="sr-only"> (search, opens in new tab)</span>
+                </a>
+              ))}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {retailerSearches[0]?.wrapped
+                ? "These open a search on each store's site; we may earn a commission. Results can include other sizes or similar products, so check the label."
+                : "These open a search on each store's site. Not affiliate links: we don't earn a commission on them. Results can include other sizes or similar products, so check the label."}
+            </p>
+          </div>
         )}
       </section>
 

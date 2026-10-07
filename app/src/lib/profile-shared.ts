@@ -1,5 +1,6 @@
 // Pure profile logic shared by server and client components (no DB / cookies).
 import { avoidConflicts, type AvoidableProduct } from "@/lib/avoid-shared";
+import { RETINOIDS, countsAtAnyPosition } from "@/lib/retinoids";
 
 export const PROFILE_COOKIE = "sw_profile";
 export const PROFILE_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
@@ -19,7 +20,7 @@ export const PROFILE_CONCERNS: { id: string; label: string; boosters: string[] }
   { id: "acne", label: "Acne & breakouts", boosters: ["benzoyl-peroxide", "salicylic-acid", "adapalene", "azelaic-acid", "niacinamide", "sulfur"] },
   { id: "fungal-acne", label: "Fungal acne", boosters: [] },
   { id: "dark-spots", label: "Dark spots & tone", boosters: ["vitamin-c", "alpha-arbutin", "tranexamic-acid", "niacinamide", "azelaic-acid", "*ascorb*"] },
-  { id: "aging", label: "Fine lines & aging", boosters: ["retinol-cosmetic", "retinal", "bakuchiol", "*peptide*", "*tripeptide*", "vitamin-c", "adapalene"] },
+  { id: "aging", label: "Fine lines & aging", boosters: [...RETINOIDS, "bakuchiol", "*peptide*", "*tripeptide*", "vitamin-c"] },
   { id: "dryness", label: "Dryness & barrier", boosters: ["*hyaluron*", "ceramide*", "squalane", "panthenol", "glycerin", "colloidal-oatmeal"] },
   { id: "redness", label: "Redness & irritation", boosters: ["centella-asiatica", "azelaic-acid", "panthenol", "allantoin", "colloidal-oatmeal"] },
   { id: "sun", label: "Sun protection", boosters: ["zinc-oxide", "titanium-dioxide", "avobenzone", "octocrylene", "homosalate"] },
@@ -160,7 +161,9 @@ export function matchProduct(
   if (!ingredients || ingredients.length === 0) return null;
   const flags = product.freeFromFlags;
   const present = new Set(ingredients.map((i) => i.id));
-  const meaningful = new Set(ingredients.filter((i) => i.isActive || (i.position > 0 && i.position <= BOOSTER_MAX_POSITION) || i.position <= 0).map((i) => i.id));
+  const meaningful = new Set(
+    ingredients.filter((i) => i.isActive || i.position <= BOOSTER_MAX_POSITION || countsAtAnyPosition(i.id)).map((i) => i.id),
+  );
 
   let score = 60;
   let cap = 100;

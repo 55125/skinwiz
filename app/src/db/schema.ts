@@ -456,6 +456,10 @@ export const regimens = sqliteTable(
     instanceId: integer("instance_id").references(() => handoutInstances.id),
     active: integer("active", { mode: "boolean" }).notNull().default(false),
     createdAt: text("created_at").notNull(),
+    // "I also use a prescription retinoid from my doctor": am/pm/both, or
+    // null. No product and no dosing; it only lets the retinoid cautions
+    // (lib/routine-conflicts.ts) account for it. Own regimens only.
+    rxRetinoidSlot: text("rx_retinoid_slot"),
   },
   (table) => [index("regimens_session_idx").on(table.sessionId), uniqueIndex("regimens_instance_idx").on(table.instanceId)],
 );

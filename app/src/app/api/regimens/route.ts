@@ -9,8 +9,10 @@ import {
   getOwnedRegimen,
   renameRegimen,
   setActiveRegimen,
+  setRxRetinoid,
   setStepState,
 } from "@/lib/regimens";
+import { isSlot } from "@/lib/regimen";
 import { getShelfEntry, setShelfEntry } from "@/lib/shelf";
 import { onShelfChange } from "@/lib/checkins";
 
@@ -71,6 +73,11 @@ export async function POST(request: Request) {
           }
         }
       }
+      return NextResponse.json({ ok: true });
+    }
+    case "rx-retinoid": {
+      if (body.slot !== null && !isSlot(body.slot)) return NextResponse.json({ error: "Invalid slot." }, { status: 400 });
+      if (!setRxRetinoid(sessionId, regimenId, body.slot)) return NextResponse.json({ error: "That regimen can't be edited." }, { status: 400 });
       return NextResponse.json({ ok: true });
     }
     default:

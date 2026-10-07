@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { rateLimit, readJsonBody } from "@/lib/api-guard";
 import { readAvoidIds, sanitizeAvoidIds, writeAvoidIds } from "@/lib/avoid";
 import { mergeAvoidIds } from "@/lib/avoid-import";
 
@@ -6,7 +7,11 @@ import { mergeAvoidIds } from "@/lib/avoid-import";
 // patch-test import), so a stale page can't drop anything. Saved to the
 // account as well when the visitor is signed in (lib/avoid.ts).
 export async function POST(request: Request) {
-  const body = await request.json().catch(() => null);
+  const limited = rateLimit(request, "avoid", 60, 60_000);
+  if (limited) return limited;
+  const parsed = await readJsonBody(request);
+  if (!parsed.ok) return parsed.response;
+  const body = parsed.body as { add?: unknown; ids?: unknown } | null;
   if (Array.isArray(body?.add)) {
     const existing = await readAvoidIds();
     const { merged, added, already } = mergeAvoidIds(existing, sanitizeAvoidIds(body.add));

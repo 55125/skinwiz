@@ -54,7 +54,8 @@ function saveIds(personId: string, ids: string[], now = new Date()) {
 async function setCookieIds(ids: string[]) {
   const store = await cookies();
   if (ids.length === 0) store.delete(AVOID_COOKIE);
-  else store.set(AVOID_COOKIE, ids.join(","), { httpOnly: true, sameSite: "lax", maxAge: AVOID_COOKIE_MAX_AGE });
+  else store.set(AVOID_COOKIE, ids.join(","), { httpOnly: true, sameSite: "lax",
+    secure: process.env.NODE_ENV === "production", maxAge: AVOID_COOKIE_MAX_AGE });
 }
 
 /**

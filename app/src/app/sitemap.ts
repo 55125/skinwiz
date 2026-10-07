@@ -10,8 +10,9 @@ import { FREE_FROM_CHECKS } from "@/db/ingredient-flags";
 import { ALLERGEN_GROUPS, CONTACT_ALLERGENS } from "@/db/contact-allergens";
 import { getEquivalenceGroups } from "@/lib/otc-index";
 import { FEATURES } from "@/lib/feature-flags";
+import { ttlCache } from "@/lib/ttl-cache";
 
-const STATIC_PAGES = ["/browse", "/ingredients", "/allergens", "/same", "/guide/hsa-fsa-eligible", "/routines", "/check", "/about", "/for-clinicians", "/clinic-tools", "/contact", "/privacy", "/terms"];
+const STATIC_PAGES = ["/browse", "/ingredients", "/allergens", "/same", "/guide/hsa-fsa-eligible", "/routines", "/check", "/about", "/for-clinicians", "/clinic-tools", "/contact", "/privacy", "/terms", "/accessibility"];
 
 // Force dynamic (query the DB per-request) rather than the default static
 // generation: a static sitemap would be computed once at build time,
@@ -23,7 +24,14 @@ const STATIC_PAGES = ["/browse", "/ingredients", "/allergens", "/same", "/guide/
 // at build time would silently drift from the real catalog.
 export const dynamic = "force-dynamic";
 
+// ~24k URLs; crawlers fetch it repeatedly, so it is built at most every 10 minutes.
 export default function sitemap(): MetadataRoute.Sitemap {
+  return cachedSitemap();
+}
+
+const cachedSitemap = ttlCache(buildSitemap);
+
+function buildSitemap(): MetadataRoute.Sitemap {
   // Never the hidden prescription concern; no /rx, /clinicians or /h URLs
   // either (the Rx pages are noindex for now, handouts are private).
   const concernRows = db.select({ id: concerns.id }).from(concerns).where(ne(concerns.id, RX_CONCERN_ID)).all();

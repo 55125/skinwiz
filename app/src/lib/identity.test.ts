@@ -93,6 +93,20 @@ test("a browser signed in as someone else switches over without merging their da
   assert.equal(m.identity.resolveSessionId("dev-c"), "dev-c");
 });
 
+test("a link requested from another browser never signs that browser in", () => {
+  // An attacker requests a link for someone else's address; the owner opens it.
+  shelf("attacker", "p1", "own", false, "2026-01-01 00:00:00");
+  const owner = m.identity.personForSession("dev-a")!;
+  const { person } = m.identity.completeSignIn({ email: "a@example.com", requestSessionId: "attacker", deviceSessionId: "dev-a", now: mins(20) });
+  assert.equal(person.id, owner.id);
+  assert.equal(m.identity.personForSession("attacker"), null, "requesting browser stays anonymous");
+  assert.equal(count(m.sql`SELECT count(*) AS n FROM shelf_items WHERE session_id = 'attacker'`), 1, "its data is not merged");
+  // Nor can a signed-in requester take over a new address through it.
+  const { person: c } = m.identity.completeSignIn({ email: "c@example.com", requestSessionId: "dev-a", deviceSessionId: "victim-phone", now: mins(21) });
+  assert.notEqual(c.id, owner.id, "a new person, not an email change for the requester");
+  assert.equal(m.identity.personForSession("dev-a")?.email, "a@example.com");
+});
+
 test("opening a product schedules 2/4/8/12-week check-ins; the job sends the due one; the 8-week answer feeds the User Score", async () => {
   const person = m.identity.personForSession("dev-a")!;
   const home = person.homeSessionId;

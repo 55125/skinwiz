@@ -1,4 +1,5 @@
 import fs from "node:fs";
+import { createHash } from "node:crypto";
 import path from "node:path";
 import { parse } from "csv-parse/sync";
 import { sql } from "drizzle-orm";
@@ -172,7 +173,48 @@ function normalizeBrandName(raw: string): string {
     .join(" ");
 }
 
+// Everything the seed reads: the pipeline outputs, the catalog code under
+// src/db and src/lib, the product photos it checks for, and the migration
+// journal. Hashed so a restart or a deploy that changed none of it can skip
+// the ~50s, ~850MB reseed (the app doesn't listen until this finishes).
+const SEED_INPUTS = [
+  path.join(REPO_ROOT, "tools/catalog_pipeline/output"),
+  path.join(REPO_ROOT, "tools/affiliate_feeds"),
+  path.join(process.cwd(), "src/db"),
+  path.join(process.cwd(), "src/lib"),
+  path.join(process.cwd(), "public/product-images"),
+  path.join(process.cwd(), "drizzle/meta/_journal.json"),
+  RX_CATALOG_CSV,
+];
+const SEED_HASH_KEY = "seed_inputs_sha256";
+
+function seedInputsHash(): string {
+  const hash = createHash("sha256");
+  const walk = (p: string) => {
+    if (!fs.existsSync(p)) return;
+    const stat = fs.statSync(p);
+    if (stat.isDirectory()) {
+      for (const name of fs.readdirSync(p).sort()) walk(path.join(p, name));
+      return;
+    }
+    hash.update(path.relative(REPO_ROOT, p)).update("\0").update(fs.readFileSync(p)).update("\0");
+  };
+  for (const p of SEED_INPUTS) walk(p);
+  return hash.digest("hex");
+}
+
+function storedSeedHash(): string | null {
+  const row = db.select().from(schema.jobState).where(sql`${schema.jobState.key} = ${SEED_HASH_KEY}`).get();
+  return row?.value ?? null;
+}
+
 async function main() {
+  const inputsHash = seedInputsHash();
+  const hasCatalog = !!db.get<{ one: number }>(sql`SELECT 1 AS one FROM products LIMIT 1`);
+  if (process.env.FORCE_SEED !== "1" && hasCatalog && storedSeedHash() === inputsHash) {
+    console.log(`Seed inputs unchanged (${inputsHash.slice(0, 12)}); keeping the current catalog. FORCE_SEED=1 reseeds anyway.`);
+    return;
+  }
   console.log(`Seeding ${SITE_NAME} database...`);
 
   // Wipe and regenerate reference/catalog data only, in FK-safe order.
@@ -202,7 +244,14 @@ async function main() {
     // to the previous catalog instead of leaving the volume DB with no
     // products, and concurrent readers keep seeing the old catalog until
     // commit.
-    db.transaction(() => reseed());
+    db.transaction(() => {
+      reseed();
+      const now = new Date().toISOString();
+      db.insert(schema.jobState)
+        .values({ key: SEED_HASH_KEY, value: inputsHash, updatedAt: now })
+        .onConflictDoUpdate({ target: schema.jobState.key, set: { value: inputsHash, updatedAt: now } })
+        .run();
+    });
   } finally {
     db.run(sql`PRAGMA foreign_keys = ON`);
   }

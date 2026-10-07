@@ -20,6 +20,15 @@ import {
   getIngredientTopBrands,
   getProductsForIngredient,
 } from "@/lib/queries";
+import { ttlCache } from "@/lib/ttl-cache";
+
+// Catalog-wide aggregates over every product that lists the ingredient: ~150ms
+// together for common ones (water, glycerin), unchanged until the next reseed.
+const statsCached = ttlCache(getIngredientStats);
+const concernCountsCached = ttlCache(getIngredientConcernCounts);
+const productsCached = ttlCache(getProductsForIngredient);
+const topBrandsCached = ttlCache(getIngredientTopBrands);
+const ewgCached = ttlCache(getIngredientEwgSummary);
 import { checksFailedByIngredient } from "@/db/ingredient-flags";
 import { allergenMembers, allergensInIngredient, getAllergen, groupsContaining, type ContactAllergen } from "@/db/contact-allergens";
 import { MONOGRAPH_RANGES, formatRange } from "@/db/monograph-ranges";
@@ -90,13 +99,13 @@ export default async function IngredientPage({
   const monograph = MONOGRAPH_RANGES[id];
   const strength = active ? getActiveStrengthStats(id) : null;
 
-  const stats = getIngredientStats(id);
-  const concernCounts = getIngredientConcernCounts(id);
+  const stats = statsCached(id);
+  const concernCounts = concernCountsCached(id);
   const selectedConcern = concernCounts.find((c) => c.concernId === concern);
-  const { rows, total, pageSize } = getProductsForIngredient(id, page, selectedConcern?.concernId);
+  const { rows, total, pageSize } = productsCached(id, page, selectedConcern?.concernId);
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
-  const brands = getIngredientTopBrands(id);
-  const ewg = getIngredientEwgSummary(id);
+  const brands = topBrandsCached(id);
+  const ewg = ewgCached(id);
 
   const failedChecks = checksFailedByIngredient([ingredient.name, ...ingredient.aliases]);
   const avoidIds = await readAvoidIds();

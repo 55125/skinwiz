@@ -3,7 +3,10 @@ import { SiteLogo } from "@/components/site-header";
 import { FREE_FROM_CHECKS } from "@/db/ingredient-flags";
 import { ALLERGEN_GROUPS } from "@/db/contact-allergens";
 import { SITE_NAME } from "@/lib/brand";
-import { getConcerns } from "@/lib/queries";
+// Concern names are code constants (the seed copies them into the concerns
+// table), so the header and footer read them directly: no database query on
+// every page, and pages without data can still be prerendered at build time.
+import { CONCERN_DEFINITIONS } from "@/db/actives";
 import { INGREDIENT_ITEMS, MY_SKIN_ITEMS } from "@/lib/nav";
 
 // Same four groups as the header, plus the about/legal links.
@@ -12,7 +15,7 @@ function footerLinks() {
     {
       heading: "Concerns",
       links: [
-        ...getConcerns().map((c) => ({ href: `/concern/${c.id}`, label: c.name })),
+        ...CONCERN_DEFINITIONS.map((c) => ({ href: `/concern/${c.id}`, label: c.name })),
         { href: "/browse", label: "All products" },
       ],
     },
@@ -27,7 +30,9 @@ function footerLinks() {
         { href: "/about", label: "About & methodology" },
         { href: "/contact", label: "Contact" },
         { href: "/privacy", label: "Privacy policy" },
+        { href: "/privacy#health-data", label: "Consumer health data privacy" },
         { href: "/terms", label: "Terms of service" },
+        { href: "/accessibility", label: "Accessibility" },
       ],
     },
   ];

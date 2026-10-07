@@ -45,6 +45,12 @@ export function recentTokenCount(email: string, now: Date, windowMs = 60 * 60_00
     .all().length;
 }
 
+/** Sign-in links issued to anyone in the window: a site-wide brake on email volume. */
+export function recentTokenCountAll(now: Date, windowMs = 60 * 60_000): number {
+  const since = iso(new Date(now.getTime() - windowMs));
+  return db.get<{ n: number }>(sql`SELECT count(*) AS n FROM email_tokens WHERE created_at > ${since}`)?.n ?? 0;
+}
+
 export function createSignInToken(email: string, requestSessionId: string | null, now: Date): string {
   const token = generateToken();
   db.insert(emailTokens)
@@ -126,16 +132,17 @@ function aliasOf(sessionId: string, tx: Pick<Tx, "select">): string | null {
 
 /**
  * Called after a sign-in token was consumed. `deviceSessionId` is the browser
- * that opened the link; `requestSessionId` the one that asked for it (the same
- * browser, or another device). Rules:
+ * that opened the link; `requestSessionId` the one that asked for it. Only the
+ * browser that opened the link is ever signed in: anyone can request a link
+ * for any address, so honouring the requester when it is a different browser
+ * would hand the address owner's account to whoever typed it in. Rules:
  *  - The address already belongs to a person -> sign in as them.
- *  - It doesn't, and the requesting browser was already signed in -> that
- *    person changes their email to this one.
+ *  - It doesn't, and this same browser asked for the link while signed in ->
+ *    that person changes their email to this one.
  *  - Otherwise a new person is created.
- * Each involved browser that was anonymous has its data merged into the
- * person and is linked. A browser signed in as someone else is switched over
- * without merging (its data belongs to that other person) -- but only the
- * browser that opened the link; a requester signed in elsewhere is left alone.
+ * An anonymous browser has its data merged into the person and is linked. A
+ * browser signed in as someone else is switched over without merging (its
+ * data belongs to that other person).
  */
 export function completeSignIn(input: {
   email: string;
@@ -148,7 +155,7 @@ export function completeSignIn(input: {
     let person = tx.select().from(people).where(eq(people.email, email)).get() ?? null;
     let created = false;
     let emailChanged = false;
-    const requester = requestSessionId ? aliasOf(requestSessionId, tx) : null;
+    const requester = requestSessionId === deviceSessionId ? aliasOf(deviceSessionId, tx) : null;
     if (!person && requester) {
       tx.update(people).set({ email, emailVerifiedAt: iso(now) }).where(eq(people.id, requester)).run();
       person = tx.select().from(people).where(eq(people.id, requester)).get()!;
@@ -167,16 +174,12 @@ export function completeSignIn(input: {
       tx.insert(people).values(person).run();
       created = true;
     }
-    const sessions = [...new Set([requestSessionId, deviceSessionId].filter((s): s is string => !!s))];
-    for (const sid of sessions) {
-      const current = aliasOf(sid, tx);
-      if (current === person.id) continue;
-      if (current === null) {
-        mergeSessionInto(sid, person.homeSessionId, tx);
-        tx.insert(personSessions).values({ sessionId: sid, personId: person.id, linkedAt: iso(now) }).run();
-      } else if (sid === deviceSessionId) {
-        tx.update(personSessions).set({ personId: person.id, linkedAt: iso(now) }).where(eq(personSessions.sessionId, sid)).run();
-      }
+    const current = aliasOf(deviceSessionId, tx);
+    if (current === null) {
+      mergeSessionInto(deviceSessionId, person.homeSessionId, tx);
+      tx.insert(personSessions).values({ sessionId: deviceSessionId, personId: person.id, linkedAt: iso(now) }).run();
+    } else if (current !== person.id) {
+      tx.update(personSessions).set({ personId: person.id, linkedAt: iso(now) }).where(eq(personSessions.sessionId, deviceSessionId)).run();
     }
     return { person, created, emailChanged };
   });

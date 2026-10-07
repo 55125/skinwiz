@@ -49,7 +49,8 @@ function saveProfile(personId: string, profile: Profile, now = new Date()) {
 async function setCookieProfile(profile: Profile) {
   const store = await cookies();
   if (!hasProfileData(profile)) store.delete(PROFILE_COOKIE);
-  else store.set(PROFILE_COOKIE, serializeProfile(profile), { httpOnly: true, sameSite: "lax", maxAge: PROFILE_COOKIE_MAX_AGE });
+  else store.set(PROFILE_COOKIE, serializeProfile(profile), { httpOnly: true, sameSite: "lax",
+    secure: process.env.NODE_ENV === "production", maxAge: PROFILE_COOKIE_MAX_AGE });
 }
 
 /**

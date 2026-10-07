@@ -214,11 +214,28 @@ export function browseProducts(filters: BrowseFilters, page: number, sort?: "nam
 // assessed (full-ingredient-list) product in the filtered set, then pages
 // the sorted result. Unassessed products have no score and are left out --
 // the caller says so rather than ranking them as if they were middling.
+// Scoring the whole set takes ~0.5-1s of blocking CPU on the full catalog, so
+// with a cacheKey (everything the score depends on) the ranked ids are kept
+// for 10 minutes: the next pages and repeat visits only fetch their 24 rows.
+const rankedIdsCache = new Map<string, { at: number; ids: string[] }>();
+const RANKED_TTL_MS = 10 * 60_000;
+const RANKED_MAX = 100;
+
 export function browseProductsByMatch(
   filters: BrowseFilters,
   page: number,
   score: (rows: (typeof products.$inferSelect)[]) => Map<string, number>,
+  cacheKey?: string,
 ) {
+  const hit = cacheKey ? rankedIdsCache.get(cacheKey) : undefined;
+  if (hit && Date.now() - hit.at < RANKED_TTL_MS) {
+    const pageIds = hit.ids.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+    const byId = new Map(
+      (pageIds.length ? db.select().from(products).where(inArray(products.id, pageIds)).all() : []).map((r) => [r.id, r]),
+    );
+    const rows = pageIds.flatMap((id) => byId.get(id) ?? []);
+    return { rows, total: hit.ids.length, pageSize: PAGE_SIZE, page };
+  }
   const base = browseWhere(filters);
   const whereClause = base ? and(base, sql`${products.freeFromFlags} IS NOT NULL`) : sql`${products.freeFromFlags} IS NOT NULL`;
   const all = db.select().from(products).where(whereClause).limit(20000).all();
@@ -226,6 +243,10 @@ export function browseProductsByMatch(
   const ranked = all
     .filter((p) => scores.has(p.id))
     .sort((a, b) => scores.get(b.id)! - scores.get(a.id)! || a.brandName.localeCompare(b.brandName));
+  if (cacheKey) {
+    if (rankedIdsCache.size >= RANKED_MAX) rankedIdsCache.clear();
+    rankedIdsCache.set(cacheKey, { at: Date.now(), ids: ranked.map((p) => p.id) });
+  }
   return { rows: ranked.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE), total: ranked.length, pageSize: PAGE_SIZE, page };
 }
 

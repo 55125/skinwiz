@@ -96,7 +96,7 @@ export default async function BrowsePage({
 
   const { rows, total, pageSize } =
     sort === "match"
-      ? browseProductsByMatch(queryFilters, page, (all) => scoreProducts(all, profile, avoidIds))
+      ? browseProductsByMatch(queryFilters, page, (all) => scoreProducts(all, profile, avoidIds), JSON.stringify([queryFilters, profile, avoidIds]))
       : browseProducts(queryFilters, page, sort);
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
   const activeFilterCount = [concern, selectedTier, active, hsa, pregnancy].filter(Boolean).length + freeFromIds.length;

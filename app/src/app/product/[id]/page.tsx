@@ -97,10 +97,20 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   const description = product.activeIngredientText
     ? `${product.brandName} — ${product.activeIngredientText}. Ingredients, matches and User Score on ${SITE_NAME}.`
     : `${product.brandName} on ${SITE_NAME}.`;
+  const title = productTitle(product, describeStrengths, displayManufacturer);
+  const canonical = `/product/${encodeURIComponent(getCanonicalProductId(product))}`;
+  // The product's own photo in link previews, instead of the site-wide card.
+  const image = bestProductImage(product, getMergedDuplicates(product.id));
   return {
-    title: productTitle(product, describeStrengths, displayManufacturer),
+    title,
     description,
-    alternates: { canonical: `/product/${encodeURIComponent(getCanonicalProductId(product))}` },
+    alternates: { canonical },
+    ...(image
+      ? {
+          openGraph: { type: "website", siteName: SITE_NAME, locale: "en_US", title, description, url: canonical, images: [{ url: image, alt: productImageAlt(product) }] },
+          twitter: { card: "summary", images: [image] },
+        }
+      : {}),
   };
 }
 

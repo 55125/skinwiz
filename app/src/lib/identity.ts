@@ -45,6 +45,12 @@ export function recentTokenCount(email: string, now: Date, windowMs = 60 * 60_00
     .all().length;
 }
 
+/** Sign-in links issued to anyone in the window: a site-wide brake on email volume. */
+export function recentTokenCountAll(now: Date, windowMs = 60 * 60_000): number {
+  const since = iso(new Date(now.getTime() - windowMs));
+  return db.get<{ n: number }>(sql`SELECT count(*) AS n FROM email_tokens WHERE created_at > ${since}`)?.n ?? 0;
+}
+
 export function createSignInToken(email: string, requestSessionId: string | null, now: Date): string {
   const token = generateToken();
   db.insert(emailTokens)

@@ -1,13 +1,23 @@
 import type { ReactNode } from "react";
 import { LEGAL_UPDATED } from "@/lib/legal";
 
-// Shared layout for /privacy and /terms: one readable column, with styling
+// Shared layout for /privacy, /terms and /accessibility: one readable column, with styling
 // for the plain h2/p/ul/table markup the documents are written in.
-export function LegalPage({ title, intro, children }: { title: string; intro: ReactNode; children: ReactNode }) {
+export function LegalPage({
+  title,
+  intro,
+  children,
+  updated = LEGAL_UPDATED,
+}: {
+  title: string;
+  intro: ReactNode;
+  children: ReactNode;
+  updated?: string;
+}) {
   return (
     <div className="mx-auto max-w-2xl px-4 py-10">
       <h1 className="text-3xl font-semibold sm:text-4xl">{title}</h1>
-      <p className="mt-2 text-sm text-muted-foreground">Last updated {LEGAL_UPDATED}</p>
+      <p className="mt-2 text-sm text-muted-foreground">Last updated {updated}</p>
       <div className="mt-6 text-muted-foreground">{intro}</div>
       <div
         className={[

@@ -2,17 +2,18 @@ import Link from "next/link";
 import { SiteLogo } from "@/components/site-header";
 import { FREE_FROM_CHECKS } from "@/db/ingredient-flags";
 import { ALLERGEN_GROUPS } from "@/db/contact-allergens";
+import { CONCERN_DEFINITIONS } from "@/db/actives";
 import { SITE_NAME } from "@/lib/brand";
-import { getConcerns } from "@/lib/queries";
 import { INGREDIENT_ITEMS, MY_SKIN_ITEMS } from "@/lib/nav";
 
-// Same four groups as the header, plus the about/legal links.
+// Same four groups as the header, plus the about/legal links. Concerns come
+// from the code constant, not the DB, for the same reason as the header.
 function footerLinks() {
   return [
     {
       heading: "Concerns",
       links: [
-        ...getConcerns().map((c) => ({ href: `/concern/${c.id}`, label: c.name })),
+        ...CONCERN_DEFINITIONS.map((c) => ({ href: `/concern/${c.id}`, label: c.name })),
         { href: "/browse", label: "All products" },
       ],
     },

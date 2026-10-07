@@ -2,7 +2,7 @@ import Link from "next/link";
 import { SiteLogoMark } from "@/components/site-logo-mark";
 import { SiteNav } from "@/components/site-nav";
 import { SITE_NAME } from "@/lib/brand";
-import { getConcerns } from "@/lib/queries";
+import { CONCERN_DEFINITIONS } from "@/db/actives";
 
 export function SiteLogo() {
   return (
@@ -16,7 +16,10 @@ export function SiteLogo() {
 }
 
 export function SiteHeader() {
-  const concerns = getConcerns().map((c) => ({ id: c.id, name: c.name }));
+  // From the code constant the seed inserts, not the DB: the header is in
+  // the root layout, so a DB read here runs while static pages prerender, and
+  // the Docker build runs before db:seed (see routines/new/page.tsx).
+  const concerns = CONCERN_DEFINITIONS.map((c) => ({ id: c.id, name: c.name }));
   return (
     <header className="sticky top-0 z-20 border-b bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/70">
       <div className="relative mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4">

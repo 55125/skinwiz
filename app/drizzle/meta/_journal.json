@@ -127,6 +127,13 @@
       "when": 1791152253922,
       "tag": "0017_product_canonical_id",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "6",
+      "when": 1791348704663,
+      "tag": "0018_similar_lookup_index",
+      "breakpoints": true
     }
   ]
 }

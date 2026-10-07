@@ -11,7 +11,7 @@ import { CONTACT_ALLERGENS, allergensInIngredient, computeAllergenHits, getAller
 import { avoidConflicts } from "@/lib/avoid-shared";
 import { canonicalSlug, ingredientKey, slugFor, splitIngredientList } from "@/db/ingredient-parse";
 import { getIngredient, MIN_PUBLIC_PRODUCTS } from "@/lib/queries";
-import { findSimilarProducts } from "@/lib/similar";
+import { findSimilarProductsCached } from "@/lib/similar";
 import { readAvoidIds, avoidedIngredientName } from "@/lib/avoid";
 import { cn } from "@/lib/utils";
 
@@ -61,7 +61,7 @@ export default async function CheckPage({ searchParams }: { searchParams: Promis
   });
   const flaggedNames = new Set([...results.flatMap((r) => r.hits), ...allergenRows.flatMap((r) => r.names)]);
   const found = enough ? avoidConflicts({ freeFromFlags: computeFreeFromFlags(text) ?? [], allergenHits }, avoidIds) : null;
-  const similar = enough ? findSimilarProducts(items.map((i) => i.slug), { limit: 6, minScore: 0.3 }) : [];
+  const similar = enough ? findSimilarProductsCached(items.map((i) => i.slug), { limit: 6, minScore: 0.3 }) : [];
 
   return (
     <div className="mx-auto max-w-4xl space-y-8 px-4 py-10">

@@ -213,6 +213,9 @@ export const productIngredients = sqliteTable(
   (table) => [
     uniqueIndex("product_ingredients_pk").on(table.productId, table.position),
     index("product_ingredients_ingredient_idx").on(table.ingredientId),
+    // Covers the "which products share these ingredients" lookup in
+    // lib/similar.ts without touching the table rows.
+    index("product_ingredients_ingredient_product_idx").on(table.ingredientId, table.productId, table.position),
   ],
 );
 

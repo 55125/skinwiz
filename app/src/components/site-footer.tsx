@@ -27,6 +27,7 @@ function footerLinks() {
         { href: "/about", label: "About & methodology" },
         { href: "/contact", label: "Contact" },
         { href: "/privacy", label: "Privacy policy" },
+        { href: "/privacy#health-data", label: "Consumer health data privacy" },
         { href: "/terms", label: "Terms of service" },
       ],
     },

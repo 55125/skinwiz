@@ -26,6 +26,7 @@ import { getTopRoutines } from "@/lib/routines";
 import { SITE_NAME } from "@/lib/brand";
 import { DERM_PANEL_LAUNCHED } from "@/lib/scoring";
 import { CONTACT_ALLERGENS } from "@/db/contact-allergens";
+import { ttlCache } from "@/lib/ttl-cache";
 
 // Force dynamic: without this, Next.js statically prerenders "/" once at
 // build time -- against whatever the database contains at that moment.
@@ -51,12 +52,18 @@ const CONCERN_ICONS: Record<string, LucideIcon> = {
 };
 
 
+// The landing page is the first stop for most visitors; its catalog-wide
+// aggregates (~45ms together) only change when the catalog is reseeded.
+const topProductsCached = ttlCache(getTopProducts);
+const topActivesCached = ttlCache(getTopActives);
+const countProductsCached = ttlCache(countProducts);
+
 export default function Home() {
   const concerns = getConcerns();
-  const topProducts = getTopProducts(6);
-  const topActives = getTopActives(10);
+  const topProducts = topProductsCached(6);
+  const topActives = topActivesCached(10);
   const topRoutines = getTopRoutines(5);
-  const productCount = countProducts();
+  const productCount = countProductsCached();
   const activeCount = getAllActives().length;
 
   const stats = [

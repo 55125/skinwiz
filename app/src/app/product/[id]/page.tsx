@@ -28,7 +28,7 @@ import { getScoresForProducts } from "@/lib/scoring";
 import { getVideoSearchLinks } from "@/lib/video-links";
 import { dataSourceBadge } from "@/lib/data-source";
 import { FREE_FROM_CHECKS, getFreeFromCheck, ingredientFailsCheck } from "@/db/ingredient-flags";
-import { findSafeSwaps, findSimilarProducts } from "@/lib/similar";
+import { findSafeSwaps, findSimilarProductsCached } from "@/lib/similar";
 import { ewgHazardBadge } from "@/lib/ewg";
 import { readSessionId } from "@/lib/session";
 import { getSessionOutcome } from "@/lib/outcomes";
@@ -176,7 +176,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
   const listedIngredients = ingredientRows.filter((r) => r.position > 0);
   const similar = isDrugLabel
     ? []
-    : findSimilarProducts(listedIngredients.map((r) => r.ingredientId), { excludeId: product.id, limit: 4 });
+    : findSimilarProductsCached(listedIngredients.map((r) => r.ingredientId), { excludeId: product.id, limit: 4 });
   const safeSwaps = needsSwap
     ? findSafeSwaps(product, ingredientRows.filter((r) => r.position > 0).map((r) => r.ingredientId), avoidIds)
     : [];

@@ -38,6 +38,15 @@ const nextConfig: NextConfig = {
           { key: "Cache-Control", value: "no-store" },
         ],
       })),
+      // The service worker must be re-checked on every visit, or a fix to it
+      // can take a day to reach people who already have it.
+      {
+        source: "/sw.js",
+        headers: [
+          { key: "Cache-Control", value: "no-cache" },
+          { key: "Content-Type", value: "application/javascript; charset=utf-8" },
+        ],
+      },
       // Catalog photos in public/ (names aren't content-hashed, so not
       // immutable). Saves every product view a revalidation round trip to
       // the single Node process.

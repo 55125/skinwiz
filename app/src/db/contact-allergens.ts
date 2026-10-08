@@ -247,7 +247,7 @@ export const CONTACT_ALLERGENS: ContactAllergen[] = [
     id: "formaldehyde",
     name: "Formaldehyde",
     section: "formaldehyde",
-    terms: ["formaldehyde", "formalin", "methanal", "methylene oxide", "methylene glycol", "formic aldehyde", "oxomethane"],
+    terms: ["formaldehyde", "paraformaldehyde", "formalin", "methanal", "methylene oxide", "methylene glycol", "formic aldehyde", "oxomethane"],
     unless: ["melamine formaldehyde", "tosylamide formaldehyde", "toluene sulfonamide formaldehyde", "toluenesulfonamide formaldehyde"],
     note: "“Methylene glycol” is formaldehyde dissolved in water, the form used in keratin hair-smoothing treatments.",
   },
@@ -307,7 +307,7 @@ export const CONTACT_ALLERGENS: ContactAllergen[] = [
     id: "mci-mi",
     name: "Methylchloroisothiazolinone/methylisothiazolinone (MCI/MI)",
     section: "preservative",
-    terms: ["methylchloroisothiazolinone", "kathon"],
+    terms: ["methylchloroisothiazolinone", "methylchloroisothiazolone", "chloromethylisothiazolinone", "5-chloro-2-methyl-4-isothiazolin-3-one", "kathon"],
     aka: ["MCI/MI", "Kathon CG"],
     note: "Always contains MI as well, so it is flagged under both.",
   },
@@ -315,7 +315,9 @@ export const CONTACT_ALLERGENS: ContactAllergen[] = [
     id: "methylisothiazolinone",
     name: "Methylisothiazolinone (MI)",
     section: "preservative",
-    terms: ["methylisothiazolinone", "kathon"],
+    // Misspellings seen on real labels ("methyisothiazolinone") and the bare
+    // class name some labels use.
+    terms: ["methylisothiazolinone", "methyisothiazolinone", "methyl isothiazolinone", "2-methyl-4-isothiazolin-3-one", "neolone", "isothiazolinones", "kathon"],
     aka: ["MI", "MIT"],
     note: "Rising prevalence, especially from rinse-off products and wet wipes.",
   },
@@ -398,7 +400,7 @@ export const CONTACT_ALLERGENS: ContactAllergen[] = [
     id: "cocamidopropyl-betaine",
     name: "Cocamidopropyl betaine (CAPB)",
     section: "surfactant",
-    terms: ["cocamidopropyl betaine", "capb", "coco betaine", "coco-betaine"],
+    terms: ["cocamidopropyl betaine", "cocoamidopropyl betaine", "cocamidopropylbetaine", "capb", "coco betaine", "coco-betaine"],
     note: "The real sensitizers are often manufacturing residues, amidoamine and dimethylaminopropylamine, which aren't listed.",
   },
   { id: "decyl-glucoside", name: "Decyl glucoside", section: "surfactant", terms: ["decyl glucoside"] },
@@ -510,6 +512,16 @@ export const CONTACT_ALLERGENS: ContactAllergen[] = [
     rare: true,
   },
   { id: "drometrizole-trisiloxane", name: "Drometrizole trisiloxane (Mexoryl XL)", section: "uv-filter", terms: ["drometrizole trisiloxane", "mexoryl xl"], rare: true },
+  {
+    id: "other-uv-filters",
+    name: "Other chemical UV filters",
+    section: "uv-filter",
+    terms: [
+      "ensulizole", "phenylbenzimidazole sulfonic acid", "meradimate", "menthyl anthranilate", "cinoxate", "dioxybenzone", "benzophenone-8",
+      "diethylamino hydroxybenzoyl hexyl benzoate", "ethylhexyl triazone", "isoamyl p-methoxycinnamate", "amiloxate", "polysilicone-15",
+    ],
+    note: "Less common filters, listed so the all-chemical-filters group leaves only mineral sunscreens.",
+  },
   { id: "oleoyl-tyrosine", name: "Oleoyl tyrosine", section: "uv-filter", terms: ["oleoyl tyrosine"], note: "In tan-enhancing products." },
   {
     id: "mineral-uv-filters",
@@ -638,7 +650,7 @@ export const CONTACT_ALLERGENS: ContactAllergen[] = [
     terms: ["hydrocortisone", "tixocortol", "prednisolone", "methylprednisolone", "prednisone", "cortisone"],
     unless: [
       "hydrocortisone 17-butyrate", "hydrocortisone butyrate", "hydrocortisone valerate", "hydrocortisone probutate", "hydrocortisone buteprate",
-      "methylprednisolone aceponate", "prednicarbate",
+      "methylprednisolone aceponate", "prednicarbate", "hydrocortisone 17-valerate",
     ],
     aka: ["tixocortol-21-pivalate (patch-test marker)"],
     note: "Includes OTC hydrocortisone and hydrocortisone acetate. Corticosteroid allergy is class-based; cross-reactions between classes occur, so ask your dermatologist which classes to avoid.",
@@ -665,6 +677,8 @@ export const CONTACT_ALLERGENS: ContactAllergen[] = [
     terms: [
       "hydrocortisone 17-butyrate", "hydrocortisone butyrate", "hydrocortisone valerate", "hydrocortisone probutate", "clobetasol", "clobetasone",
       "betamethasone valerate", "betamethasone dipropionate", "mometasone", "fluticasone", "methylprednisolone aceponate", "prednicarbate",
+      // Esters the class A and C lists exclude, so they must land here.
+      "hydrocortisone 17-valerate", "hydrocortisone buteprate", "betamethasone 17-valerate", "dexamethasone valerate",
     ],
     aka: ["hydrocortisone-17-butyrate (patch-test marker)", "clobetasol-17-propionate (patch-test marker)"],
   },
@@ -967,9 +981,17 @@ const MIN_FULL_INGREDIENT_TEXT_LENGTH = 60;
  */
 export function computeAllergenHits(fullIngredientText: string | null | undefined): string[] | null {
   if (!fullIngredientText || fullIngredientText.trim().length < MIN_FULL_INGREDIENT_TEXT_LENGTH) return null;
+  return allergensInList(fullIngredientText);
+}
+
+/**
+ * Allergen ids in an ingredient list with no length floor, for a list the
+ * visitor pasted as complete (/check): "Water, Glycerin, Parfum,
+ * Methylisothiazolinone" is short but whole.
+ */
+export function allergensInList(ingredientText: string): string[] {
   // Commas survive normalization, so a term can't run across two ingredients.
-  const text = normalizeForAllergens(fullIngredientText.replace(/[;\n]/g, ","));
-  return matchNormalized(text);
+  return matchNormalized(normalizeForAllergens(ingredientText.replace(/[;\n]/g, ",")));
 }
 
 export type AllergenFinding = { level: "contains" | "may-contain"; allergenIds: string[] };

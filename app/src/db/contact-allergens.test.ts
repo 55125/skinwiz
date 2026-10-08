@@ -76,3 +76,17 @@ test("patch-test results sheets", () => {
   assert.equal(read("Methylisothiazolinone 0.2% aq +++").negative, false);
   assert.equal(parsePatchTestResults("Kathon CG, Lyral; Nickel sulfate").length, 3);
 });
+
+test("label spellings seen in the catalog, and short pasted lists", async () => {
+  const { allergensInList } = await import("./contact-allergens");
+  assert.deepEqual(allergensInIngredient("methyisothiazolinone"), ["methylisothiazolinone"]);
+  assert.deepEqual(allergensInIngredient("Methylchloroisothiazolone"), ["mci-mi"]);
+  assert.deepEqual(allergensInIngredient("Cocoamidopropyl Betaine"), ["cocamidopropyl-betaine"]);
+  assert.deepEqual(allergensInIngredient("Paraformaldehyde"), ["formaldehyde"]);
+  assert.deepEqual(allergensInIngredient("Hydrocortisone 17-Valerate"), ["corticosteroid-class-d"]);
+  assert.deepEqual(allergensInIngredient("Betamethasone 17-Valerate"), ["corticosteroid-class-d"]);
+  assert.deepEqual(allergensInIngredient("Ensulizole"), ["other-uv-filters"]);
+  // Under the 60-character floor for catalog text, but a whole list when pasted.
+  assert.equal(computeAllergenHits("Water, Glycerin, Parfum, Methylisothiazolinone"), null);
+  assert.ok(allergensInList("Water, Glycerin, Parfum, Methylisothiazolinone").includes("methylisothiazolinone"));
+});

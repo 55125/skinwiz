@@ -39,7 +39,7 @@ function savedProfile(personId: string): Profile | null {
 
 function saveProfile(personId: string, profile: Profile, now = new Date()) {
   const stored = accountPart(profile);
-  const value = { skin: stored.skin, concerns: stored.concerns, likes: stored.likes, dislikes: stored.dislikes };
+  const value = { skin: stored.skin, sensitive: stored.sensitive, concerns: stored.concerns, likes: stored.likes, dislikes: stored.dislikes };
   db.insert(personProfiles)
     .values({ personId, profile: value, updatedAt: now.toISOString() })
     .onConflictDoUpdate({ target: personProfiles.personId, set: { profile: value, updatedAt: now.toISOString() } })

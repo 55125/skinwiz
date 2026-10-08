@@ -7,6 +7,7 @@
 // DailyMed package photos per run (lib/product-images/sync.ts), so a fresh
 // volume fills itself over the first day or two after a deploy.
 import { purgeExpiredTokens } from "@/lib/identity";
+import { purgeOldRaterApplications } from "@/lib/retention";
 import { sendDueCheckins, type CheckinRunResult } from "@/lib/checkins";
 import { notifyRecalls, syncRecalls, type NotifyResult, type SyncResult } from "@/lib/recalls";
 import { refreshPrices, type PriceRefreshReport } from "@/lib/prices/refresh";
@@ -32,6 +33,7 @@ export type JobReport = {
   recallEmails?: NotifyResult;
   checkins?: CheckinRunResult;
   purgedTokens?: number;
+  purgedRaterApplications?: number;
   prices?: PriceRefreshReport | { error: string };
   images?: ImageSyncReport | { error: string } | { skipped: string };
 };
@@ -55,7 +57,10 @@ export async function runJobs(now: Date, jobs: JobName[] = ALL_JOBS, opts: { for
       report.recallEmails = await notifyRecalls(now);
     }
     if (jobs.includes("checkins")) report.checkins = await sendDueCheckins(now);
-    if (jobs.includes("cleanup")) report.purgedTokens = purgeExpiredTokens(now);
+    if (jobs.includes("cleanup")) {
+      report.purgedTokens = purgeExpiredTokens(now);
+      report.purgedRaterApplications = purgeOldRaterApplications(now);
+    }
     if (jobs.includes("prices")) {
       try {
         report.prices = await refreshPrices(now);

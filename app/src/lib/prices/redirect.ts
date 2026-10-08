@@ -9,7 +9,9 @@
 // the key once a site is approved). Never wrapped: regulatory and clinical
 // sources (FDA, DailyMed/NIH, AAD), Rx price checks (GoodRx, Cost Plus),
 // anything on an Rx page, links that are already affiliate links, and
-// non-http(s) URLs. The CUID names the page type only ("product", "same",
+// non-http(s) URLs, and every link for a visitor whose browser sends a Global
+// Privacy Control signal (the privacy policy promises we honor it, and Sovrn
+// sees the click). The CUID names the page type only ("product", "same",
 // "plan"), never anything about the visitor.
 import { sovrnSiteKey } from "./config";
 
@@ -59,15 +61,15 @@ export type OutboundLink = { href: string; rel: string; wrapped: boolean };
  * An outbound retailer/brand link: wrapped through Sovrn (rel gains
  * "sponsored nofollow") when enabled and allowed, otherwise returned
  * exactly as given with the caller's rel, so pages are unchanged while
- * the feature is dormant.
+ * the feature is dormant. `gpc`: the visitor sent Sec-GPC: 1 (lib/gpc.ts).
  */
 export function outboundLink(
   url: string,
-  opts: { placement: LinkPlacement; rel: string; isRx?: boolean },
+  opts: { placement: LinkPlacement; rel: string; isRx?: boolean; gpc?: boolean },
   env: NodeJS.ProcessEnv = process.env,
 ): OutboundLink {
   const key = sovrnSiteKey(env);
-  if (!key || opts.isRx || !isWrappable(url)) return { href: url, rel: opts.rel, wrapped: false };
+  if (!key || opts.isRx || opts.gpc || !isWrappable(url)) return { href: url, rel: opts.rel, wrapped: false };
   const rel = [...new Set([...opts.rel.split(/\s+/).filter(Boolean), "sponsored", "nofollow"])].join(" ");
   return { href: sovrnRedirectUrl(key, url, opts.placement), rel, wrapped: true };
 }

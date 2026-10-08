@@ -63,12 +63,13 @@ import { EquivalenceExplainer, EquivalenceRows } from "@/components/equivalence-
 import { FEATURES } from "@/lib/feature-flags";
 import { productPregnancyFindings } from "@/lib/pregnancy";
 import { PregnancyNotice } from "@/components/pregnancy-notice";
-import { DAILYMED_IMAGE_CAPTION, isDailymedImageUrl, productImageAlt } from "@/lib/image-urls";
+import { DAILYMED_IMAGE_CAPTION, isOpenBeautyFactsImageUrl, isDailymedImageUrl, productImageAlt } from "@/lib/image-urls";
 import { recallsForProduct } from "@/lib/recalls";
 import { RecallBanner } from "@/components/recall-banner";
 import { canViewRxReference } from "@/lib/clinicians";
 import { isAmazonLink, manualLinkHref, manualLinkLabel } from "@/lib/manual-links";
 import { headers } from "next/headers";
+import { gpcEnabled } from "@/lib/gpc";
 import { livePricesEnabled } from "@/lib/prices/config";
 import { getDisplayQuotes, recordProductView } from "@/lib/prices/store";
 import { outboundLink } from "@/lib/prices/redirect";
@@ -177,13 +178,16 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
   const groupSavings = equivalenceGroup ? storeBrandSavings(equivalenceGroup.members, groupLive) : null;
   const groupRows = sortByUnitPrice(groupOthers, groupLive);
   const quotes = getDisplayQuotes(product.id);
+  const gpc = await gpcEnabled();
   const retailerSearches = retailerSearchLinks(
     product.brandName,
     // Only these sources carry the brand in `manufacturer`; FDA rows carry the labeler.
     product.dataSource === "brand_direct" || product.dataSource === "open_beauty_facts" ? product.manufacturer : null,
+    process.env,
+    gpc,
   );
   const brandLine = productBrand(product);
-  const brandLink = product.sourceUrl ? outboundLink(product.sourceUrl, { placement: "product", rel: "noopener noreferrer" }) : null;
+  const brandLink = product.sourceUrl ? outboundLink(product.sourceUrl, { placement: "product", rel: "noopener noreferrer", gpc }) : null;
   if (livePricesEnabled() && !BOT_UA.test((await headers()).get("user-agent") ?? "")) recordProductView(product.id);
   const equivalents = equivalenceGroup ? { rows: [], total: 0 } : getEquivalentProducts(product);
   const hsaEligible = isHsaEligible(product.id);
@@ -253,6 +257,14 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
             </div>
             {isDailymedImageUrl(imageUrl) && (
               <figcaption className="text-center text-xs text-muted-foreground">{DAILYMED_IMAGE_CAPTION}</figcaption>
+            )}
+            {isOpenBeautyFactsImageUrl(imageUrl) && (
+              <figcaption className="text-center text-xs text-muted-foreground">
+                Photo: Open Beauty Facts contributors,{" "}
+                <a href="https://creativecommons.org/licenses/by-sa/3.0/" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2">
+                  CC BY-SA 3.0
+                </a>
+              </figcaption>
             )}
           </figure>
         )}
@@ -572,7 +584,15 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
           <AlertDescription className="text-[13px]">
             This product&apos;s data comes from Open Beauty Facts, a crowd-edited database — anyone can
             submit or edit an entry. Unlike the rest of the catalog, this listing hasn&apos;t been
-            independently verified. Ingredient names and amounts may be incomplete or inaccurate.
+            independently verified. Ingredient names and amounts may be incomplete or inaccurate. Data from{" "}
+            <a href="https://world.openbeautyfacts.org" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2">
+              Open Beauty Facts
+            </a>
+            , available under the{" "}
+            <a href="https://opendatacommons.org/licenses/odbl/1-0/" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2">
+              Open Database License
+            </a>
+            .
           </AlertDescription>
         </Alert>
       )}

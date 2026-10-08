@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, BookOpen, ClipboardCheck, FileText, ListChecks, ShieldCheck } from "lucide-react";
+import { ArrowRight, BookOpen, ClipboardCheck, FilePlus2, FileText, ListChecks, ShieldCheck } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { HandoutLibrary } from "@/components/handout-library";
 import { HANDOUT_CATEGORIES, libraryItems } from "@/db/handout-templates";
@@ -21,6 +21,9 @@ export default function ClinicToolsPage() {
     ...(items.length
       ? [{ href: "#library", icon: BookOpen, title: `${items.length} patient handouts`, body: "Conditions, surgery and procedures, cosmetic, pediatric and treatment how-tos. Use as is or customize, or write your own." }]
       : []),
+    ...(FEATURES.HANDOUTS
+      ? [{ href: "/clinicians", icon: FilePlus2, title: "Handout builder", body: "Start blank or from the library, print with a QR code or email the link, and see anonymous printed, opened and saved counts." }]
+      : []),
     { href: "/clinic-tools/patch-test-reader", icon: ClipboardCheck, title: "Patch-test reader", body: "For MAs: tap each chamber to grade it, then copy a ready-to-chart write-up and hand the patient a QR code." },
     { href: "/for-clinicians/patch-test", icon: FileText, title: "Patch-test results sheet", body: "Tick the positives and print a one-page sheet whose QR code loads the patient's avoid list." },
     { href: "/clinicians#lists", icon: ListChecks, title: "Starter lists", body: "Save your practice's standard avoid lists (for example, fragrance-allergic) and issue them in one click." },
@@ -29,7 +32,7 @@ export default function ClinicToolsPage() {
   return (
     <div className="mx-auto max-w-5xl space-y-12 px-4 py-10">
       <PageHeader
-        eyebrow="For practices"
+        eyebrow="For clinicians"
         title="Free tools for your clinic"
         description={`Patient handouts, patch-test reading and allergen lists that send patients somewhere useful afterwards. Free to use; we never receive your patients' names or contact details.`}
       />
@@ -95,6 +98,13 @@ export default function ClinicToolsPage() {
           <HandoutLibrary items={items} categories={HANDOUT_CATEGORIES} useHref="/clinicians/handouts/new?template=" previewHref="/clinic-tools/handouts/" />
         </section>
       )}
+
+      <p className="text-sm text-muted-foreground">
+        Board-certified dermatologist?{" "}
+        <Link href="/for-clinicians" className="font-medium text-brand hover:underline">
+          Request to join the Derm Score rating panel →
+        </Link>
+      </p>
     </div>
   );
 }

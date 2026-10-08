@@ -27,8 +27,8 @@ function footerLinks() {
       heading: SITE_NAME,
       links: [
         { href: "/routines", label: "Community routines" },
-        { href: "/for-clinicians", label: "For clinicians" },
-        { href: "/clinic-tools", label: "Clinic tools" },
+        { href: "/clinic-tools", label: "For clinicians" },
+        { href: "/for-clinicians", label: "Dermatologist panel" },
         { href: "/about", label: "About & methodology" },
         { href: "/contact", label: "Contact" },
         { href: "/privacy", label: "Privacy policy" },

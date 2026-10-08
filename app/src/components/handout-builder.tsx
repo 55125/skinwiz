@@ -139,8 +139,9 @@ export function HandoutBuilder({
   return (
     <div className="space-y-8">
       {initial.templateDraft && (
-        <p className="rounded-xl border border-amber-300 bg-amber-50 p-3 text-xs text-amber-900 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
-          Draft template, AI-written and pending clinical review. Read it before handing it out; every word is yours to edit.
+        <p className="text-xs text-muted-foreground">
+          This template was drafted with AI assistance; physician review in progress. Read it before handing it out; every word is
+          yours to edit.
         </p>
       )}
 

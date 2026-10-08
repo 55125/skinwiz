@@ -42,7 +42,7 @@ export default function AboutPage() {
         </p>
         <ul className="list-disc pl-5 text-sm text-muted-foreground space-y-1">
           <li>
-            <strong className="text-foreground">Derm Score</strong> — from a panel of board-certified
+            <strong className="text-foreground">Derm Score (planned)</strong> — from a panel of board-certified
             dermatologists whose ABD/AOBD certification and NPI will be verified before they can rate.
             The panel hasn&apos;t launched yet, so no product has a Derm Score today. Once it does, a score
             is only shown after at least 5 dermatologists have rated a product for a given concern.
@@ -82,7 +82,7 @@ export default function AboutPage() {
         <p className="text-sm text-muted-foreground">
           Some product links are affiliate links, and we may earn a commission if you buy through them, at
           no extra cost to you. This is disclosed next to every such link, not just here. Commercial
-          relationships never influence Derm Score or User Score.
+          relationships never influence the User Score or the planned Derm Score.
         </p>
       </section>
 

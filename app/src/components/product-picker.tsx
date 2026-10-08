@@ -12,9 +12,17 @@ type ProductResult = { id: string; brandName: string; manufacturer: string | nul
 export function ProductPicker({
   selected,
   onSelect,
+  label = "Link a product from our catalog (optional)",
+  placeholder = label,
+  size = "inline",
 }: {
   selected: ProductResult | null;
   onSelect: (product: ProductResult | null) => void;
+  /** Accessible name for the search box (the routine form's default says it's optional). */
+  label?: string;
+  placeholder?: string;
+  /** "field": a full-size search box, for pages where picking is the point (Compare). */
+  size?: "inline" | "field";
 }) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<ProductResult[]>([]);
@@ -45,11 +53,14 @@ export function ProductPicker({
     };
   }, [query, searchable]);
 
+  const field = size === "field";
   if (selected) {
     return (
-      <div className="flex items-center gap-1 text-xs">
-        <Check className="h-3 w-3 text-emerald-600" />
-        <span className="text-muted-foreground">Linked: {selected.brandName}</span>
+      <div className={field ? "flex min-h-10 items-center gap-1.5 rounded-xl border bg-background px-3 text-sm" : "flex items-center gap-1 text-xs"}>
+        <Check className={field ? "h-4 w-4 text-emerald-600" : "h-3 w-3 text-emerald-600"} aria-hidden />
+        <span className={field ? "min-w-0 flex-1 truncate font-medium" : "text-muted-foreground"}>
+          {field ? selected.brandName : `Linked: ${selected.brandName}`}
+        </span>
         <button
           type="button"
           onClick={() => onSelect(null)}
@@ -64,16 +75,26 @@ export function ProductPicker({
 
   return (
     <div className="relative">
-      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-        <Search className="h-3 w-3" />
+      <div
+        className={
+          field
+            ? "flex h-10 items-center gap-2 rounded-xl border bg-background px-3 text-sm focus-within:ring-2 focus-within:ring-ring"
+            : "flex items-center gap-1.5 text-xs text-muted-foreground"
+        }
+      >
+        <Search className={field ? "h-4 w-4 text-muted-foreground" : "h-3 w-3"} aria-hidden />
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onFocus={() => visibleResults.length > 0 && setOpen(true)}
           onBlur={() => setTimeout(() => setOpen(false), 150)}
-          placeholder="Link a product from our catalog (optional)"
-          aria-label="Link a product from our catalog (optional)"
-          className="w-full border-0 border-b border-dashed bg-transparent p-0 text-xs outline-none focus:border-foreground"
+          placeholder={placeholder}
+          aria-label={label}
+          className={
+            field
+              ? "w-full border-0 bg-transparent p-0 text-sm outline-none"
+              : "w-full border-0 border-b border-dashed bg-transparent p-0 text-xs outline-none focus:border-foreground"
+          }
         />
       </div>
       {open && visibleResults.length > 0 && (
@@ -87,7 +108,7 @@ export function ProductPicker({
                   setQuery("");
                   setOpen(false);
                 }}
-                className="block w-full px-3 py-2 text-left text-xs hover:bg-muted"
+                className={`block w-full px-3 py-2 text-left hover:bg-muted ${field ? "text-sm" : "text-xs"}`}
               >
                 <div className="font-medium">{p.brandName}</div>
                 {p.manufacturer && <div className="text-muted-foreground">{p.manufacturer}</div>}

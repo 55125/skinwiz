@@ -50,6 +50,7 @@ import { MatchBadge } from "@/components/match-badge";
 import { avoidLabelsFor, hasProfile, matchProduct, readProfile } from "@/lib/profile";
 import { pubchemLinkText } from "@/lib/pubchem";
 import { displayManufacturer, tidyIngredientName } from "@/lib/format";
+import { productBrand } from "@/lib/product-brand";
 import { productTitle, breadcrumbLd } from "@/lib/seo";
 import { JsonLd } from "@/components/json-ld";
 import { siteUrl } from "@/lib/site-url";
@@ -181,6 +182,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
     // Only these sources carry the brand in `manufacturer`; FDA rows carry the labeler.
     product.dataSource === "brand_direct" || product.dataSource === "open_beauty_facts" ? product.manufacturer : null,
   );
+  const brandLine = productBrand(product);
   const brandLink = product.sourceUrl ? outboundLink(product.sourceUrl, { placement: "product", rel: "noopener noreferrer" }) : null;
   if (livePricesEnabled() && !BOT_UA.test((await headers()).get("user-agent") ?? "")) recordProductView(product.id);
   const equivalents = equivalenceGroup ? { rows: [], total: 0 } : getEquivalentProducts(product);
@@ -257,10 +259,11 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
 
         <div className="space-y-6">
           <div className="space-y-3">
-            {product.manufacturer && (
-              <p className="text-xs font-semibold uppercase tracking-wider text-brand">{displayManufacturer(product.manufacturer)}</p>
+            {brandLine.brand && (
+              <p className="text-xs font-semibold uppercase tracking-wider text-brand">{brandLine.brand}</p>
             )}
             <h1 className="text-3xl font-semibold leading-tight sm:text-4xl">{product.brandName}</h1>
+            {brandLine.madeBy && <p className="text-xs text-muted-foreground">Made by {brandLine.madeBy} (as listed with the FDA)</p>}
             <div className="flex flex-wrap gap-2">
               {product.dosageForm && <Badge variant="secondary">{product.dosageForm}</Badge>}
               {sourceBadge && (
@@ -424,6 +427,16 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
                   </li>
                 ))}
               </ul>
+              {strengthRows.some((r) => r.monograph?.status === "above") && (
+                <p className="mt-2 rounded-lg border border-amber-300 bg-amber-50 p-2.5 text-xs text-amber-900 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
+                  {strengthRows
+                    .filter((r) => r.monograph?.status === "above")
+                    .map((r) => `${activeName(r.id)} is listed at ${formatPct(r.pct)}, above the ${formatPct(r.monograph!.range.max)} OTC limit.`)
+                    .join(" ")}{" "}
+                  That&apos;s usually a filing error, so check the strength on the package. Until it&apos;s clear, we leave this product
+                  off our concern lists.
+                </p>
+              )}
               <p className="mt-2 text-xs text-muted-foreground">
                 The monograph range is what the FDA permits for this active in an OTC product — a regulatory fact,
                 not a rating. A strength outside it may reflect how the label was filed rather than the product

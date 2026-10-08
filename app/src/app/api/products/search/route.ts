@@ -12,7 +12,17 @@ export async function GET(request: Request) {
   const q = new URL(request.url).searchParams.get("q")?.trim().slice(0, 100) ?? "";
   if (q.length < 2) return NextResponse.json({ products: [] });
 
+  // One row per name + brand, case-insensitively: the catalog lists some
+  // products twice from different sources ("Skin renewing retinol serum /
+  // Cerave" and "Skin Renewing Retinol Serum / CeraVe").
+  const seen = new Set<string>();
   const results = searchProducts(q)
+    .filter((p) => {
+      const key = `${p.brandName.trim().toLowerCase()}|${(p.manufacturer ?? "").trim().toLowerCase()}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
     .slice(0, 8)
     .map((p) => ({ id: p.id, brandName: p.brandName, manufacturer: p.manufacturer }));
   return NextResponse.json({ products: results });

@@ -4,6 +4,7 @@ import { FilterChip } from "@/components/filter-chip";
 import { FREE_FROM_CHECKS } from "@/db/ingredient-flags";
 import { readAvoidIds } from "@/lib/avoid";
 import { CONTACT_ALLERGENS, FEATURED_ALLERGEN_IDS, allergenLabel } from "@/db/contact-allergens";
+import { SENSITIVE_SKIN_FREE } from "@/lib/profile-shared";
 
 // Server-rendered toggle links, no client JS -- same philosophy as the
 // existing single-select active-ingredient chips on /concern/[slug]. Each
@@ -38,6 +39,12 @@ export async function FreeFromFilters({
   }
 
   const avoidIds = await readAvoidIds();
+  // One-tap preset: the three things the match score marks down for
+  // sensitive skin (lib/profile-shared.ts SENSITIVE_TRIGGERS).
+  const sensitiveOn = SENSITIVE_SKIN_FREE.every((id) => selected.includes(id));
+  const sensitiveHref = hrefWithFree(
+    sensitiveOn ? selected.filter((id) => !SENSITIVE_SKIN_FREE.includes(id)) : [...new Set([...selected, ...SENSITIVE_SKIN_FREE])],
+  );
 
   const clean = FREE_FROM_CHECKS.filter((c) => c.category === "clean");
   // The full allergen list is ~100 long: offer the high-yield picks here,
@@ -50,6 +57,12 @@ export async function FreeFromFilters({
       <Link href="/avoid" className="block text-xs font-medium text-brand hover:underline">
         {avoidIds.length > 0 ? "Edit my avoid list" : "Set up my avoid list"}
       </Link>
+      <div className="flex flex-wrap items-center gap-2">
+        <FilterChip href={sensitiveHref} selected={sensitiveOn} showCheck>
+          Sensitive skin
+        </FilterChip>
+        <span className="text-xs text-muted-foreground">No fragrance, drying alcohol or essential oils</span>
+      </div>
       {extra}
       <FilterGroup
         title="Clean ingredient filters"

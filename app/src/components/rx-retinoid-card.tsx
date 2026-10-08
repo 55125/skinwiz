@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Moon, Pill, Sun, SunMoon } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -49,7 +50,10 @@ export function RxRetinoidCard({ regimenId, initialSlot }: { regimenId: number; 
           <p className="text-sm text-muted-foreground">
             Tretinoin, tazarotene or another retinoid from your doctor. Mark when you use it and the cautions on this page take it
             into account. Keep using it exactly as your prescriber told you; we don&apos;t give directions for prescription
-            medicines.
+            medicines.{" "}
+            <Link href="/guide/prescription-retinoids" className="font-medium text-brand hover:underline">
+              What usually pairs well with one
+            </Link>
           </p>
         </div>
       </div>

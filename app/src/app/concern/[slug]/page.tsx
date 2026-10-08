@@ -7,8 +7,8 @@ import { PageHeader } from "@/components/page-header";
 import { Pagination } from "@/components/pagination";
 import { RedFlagBanner } from "@/components/red-flag-banner";
 import { FreeFromFilters } from "@/components/free-from-filters";
-import { OriginNotice } from "@/components/origin-notice";
-import { readOrigin } from "@/lib/origin";
+import { OriginChips } from "@/components/origin-chips";
+import { ORIGIN_PARAM, parseOrigin, type OriginId } from "@/lib/origin-shared";
 import {
   browseProducts,
   browseProductsByMatch,
@@ -16,6 +16,7 @@ import {
   getConcern,
   getProductsForConcern,
   getStrengthOptionsForActive,
+  browseOriginCounts,
 } from "@/lib/queries";
 import { ChevronDown, SlidersHorizontal } from "lucide-react";
 import { MatchSortNote, SortChips, parseListSort, type ListSort } from "@/components/sort-chips";
@@ -34,7 +35,7 @@ import { PregnancyFilter } from "@/components/pregnancy-notice";
 import { escalationFor } from "@/db/escalation-guidance";
 import { EscalationPanel } from "@/components/escalation-guidance";
 
-type ConcernParams = { page?: string; active?: string; free?: string; strength?: string; pregnancy?: string; sort?: string };
+type ConcernParams = { page?: string; active?: string; free?: string; strength?: string; pregnancy?: string; sort?: string; from?: string };
 
 export async function generateMetadata({
   params,
@@ -62,7 +63,7 @@ export default async function ConcernPage({
   searchParams: Promise<ConcernParams>;
 }) {
   const { slug } = await params;
-  const { page: pageParam, active, free, strength, pregnancy, sort: sortParam } = await searchParams;
+  const { page: pageParam, active, free, strength, pregnancy, sort: sortParam, from: fromParam } = await searchParams;
   const concern = getConcern(slug);
   if (!concern) notFound();
 
@@ -82,12 +83,12 @@ export default async function ConcernPage({
   const pregnancyHide = pregnancyMode && pregnancy === PREGNANCY_FILTER_VALUE;
   const profile = await readProfile();
   const avoidIds = await readAvoidIds();
-  const origin = await readOrigin();
+  const origin = parseOrigin(fromParam);
   const showPregnancyFilter = pregnancyMode && (pregnancyHide || profile.pregnant);
   const canMatch = hasProfile(profile) || avoidIds.length > 0;
   const sort = parseListSort(sortParam, canMatch);
   // ?sort and ?pregnancy ride along on every filter and page link.
-  const preg = `${pregnancyHide ? `&${PREGNANCY_FILTER_PARAM}=${PREGNANCY_FILTER_VALUE}` : ""}${sort ? `&sort=${sort}` : ""}`;
+  const preg = `${pregnancyHide ? `&${PREGNANCY_FILTER_PARAM}=${PREGNANCY_FILTER_VALUE}` : ""}${sort ? `&sort=${sort}` : ""}${origin ? `&${ORIGIN_PARAM}=${origin}` : ""}`;
   const excludeIngredientIds = pregnancyHide ? pregnancyAvoidIngredientIds() : undefined;
   const listFilters = { concernId: slug, activeId: active, freeFromIds, strengthPct, excludeIngredientIds, concernListing: true, origin };
   const { rows, total, pageSize } =
@@ -107,6 +108,7 @@ export default async function ConcernPage({
     if (strengthPct !== undefined) qs.set("strength", String(strengthPct));
     if (!pregnancyHide) qs.set(PREGNANCY_FILTER_PARAM, PREGNANCY_FILTER_VALUE);
     if (sort) qs.set("sort", sort);
+    if (origin) qs.set(ORIGIN_PARAM, origin);
     const q = qs.toString();
     return `/concern/${slug}${q ? `?${q}` : ""}`;
   })();
@@ -118,10 +120,23 @@ export default async function ConcernPage({
     if (strengthPct !== undefined) qs.set("strength", String(strengthPct));
     if (pregnancyHide) qs.set(PREGNANCY_FILTER_PARAM, PREGNANCY_FILTER_VALUE);
     if (next) qs.set("sort", next);
+    if (origin) qs.set(ORIGIN_PARAM, origin);
     const q = qs.toString();
     return `/concern/${slug}${q ? `?${q}` : ""}`;
   };
-  const filterCount = [active, strengthPct !== undefined ? "s" : undefined, pregnancyHide ? "p" : undefined].filter(Boolean).length + freeFromIds.length;
+  const originHref = (next: OriginId | undefined) => {
+    const qs = new URLSearchParams();
+    if (active) qs.set("active", active);
+    if (free) qs.set("free", free);
+    if (strengthPct !== undefined) qs.set("strength", String(strengthPct));
+    if (pregnancyHide) qs.set(PREGNANCY_FILTER_PARAM, PREGNANCY_FILTER_VALUE);
+    if (sort) qs.set("sort", sort);
+    if (next) qs.set(ORIGIN_PARAM, next);
+    const q = qs.toString();
+    return `/concern/${slug}${q ? `?${q}` : ""}`;
+  };
+  const originCounts = browseOriginCounts(listFilters);
+  const filterCount = [active, origin, strengthPct !== undefined ? "s" : undefined, pregnancyHide ? "p" : undefined].filter(Boolean).length + freeFromIds.length;
 
   const filters = (
     <>
@@ -161,9 +176,11 @@ export default async function ConcernPage({
           </div>
         )}
   
+        <OriginChips selected={origin} counts={originCounts} hrefFor={originHref} />
+
         <FreeFromFilters
           basePath={`/concern/${slug}`}
-          searchParams={{ active, free, strength, sort, [PREGNANCY_FILTER_PARAM]: pregnancyHide ? PREGNANCY_FILTER_VALUE : undefined }}
+          searchParams={{ active, free, strength, sort, [PREGNANCY_FILTER_PARAM]: pregnancyHide ? PREGNANCY_FILTER_VALUE : undefined, [ORIGIN_PARAM]: origin }}
           selected={freeFromIds}
           extra={showPregnancyFilter ? <PregnancyFilter href={pregnancyToggleHref} selected={pregnancyHide} /> : undefined}
         />
@@ -215,10 +232,9 @@ export default async function ConcernPage({
       <div className="hidden space-y-8 md:block">{filters}</div>
 
       <div className="space-y-4">
-        <OriginNotice origin={origin} />
         <AvoidSwitch
           basePath={`/concern/${slug}`}
-          searchParams={{ active, free, strength, sort, [PREGNANCY_FILTER_PARAM]: pregnancyHide ? PREGNANCY_FILTER_VALUE : undefined }}
+          searchParams={{ active, free, strength, sort, [PREGNANCY_FILTER_PARAM]: pregnancyHide ? PREGNANCY_FILTER_VALUE : undefined, [ORIGIN_PARAM]: origin }}
           selected={freeFromIds}
         />
         <div className="flex flex-wrap items-center justify-between gap-3">

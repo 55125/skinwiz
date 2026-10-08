@@ -29,7 +29,8 @@ import { POTENT_RETINOIDS } from "@/lib/retinoids";
 import { RX_CONCERN_ID } from "@/db/rx";
 import { isDailymedImageUrl } from "@/lib/image-urls";
 import { LISTED, inProductGroup } from "@/lib/canonical";
-import { originIdsJson, type OriginId } from "@/lib/origin";
+import { originIdsJson } from "@/lib/origin";
+import { ORIGINS, type OriginId } from "@/lib/origin-shared";
 
 // Prescription rows (products.isRx) are reference/handout data and must never
 // reach a consumer listing, search, count, score, equivalence list or the
@@ -165,6 +166,21 @@ function originClause(origin: OriginId): SQL {
   return sql`${products.id} IN (SELECT value FROM json_each(${originIdsJson(origin)}))`;
 }
 
+// How many rows under `where` come from each region: one scan, for the
+// counts on the "Brand from" chips.
+function countByOrigin(where: SQL | undefined): Map<OriginId, number> {
+  const row = db
+    .select(
+      Object.fromEntries(
+        ORIGINS.map((o) => [o.id, sql<number>`coalesce(sum(CASE WHEN ${originClause(o.id)} THEN 1 ELSE 0 END), 0)`]),
+      ) as Record<OriginId, SQL<number>>,
+    )
+    .from(products)
+    .where(where)
+    .get();
+  return new Map(ORIGINS.map((o) => [o.id, Number(row?.[o.id] ?? 0)]));
+}
+
 function notDuplicate(): SQL {
   return sql`${products.id} NOT IN (SELECT value FROM json_each(${duplicateIdsJson()}))`;
 }
@@ -248,6 +264,11 @@ export function browseWhere(filters: BrowseFilters): SQL | undefined {
   // sunscreens), bound here as one JSON array parameter.
   if (filters.hsaOnly) clauses.push(sql`${products.id} IN (SELECT value FROM json_each(${hsaEligibleIdsJson()}))`);
   return clauses.length > 0 ? and(...clauses) : undefined;
+}
+
+/** Each region's count under every other filter, for the "Brand from" chips. */
+export function browseOriginCounts(filters: BrowseFilters): Map<OriginId, number> {
+  return countByOrigin(browseWhere({ ...filters, origin: undefined }));
 }
 
 export function browseProducts(filters: BrowseFilters, page: number, sort?: "name") {
@@ -647,6 +668,12 @@ export function searchProductsCount(q: string, filters: SearchFilters = {}) {
     .where(buildSearchWhere(terms, filters))
     .all();
   return count;
+}
+
+export function searchOriginCounts(q: string, filters: SearchFilters = {}): Map<OriginId, number> {
+  const { terms } = parseSearch(q);
+  if (!terms.length) return new Map();
+  return countByOrigin(buildSearchWhere(terms, { ...filters, origin: undefined }));
 }
 
 export function searchActives(q: string) {

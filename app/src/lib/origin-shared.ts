@@ -1,41 +1,44 @@
-// Where a product's brand comes from, for the header's region picker
-// ("Korean only", "Japanese only", ...). The catalog has no country field
-// (openFDA, DailyMed and Open Beauty Facts rows don't carry one), so this is
-// a curated brand list: the brand's home country, not where a given bottle
-// was filled. A US-labelled La Roche-Posay sunscreen is still a French brand.
-// Unlisted brands have no origin and drop out of every region filter; they
-// are never guessed from a "Co., Ltd." in the labeler name.
+// Where a product's brand comes from: the region tag on product cards and
+// the "Brand from" filter (?from=kr) on concern, browse and search pages.
+// The catalog has no country field (openFDA, DailyMed and Open Beauty Facts
+// rows don't carry one), so this is a curated brand list: the brand's home
+// country, not where a given bottle was filled. A US-labelled La Roche-Posay
+// sunscreen is still a French brand. Unlisted brands have no origin and drop
+// out of every region filter; they are never guessed from a "Co., Ltd." in
+// the labeler name.
 //
 // Regions are the markets Americans actually shop abroad for skincare from:
 // K-beauty, J-beauty, European pharmacy brands (EU, UK and Switzerland),
 // Australian sunscreens and Canadian brands (The Ordinary).
 
-export const ORIGIN_COOKIE = "sw_origin";
+export const ORIGIN_PARAM = "from";
 
 export type OriginId = "kr" | "jp" | "eu" | "au" | "ca";
 
 export type Origin = {
   id: OriginId;
-  /** Picker row and card badge: "Korean". */
+  /** Filter chip: "Korea". */
+  place: string;
+  /** Product card tag: "K-beauty". */
+  tag: string;
+  /** Running text: "Korean brands". */
   label: string;
-  /** Picker hint. */
-  hint: string;
 };
 
 export const ORIGINS: Origin[] = [
-  { id: "kr", label: "Korean", hint: "K-beauty: COSRX, Laneige, Round Lab, Beauty of Joseon" },
-  { id: "jp", label: "Japanese", hint: "J-beauty: Shiseido, Bioré, Hada Labo, DHC" },
-  { id: "eu", label: "European", hint: "EU and UK: La Roche-Posay, Bioderma, Nivea, Avène" },
-  { id: "au", label: "Australian", hint: "Bondi Sands, Naked Sundays, Ultra Violette" },
-  { id: "ca", label: "Canadian", hint: "The Ordinary, Attitude, Druide" },
+  { id: "kr", place: "Korea", tag: "K-beauty", label: "Korean" },
+  { id: "jp", place: "Japan", tag: "J-beauty", label: "Japanese" },
+  { id: "eu", place: "Europe", tag: "European", label: "European" },
+  { id: "au", place: "Australia", tag: "Australian", label: "Australian" },
+  { id: "ca", place: "Canada", tag: "Canadian", label: "Canadian" },
 ];
 
 export function parseOrigin(value: string | null | undefined): OriginId | undefined {
   return ORIGINS.find((o) => o.id === value)?.id;
 }
 
-export function originLabel(id: OriginId): string {
-  return ORIGINS.find((o) => o.id === id)!.label;
+export function getOrigin(id: OriginId): Origin {
+  return ORIGINS.find((o) => o.id === id)!;
 }
 
 // Brand names, normalized (see normalize below). Matched as whole words

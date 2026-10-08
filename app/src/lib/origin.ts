@@ -1,17 +1,14 @@
-import { cookies } from "next/headers";
 import { sql } from "drizzle-orm";
 import { db } from "@/db/client";
 import { productBrand } from "@/lib/product-brand";
-import { ORIGINS, ORIGIN_COOKIE, parseOrigin, productNameOrigin, type OriginId } from "@/lib/origin-shared";
-
-export { ORIGINS, originLabel, type OriginId } from "@/lib/origin-shared";
+import { ORIGINS, productNameOrigin, type OriginId } from "@/lib/origin-shared";
 
 // The listed product ids of each origin (lib/origin-shared.ts), from one scan
 // of the catalog kept in memory: the catalog only changes on a reseed, so a
 // 10-minute refresh (same as otc-index.ts) is plenty. A listing filter binds
 // one region's ids as a single JSON array parameter.
 const TTL_MS = 10 * 60_000;
-let cached: { at: number; json: Map<OriginId, string>; counts: Map<OriginId, number> } | null = null;
+let cached: { at: number; json: Map<OriginId, string> } | null = null;
 
 function index() {
   if (cached && Date.now() - cached.at < TTL_MS) return cached;
@@ -27,7 +24,6 @@ function index() {
   cached = {
     at: Date.now(),
     json: new Map([...ids].map(([k, v]) => [k, JSON.stringify(v)])),
-    counts: new Map([...ids].map(([k, v]) => [k, v.length])),
   };
   return cached;
 }
@@ -39,13 +35,4 @@ export function productOrigin(p: { dataSource: string; brandName: string; manufa
 /** One origin's listed product ids as a JSON array: id IN (SELECT value FROM json_each(?)). */
 export function originIdsJson(origin: OriginId): string {
   return index().json.get(origin)!;
-}
-
-export function originCounts(): Map<OriginId, number> {
-  return index().counts;
-}
-
-/** The visitor's region pick from the header, if any. */
-export async function readOrigin(): Promise<OriginId | undefined> {
-  return parseOrigin((await cookies()).get(ORIGIN_COOKIE)?.value);
 }

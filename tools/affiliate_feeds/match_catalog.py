@@ -57,7 +57,7 @@ def similarity(a: str, b: str) -> float:
 KNOWN_ACTIVES = [
     "salicylic acid", "benzoyl peroxide", "adapalene", "sulfur", "azelaic acid",
     "octisalate", "zinc oxide", "avobenzone", "octocrylene", "homosalate",
-    "titanium dioxide", "octinoxate", "oxybenzone", "ensulizole",
+    "titanium dioxide", "octinoxate", "oxybenzone", "ensulizole", "bemotrizinol",
 ]
 
 

@@ -77,6 +77,16 @@ COSMETIC_ACTIVES = {
     # than creating a duplicate, so cosmetic-sourced rows join the same
     # evidence note and filter chip an FDA-sourced one would.
     "petrolatum": ("petrolatum", ["petrolatum", "petroleum jelly", "white petrolatum"]),
+    # Added 2026-10-08 alongside the same additions in
+    # build_brand_direct_catalog.py. UV filters aren't listed: seed.ts adds
+    # any actives.ts filter it finds in the INCI list (countsAnywhereListed).
+    "retinal": ("retinal", ["retinal", "retinaldehyde"]),
+    "hydroxypinacolone-retinoate": ("hydroxypinacolone-retinoate", ["hydroxypinacolone retinoate"]),
+    "retinyl-retinoate": ("retinyl-retinoate", ["retinyl retinoate"]),
+    "gluconolactone": ("gluconolactone", ["gluconolactone"]),
+    "lactobionic-acid": ("lactobionic-acid", ["lactobionic acid"]),
+    "capryloyl-salicylic-acid": ("capryloyl-salicylic-acid", ["capryloyl salicylic acid"]),
+    "betaine-salicylate": ("betaine-salicylate", ["betaine salicylate"]),
 }
 
 JUNK_PATTERN = re.compile(r"\btest\b", re.IGNORECASE)

@@ -301,6 +301,17 @@ COSMETIC_ACTIVES = {
     # creating a duplicate id, so a cosmetic-sourced petrolatum product joins
     # the same evidence note and active-filter chip an FDA one would.
     "petrolatum": ["petrolatum", "petroleum jelly", "white petrolatum"],
+    # Added 2026-10-08: retinoids and exfoliating acids that were only
+    # ingredient-level before. UV filters (bemotrizinol etc.) aren't listed
+    # here: seed.ts adds any actives.ts filter it finds in the INCI list
+    # (countsAnywhereListed), for every source.
+    "retinal": ["retinal", "retinaldehyde"],
+    "hydroxypinacolone-retinoate": ["hydroxypinacolone retinoate"],
+    "retinyl-retinoate": ["retinyl retinoate"],
+    "gluconolactone": ["gluconolactone"],
+    "lactobionic-acid": ["lactobionic acid"],
+    "capryloyl-salicylic-acid": ["capryloyl salicylic acid"],
+    "betaine-salicylate": ["betaine salicylate"],
 }
 
 

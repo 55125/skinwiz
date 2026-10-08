@@ -5,7 +5,7 @@ import { parse } from "csv-parse/sync";
 import { sql } from "drizzle-orm";
 import { db } from "./client";
 import * as schema from "./schema";
-import { ACTIVE_DEFINITIONS, CONCERN_DEFINITIONS, matchActiveIds, nicheToConcernId } from "./actives";
+import { ACTIVE_DEFINITIONS, ANYWHERE_LISTED_ACTIVE_IDS, CONCERN_DEFINITIONS, matchActiveIds, nicheToConcernId } from "./actives";
 import { computeFreeFromFlags } from "./ingredient-flags";
 import { computeAllergenHits } from "./contact-allergens";
 import { parseStrengths, strengthKey } from "./strength";
@@ -331,9 +331,22 @@ function reseed() {
     for (const row of catalogRows) {
       if (!row.product_ndc || seenNdc.has(row.product_ndc)) continue;
 
-      const activeIds = row.source && PRE_MATCHED_SOURCES.has(row.source)
+      const isPreMatched = row.source && PRE_MATCHED_SOURCES.has(row.source);
+      // Drug rows: the label's own inactive text, else the SPL XML's list
+      // (spl-inactive.ts). Neither = unknown, not "clean".
+      const inactive = isPreMatched ? null : drugInactiveList(row.inactive_ingredient_text, splInactive.get(row.product_ndc));
+      // Cosmetic sources: the single INCI list, in order.
+      const cosmeticList = isPreMatched ? parseIngredients(row.active_ingredient_text) : null;
+      const labeledActiveIds = isPreMatched
         ? (row.active_ingredients_structured ?? "").split(";").filter(Boolean)
         : matchActiveIds([row.active_ingredients_structured, row.substance_name, row.active_ingredient_text].join(" "));
+      // UV filters count wherever they're listed (actives.ts
+      // countsAnywhereListed): bemotrizinol in a label's "inactive" list or a
+      // cosmetic INCI list is still doing a sunscreen active's job.
+      const listedFilters = (cosmeticList ?? inactive?.parsed ?? [])
+        .map((ing) => canonicalSlug(ing.slug))
+        .filter((slug) => ANYWHERE_LISTED_ACTIVE_IDS.has(slug) && !labeledActiveIds.includes(slug));
+      const activeIds = [...labeledActiveIds, ...new Set(listedFilters)];
 
       if (activeIds.length === 0) {
         skippedNoActive++;
@@ -341,17 +354,11 @@ function reseed() {
       }
       seenNdc.add(row.product_ndc);
       const trimmedBrandName = row.brand_name?.trim() || "(unnamed product)";
-      // Only openfda/dailymed rows get normalized -- brand_direct/OBF brand
-      // names are already human-written product names, not SPL label text.
-      const isPreMatched = row.source && PRE_MATCHED_SOURCES.has(row.source);
       // The full ingredient list for free-from-flag purposes -- NOT the
       // same text as activeIngredientText above, which for openfda/dailymed
       // is deliberately just the active-ingredient line for display. Using
       // that alone here would wrongly mark almost everything "paraben-free"
       // etc. just because an active-ingredient line never mentions parabens.
-      // Drug rows: the label's own inactive text, else the SPL XML's list
-      // (spl-inactive.ts). Neither = unknown, not "clean".
-      const inactive = isPreMatched ? null : drugInactiveList(row.inactive_ingredient_text, splInactive.get(row.product_ndc));
       if (inactive) inactiveSources[inactive.source ?? "none"] = (inactiveSources[inactive.source ?? "none"] ?? 0) + 1;
       const fullIngredientText = isPreMatched
         ? row.active_ingredient_text || null
@@ -367,8 +374,8 @@ function reseed() {
       // Drug labels: the tracked actives (position 0) plus the SPL's own
       // inactive list. Cosmetic sources: the single INCI list, in order.
       if (isPreMatched) {
-        parseIngredients(row.active_ingredient_text).forEach((ing, i) =>
-          memberships.push({ productId: row.product_ndc, position: i + 1, slug: ing.slug, rawName: ing.raw, isActive: activeIdSet.has(ing.slug) }),
+        cosmeticList!.forEach((ing, i) =>
+          memberships.push({ productId: row.product_ndc, position: i + 1, slug: ing.slug, rawName: ing.raw, isActive: activeIdSet.has(canonicalSlug(ing.slug)) }),
         );
       } else {
         const listed = new Set<string>();
@@ -379,12 +386,14 @@ function reseed() {
           memberships.push({ productId: row.product_ndc, position: -i, slug: id, rawName: id, isActive: true });
         });
         inactive!.parsed.forEach((ing, i) => {
-          if (!listed.has(ing.slug)) memberships.push({ productId: row.product_ndc, position: i + 1, slug: ing.slug, rawName: ing.raw, isActive: false });
+          if (!listed.has(canonicalSlug(ing.slug))) memberships.push({ productId: row.product_ndc, position: i + 1, slug: ing.slug, rawName: ing.raw, isActive: false });
         });
       }
       productBatch.push({
         id: row.product_ndc,
         concernId: nicheToConcernId(row.niche),
+        // Only openfda/dailymed rows get normalized -- brand_direct/OBF brand
+        // names are already human-written product names, not SPL label text.
         brandName: isPreMatched ? trimmedBrandName : normalizeBrandName(trimmedBrandName),
         manufacturer: row.manufacturer_name || null,
         dosageForm: row.dosage_form || null,

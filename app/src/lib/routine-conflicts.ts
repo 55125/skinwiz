@@ -10,7 +10,7 @@ export type ClassId = "retinoid" | "exfoliant" | "benzoyl-peroxide" | "vitamin-c
 
 export const CLASS_IDS: Record<ClassId, string[]> = {
   retinoid: RETINOIDS,
-  exfoliant: ["glycolic-acid", "lactic-acid", "mandelic-acid", "salicylic-acid", "lactobionic-acid", "gluconolactone"],
+  exfoliant: ["glycolic-acid", "lactic-acid", "mandelic-acid", "salicylic-acid", "lactobionic-acid", "gluconolactone", "capryloyl-salicylic-acid", "betaine-salicylate"],
   "benzoyl-peroxide": ["benzoyl-peroxide"],
   "vitamin-c": ["vitamin-c", "l-ascorbic-acid"],
 };

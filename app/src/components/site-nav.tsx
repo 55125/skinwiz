@@ -216,7 +216,7 @@ function MobileMenu({ pathname, concerns, showSearch }: { pathname: string; conc
             <div className="grid grid-cols-2">{INGREDIENT_ITEMS.map(link)}</div>
             <div className="mt-4 border-t pt-3" />
             {link({ href: "/routines", label: "Community routines" })}
-            {link({ href: "/for-clinicians", label: "For clinicians" })}
+            {link({ href: "/clinic-tools", label: "For clinicians" })}
             {link({ href: "/about", label: "About" })}
           </nav>
         </div>
@@ -268,7 +268,7 @@ export function SiteNav({ concerns }: { concerns: Concern[] }) {
         />
         {pill("/routines", "Routines", isActive(pathname, "/routines"))}
         {pill(
-          "/for-clinicians",
+          "/clinic-tools",
           "For clinicians",
           ["/for-clinicians", "/clinic-tools", "/clinicians"].some((h) => isActive(pathname, h)),
           "text-xs",

@@ -30,6 +30,18 @@ export const FREE_FROM_CHECKS: FreeFromCheck[] = [
   { id: "fragrance-free", label: "Fragrance-free", category: "clean", avoidSubstrings: ["fragrance", "parfum", "perfume"] },
   { id: "paraben-free", label: "Paraben-free", category: "clean", avoidSubstrings: ["paraben"] },
   {
+    id: "phthalate-free",
+    label: "Phthalate-free",
+    category: "clean",
+    avoidName: "phthalates or fragrance",
+    explain:
+      "Flags any listed phthalate (diethyl phthalate, dibutyl phthalate and the rest), and also fragrance or parfum: phthalates are mostly used as fragrance solvents, and a label can list the whole fragrance blend as one word, so a fragranced product can't be shown phthalate-free from its ingredient list.",
+    // Bare "phthalate" covers every ester; the abbreviations only as a whole
+    // ingredient name, since "dep" would hit far too much as a substring.
+    avoidSubstrings: ["phthalate", "fragrance", "parfum", "perfume"],
+    avoidPatterns: [/^(dep|dbp|dehp|dmp|bbp|dinp|didp)$/],
+  },
+  {
     id: "sulfate-free",
     label: "Sulfate-free",
     category: "clean",

@@ -166,6 +166,20 @@ export function ProfileEditor({
             </button>
           )}
         </div>
+        <label className="flex w-fit cursor-pointer items-start gap-2 text-sm">
+          <input
+            type="checkbox"
+            className="mt-0.5 h-4 w-4 accent-[var(--brand)]"
+            checked={profile.sensitive}
+            onChange={(e) => update({ sensitive: e.target.checked })}
+          />
+          <span>
+            My skin is sensitive
+            <span className="block text-xs text-muted-foreground">
+              Stings, burns or reddens easily. Works with any skin type above.
+            </span>
+          </span>
+        </label>
       </fieldset>
 
       <fieldset className="space-y-3">

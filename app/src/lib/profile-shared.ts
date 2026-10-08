@@ -6,12 +6,13 @@ export const PROFILE_COOKIE = "sw_profile";
 export const PROFILE_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
 const MAX_LIST = 30;
 
+// Oil level only. Sensitivity is a separate yes/no (Profile.sensitive): an
+// oily or dry person can also be sensitive, and one choice made them pick.
 export const SKIN_TYPES = [
   { id: "oily", label: "Oily" },
   { id: "dry", label: "Dry" },
   { id: "combination", label: "Combination" },
   { id: "normal", label: "Normal" },
-  { id: "sensitive", label: "Sensitive" },
 ] as const;
 
 // Booster patterns: exact slug, "prefix*", or "*contains*" (ingredient slugs
@@ -41,8 +42,8 @@ function hitsFor(patterns: string[], ids: Iterable<string>): string[] {
 
 // pregnant / breastfeeding only drive the pregnancy & lactation notices
 // (db/pregnancy-lactation.ts); they never change the match score.
-export type Profile = { skin: string | null; concerns: string[]; likes: string[]; dislikes: string[]; pregnant: boolean; breastfeeding: boolean };
-export const EMPTY_PROFILE: Profile = { skin: null, concerns: [], likes: [], dislikes: [], pregnant: false, breastfeeding: false };
+export type Profile = { skin: string | null; sensitive: boolean; concerns: string[]; likes: string[]; dislikes: string[]; pregnant: boolean; breastfeeding: boolean };
+export const EMPTY_PROFILE: Profile = { skin: null, sensitive: false, concerns: [], likes: [], dislikes: [], pregnant: false, breastfeeding: false };
 
 const SKIN_IDS = new Set<string>(SKIN_TYPES.map((s) => s.id));
 const CONCERN_IDS = new Set(PROFILE_CONCERNS.map((c) => c.id));
@@ -58,6 +59,8 @@ export function sanitizeProfile(input: unknown): Profile {
   const dislikes = slugList(o.dislikes);
   return {
     skin: typeof o.skin === "string" && SKIN_IDS.has(o.skin) ? o.skin : null,
+    // "sensitive" used to be a skin type; profiles saved that way carry over.
+    sensitive: o.sensitive === true || o.skin === "sensitive",
     concerns: Array.isArray(o.concerns) ? [...new Set(o.concerns.filter((c): c is string => typeof c === "string" && CONCERN_IDS.has(c)))] : [],
     dislikes,
     likes: slugList(o.likes).filter((l) => !dislikes.includes(l)),
@@ -67,9 +70,9 @@ export function sanitizeProfile(input: unknown): Profile {
 }
 
 // s=oily|c=acne,aging|l=a,b|d=x -- only [a-z0-9,-=|] so no cookie escaping.
-// |p=1 / |b=1 are appended only when set, so existing cookies parse as-is.
+// |v=1 / |p=1 / |b=1 are appended only when set, so existing cookies parse as-is.
 export function serializeProfile(p: Profile): string {
-  return `s=${p.skin ?? ""}|c=${p.concerns.join(",")}|l=${p.likes.join(",")}|d=${p.dislikes.join(",")}${p.pregnant ? "|p=1" : ""}${p.breastfeeding ? "|b=1" : ""}`;
+  return `s=${p.skin ?? ""}|c=${p.concerns.join(",")}|l=${p.likes.join(",")}|d=${p.dislikes.join(",")}${p.sensitive ? "|v=1" : ""}${p.pregnant ? "|p=1" : ""}${p.breastfeeding ? "|b=1" : ""}`;
 }
 
 export function parseProfile(raw: string | undefined): Profile {
@@ -80,12 +83,12 @@ export function parseProfile(raw: string | undefined): Profile {
     if (i > 0) f[part.slice(0, i)] = part.slice(i + 1);
   }
   const list = (s: string | undefined) => (s ? s.split(",").filter(Boolean) : []);
-  return sanitizeProfile({ skin: f.s, concerns: list(f.c), likes: list(f.l), dislikes: list(f.d), pregnant: f.p === "1", breastfeeding: f.b === "1" });
+  return sanitizeProfile({ skin: f.s, sensitive: f.v === "1", concerns: list(f.c), likes: list(f.l), dislikes: list(f.d), pregnant: f.p === "1", breastfeeding: f.b === "1" });
 }
 
 /** Whether the profile has anything the match score uses. */
 export function hasProfile(p: Profile): boolean {
-  return !!p.skin || p.concerns.length > 0 || p.likes.length > 0 || p.dislikes.length > 0;
+  return !!p.skin || p.sensitive || p.concerns.length > 0 || p.likes.length > 0 || p.dislikes.length > 0;
 }
 
 /** Whether there's anything worth keeping in the cookie at all. */
@@ -115,7 +118,8 @@ export function withLocalFlags(saved: Profile, local: Profile): Profile {
 /**
  * At sign-in: this browser's profile and the account's become one. Lists are
  * combined; a single-choice field (skin type) keeps the account's value
- * unless it has none; a disliked ingredient always beats a liked one.
+ * unless it has none; sensitive is kept if either side says so; a disliked
+ * ingredient always beats a liked one.
  * Pregnancy and breastfeeding come from this browser only.
  */
 export function mergeProfiles(saved: Profile | null, local: Profile): Profile {
@@ -123,6 +127,7 @@ export function mergeProfiles(saved: Profile | null, local: Profile): Profile {
   const union = (a: string[], b: string[]) => [...new Set([...a, ...b])];
   return sanitizeProfile({
     skin: saved.skin ?? local.skin,
+    sensitive: saved.sensitive || local.sensitive,
     concerns: union(saved.concerns, local.concerns),
     likes: union(saved.likes, local.likes),
     dislikes: union(saved.dislikes, local.dislikes),
@@ -196,7 +201,7 @@ export function matchProduct(
   const likeHits = profile.likes.filter((l) => present.has(l));
   for (const l of likeHits.slice(0, 3)) add(8, `Contains ${prettify(l)}, which you like`);
 
-  if (profile.skin === "sensitive" && flags) {
+  if (profile.sensitive && flags) {
     const bad = SENSITIVE_TRIGGERS.filter((t) => !flags.includes(t.flag));
     for (const t of bad) add(-12, `Sensitive skin: ${t.text}`);
     if (bad.length === 0) add(8, "Sensitive skin: no fragrance, drying alcohol or essential oils");

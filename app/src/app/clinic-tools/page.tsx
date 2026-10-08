@@ -18,11 +18,17 @@ export const dynamic = "force-dynamic";
 export default function ClinicToolsPage() {
   const items = FEATURES.HANDOUTS ? libraryItems() : [];
   const tools = [
+    // Moved here from /for-clinicians so clinicians land on it directly.
+    ...(FEATURES.HANDOUTS
+      ? [{
+          href: "/clinicians",
+          icon: FilePlus2,
+          title: "Patient handouts with a QR code",
+          body: "Start from the handout library or a blank page: patient information, OTC and prescription steps, your own directions and when to call. Print it with a QR code, show the code, or email the link from your own email app, and paste a chart note. Your patient scans it to save the plan privately on their phone. Sign in with your email and NPI; no patient details are ever sent to us.",
+        }]
+      : []),
     ...(items.length
       ? [{ href: "#library", icon: BookOpen, title: `${items.length} patient handouts`, body: "Conditions, surgery and procedures, cosmetic, pediatric and treatment how-tos. Use as is or customize, or write your own." }]
-      : []),
-    ...(FEATURES.HANDOUTS
-      ? [{ href: "/clinicians", icon: FilePlus2, title: "Handout builder", body: "Start blank or from the library, print with a QR code or email the link, and see anonymous printed, opened and saved counts." }]
       : []),
     { href: "/clinic-tools/patch-test-reader", icon: ClipboardCheck, title: "Patch-test reader", body: "For MAs: tap each chamber to grade it, then copy a ready-to-chart write-up and hand the patient a QR code." },
     { href: "/for-clinicians/patch-test", icon: FileText, title: "Patch-test results sheet", body: "Tick the positives and print a one-page sheet whose QR code loads the patient's avoid list." },

@@ -83,9 +83,13 @@ export default function ClinicToolsPage() {
           <div className="space-y-1">
             <h2 className="text-2xl font-semibold">Handout library</h2>
             <p className="max-w-3xl text-sm text-muted-foreground">
-              Plain-language handouts written to be edited. Ones marked <strong>Draft</strong> are AI-written and still in
-              dermatologist review: read before you hand them out. Using one needs a free clinician account (email plus NPI) so the
-              copy carries your name and clinic.
+              Plain-language handouts written to be edited. Using one needs a free clinician account (email plus NPI) so the copy
+              carries your name and clinic.
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {items.every((t) => !t.draft)
+                ? "Drafted with AI assistance and reviewed by the site's dermatologist before clinical use."
+                : "Drafted with AI assistance; physician review in progress. Read each one before you hand it out."}
             </p>
           </div>
           <HandoutLibrary items={items} categories={HANDOUT_CATEGORIES} useHref="/clinicians/handouts/new?template=" previewHref="/clinic-tools/handouts/" />

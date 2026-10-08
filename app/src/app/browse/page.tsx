@@ -19,6 +19,7 @@ import { HSA_GUIDE_PATH } from "@/lib/hsa";
 import { FEATURES } from "@/lib/feature-flags";
 import { PREGNANCY_FILTER_VALUE, pregnancyAvoidIngredientIds } from "@/lib/pregnancy";
 import { PregnancyFilter } from "@/components/pregnancy-notice";
+import { MatchSortNote, SortChips, parseListSort } from "@/components/sort-chips";
 
 type BrowseParams = { concern?: string; tier?: string; active?: string; free?: string; hsa?: string; sort?: string; page?: string; pregnancy?: string };
 
@@ -80,7 +81,7 @@ export default async function BrowsePage({
   const profile = await readProfile();
   const avoidIds = await readAvoidIds();
   const canMatch = hasProfile(profile) || avoidIds.length > 0;
-  const sort = sortParam === "match" && canMatch ? "match" : sortParam === "name" ? "name" : undefined;
+  const sort = parseListSort(sortParam, canMatch);
   // Gated pregnancy filter: offered once the profile says pregnant; a
   // ?pregnancy=hide link keeps working while the flag is on.
   const pregnancy = FEATURES.PREGNANCY_MODE && pregnancyParam === PREGNANCY_FILTER_VALUE ? PREGNANCY_FILTER_VALUE : undefined;
@@ -255,33 +256,9 @@ export default async function BrowsePage({
               <span className="font-semibold text-foreground tabular-nums">{total.toLocaleString()}</span> product
               {total === 1 ? "" : "s"}
             </p>
-            <div className="flex items-center gap-1 text-sm">
-              <span className="mr-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">Sort</span>
-              {[
-                { id: undefined, label: "Default" },
-                { id: "name", label: "A–Z" },
-                ...(canMatch ? [{ id: "match", label: "Best match" }] : []),
-              ].map((o) => (
-                <Link
-                  key={o.label}
-                  href={hrefWith({ sort: o.id })}
-                  aria-current={sort === o.id ? "true" : undefined}
-                  className={cn(
-                    "rounded-full border px-3 py-1 text-xs font-medium transition-colors",
-                    sort === o.id ? "border-brand/50 bg-brand-soft text-brand-foreground" : "hover:bg-muted",
-                  )}
-                >
-                  {o.label}
-                </Link>
-              ))}
-            </div>
+            <SortChips sort={sort} canMatch={canMatch} hrefFor={(id) => hrefWith({ sort: id })} />
           </div>
-          {sort === "match" && (
-            <p className="text-xs text-muted-foreground">
-              Ranked by your <Link href="/profile" className="underline">profile</Link> and avoid list. Products
-              without a full ingredient list can&apos;t be scored and are left out of this view.
-            </p>
-          )}
+          {sort === "match" && <MatchSortNote />}
 
           {rows.length === 0 ? (
             <div className="rounded-2xl border border-dashed p-10 text-center text-muted-foreground">

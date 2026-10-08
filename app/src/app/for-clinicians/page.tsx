@@ -21,9 +21,9 @@ export default function ForCliniciansPage() {
       <div>
         <h1 className="text-3xl font-semibold sm:text-4xl">For dermatologists</h1>
         <p className="mt-2 text-muted-foreground">
-          {SITE_NAME}&apos;s Derm Score exists because every other tool in this space runs on ingredient-list
-          heuristics with no clinical authority behind them. We&apos;re building a verified panel of
-          board-certified dermatologists instead.
+          Every other tool in this space rates products with ingredient-list heuristics and no clinical
+          authority behind them. {SITE_NAME} is building the Derm Score instead: a rating from a verified panel of
+          board-certified dermatologists. The panel hasn&apos;t launched, so no product has a Derm Score yet.
         </p>
       </div>
 

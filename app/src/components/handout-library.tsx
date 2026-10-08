@@ -81,10 +81,7 @@ export function HandoutLibrary({
           {shown.map((t) => (
             <li key={t.id} className="flex flex-col gap-2 rounded-2xl border bg-card p-4">
               <div className="space-y-1">
-                <p className="flex flex-wrap items-center gap-2 font-medium">
-                  {t.name}
-                  {t.draft && <span className="rounded-full bg-amber-100 px-2 py-px text-[10px] font-semibold text-amber-900 dark:bg-amber-950 dark:text-amber-200">Draft</span>}
-                </p>
+                <p className="font-medium">{t.name}</p>
                 <p className="text-xs leading-snug text-muted-foreground">{t.summary}</p>
               </div>
               <div className="mt-auto flex items-center gap-3 text-xs">

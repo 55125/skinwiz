@@ -22,7 +22,7 @@ const CLASS_LABEL: Record<ClassId, string> = {
   "vitamin-c": "vitamin C",
 };
 
-const RULES: { a: ClassId; b: ClassId; note: string }[] = [
+export const RULES: { a: ClassId; b: ClassId; note: string }[] = [
   {
     a: "retinoid",
     b: "exfoliant",

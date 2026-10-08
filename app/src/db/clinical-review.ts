@@ -1,7 +1,9 @@
 // Writes review/clinical-content-review.html (repo root) -- the
 // dermatologist's sign-off copy of the gated clinical content:
 // pregnancy/lactation classifications (db/pregnancy-lactation.ts) and
-// "When OTC isn't enough" guidance (db/escalation-guidance.ts).
+// "When OTC isn't enough" guidance (db/escalation-guidance.ts), plus Part D:
+// the clinical calls made after the persona test and already live
+// (lib/listing-rules.ts, lib/retinoids.ts, the retinoid and kids guides).
 //
 //   npx tsx src/db/clinical-review.ts        (from app/)
 //
@@ -15,6 +17,11 @@ import { PREGNANCY_ENTRIES, pregnancyEntryFor, type Classification, type Pregnan
 import { ESCALATION_GUIDANCE, ESCALATION_URGENT_SOURCES, UNIVERSAL_URGENT, type EscalationGuidance } from "./escalation-guidance";
 import { CONCERN_DEFINITIONS } from "./actives";
 import { DERM_FINDER } from "../lib/derm-finder";
+import { ECZEMA_EXCLUDED_ACTIVES } from "../lib/listing-rules";
+import { POTENT_RETINOIDS, RETINYL_ESTERS } from "../lib/retinoids";
+import { RULES as ROUTINE_RULES } from "../lib/routine-conflicts";
+import { SENSITIVE_SKIN_FREE } from "../lib/profile-shared";
+import { ALL_HANDOUT_TEMPLATES } from "./handout-templates";
 
 const OUT = path.join(process.cwd(), "..", "review", "clinical-content-review.html");
 const DB_PATH = process.env.DATABASE_PATH ?? path.join(process.cwd(), "data", "skinwiz.db");
@@ -139,6 +146,66 @@ const OPEN_QUESTIONS = [
   "Many AAD sources are cited as “AAD public guidance on …” rather than an exact page title / URL, because the drafter couldn't verify exact titles. Kaplan et al. (hydroquinone review) is cited without a year for the same reason. Please confirm or replace.",
 ];
 
+// ---- Part D: live since 2026-10-08, review after the fact ------------------
+// Michael asked for best judgement on these and said he'd review them on the
+// live site. Constants are read from the code; prose rows are hand-kept in
+// sync with the files named in each row.
+const D_RANKING: [string, string, string][] = [
+  ["D1", "Eczema list: left out", `Products whose actives include ${ECZEMA_EXCLUDED_ACTIVES.map((a) => `<code>${a}</code>`).join(" ")} are not shown on <code>/concern/dry-skin-eczema</code> (they keep their own pages and stay in search). Reason given in code: topical diphenhydramine is a common cause of allergic contact dermatitis and isn't recommended for eczema; antifungals treat a different problem. Sources cited: AAD “Eczema: self-care”; AAD atopic dermatitis guidelines 2023. <i>lib/listing-rules.ts</i>`],
+  ["D2", "Eczema list: ranked lower", "Diaper-area products, lip products and anything with chemical sunscreen filters (SPF day creams) rank after general eczema care. Diaper products carry a “For the diaper area” label. Petrolatum and colloidal oatmeal protectants now lead the list. <i>lib/listing-rules.ts</i>"],
+  ["D3", "Sun list order", "Tier 1: name says SPF 30 or higher <b>and</b> broad spectrum (from the label or the name). Tier 2: other sunscreens. Tier 3: makeup with SPF (foundation, BB/CC cream, lip, powder…), SPF under 30, and labels with the “sunburn only” skin-aging alert. Within a tier, FDA OTC drugs first, then listings with a photo. Source cited: AAD “How to select a sunscreen”. <i>lib/listing-rules.ts</i>"],
+  ["D4", "Above the OTC limit", "A product whose stated strength is above its OTC monograph maximum (today: salicylic acid 2.88% on the acne list) is left off concern lists. Its page says: “Salicylic acid is listed at 2.88%, above the 2% OTC limit. That's usually a filing error, so check the strength on the package. Until it's clear, we leave this product off our concern lists.” <i>product/[id]/page.tsx</i>"],
+  ["D5", "Sensitive skin", `One-tap “Sensitive skin” filter on every product list = ${SENSITIVE_SKIN_FREE.join(" + ")}. The profile's new “My skin is sensitive” checkbox (separate from Oily / Dry / Combination / Normal) scores −12 for each of fragrance, drying alcohol and essential oils, and +8 when none is present. <i>lib/profile-shared.ts</i>`],
+];
+
+const D_RETINOIDS: [string, string, string][] = [
+  ["D6", "What counts as a retinoid", `At any position on the list: ${POTENT_RETINOIDS.map((r) => `<code>${r}</code>`).join(" ")}. Only near the top of a cosmetic list (position 15 or above, like other ingredients), because they're weaker and often a trace antioxidant: ${RETINYL_ESTERS.map((r) => `<code>${r}</code>`).join(" ")}. Used for the regimen cautions below and the “Fine lines &amp; aging” match score. Before this change only the word “retinol” was caught, so INKEY Retinol (retinyl acetate + HPR) got no caution. <i>lib/retinoids.ts</i>`],
+  ...ROUTINE_RULES.filter((r) => r.a === "retinoid" || r.b === "retinoid").map((r, i): [string, string, string] => [
+    `D${7 + i}`,
+    `Regimen caution: retinoid + ${r.b === "retinoid" ? r.a : r.b}`,
+    `${esc(r.note)} <i>lib/routine-conflicts.ts</i>`,
+  ]),
+  ["D9", "“Also using a prescription retinoid?” (regimen)", "Tretinoin, tazarotene or another retinoid from your doctor. Mark when you use it (Morning / Night / Both) and the cautions on this page take it into account. Keep using it exactly as your prescriber told you; we don't give directions for prescription medicines. Stores no product and no dose. <i>components/rx-retinoid-card.tsx</i>"],
+];
+
+// /guide/prescription-retinoids, statement by statement (hand-kept in sync).
+const D_RX_GUIDE: [string, string][] = [
+  ["Header", "Tretinoin (Retin-A and others), prescription-strength adapalene, tazarotene or trifarotene. The everyday products around it make a real difference to how well you tolerate it."],
+  ["Box", "Your prescriber's directions come first. This page is general information about the skincare around a prescription, not instructions for the medicine itself. Actively never tells you how much to use, how often, or whether to start or stop. Ask your prescriber before changing how you use it."],
+  ["Pairs well", "A gentle, non-medicated cleanser. Fragrance-free, without scrubbing beads or acids."],
+  ["Pairs well", "A fragrance-free moisturizer. Dryness and peeling are the most common side effects, and moisturizing helps. Ask your prescriber whether to apply it before or after the retinoid."],
+  ["Pairs well", "Broad-spectrum sunscreen, SPF 30 or higher, every morning. Retinoids make skin more sensitive to the sun, and their labels say to limit sun exposure and use sun protection."],
+  ["Space out", "Exfoliating acids (glycolic, lactic, mandelic, salicylic). Together with a retinoid they add up to more dryness and irritation. Many people keep them to different nights, or skip them while getting used to the retinoid."],
+  ["Space out", "Benzoyl peroxide with tretinoin. Benzoyl peroxide can break down tretinoin, so the two are usually used at different times of day unless your prescription is made to be combined."],
+  ["Space out", "Another retinoid on top, such as an over-the-counter retinol serum or adapalene gel. Doubling up adds irritation without being part of the plan."],
+  ["Space out", "Scrubs, cleansing brushes, astringent or alcohol toners, and waxing on treated skin, which can lift fragile skin."],
+  ["First weeks", "Dryness, redness, flaking and stinging are common at first and usually ease as skin adjusts. For acne, breakouts can look a little worse before they get better, and real improvement usually takes 8 to 12 weeks of steady use."],
+  ["First weeks", "Call your prescriber if irritation is severe or doesn't settle, if you have swelling or blistering, or if you are pregnant, planning a pregnancy or breastfeeding."],
+  ["Sources", "Reynolds RV et al. Guidelines of care for the management of acne vulgaris. J Am Acad Dermatol 2024;90(5):1006.e1-30 (AAD) · FDA prescribing information: tretinoin cream and gel; tazarotene (pregnancy) · AAD acne patient education"],
+  ["Indexing", "Not indexed by search engines (robots noindex) until you approve it. Linked from the tretinoin search pointer, the regimen's prescription-retinoid option and retinoid ingredient pages."],
+];
+
+const KIDS = ALL_HANDOUT_TEMPLATES.filter((t) => t.category === "pediatric");
+
+const D_WORDING: [string, string][] = [
+  ["Handout review note (replaces the per-handout “Draft” badge)", "Unreviewed: “Drafted with AI assistance; physician review in progress.” Once a template is marked reviewed: “Drafted with AI assistance and reviewed by the site's dermatologist before clinical use.” Shown once per page in small type on /clinic-tools, each handout, /guide/kids and the retinoid guide."],
+  ["Derm Score", "Described everywhere as planned: “Actively is building the Derm Score instead: a rating from a verified panel of board-certified dermatologists. The panel hasn't launched, so no product has a Derm Score yet.” (/for-clinicians, /about, /terms, footer)"],
+  ["Nickel note (patch-test sheet and patient import page)", "Mostly from metal, not product labels: jewelry, belt buckles, jeans buttons, eyeglass frames, keys and metal tools like eyelash curlers."],
+  ["Ingredient checker", "Found allergens are grouped under their patch-test mix, e.g. “Fragrance mix I: Cinnamal, Eugenol, Hydroxycitronellal”. Its “similar formula” suggestions are screened against the visitor's avoid list, or against fragrance when the pasted list contains any."],
+  ["Search pointers", "Searching tretinoin, Retin-A, Tazorac, tazarotene or trifarotene, “kids” or “HSA” shows a pointer to the retinoid guide, /guide/kids or the HSA/FSA guide above the results."],
+];
+
+const D_QUESTIONS = [
+  "D1: also leave out topical hydrocortisone from the eczema list, or keep it (it's appropriate short-term for flares)? It's kept today.",
+  "D2/D3: are the tier rules right, and should the sun list also demote chemical-filter products for people who've marked sensitive skin?",
+  "D6: retinyl esters only count in the top 15 ingredients. Agree, or should any retinyl ester count for the retinoid + acid caution?",
+  "Retinoid guide: is the benzoyl peroxide line right now that some tretinoin formulations (microsphere) are photostable and BPO-compatible? It says “unless your prescription is made to be combined”.",
+  "Kids guides: parents see each pediatric handout's education, OTC steps and stop rules; prescription steps are hidden. Any handout that shouldn't be public at all (for example ones that only make sense with a visit)?",
+  "Once you've read them: mark which handouts are reviewed (the <code>reviewed</code> flag in the handout library), so the note switches to “reviewed by the site's dermatologist”.",
+  "Data: “Differin Epiduo” (NDC 0299-4908, adapalene 0.1% / benzoyl peroxide 2.5%) is listed as OTC. Checked: its FDA SPL is filed as HUMAN OTC DRUG with a Drug Facts label, and differin.com sells it, so the listing looks correct (Epiduo Forte 0.3% stays Rx). Agree?",
+  "Catalog gaps, no listing at all: Jergens Ultra Healing, Paula's Choice 2% BHA, Supergoop Unseen, La Roche-Posay Anthelios, PanOxyl Foaming Wash, Hero Mighty Patch, Nizoral, Sarna, Curel Itch Defense, Lubriderm Daily Moisture. Which should be added first?",
+];
+
 const pregnancyByLevel = (["avoid", "caution", "ok"] as SafetyLevel[]).map((lvl) => ({
   lvl,
   entries: PREGNANCY_ENTRIES.filter((e) => e.pregnancy.level === lvl),
@@ -147,7 +214,7 @@ const statementCount = ESCALATION_GUIDANCE.reduce((t, g) => t + 1 + g.seeDermato
 const today = new Date().toISOString().slice(0, 10);
 
 const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Actively pregnancy mode &amp; escalation guidance — draft for review</title>
+<title>Actively clinical content — draft for review</title>
 <style>
 :root{--ink:#141b24;--muted:#5d646c;--line:#d7d4cc;--paper:#f6f4ee;--card:#fff;--teal:#006761;--amber:#8a5a00}
 body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.6 Georgia, "Times New Roman", serif}
@@ -170,15 +237,16 @@ tbody th{width:110px;font-weight:600} td.src{width:28%;color:var(--muted);font-s
 pre{font:13px ui-monospace,monospace;background:#eeece5;padding:10px 12px;border-radius:8px;white-space:pre-wrap}
 @media print{body{background:#fff} article{border-color:#bbb}}
 </style></head><body><main>
-<h1>Actively pregnancy mode &amp; escalation guidance — draft for review</h1>
-<p class="lede">Generated ${today} from <code>app/src/db/pregnancy-lactation.ts</code> and <code>app/src/db/escalation-guidance.ts</code> · ${PREGNANCY_ENTRIES.length} ingredient classifications · ${ESCALATION_GUIDANCE.length} concerns, ${statementCount} escalation statements${dbNote}</p>
+<h1>Actively clinical content — draft for review</h1>
+<p class="lede">Generated ${today} from <code>app/src/db/pregnancy-lactation.ts</code>, <code>app/src/db/escalation-guidance.ts</code> and the Part D sources · ${PREGNANCY_ENTRIES.length} ingredient classifications · ${ESCALATION_GUIDANCE.length} concerns, ${statementCount} escalation statements · Part D: ${D_RANKING.length + D_RETINOIDS.length} rules, ${D_RX_GUIDE.length} retinoid-guide statements, ${KIDS.length} parent guides${dbNote}</p>
+<div class="callout"><b>New in this version: <a href="#part-d">Part D</a>.</b> Clinical calls made on 2026-10-08 after the 10-persona site test, using best judgement as you asked. Unlike Parts A and B, <b>these are already live</b>: eczema and sun list rules, retinoid detection and regimen cautions, the prescription retinoid guide, parent access to the pediatric handouts, and review-note and Derm Score wording. Mark them the same way; edits get applied straight to the live site.</div>
 
 <h2>How to review</h2>
 <p>Everything below was drafted by Claude (AI) for your review as the site's board-certified dermatologist. Both features sit behind flags that default to <b>off in production</b> (see the status check below for what is live today).</p>
 <p>Tick one box per row (and per entry) and note edits. Send the marked-up file back, or list row numbers and changes, and the edits get applied before either flag is turned on. This file is regenerated from the source data with <code>npx tsx src/db/clinical-review.ts</code> (run in <code>app/</code>), so it always matches what would ship.</p>
 <p>Drafting rules: mainstream guidance only (ACOG, AAD, peer-reviewed reviews, NIH LactMed, FDA OTC labeling). Levels reflect the evidence rather than blanket caution, and every notice says it isn't medical clearance and to talk to an OB or dermatologist. Escalation text says when to get seen, never what a condition is.</p>
 
-<div class="callout"><b>Status check, ${today}:</b> the live site is currently serving both features, even though the code defaults them to off in production. The pregnancy guide page, the profile checkboxes and the “When OTC isn't enough” panels are all reachable. <code>FEATURE_PREGNANCY_MODE</code> and <code>FEATURE_ESCALATION</code> are set in the production environment (outside the repo); the Rx catalog and clinician handouts are <b>not</b> live (those pages return 404). To switch the two clinical features off until sign-off, set both to <code>off</code> in the hosting environment and redeploy.</div>
+<div class="callout"><b>Status check, ${today}:</b> the live site is currently serving both features, even though the code defaults them to off in production. The pregnancy guide page, the profile checkboxes and the “When OTC isn't enough” panels are all reachable. <code>FEATURE_PREGNANCY_MODE</code> and <code>FEATURE_ESCALATION</code> are set in the production environment (outside the repo); the Rx catalog is <b>not</b> live (<code>/rx</code> returns 404); the clinician handout library at <code>/clinic-tools</code> is. To switch the two clinical features off until sign-off, set both to <code>off</code> in the hosting environment and redeploy.</div>
 <h2>Turning the features on</h2>
 <p>Flags live in <code>app/src/lib/feature-flags.ts</code>. Each is OFF when <code>NODE_ENV=production</code> and ON otherwise, unless its environment variable overrides it (<code>on</code>/<code>1</code>/<code>true</code> or <code>off</code>/<code>0</code>/<code>false</code>). After sign-off, set the variable on the production service (e.g. Railway → Variables) and redeploy or restart:</p>
 <pre>FEATURE_PREGNANCY_MODE=on   # Part A: profile options, product notices, listing filter, /guide/pregnancy-breastfeeding
@@ -195,7 +263,7 @@ FEATURE_ESCALATION=on       # Part B: "When OTC isn't enough" on concern pages, 
 <div class="callout"><ol>${OPEN_QUESTIONS.map((q) => `<li>${q}</li>`).join("")}</ol></div>
 
 <h2>Contents</h2>
-<nav>${pregnancyByLevel.map((g) => `<div><a href="#lvl-${g.lvl}">Pregnancy: ${LEVEL[g.lvl]}</a> (${g.entries.length})</div>`).join("")}<div><a href="#rules">How the screen decides (rules)</a> (${RULES.length})</div><div><a href="#escalation">When OTC isn't enough</a> (${ESCALATION_GUIDANCE.length})</div><div><a href="#ui-copy">Fixed UI copy</a> (${UI_COPY.length})</div></nav>
+<nav>${pregnancyByLevel.map((g) => `<div><a href="#lvl-${g.lvl}">Pregnancy: ${LEVEL[g.lvl]}</a> (${g.entries.length})</div>`).join("")}<div><a href="#rules">How the screen decides (rules)</a> (${RULES.length})</div><div><a href="#escalation">When OTC isn't enough</a> (${ESCALATION_GUIDANCE.length})</div><div><a href="#ui-copy">Fixed UI copy</a> (${UI_COPY.length})</div><div><a href="#part-d">Part D: live since 2026-10-08</a> (${D_RANKING.length + D_RETINOIDS.length + D_RX_GUIDE.length + KIDS.length + D_WORDING.length})</div></nav>
 
 <h2>Part A — Pregnancy &amp; breastfeeding classifications</h2>
 <p class="meta">Levels: <span class="lvl avoid">Avoid</span> mainstream guidance says don't use it during this time (often precautionary) · <span class="lvl caution">Caution / ask first</span> fine in limited use, or not enough data · <span class="lvl ok">Generally OK</span> acceptable in normal use. Grouped by pregnancy level. The first entry whose patterns match an ingredient slug claims it; salicylate esters (butyloctyl, benzyl, tridecyl, methyl salicylate) deliberately don't match salicylic acid.</p>
@@ -221,9 +289,49 @@ ${ESCALATION_GUIDANCE.map(escalationHtml).join("\n")}
 ${UI_COPY.map(([w, t]) => `<tr><th style="width:200px">${esc(w)}</th><td>${esc(t)}</td>${BOX}</tr>`).join("\n")}
 </tbody></table>
 </section>
+
+<section id="part-d"><h2>Part D — Live since 2026-10-08: persona-test follow-ups</h2>
+<p class="meta">Drafted by Claude (AI) on your instruction to use best judgement and review on the live site. Everything here is <b>already live</b> on activelyskin.com. Constants (ingredient lists, filter definitions, caution notes) are read from the code when this file is generated.</p>
+
+<h3>Questions for you</h3>
+<div class="callout"><ol>${D_QUESTIONS.map((q) => `<li>${q}</li>`).join("")}</ol></div>
+
+<h3 style="margin-top:24px">List ranking and filters</h3>
+<table><thead><tr><th>#</th><th>Rule</th><th>What the site does</th><th>Sign-off</th></tr></thead><tbody>
+${D_RANKING.map(([id, t, d]) => `<tr><th>${id}</th><td><b>${t}</b></td><td>${d}</td>${BOX}</tr>`).join("\n")}
+</tbody></table>
+
+<h3 style="margin-top:24px">Retinoids</h3>
+<table><thead><tr><th>#</th><th>Rule</th><th>What the site does</th><th>Sign-off</th></tr></thead><tbody>
+${D_RETINOIDS.map(([id, t, d]) => `<tr><th>${id}</th><td><b>${t}</b></td><td>${d}</td>${BOX}</tr>`).join("\n")}
+</tbody></table>
+
+<article id="d-rx-guide"><h3>Guide: “Using a prescription retinoid?” <code>/guide/prescription-retinoids</code></h3>
+<table><thead><tr><th>#</th><th>Statement shown</th><th>Sign-off</th></tr></thead><tbody>
+${D_RX_GUIDE.map(([w, t], i) => `<tr><th>R${i + 1}<br><small>${esc(w)}</small></th><td>${esc(t)}</td>${BOX}</tr>`).join("\n")}
+</tbody></table>
+<div class="review"><span>☐ Approve guide as written</span><span>☐ Approve with edits</span><span>☐ Take it down</span><div class="notes">Notes:</div></div>
+</article>
+
+<article id="d-kids"><h3>Children's skin guides for parents <code>/guide/kids</code></h3>
+<p class="meta">The ${KIDS.length} pediatric handouts from the clinician library, readable without signing in and not indexed by search engines. Each shows the handout's education sections, its over-the-counter steps, its stop rules plus the universal ones, and its sources, under a note that “we” means the child's own doctor. <b>Prescription steps are hidden.</b> The full text of each is in <code>review/handout-library-review.html</code>.</p>
+<table><thead><tr><th>#</th><th>Guide</th><th>Shown to parents</th><th>Hidden</th><th>Reviewed?</th><th>Sign-off</th></tr></thead><tbody>
+${KIDS.map((t, i) => {
+  const otc = t.steps.filter((x) => x.kind === "otc").length;
+  const rx = t.steps.filter((x) => x.kind !== "otc").length;
+  return `<tr><th>K${i + 1}</th><td><b>${esc(t.title)}</b><br><small>${esc(t.summary)}</small></td><td>${t.sections.length} section${t.sections.length === 1 ? "" : "s"}, ${otc} OTC step${otc === 1 ? "" : "s"}, ${t.stopRules.length} stop rule${t.stopRules.length === 1 ? "" : "s"}</td><td>${rx ? `${rx} prescription/other step${rx === 1 ? "" : "s"}` : "nothing"}</td><td>${t.reviewed ? "Yes" : "No"}</td><td class="box">☐ Public OK<br>☐ Edit<br>☐ Clinic only</td></tr>`;
+}).join("\n")}
+</tbody></table>
+</article>
+
+<h3 style="margin-top:24px">Wording</h3>
+<table><thead><tr><th>Where</th><th>Text</th><th>Sign-off</th></tr></thead><tbody>
+${D_WORDING.map(([w, t]) => `<tr><th style="width:200px">${esc(w)}</th><td>${esc(t)}</td>${BOX}</tr>`).join("\n")}
+</tbody></table>
+</section>
 </main></body></html>
 `;
 
 fs.mkdirSync(path.dirname(OUT), { recursive: true });
 fs.writeFileSync(OUT, html);
-console.log(`Wrote ${OUT}: ${PREGNANCY_ENTRIES.length} classifications, ${statementCount} escalation statements.`);
+console.log(`Wrote ${OUT}: ${PREGNANCY_ENTRIES.length} classifications, ${statementCount} escalation statements, Part D with ${KIDS.length} parent guides.`);

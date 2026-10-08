@@ -356,7 +356,10 @@ function reseed() {
       const fullIngredientText = isPreMatched
         ? row.active_ingredient_text || null
         : inactive?.text
-          ? `${row.active_ingredient_text || ""} ${inactive.text}`
+          ? // Both active columns: the label-text one is sometimes garbled
+            // ("Active i ngredient") or empty, and a hydrocortisone cream
+            // must never read as clear of hydrocortisone.
+            `${row.active_ingredients_structured || ""} ${row.active_ingredient_text || ""} ${inactive.text}`
           : null;
       // Cosmetic sources never disclose concentrations, so only the FDA
       // label line is parsed -- see db/strength.ts.

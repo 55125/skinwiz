@@ -280,7 +280,7 @@ function Tick({
 
 // For patients without a QR: tick positives off the series their
 // dermatologist used, then add the label-checkable ones to the avoid list.
-export function PatchTestSeriesPicker({ onAdd, defaultOpen }: { onAdd: (ids: string[]) => void; defaultOpen?: boolean }) {
+export function PatchTestSeriesPicker({ onAdd, defaultOpen }: { onAdd: (ids: string[], notOnLabel: string[]) => void; defaultOpen?: boolean }) {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [added, setAdded] = useState<number | null>(null);
   const avoidIds = [...selected].filter((id) => resolveAllergenId(id));
@@ -309,21 +309,21 @@ export function PatchTestSeriesPicker({ onAdd, defaultOpen }: { onAdd: (ids: str
         />
         {offLabel.length > 0 && (
           <p className="text-xs leading-relaxed text-muted-foreground">
-            Not on cosmetic labels, so we can&apos;t check products for:{" "}
+            Saved to your list for reference, but not on cosmetic labels, so we can&apos;t check products for:{" "}
             {offLabel.map((id) => `${getNotOnLabel(id)!.name} (${getNotOnLabel(id)!.foundIn.replace(/\.$/, "").toLowerCase()})`).join("; ")}.
           </p>
         )}
         <div className="flex flex-wrap items-center gap-3">
           <Button
             type="button"
-            disabled={avoidIds.length === 0}
+            disabled={avoidIds.length + offLabel.length === 0}
             onClick={() => {
-              onAdd(avoidIds);
-              setAdded(avoidIds.length);
+              onAdd(avoidIds, offLabel);
+              setAdded(avoidIds.length + offLabel.length);
             }}
             className="rounded-full"
           >
-            Add {avoidIds.length || ""} to my list
+            Add {avoidIds.length + offLabel.length || ""} to my list
           </Button>
           {added !== null && (
             <span className="flex items-center gap-1 text-sm text-emerald-700 dark:text-emerald-400">

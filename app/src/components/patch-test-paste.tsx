@@ -13,7 +13,7 @@ const EXAMPLE = "Methylisothiazolinone 0.2% aq ++\nFragrance mix I 8% pet +\nAme
 // Turns a pasted patch-test results sheet into avoid-list picks: every line
 // is matched against allergen names, label synonyms and series names, and
 // shown for the visitor to confirm before anything is added.
-export function PatchTestPaste({ onAdd, defaultOpen }: { onAdd: (ids: string[]) => void; defaultOpen?: boolean }) {
+export function PatchTestPaste({ onAdd, defaultOpen }: { onAdd: (ids: string[], notOnLabel: string[]) => void; defaultOpen?: boolean }) {
   const [text, setText] = useState("");
   const [unticked, setUnticked] = useState<Set<string>>(new Set());
   const [ticked, setTicked] = useState<Set<string>>(new Set());
@@ -26,7 +26,7 @@ export function PatchTestPaste({ onAdd, defaultOpen }: { onAdd: (ids: string[]) 
     return { ...l, key: `${i}:${l.line}`, family: families[0], byDefault: !l.negative && !l.uncertain };
   });
   const recognized = rows.filter((r) => r.ids.length > 0);
-  const offLabel = rows.filter((r) => r.ids.length === 0 && r.notOnLabel && !r.negative);
+  const offLabel = rows.filter((r) => r.ids.length === 0 && r.notOnLabel && !r.negative && !r.uncertain);
   const unknown = rows.filter((r) => r.ids.length === 0 && !r.notOnLabel);
 
   const isOn = (key: string, byDefault: boolean) => (byDefault ? !unticked.has(key) : ticked.has(key));
@@ -97,7 +97,7 @@ export function PatchTestPaste({ onAdd, defaultOpen }: { onAdd: (ids: string[]) 
         )}
         {offLabel.length > 0 && (
           <p className="text-xs leading-relaxed text-muted-foreground">
-            Not on cosmetic labels, so we can&apos;t check products for:{" "}
+            Saved to your list for reference, but not on cosmetic labels, so we can&apos;t check products for:{" "}
             {offLabel.map((r) => `${getNotOnLabel(r.notOnLabel!)!.name} (${getNotOnLabel(r.notOnLabel!)!.foundIn.replace(/\.$/, "").toLowerCase()})`).join("; ")}.
           </p>
         )}
@@ -110,14 +110,15 @@ export function PatchTestPaste({ onAdd, defaultOpen }: { onAdd: (ids: string[]) 
         <div className="flex flex-wrap items-center gap-3">
           <Button
             type="button"
-            disabled={picked.length === 0}
+            disabled={picked.length + offLabel.length === 0}
             onClick={() => {
-              onAdd(picked);
-              setAdded(picked.length);
+              const off = [...new Set(offLabel.map((r) => r.notOnLabel!))];
+              onAdd(picked, off);
+              setAdded(picked.length + off.length);
             }}
             className="rounded-full"
           >
-            Add {picked.length || ""} to my list
+            Add {picked.length + offLabel.length || ""} to my list
           </Button>
           {added !== null && (
             <span className="flex items-center gap-1 text-sm text-emerald-700 dark:text-emerald-400">

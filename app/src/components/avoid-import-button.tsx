@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 // The one button on the import page: merges the imported ids into the
 // avoid list server-side (the cookie is the source of truth, so nothing on
 // the list is dropped), then points at what to do next.
-export function AvoidImportButton({ ids, allPresent }: { ids: string[]; allPresent: boolean }) {
+export function AvoidImportButton({ ids, notOnLabel = [], allPresent }: { ids: string[]; notOnLabel?: string[]; allPresent: boolean }) {
   const router = useRouter();
   const [result, setResult] = useState<{ merged: string[]; added: number } | null>(null);
   const [error, setError] = useState(false);
@@ -21,14 +21,14 @@ export function AvoidImportButton({ ids, allPresent }: { ids: string[]; allPrese
       const res = await fetch("/api/avoid", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ add: ids }),
+        body: JSON.stringify({ add: ids, addNotOnLabel: notOnLabel }),
       }).catch(() => null);
       const body = res?.ok ? await res.json().catch(() => null) : null;
       if (!body?.ok) {
         setError(true);
         return;
       }
-      setResult({ merged: body.ids, added: body.added.length });
+      setResult({ merged: body.ids, added: body.added.length + (body.addedNotOnLabel?.length ?? 0) });
       router.refresh();
     });
   }
@@ -46,12 +46,14 @@ export function AvoidImportButton({ ids, allPresent }: { ids: string[]; allPrese
             : "Everything here is already on your avoid list."}
         </p>
         <div className="flex flex-wrap gap-2">
-          <Link
-            href={`/browse?free=${browseIds.join(",")}`}
-            className="inline-flex items-center rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-          >
-            Browse products without them
-          </Link>
+          {browseIds.length > 0 && (
+            <Link
+              href={`/browse?free=${browseIds.join(",")}`}
+              className="inline-flex items-center rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+            >
+              Browse products without them
+            </Link>
+          )}
           <Link href="/avoid" className="inline-flex items-center rounded-full border bg-card px-4 py-2 text-sm font-medium hover:bg-muted">
             See my full list
           </Link>

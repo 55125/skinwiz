@@ -1026,8 +1026,7 @@ const PATCH_TEST_NAMES: [string, string][] = [
   ["fragrance mix 1", "fragrance-mix-1"],
   ["fragrance mix", "fragrance-mix-1"],
   ["paraben mix", "parabens"],
-  ["caine mix", "benzocaine"],
-  ["compositae mix", "compositae"],
+    ["compositae mix", "compositae"],
   ["formaldehyde releaser", "formaldehyde-releasers"],
   ["amidoamine", "cocamidopropyl-betaine"],
   ["dimethylaminopropylamine", "cocamidopropyl-betaine"],
@@ -1048,29 +1047,40 @@ const RESULT_NOISE =
   /\b(\d+([.,]\d+)?\s*%|\d+([.,]\d+)?\s*(mg|µg|ug)(\s*\/\s*cm2?)?|pet|petrolatum|aq|water|eth|ethanol|acetone|ac|day\s*\d|d\s*\d|reading|positive|pos|relevant|relevance|current|past|possible|probable|definite|doubtful|irritant|ir|allergic|reaction|result|weak|strong|extreme)\b|[+?()[\]:#*]+|\b\d+\.(?=\s)/gi;
 const NEGATIVE = /\b(neg|negative|nr|not reactive|no reaction)\b|(^|\s)[-–]\s*$|(^|\s)0\s*$/i;
 
-export type PatchTestLine = { line: string; ids: string[]; negative: boolean };
+// Doubtful and irritant readings: not an allergy on their own, so these
+// lines are recognized but left for the patient to tick.
+const UNCERTAIN = /(^|\s)(\?\+?|\+\s*\/\s*-|\+-|±|ir|irritant|doubtful)(?=\s|$)/i;
+
+export type PatchTestLine = { line: string; ids: string[]; negative: boolean; uncertain: boolean; notOnLabel?: string };
+
+// A series name the caller knows ("Caine mix III", "Carba mix"), looked up
+// before label matching. Returns allergen ids, or a not-on-label id.
+export type SeriesNameLookup = (cleaned: string) => { ids: string[]; notOnLabel?: string } | undefined;
 
 /**
  * Reads a pasted patch-test results sheet, one allergen per line (or comma-
- * separated), into allergen/group ids. Lines read as negative are flagged so
- * the caller can leave them unticked.
+ * separated), into allergen/group ids. Lines read as negative, doubtful or
+ * irritant are flagged so the caller can leave them unticked.
  */
-export function parsePatchTestResults(text: string): PatchTestLine[] {
+export function parsePatchTestResults(text: string, seriesName?: SeriesNameLookup): PatchTestLine[] {
   const lines = text
     .split(/\r?\n|;|,(?!\d)/)
     .map((l) => l.trim())
     .filter((l) => /[a-z]{2}/i.test(l));
   return lines.slice(0, 120).map((line) => {
     const negative = NEGATIVE.test(line);
-    const cleaned = normalizeForAllergens(line.replace(NEGATIVE, " ").replace(RESULT_NOISE, " "));
+    const uncertain = !negative && UNCERTAIN.test(line);
+    const cleaned = normalizeForAllergens(line.replace(NEGATIVE, " ").replace(UNCERTAIN, " ").replace(RESULT_NOISE, " "));
+    const series = cleaned ? seriesName?.(cleaned) : undefined;
+    if (series) return { line, ...series, negative, uncertain };
     const exact = PATCH_TEST_NAMES.find(([name]) => cleaned === name);
     const named = exact ?? PATCH_TEST_NAMES.find(([name]) => name.length > 3 && new RegExp(`(^| )${escapeRe(name)}( |$)`).test(cleaned));
-    if (named) return { line, ids: [named[1]], negative };
+    if (named) return { line, ids: [named[1]], negative, uncertain };
     const group = ALLERGEN_GROUPS.find((g) => normalizeForAllergens(g.name) === cleaned);
-    if (group) return { line, ids: [group.id], negative };
+    if (group) return { line, ids: [group.id], negative, uncertain };
     // An exact aka ("Kathon CG", "Amerchol L-101") before word matching.
     const aka = CONTACT_ALLERGENS.find((a) => [a.name, ...(a.aka ?? [])].some((n) => normalizeForAllergens(n) === cleaned));
-    if (aka) return { line, ids: [aka.id], negative };
-    return { line, ids: cleaned ? allergensInIngredient(cleaned) : [], negative };
+    if (aka) return { line, ids: [aka.id], negative, uncertain };
+    return { line, ids: cleaned ? allergensInIngredient(cleaned) : [], negative, uncertain };
   });
 }

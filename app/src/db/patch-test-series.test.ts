@@ -166,3 +166,32 @@ test("80-allergen trays: ACDS 2017 and NAC-80 are 8 panels of 10, numbered 1-80,
     for (const [n, re] of checks) assert.match(items[n - 1].name, re, `${id} #${n}`);
   }
 });
+
+test("pasted results sheets read series names first, and doubtful or irritant lines stay unticked", async () => {
+  const { readResultsSheet } = await import("./patch-test-series");
+  const read = (line: string) => readResultsSheet(line)[0];
+  // A resin positive is not a formaldehyde allergy.
+  assert.deepEqual(read("p-tert-Butylphenol formaldehyde resin 1% pet +"), {
+    line: "p-tert-Butylphenol formaldehyde resin 1% pet +",
+    ids: [],
+    notOnLabel: "ptbp-formaldehyde-resin",
+    negative: false,
+    uncertain: false,
+  });
+  assert.deepEqual(read("Caine mix III 10% pet +").ids, ["benzocaine", "dibucaine", "tetracaine"]);
+  assert.deepEqual(read("Quinoline mix 6% pet +").ids, ["clioquinol", "chlorquinaldol"]);
+  assert.deepEqual(read("Methylchloroisothiazolinone/Methylisothiazolinone 0.02% aq +").ids, ["mci-mi"]);
+  assert.deepEqual(read("Parthenolide 0.1% pet +").ids, ["compositae"]);
+  assert.equal(read("IPPD 0.1% pet +").notOnLabel, "black-rubber-mix");
+  assert.equal(read("Diphenylguanidine 1% pet +").notOnLabel, "diphenylguanidine");
+  assert.equal(read("Carba mix 3% pet 2+").notOnLabel, "carba-mix");
+  // Label-name matching still covers anything the series don't name.
+  assert.deepEqual(read("Nickel sulfate hexahydrate 2.5% pet ++").ids, ["nickel"]);
+  assert.deepEqual(read("Kathon CG +").ids, ["mci-mi"]);
+  for (const line of ["Fragrance mix I 8% pet IR", "Cobalt chloride 1% pet ?+", "Balsam of Peru 25% pet +/-", "Nickel doubtful"]) {
+    const r = read(line);
+    assert.ok(r.ids.length > 0 && r.uncertain && !r.negative, line);
+  }
+  assert.equal(read("Methylisothiazolinone 0.2% aq ++").uncertain, false);
+  assert.equal(read("Quaternium-15 2% pet negative").uncertain, false);
+});

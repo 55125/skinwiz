@@ -234,7 +234,7 @@ export function PatchTestSeriesPicker({ onAdd, defaultOpen }: { onAdd: (ids: str
         <span>
           <span className="block text-sm font-semibold">Pick from a patch-test series</span>
           <span className="block text-xs text-muted-foreground">
-            Tick your positives on the T.R.U.E. Test or the core series, in the order your results sheet lists them.
+            Tick your positives on the series your dermatologist used: the T.R.U.E. Test, an ACDS or NAC-80 tray, or the core series.
           </span>
         </span>
       </summary>

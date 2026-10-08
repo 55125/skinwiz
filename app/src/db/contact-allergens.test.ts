@@ -69,7 +69,6 @@ test("patch-test results sheets", () => {
   assert.deepEqual(read("Fragrance mix II 14% pet +").ids, ["fragrance-mix-2"]);
   assert.deepEqual(read("Amerchol L-101 50% pet ++").ids, ["lanolin"]);
   assert.deepEqual(read("Tixocortol-21-pivalate 0.1% pet +").ids, ["corticosteroid-class-a"]);
-  assert.deepEqual(read("Caine mix III 10% pet +").ids, ["benzocaine"]);
   assert.deepEqual(read("MI").ids, ["methylisothiazolinone"]);
   assert.deepEqual(read("Carba mix 3% pet +").ids, []);
   assert.equal(read("Quaternium-15 2% pet negative").negative, true);

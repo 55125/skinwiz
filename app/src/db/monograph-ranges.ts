@@ -66,6 +66,7 @@ export const MONOGRAPH_RANGES: Record<string, MonographRange> = {
   diphenhydramine: { min: 1, max: 2, cfr: "21 CFR 348.10" },
   lidocaine: { min: 0.5, max: 4, cfr: "21 CFR 348.10" },
   benzocaine: { min: 5, max: 20, cfr: "21 CFR 348.10" },
+  phenol: { min: 0.5, max: 1.5, cfr: "21 CFR 348.10" },
   // Menthol and camphor have no entry: their higher counterirritant
   // (pain-relief) strengths are also monograph-permitted, and an itch-only
   // maximum would wrongly flag those products as above range.
@@ -83,6 +84,8 @@ export const MONOGRAPH_RANGES: Record<string, MonographRange> = {
   // 50-100% alone; 30-35% when combined with colloidal oatmeal.
   "mineral-oil": { min: 30, max: 100, cfr: "21 CFR 347.10" },
   "aluminum-hydroxide": { min: 0.15, max: 5, cfr: "21 CFR 347.10" },
+  // Topical starch (10-98%) has no entry: pure cornstarch powders label
+  // 99-100%, and an above-range badge or listing exclusion would be noise.
 
   // Antiperspirant -- 21 CFR 350.10
   "aluminum-chlorohydrate": { min: 0, max: 25, cfr: "21 CFR 350.10" },

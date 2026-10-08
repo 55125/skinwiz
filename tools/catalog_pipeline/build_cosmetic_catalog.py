@@ -77,16 +77,40 @@ COSMETIC_ACTIVES = {
     # than creating a duplicate, so cosmetic-sourced rows join the same
     # evidence note and filter chip an FDA-sourced one would.
     "petrolatum": ("petrolatum", ["petrolatum", "petroleum jelly", "white petrolatum"]),
-    # Added 2026-10-08 alongside the same additions in
-    # build_brand_direct_catalog.py. UV filters aren't listed: seed.ts adds
-    # any actives.ts filter it finds in the INCI list (countsAnywhereListed).
-    "retinal": ("retinal", ["retinal", "retinaldehyde"]),
-    "hydroxypinacolone-retinoate": ("hydroxypinacolone-retinoate", ["hydroxypinacolone retinoate"]),
-    "retinyl-retinoate": ("retinyl-retinoate", ["retinyl retinoate"]),
-    "gluconolactone": ("gluconolactone", ["gluconolactone"]),
-    "lactobionic-acid": ("lactobionic-acid", ["lactobionic acid"]),
-    "capryloyl-salicylic-acid": ("capryloyl-salicylic-acid", ["capryloyl salicylic acid"]),
-    "betaine-salicylate": ("betaine-salicylate", ["betaine salicylate"]),
+}
+
+# Added 2026-10-08 alongside the same additions in
+# build_brand_direct_catalog.py. Matched in every fetched product's
+# ingredient text but not fetched by tag: COSMETIC_ACTIVES only holds tags
+# checked against a live OBF count, and these weren't (no network where they
+# were added). UV filters aren't listed: seed.ts adds any actives.ts filter
+# it finds in the INCI list (countsAnywhereListed).
+MATCH_ONLY_ACTIVES = {
+    # in actives.ts and the brand-direct matcher already, missing here
+    "alpha-arbutin": ["alpha arbutin", "alpha-arbutin"],
+    "glycolic-acid": ["glycolic acid"],
+    "squalane": ["squalane"],
+    "retinal": ["retinal", "retinaldehyde"],
+    "hydroxypinacolone-retinoate": ["hydroxypinacolone retinoate"],
+    "retinyl-retinoate": ["retinyl retinoate"],
+    "retinyl-palmitate": ["retinyl palmitate"],
+    "retinyl-acetate": ["retinyl acetate"],
+    "retinyl-propionate": ["retinyl propionate"],
+    "retinyl-linoleate": ["retinyl linoleate"],
+    "gluconolactone": ["gluconolactone"],
+    "lactobionic-acid": ["lactobionic acid"],
+    "capryloyl-salicylic-acid": ["capryloyl salicylic acid"],
+    "betaine-salicylate": ["betaine salicylate"],
+    "malic-acid": ["malic acid"],
+    "ascorbyl-glucoside": ["ascorbyl glucoside"],
+    "3-o-ethyl-ascorbic-acid": ["3-o-ethyl ascorbic acid", "ethyl ascorbic acid", "ethylascorbic acid"],
+    "magnesium-ascorbyl-phosphate": ["magnesium ascorbyl phosphate"],
+    "sodium-ascorbyl-phosphate": ["sodium ascorbyl phosphate"],
+    "tetrahexyldecyl-ascorbate": ["tetrahexyldecyl ascorbate", "ascorbyl tetraisopalmitate"],
+    "arbutin": ["beta-arbutin", "beta arbutin", "arbutin"],
+    "adenosine": ["adenosine"],
+    "urea": ["urea"],
+    "tea-tree-oil": ["tea tree oil", "melaleuca alternifolia leaf oil", "melaleuca alternifolia oil", "tea tree leaf oil"],
 }
 
 JUNK_PATTERN = re.compile(r"\btest\b", re.IGNORECASE)
@@ -169,17 +193,43 @@ def pick_niche(active_ids: list[str]) -> str:
     return "skin-protectant" if protectant_votes > len(active_ids) - protectant_votes else "brightening-texture"
 
 
-def matched_active_ids(ingredients_text: str) -> list[str]:
+# Ingredient names that contain a tracked needle without being that
+# ingredient: two formaldehyde-releasing preservatives end in "urea".
+DECOYS = ["imidazolidinyl urea", "diazolidinyl urea"]
+
+
+def _longest_first(actives: dict[str, list[str]]) -> list[tuple[str, str]]:
+    return sorted(((n, aid) for aid, needles in actives.items() for n in needles), key=lambda p: -len(p[0]))
+
+
+def match_longest_first(ingredients_text: str, pairs: list[tuple[str, str]]) -> list[str]:
+    """Like app/src/db/actives.ts matchActiveIds: longest needle first, each
+    match blanked out before shorter ones are tried, so "alpha arbutin" isn't
+    also arbutin and "3-o-ethyl ascorbic acid" isn't also vitamin C."""
     lowered = ingredients_text.lower()
-    seen = set()
-    matched = []
-    for _, (active_id, needles) in COSMETIC_ACTIVES.items():
-        if active_id in seen:
-            continue
-        if any(n in lowered for n in needles):
-            matched.append(active_id)
-            seen.add(active_id)
+    for decoy in DECOYS:
+        lowered = lowered.replace(decoy, " ")
+    matched: list[str] = []
+    for needle, aid in pairs:
+        if needle in lowered:
+            if aid not in matched:
+                matched.append(aid)
+            lowered = lowered.replace(needle, " ")
     return matched
+
+
+# Needles grouped by id, in COSMETIC_ACTIVES order then MATCH_ONLY_ACTIVES.
+_NEEDLES: dict[str, list[str]] = {}
+for _aid, _needles in COSMETIC_ACTIVES.values():
+    _NEEDLES.setdefault(_aid, [])
+    _NEEDLES[_aid] += [n for n in _needles if n not in _NEEDLES[_aid]]
+_NEEDLES.update(MATCH_ONLY_ACTIVES)
+_PAIRS = _longest_first(_NEEDLES)
+
+
+def matched_active_ids(ingredients_text: str) -> list[str]:
+    found = set(match_longest_first(ingredients_text, _PAIRS))
+    return [aid for aid in _NEEDLES if aid in found]
 
 
 def main() -> None:

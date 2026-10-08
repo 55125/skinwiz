@@ -279,7 +279,8 @@ BRANDS = {
 COSMETIC_ACTIVES = {
     "niacinamide": ["niacinamide"],
     "azelaic-acid": ["azelaic acid"],
-    "vitamin-c": ["ascorbic acid", "ascorbyl glucoside", "ascorbyl tetraisopalmitate"],
+    # Pure ascorbic acid only; the derivatives are their own ids (below).
+    "vitamin-c": ["ascorbic acid"],
     "hyaluronic-acid": ["hyaluronic acid", "sodium hyaluronate"],
     "retinol-cosmetic": ["retinol"],
     "ceramides": ["ceramide"],
@@ -301,17 +302,32 @@ COSMETIC_ACTIVES = {
     # creating a duplicate id, so a cosmetic-sourced petrolatum product joins
     # the same evidence note and active-filter chip an FDA one would.
     "petrolatum": ["petrolatum", "petroleum jelly", "white petrolatum"],
-    # Added 2026-10-08: retinoids and exfoliating acids that were only
-    # ingredient-level before. UV filters (bemotrizinol etc.) aren't listed
-    # here: seed.ts adds any actives.ts filter it finds in the INCI list
-    # (countsAnywhereListed), for every source.
+    # Added 2026-10-08: retinoids, acids, vitamin C derivatives and other
+    # actives that were only ingredient-level before. UV filters
+    # (bemotrizinol etc.) aren't listed here: seed.ts adds any actives.ts
+    # filter it finds in the INCI list (countsAnywhereListed), for every
+    # source.
     "retinal": ["retinal", "retinaldehyde"],
     "hydroxypinacolone-retinoate": ["hydroxypinacolone retinoate"],
     "retinyl-retinoate": ["retinyl retinoate"],
+    "retinyl-palmitate": ["retinyl palmitate"],
+    "retinyl-acetate": ["retinyl acetate"],
+    "retinyl-propionate": ["retinyl propionate"],
+    "retinyl-linoleate": ["retinyl linoleate"],
     "gluconolactone": ["gluconolactone"],
     "lactobionic-acid": ["lactobionic acid"],
     "capryloyl-salicylic-acid": ["capryloyl salicylic acid"],
     "betaine-salicylate": ["betaine salicylate"],
+    "malic-acid": ["malic acid"],
+    "ascorbyl-glucoside": ["ascorbyl glucoside"],
+    "3-o-ethyl-ascorbic-acid": ["3-o-ethyl ascorbic acid", "ethyl ascorbic acid", "ethylascorbic acid"],
+    "magnesium-ascorbyl-phosphate": ["magnesium ascorbyl phosphate"],
+    "sodium-ascorbyl-phosphate": ["sodium ascorbyl phosphate"],
+    "tetrahexyldecyl-ascorbate": ["tetrahexyldecyl ascorbate", "ascorbyl tetraisopalmitate"],
+    "arbutin": ["beta-arbutin", "beta arbutin", "arbutin"],
+    "adenosine": ["adenosine"],
+    "urea": ["urea"],
+    "tea-tree-oil": ["tea tree oil", "melaleuca alternifolia leaf oil", "melaleuca alternifolia oil", "tea tree leaf oil"],
 }
 
 
@@ -876,9 +892,37 @@ def extract_product_aquaphor(html: str, url: str) -> dict | None:
     }
 
 
-def matched_active_ids(ingredients_text: str) -> list[str]:
+# Ingredient names that contain a tracked needle without being that
+# ingredient: two formaldehyde-releasing preservatives end in "urea".
+DECOYS = ["imidazolidinyl urea", "diazolidinyl urea"]
+
+
+def _longest_first(actives: dict[str, list[str]]) -> list[tuple[str, str]]:
+    return sorted(((n, aid) for aid, needles in actives.items() for n in needles), key=lambda p: -len(p[0]))
+
+
+def match_longest_first(ingredients_text: str, pairs: list[tuple[str, str]]) -> list[str]:
+    """Like app/src/db/actives.ts matchActiveIds: longest needle first, each
+    match blanked out before shorter ones are tried, so "alpha arbutin" isn't
+    also arbutin and "3-o-ethyl ascorbic acid" isn't also vitamin C."""
     lowered = ingredients_text.lower()
-    return [aid for aid, needles in COSMETIC_ACTIVES.items() if any(n in lowered for n in needles)]
+    for decoy in DECOYS:
+        lowered = lowered.replace(decoy, " ")
+    matched: list[str] = []
+    for needle, aid in pairs:
+        if needle in lowered:
+            if aid not in matched:
+                matched.append(aid)
+            lowered = lowered.replace(needle, " ")
+    return matched
+
+
+_PAIRS = _longest_first(COSMETIC_ACTIVES)
+
+
+def matched_active_ids(ingredients_text: str) -> list[str]:
+    found = set(match_longest_first(ingredients_text, _PAIRS))
+    return [aid for aid in COSMETIC_ACTIVES if aid in found]
 
 
 # Same "actual fit" reasoning as build_cosmetic_catalog.py's identical dict

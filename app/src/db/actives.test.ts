@@ -35,3 +35,10 @@ test("old ingredient links for newly tracked actives redirect", () => {
   assert.equal(canonicalSlug("bemotrizinol"), "bemotrizinol");
   assert.equal(canonicalSlug("water"), "water");
 });
+
+test("a vitamin C derivative or alpha arbutin isn't also the plainer active", () => {
+  assert.deepEqual(matchActiveIds("3-O-Ethyl Ascorbic Acid"), ["3-o-ethyl-ascorbic-acid"]);
+  assert.deepEqual(matchActiveIds("Alpha Arbutin 2%"), ["alpha-arbutin"]);
+  assert.deepEqual(matchActiveIds("Arbutin 2%"), ["arbutin"]);
+  assert.deepEqual(matchActiveIds("Bis-Ethylhexyloxyphenol Methoxyphenyl Triazine"), ["bemotrizinol"]);
+});

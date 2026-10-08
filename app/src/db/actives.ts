@@ -422,6 +422,17 @@ export const ACTIVE_DEFINITIONS: ActiveDefinition[] = [
     countsAnywhereListed: true,
   },
 
+  {
+    id: "butyloctyl-salicylate",
+    canonicalName: "Butyloctyl Salicylate",
+    categories: ["sunscreen"],
+    synonyms: ["butyloctyl salicylate"],
+    summary:
+      "A salicylate used in sunscreens to raise SPF and dissolve other UV filters (an \"SPF booster\"). Not a recognized UV filter in the US or EU, so labels list it as an inactive ingredient.",
+    typicalConcentrationText: "Concentration varies by formulation; not standardized.",
+    countsAnywhereListed: true,
+  },
+
   // --- Antifungal (athlete's foot, ringworm, jock itch, yeast) ---
   {
     id: "clotrimazole",
@@ -478,6 +489,15 @@ export const ACTIVE_DEFINITIONS: ActiveDefinition[] = [
     synonyms: ["tioconazole"],
     summary: "An FDA OTC monograph antifungal active, most commonly formulated for vaginal yeast infections.",
     typicalConcentrationText: "Typically formulated at 6.5% (single-dose vaginal products).",
+  },
+  {
+    id: "tea-tree-oil",
+    canonicalName: "Tea Tree Oil",
+    categories: ["acne", "antifungal"],
+    synonyms: ["tea tree oil", "melaleuca alternifolia leaf oil", "melaleuca alternifolia oil", "tea tree leaf oil"],
+    summary:
+      "An essential oil from Melaleuca alternifolia used in acne and antifungal products. Not an FDA OTC monograph active; a known fragrance-type contact allergen, especially once oxidized.",
+    typicalConcentrationText: "Commonly 1%–5% in leave-on products; not standardized.",
   },
 
   // --- Antidandruff / seborrheic dermatitis ---
@@ -574,6 +594,14 @@ export const ACTIVE_DEFINITIONS: ActiveDefinition[] = [
       "A topical anesthetic recognized as an external analgesic active (21 CFR part 348) for temporary relief of itch and minor skin pain. A known contact allergen (part of the caine mix patch test).",
     typicalConcentrationText: "Typically 5%–20% in OTC products.",
   },
+  {
+    id: "phenol",
+    canonicalName: "Phenol",
+    categories: ["anti-itch"],
+    synonyms: ["phenol"],
+    summary: "An external analgesic active (21 CFR part 348) for temporary relief of itch and minor skin pain, best known in calamine-phenol lotions.",
+    typicalConcentrationText: "0.5%–1.5% for itch relief.",
+  },
 
   // --- Skin protectant (dry skin, eczema, diaper rash, chapped skin) ---
   {
@@ -657,6 +685,23 @@ export const ACTIVE_DEFINITIONS: ActiveDefinition[] = [
     summary:
       "An occlusive recognized as an FDA OTC monograph skin protectant. Also a very common inactive ingredient; it only counts as a product's active when the Drug Facts label says so.",
     typicalConcentrationText: "50%–100% under the skin protectant monograph (30%–35% when combined with colloidal oatmeal).",
+  },
+  {
+    id: "topical-starch",
+    canonicalName: "Topical Starch",
+    categories: ["skin-protectant"],
+    synonyms: ["topical starch", "starch, corn", "corn starch", "cornstarch", "zea mays starch"],
+    summary: "Corn starch recognized as an FDA OTC monograph skin protectant, mostly in diaper-rash and body powders.",
+    typicalConcentrationText: "10%–98% under the skin protectant monograph.",
+  },
+  {
+    id: "urea",
+    canonicalName: "Urea",
+    categories: ["skin-protectant", "brightening-texture"],
+    synonyms: ["urea"],
+    summary:
+      "A humectant and keratolytic used in moisturizers for very dry, rough or thickened skin. Not an FDA OTC monograph active at cosmetic strengths; high-strength (around 40%) urea is prescription-only.",
+    typicalConcentrationText: "Commonly 2%–10% for hydration and 10%–25% for rough skin; not standardized.",
   },
   {
     id: "aluminum-hydroxide",
@@ -932,6 +977,108 @@ export const ACTIVE_DEFINITIONS: ActiveDefinition[] = [
     summary:
       "A salicylic acid derivative used as a cosmetic exfoliant, common in Korean skin care. Not the FDA OTC monograph acne active salicylic acid, and no FDA efficacy claim applies to it.",
     typicalConcentrationText: "Commonly 1%–4% in cosmetic products; not standardized.",
+  },
+  {
+    id: "retinyl-palmitate",
+    canonicalName: "Retinyl Palmitate",
+    categories: ["brightening-texture"],
+    synonyms: ["retinyl palmitate", "vitamin a palmitate"],
+    summary:
+      "A vitamin-A ester, much weaker than retinol, that skin must convert several steps before it acts like a retinoid. Often a trace antioxidant rather than a treatment. Not an FDA-regulated drug ingredient.",
+    typicalConcentrationText: "Concentration varies widely and is often very low; not standardized.",
+  },
+  {
+    id: "retinyl-acetate",
+    canonicalName: "Retinyl Acetate",
+    categories: ["brightening-texture"],
+    synonyms: ["retinyl acetate", "vitamin a acetate"],
+    summary: "A vitamin-A ester, weaker than retinol. Not an FDA-regulated drug ingredient; no OTC monograph or FDA efficacy claim applies to it.",
+    typicalConcentrationText: "Concentration varies by product; not standardized.",
+  },
+  {
+    id: "retinyl-propionate",
+    canonicalName: "Retinyl Propionate",
+    categories: ["brightening-texture"],
+    synonyms: ["retinyl propionate"],
+    summary: "A vitamin-A ester, weaker than retinol but more stable. Not an FDA-regulated drug ingredient; no OTC monograph or FDA efficacy claim applies to it.",
+    typicalConcentrationText: "Concentration varies by product; not standardized.",
+  },
+  {
+    id: "retinyl-linoleate",
+    canonicalName: "Retinyl Linoleate",
+    categories: ["brightening-texture"],
+    synonyms: ["retinyl linoleate"],
+    summary: "A vitamin-A ester, weaker than retinol. Not an FDA-regulated drug ingredient; no OTC monograph or FDA efficacy claim applies to it.",
+    typicalConcentrationText: "Concentration varies by product; not standardized.",
+  },
+  // Vitamin C derivatives: kept apart from vitamin-c (pure L-ascorbic acid)
+  // so a product page shows which form it actually uses.
+  {
+    id: "ascorbyl-glucoside",
+    canonicalName: "Ascorbyl Glucoside",
+    categories: ["brightening-texture"],
+    synonyms: ["ascorbyl glucoside"],
+    summary: "A stable, water-soluble vitamin C derivative that skin converts to ascorbic acid. Not an FDA-regulated drug ingredient; no OTC monograph or FDA efficacy claim applies to it.",
+    typicalConcentrationText: "Commonly 2%–12% in cosmetic products; not standardized.",
+  },
+  {
+    id: "3-o-ethyl-ascorbic-acid",
+    canonicalName: "Ethyl Ascorbic Acid",
+    categories: ["brightening-texture"],
+    synonyms: ["3-o-ethyl ascorbic acid", "ethyl ascorbic acid", "ethylascorbic acid"],
+    summary: "A stable vitamin C derivative (3-O-ethyl ascorbic acid). Not an FDA-regulated drug ingredient; no OTC monograph or FDA efficacy claim applies to it.",
+    typicalConcentrationText: "Commonly 1%–5% in cosmetic products; not standardized.",
+  },
+  {
+    id: "magnesium-ascorbyl-phosphate",
+    canonicalName: "Magnesium Ascorbyl Phosphate",
+    categories: ["brightening-texture"],
+    synonyms: ["magnesium ascorbyl phosphate"],
+    summary: "A stable, water-soluble vitamin C derivative, gentler than pure ascorbic acid. Not an FDA-regulated drug ingredient; no OTC monograph or FDA efficacy claim applies to it.",
+    typicalConcentrationText: "Commonly 1%–10% in cosmetic products; not standardized.",
+  },
+  {
+    id: "sodium-ascorbyl-phosphate",
+    canonicalName: "Sodium Ascorbyl Phosphate",
+    categories: ["brightening-texture"],
+    synonyms: ["sodium ascorbyl phosphate"],
+    summary: "A stable, water-soluble vitamin C derivative also used in acne-prone skin care. Not an FDA-regulated drug ingredient; no OTC monograph or FDA efficacy claim applies to it.",
+    typicalConcentrationText: "Commonly 1%–5% in cosmetic products; not standardized.",
+  },
+  {
+    id: "tetrahexyldecyl-ascorbate",
+    canonicalName: "Tetrahexyldecyl Ascorbate",
+    categories: ["brightening-texture"],
+    synonyms: ["tetrahexyldecyl ascorbate", "ascorbyl tetraisopalmitate"],
+    summary: "An oil-soluble vitamin C derivative (also listed as ascorbyl tetraisopalmitate). Not an FDA-regulated drug ingredient; no OTC monograph or FDA efficacy claim applies to it.",
+    typicalConcentrationText: "Commonly 1%–20% in cosmetic products; not standardized.",
+  },
+  {
+    id: "arbutin",
+    canonicalName: "Arbutin",
+    categories: ["brightening-texture"],
+    synonyms: ["beta-arbutin", "beta arbutin", "arbutin"],
+    summary:
+      "A plant-derived brightening ingredient (beta-arbutin), distinct from the more stable alpha arbutin. Listed as a brightening active on some Korean labels; not an FDA-regulated drug ingredient. It can break down to small amounts of hydroquinone.",
+    typicalConcentrationText: "Commonly 2%–7% in cosmetic products; not standardized.",
+  },
+  {
+    id: "adenosine",
+    canonicalName: "Adenosine",
+    categories: ["brightening-texture"],
+    synonyms: ["adenosine"],
+    summary:
+      "A nucleoside used in anti-wrinkle products; Korea recognizes it as a functional anti-wrinkle ingredient (usually 0.04%). Not an FDA-regulated drug ingredient in the US.",
+    typicalConcentrationText: "Commonly 0.04% (the Korean functional-cosmetic level); not standardized.",
+  },
+  {
+    id: "malic-acid",
+    canonicalName: "Malic Acid",
+    categories: ["brightening-texture"],
+    synonyms: ["malic acid"],
+    summary:
+      "An alpha-hydroxy acid (AHA) from fruit, used as a mild exfoliant and, at low levels, to adjust pH. Not an FDA-regulated drug ingredient; no OTC monograph or FDA efficacy claim applies to it.",
+    typicalConcentrationText: "Concentration varies widely (often under 1% as a pH adjuster); not standardized.",
   },
 ];
 

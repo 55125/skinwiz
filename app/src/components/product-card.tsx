@@ -10,8 +10,11 @@ import { ewgHazardBadge } from "@/lib/ewg";
 import { avoidVerdict, avoidedIngredientName } from "@/lib/avoid";
 import { MatchBadge } from "@/components/match-badge";
 import type { Match } from "@/lib/profile-shared";
-import { describeStrengths } from "@/lib/strength-display";
-import { displayManufacturer } from "@/lib/format";
+import { describeStrengths, unparsedActivesLine } from "@/lib/strength-display";
+
+const FDA_SOURCES = new Set(["openfda", "dailymed"]);
+import { productBrand } from "@/lib/product-brand";
+import { ECZEMA_CONCERN, isDiaperProduct } from "@/lib/listing-rules";
 import { HsaBadge } from "@/components/hsa-badge";
 import type { products } from "@/db/schema";
 import { productImageAlt, thumbnailUrl } from "@/lib/image-urls";
@@ -32,6 +35,8 @@ export function ProductCard({
   hsaEligible?: boolean;
 }) {
   const sourceBadge = dataSourceBadge(product.dataSource);
+  const { brand } = productBrand(product);
+  const diaperArea = product.concernId === ECZEMA_CONCERN && isDiaperProduct(product.brandName);
   const avoid = avoidVerdict(product, avoidIds);
   const avoidConflicts = avoid?.status === "conflicts" ? avoid.conflicts : [];
   const avoidPossible = avoid?.status === "conflicts" || avoid?.status === "possible" ? avoid.possible : [];
@@ -90,16 +95,17 @@ export function ProductCard({
               )}
             </div>
           )}
-          {product.manufacturer && (
-            <p className="truncate text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-              {displayManufacturer(product.manufacturer)}
-            </p>
+          {brand && (
+            <p className="truncate text-[11px] font-medium uppercase tracking-wider text-muted-foreground">{brand}</p>
           )}
           <h3 className="line-clamp-2 text-[15px] font-semibold leading-snug" title={product.brandName}>
             {product.brandName}
           </h3>
+          {diaperArea && <p className="text-xs font-medium text-amber-800 dark:text-amber-300">For the diaper area</p>}
           {strengthLine ? (
             <p className="line-clamp-2 text-xs font-medium text-foreground/80">{strengthLine}</p>
+          ) : FDA_SOURCES.has(product.dataSource) && product.activeIngredientText ? (
+            <p className="line-clamp-2 text-xs text-muted-foreground">{unparsedActivesLine(product.activeIngredientText) ?? product.activeIngredientText}</p>
           ) : (
             product.activeIngredientText && (
               <p className="line-clamp-2 text-xs text-muted-foreground">{product.activeIngredientText}</p>

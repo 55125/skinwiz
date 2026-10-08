@@ -85,7 +85,7 @@ export default async function ConcernPage({
   // ?sort and ?pregnancy ride along on every filter and page link.
   const preg = `${pregnancyHide ? `&${PREGNANCY_FILTER_PARAM}=${PREGNANCY_FILTER_VALUE}` : ""}${sort ? `&sort=${sort}` : ""}`;
   const excludeIngredientIds = pregnancyHide ? pregnancyAvoidIngredientIds() : undefined;
-  const listFilters = { concernId: slug, activeId: active, freeFromIds, strengthPct, excludeIngredientIds };
+  const listFilters = { concernId: slug, activeId: active, freeFromIds, strengthPct, excludeIngredientIds, concernListing: true };
   const { rows, total, pageSize } =
     sort === "match"
       ? browseProductsByMatch(listFilters, page, (all) => scoreProducts(all, profile, avoidIds), JSON.stringify([listFilters, profile, avoidIds]))

@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { PatchTestChecklist } from "@/components/patch-test-checklist";
 import { QrCode } from "@/components/qr-code";
 import { resolveAllergenId } from "@/db/contact-allergens";
-import { getNotOnLabel, importItemName, mainlyOffLabel, watchForNames } from "@/db/patch-test-series";
+import { getNotOnLabel, importItemName, mainlyOffLabel, positivesById, watchForNames } from "@/db/patch-test-series";
 import { MAX_NOTE_LENGTH, buildImportPath, cleanDetails } from "@/lib/avoid-import";
 import { SITE_NAME } from "@/lib/brand";
 import { PRIVACY_HIT_TEXT, findPrivacyHits } from "@/lib/note-privacy";
@@ -38,6 +38,7 @@ function formatDate(iso: string): string {
 export function PatchTestIssuer({ lists = [], initialIds = [] }: { lists?: { id: string; name: string; ids: string[] }[]; initialIds?: string[] }) {
   const origin = useOrigin();
   const [selected, setSelected] = useState<Set<string>>(() => new Set(initialIds));
+  const [ticked, setTicked] = useState<Set<string>>(() => new Set());
   const [date, setDate] = useState("");
   const [note, setNote] = useState("");
   const [patient, setPatient] = useState("");
@@ -80,6 +81,8 @@ export function PatchTestIssuer({ lists = [], initialIds = [] }: { lists?: { id:
         )}
         <PatchTestChecklist
           selected={selected}
+          ticked={ticked}
+          onTickedChange={setTicked}
           onChange={(next) => {
             setSelected(next);
             setCopied(false);
@@ -163,7 +166,7 @@ export function PatchTestIssuer({ lists = [], initialIds = [] }: { lists?: { id:
 
       {ready &&
         createPortal(
-          <PrintSheet url={url} ids={avoidIds} offLabel={offLabel} patient={patient.trim()} {...details} />,
+          <PrintSheet url={url} ids={avoidIds} offLabel={offLabel} positives={positivesById(ticked)} patient={patient.trim()} {...details} />,
           document.body,
         )}
     </div>
@@ -186,6 +189,7 @@ export function PrintSheet({
   url,
   ids,
   offLabel,
+  positives = {},
   patient,
   eyebrow = "Patch-test results",
   date,
@@ -194,12 +198,19 @@ export function PrintSheet({
   url: string;
   ids: string[];
   offLabel: string[];
+  // Series item names behind each id ("Budesonide" for class B), printed with it.
+  positives?: Record<string, string[]>;
   patient: string;
   eyebrow?: string;
   date?: string;
   note?: string;
 }) {
   const shortUrl = url.replace(/^https?:\/\//, "");
+  // The tested names, when they differ from the allergen's own name.
+  const tested = (id: string) => {
+    const names = (positives[id] ?? []).filter((n) => n.toLowerCase() !== importItemName(id)?.toLowerCase());
+    return names.length ? names.join(", ") : null;
+  };
   return (
     <div className="pt-print-sheet" aria-hidden>
       <style>{`
@@ -247,7 +258,10 @@ export function PrintSheet({
             <tbody>
               {ids.map((id) => (
                 <tr key={id} style={{ borderBottom: "0.5px solid #999", verticalAlign: "top" }}>
-                  <td style={{ padding: "1.2mm 2mm 1.2mm 0", fontWeight: 600 }}>{importItemName(id)}</td>
+                  <td style={{ padding: "1.2mm 2mm 1.2mm 0", fontWeight: 600 }}>
+                    {importItemName(id)}
+                    {tested(id) && <span style={{ display: "block", fontWeight: 400, fontSize: "8.5pt" }}>Positive: {tested(id)}</span>}
+                  </td>
                   <td style={{ padding: "1.2mm 0" }}>
                     {watchForNames(id, Infinity).join(", ") || (mainlyOffLabel(id) ? null : "—")}
                     {mainlyOffLabel(id) && <span style={{ display: "block" }}>{mainlyOffLabel(id)}</span>}
@@ -265,7 +279,8 @@ export function PrintSheet({
           <ul style={{ margin: 0, paddingLeft: "5mm", fontSize: "9.5pt" }}>
             {offLabel.map((id) => (
               <li key={id} style={{ marginBottom: "0.8mm" }}>
-                <strong>{getNotOnLabel(id)!.name}:</strong> {getNotOnLabel(id)!.foundIn}
+                <strong>{getNotOnLabel(id)!.name}</strong>
+                {tested(id) ? ` (positive: ${tested(id)})` : ""}: {getNotOnLabel(id)!.foundIn}
               </li>
             ))}
           </ul>

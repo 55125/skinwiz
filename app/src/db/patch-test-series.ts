@@ -604,6 +604,52 @@ export function seriesItems(series: PatchTestSeries): SeriesItem[] {
   return series.groups.flatMap((g) => g.items);
 }
 
+/** A series item's stable key ("acds-2020:18"), for ticking items one by one. */
+export function seriesItemKey(seriesId: string, it: SeriesItem): string {
+  return `${seriesId}:${it.pos ?? it.name}`;
+}
+
+const ITEM_BY_KEY = new Map(PATCH_TEST_SERIES.flatMap((s) => seriesItems(s).map((it) => [seriesItemKey(s.id, it), it] as const)));
+
+export function seriesItemByKey(key: string): SeriesItem | undefined {
+  return ITEM_BY_KEY.get(key);
+}
+
+/** The avoid ids an item stands for (its allergen ids, or its not-on-label id). */
+export function itemIds(it: SeriesItem): string[] {
+  return it.ids.length > 0 ? it.ids : [it.notOnLabel!];
+}
+
+// Items whose ids another item in the same series fully covers: budesonide
+// and triamcinolone are both "class B", benzocaine is inside caine mix. A
+// tick on one mustn't show the other as positive too.
+const SHARED_ITEMS = new Set(
+  PATCH_TEST_SERIES.flatMap((s) => {
+    const items = seriesItems(s);
+    return items
+      .filter((it) => items.some((other) => other !== it && itemIds(it).every((id) => itemIds(other).includes(id))))
+      .map((it) => seriesItemKey(s.id, it));
+  }),
+);
+
+export function sharesIdsInSeries(key: string): boolean {
+  return SHARED_ITEMS.has(key);
+}
+
+/**
+ * The series item names behind each avoid id, from ticked item keys, so the
+ * printed sheet can say "Budesonide" next to "Corticosteroids, class B".
+ */
+export function positivesById(keys: Iterable<string>): Record<string, string[]> {
+  const out: Record<string, string[]> = {};
+  for (const key of keys) {
+    const it = ITEM_BY_KEY.get(key);
+    if (!it) continue;
+    for (const id of itemIds(it)) if (!(out[id] ??= []).includes(it.name)) out[id].push(it.name);
+  }
+  return out;
+}
+
 /** The family a positive to this item is usually extended to, if any. */
 export function itemFamily(it: SeriesItem): { id: string; byDefault: boolean } | undefined {
   for (const id of it.ids) if (PATCH_TEST_FAMILY[id]) return PATCH_TEST_FAMILY[id];

@@ -195,3 +195,17 @@ test("pasted results sheets read series names first, and doubtful or irritant li
   assert.equal(read("Methylisothiazolinone 0.2% aq ++").uncertain, false);
   assert.equal(read("Quaternium-15 2% pet negative").uncertain, false);
 });
+
+test("series items tick one by one: keys are unique, and shared-id siblings are known", async () => {
+  const { seriesItemKey, sharesIdsInSeries, positivesById } = await import("./patch-test-series");
+  for (const s of PATCH_TEST_SERIES) {
+    const keys = seriesItems(s).map((it) => seriesItemKey(s.id, it));
+    assert.equal(new Set(keys).size, keys.length, s.id);
+  }
+  const acds = PATCH_TEST_SERIES.find((s) => s.id === "acds-2020")!;
+  const key = (name: RegExp) => seriesItemKey(acds.id, seriesItems(acds).find((it) => name.test(it.name))!);
+  assert.ok(sharesIdsInSeries(key(/^Budesonide/)));
+  assert.ok(sharesIdsInSeries(key(/^Triamcinolone/)));
+  assert.ok(!sharesIdsInSeries(key(/^Nickel/)));
+  assert.deepEqual(positivesById([key(/^Budesonide/)]), { "corticosteroid-class-b": ["Budesonide"] });
+});

@@ -7,6 +7,8 @@ import { PageHeader } from "@/components/page-header";
 import { Pagination } from "@/components/pagination";
 import { RedFlagBanner } from "@/components/red-flag-banner";
 import { FreeFromFilters } from "@/components/free-from-filters";
+import { OriginNotice } from "@/components/origin-notice";
+import { readOrigin } from "@/lib/origin";
 import {
   browseProducts,
   browseProductsByMatch,
@@ -80,19 +82,20 @@ export default async function ConcernPage({
   const pregnancyHide = pregnancyMode && pregnancy === PREGNANCY_FILTER_VALUE;
   const profile = await readProfile();
   const avoidIds = await readAvoidIds();
+  const origin = await readOrigin();
   const showPregnancyFilter = pregnancyMode && (pregnancyHide || profile.pregnant);
   const canMatch = hasProfile(profile) || avoidIds.length > 0;
   const sort = parseListSort(sortParam, canMatch);
   // ?sort and ?pregnancy ride along on every filter and page link.
   const preg = `${pregnancyHide ? `&${PREGNANCY_FILTER_PARAM}=${PREGNANCY_FILTER_VALUE}` : ""}${sort ? `&sort=${sort}` : ""}`;
   const excludeIngredientIds = pregnancyHide ? pregnancyAvoidIngredientIds() : undefined;
-  const listFilters = { concernId: slug, activeId: active, freeFromIds, strengthPct, excludeIngredientIds, concernListing: true };
+  const listFilters = { concernId: slug, activeId: active, freeFromIds, strengthPct, excludeIngredientIds, concernListing: true, origin };
   const { rows, total, pageSize } =
     sort === "match"
       ? browseProductsByMatch(listFilters, page, (all) => scoreProducts(all, profile, avoidIds), JSON.stringify([listFilters, profile, avoidIds]))
       : sort === "name"
         ? browseProducts(listFilters, page, "name")
-        : getProductsForConcern(slug, page, active, freeFromIds, strengthPct, excludeIngredientIds);
+        : getProductsForConcern(slug, page, active, freeFromIds, strengthPct, excludeIngredientIds, origin);
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
   const pageLinkSuffix = `${active ? `&active=${active}` : ""}${free ? `&free=${free}` : ""}${strengthPct !== undefined ? `&strength=${strengthPct}` : ""}${preg}`;
   const strengthHref = (pct?: number) =>
@@ -212,6 +215,7 @@ export default async function ConcernPage({
       <div className="hidden space-y-8 md:block">{filters}</div>
 
       <div className="space-y-4">
+        <OriginNotice origin={origin} />
         <AvoidSwitch
           basePath={`/concern/${slug}`}
           searchParams={{ active, free, strength, sort, [PREGNANCY_FILTER_PARAM]: pregnancyHide ? PREGNANCY_FILTER_VALUE : undefined }}

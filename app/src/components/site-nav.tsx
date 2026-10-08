@@ -3,10 +3,12 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useId, useRef, useState } from "react";
-import { ChevronDown, Menu, UserRound, X } from "lucide-react";
+import { Check, ChevronDown, Globe, Menu, UserRound, X } from "lucide-react";
 import { SearchBar } from "@/components/search-bar";
 import { cn } from "@/lib/utils";
 import { INGREDIENT_ITEMS, MY_SKIN_ITEMS, isActive, type NavItem } from "@/lib/nav";
+import { ORIGINS, originLabel } from "@/lib/origin-shared";
+import { useOrigin } from "@/lib/use-origin";
 
 // The whole site is four places: what you're treating (Concerns), what's in
 // a product (Ingredients), what others use (Routines), and your own stuff
@@ -165,6 +167,101 @@ function NavMenu({
   );
 }
 
+// Top-right region pick ("Korean only", "Japanese only", ...): narrows every
+// product list to brands from there (lib/origin-shared.ts) until cleared.
+// Same disclosure pattern as NavMenu, with buttons instead of links.
+function OriginPicker() {
+  const [origin, setOrigin] = useOrigin();
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const button = useRef<HTMLButtonElement>(null);
+  const panelId = useId();
+  useDismiss(open, () => setOpen(false), ref);
+
+  const options = [{ id: undefined, label: "All regions", hint: "Every brand in the catalog" }, ...ORIGINS.map((o) => ({ id: o.id, label: `${o.label} only`, hint: o.hint }))];
+  const optionButtons = () => [...(ref.current?.querySelectorAll<HTMLButtonElement>(`#${CSS.escape(panelId)} button`) ?? [])];
+  function focusOption(index: number) {
+    const all = optionButtons();
+    if (all.length) all[(index + all.length) % all.length].focus();
+  }
+  function onPanelKey(e: React.KeyboardEvent) {
+    const all = optionButtons();
+    const i = all.indexOf(document.activeElement as HTMLButtonElement);
+    if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+      e.preventDefault();
+      focusOption(i + (e.key === "ArrowDown" ? 1 : -1));
+    } else if (e.key === "Escape") {
+      e.preventDefault();
+      setOpen(false);
+      button.current?.focus();
+    }
+  }
+
+  return (
+    <div
+      ref={ref}
+      className="relative"
+      onBlur={(e) => {
+        if (open && !e.currentTarget.contains(e.relatedTarget as Node | null)) setOpen(false);
+      }}
+    >
+      <button
+        ref={button}
+        type="button"
+        aria-expanded={open}
+        aria-controls={panelId}
+        aria-label={`Brand region: ${origin ? `${originLabel(origin)} only` : "all regions"}`}
+        onClick={() => setOpen((o) => !o)}
+        onKeyDown={(e) => {
+          if (e.key !== "ArrowDown") return;
+          e.preventDefault();
+          setOpen(true);
+          requestAnimationFrame(() => focusOption(0));
+        }}
+        className={cn(
+          "flex h-9 items-center gap-1.5 rounded-full border px-3 text-sm transition-colors",
+          origin ? "border-primary bg-primary font-medium text-primary-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground",
+        )}
+      >
+        <Globe className="h-4 w-4 shrink-0" aria-hidden />
+        {/* Icon only on the narrowest phones, where the label pushes the menu button off screen. */}
+        <span className="whitespace-nowrap max-[359px]:sr-only">{origin ? `${originLabel(origin)} only` : "All regions"}</span>
+        <ChevronDown className={cn("h-3.5 w-3.5 shrink-0 transition-transform", open && "rotate-180")} aria-hidden />
+      </button>
+      <div
+        id={panelId}
+        hidden={!open}
+        onKeyDown={onPanelKey}
+        className="absolute right-0 top-full z-30 mt-2 w-72 max-w-[calc(100vw-2rem)] rounded-2xl border bg-popover p-1.5 shadow-xl shadow-foreground/5"
+      >
+        <p className="px-3 pb-1 pt-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Brands from</p>
+        <ul>
+          {options.map((o) => (
+            <li key={o.label} className="list-none">
+              <button
+                type="button"
+                aria-pressed={origin === o.id}
+                onClick={() => {
+                  setOpen(false);
+                  if (origin !== o.id) setOrigin(o.id);
+                }}
+                className="flex w-full items-start gap-2 rounded-xl px-3 py-2 text-left transition-colors hover:bg-muted focus-visible:bg-muted aria-pressed:bg-brand-soft"
+              >
+                <span className="min-w-0 flex-1">
+                  <span className="block text-sm font-medium">{o.label}</span>
+                  <span className="block text-xs text-muted-foreground">{o.hint}</span>
+                </span>
+                {origin === o.id && <Check className="mt-0.5 h-4 w-4 shrink-0 text-brand" aria-hidden />}
+              </button>
+            </li>
+          ))}
+        </ul>
+        <p className="border-t px-3 pb-1.5 pt-2 text-xs text-muted-foreground">By where the brand is from, not where the bottle was made.</p>
+      </div>
+    </div>
+  );
+}
+
 function MobileMenu({ pathname, concerns, showSearch }: { pathname: string; concerns: Concern[]; showSearch: boolean }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -284,7 +381,10 @@ export function SiteNav({ concerns }: { concerns: Concern[] }) {
           />
         </div>
       </nav>
-      <MobileMenu pathname={pathname} concerns={concerns} showSearch={showSearch} />
+      <div className="flex shrink-0 items-center gap-2">
+        <OriginPicker />
+        <MobileMenu pathname={pathname} concerns={concerns} showSearch={showSearch} />
+      </div>
     </>
   );
 }

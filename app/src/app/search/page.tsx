@@ -2,6 +2,8 @@ import Link from "next/link";
 import { SearchBar } from "@/components/search-bar";
 import { ProductGrid } from "@/components/product-grid";
 import { FreeFromFilters } from "@/components/free-from-filters";
+import { OriginNotice } from "@/components/origin-notice";
+import { readOrigin } from "@/lib/origin";
 import { FilterChip } from "@/components/filter-chip";
 import { PageHeader } from "@/components/page-header";
 import { searchProducts, searchProductsCount, searchActives, getConcerns } from "@/lib/queries";
@@ -36,7 +38,8 @@ export default async function SearchPage({
   const selectedTier = TRUST_TIERS.find((t) => t.label === tier);
   const concerns = getConcerns();
 
-  const searchFilters = { concernId: concern, dataSources: selectedTier?.dataSources, freeFromIds };
+  const origin = await readOrigin();
+  const searchFilters = { concernId: concern, dataSources: selectedTier?.dataSources, freeFromIds, origin };
   const activeResults = query ? searchActives(query) : [];
   const productResults = query ? searchProducts(query, searchFilters) : [];
   const productTotal = query ? searchProductsCount(query, searchFilters) : 0;
@@ -93,6 +96,7 @@ export default async function SearchPage({
           </div>
           <FreeFromFilters basePath="/search" searchParams={{ q, concern, tier, free }} selected={freeFromIds} />
           <AvoidSwitch basePath="/search" searchParams={{ q, concern, tier }} selected={freeFromIds} />
+          <OriginNotice origin={origin} />
         </div>
       )}
 

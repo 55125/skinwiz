@@ -14,6 +14,7 @@ import { describeStrengths, unparsedActivesLine } from "@/lib/strength-display";
 
 const FDA_SOURCES = new Set(["openfda", "dailymed"]);
 import { productBrand } from "@/lib/product-brand";
+import { originLabel, productNameOrigin } from "@/lib/origin-shared";
 import { ECZEMA_CONCERN, isDiaperProduct } from "@/lib/listing-rules";
 import { HsaBadge } from "@/components/hsa-badge";
 import type { products } from "@/db/schema";
@@ -36,6 +37,7 @@ export function ProductCard({
 }) {
   const sourceBadge = dataSourceBadge(product.dataSource);
   const { brand } = productBrand(product);
+  const origin = productNameOrigin(brand, product.brandName);
   const diaperArea = product.concernId === ECZEMA_CONCERN && isDiaperProduct(product.brandName);
   const avoid = avoidVerdict(product, avoidIds);
   const avoidConflicts = avoid?.status === "conflicts" ? avoid.conflicts : [];
@@ -96,7 +98,10 @@ export function ProductCard({
             </div>
           )}
           {brand && (
-            <p className="truncate text-[11px] font-medium uppercase tracking-wider text-muted-foreground">{brand}</p>
+            <p className="flex min-w-0 gap-1.5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+              <span className="truncate">{brand}</span>
+              {origin && <span className="shrink-0 text-brand">· {originLabel(origin)}</span>}
+            </p>
           )}
           <h3 className="line-clamp-2 text-[15px] font-semibold leading-snug" title={product.brandName}>
             {product.brandName}

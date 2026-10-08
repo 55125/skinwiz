@@ -3,6 +3,8 @@ import type { Metadata } from "next";
 import { ChevronDown, SlidersHorizontal } from "lucide-react";
 import { ProductGrid } from "@/components/product-grid";
 import { FreeFromFilters } from "@/components/free-from-filters";
+import { OriginNotice } from "@/components/origin-notice";
+import { readOrigin } from "@/lib/origin";
 import { RedFlagBanner } from "@/components/red-flag-banner";
 import { PageHeader } from "@/components/page-header";
 import { Pagination } from "@/components/pagination";
@@ -80,6 +82,7 @@ export default async function BrowsePage({
 
   const profile = await readProfile();
   const avoidIds = await readAvoidIds();
+  const origin = await readOrigin();
   const canMatch = hasProfile(profile) || avoidIds.length > 0;
   const sort = parseListSort(sortParam, canMatch);
   // Gated pregnancy filter: offered once the profile says pregnant; a
@@ -93,6 +96,7 @@ export default async function BrowsePage({
     freeFromIds,
     hsaOnly: !!hsa,
     excludeIngredientIds: pregnancy ? pregnancyAvoidIngredientIds() : undefined,
+    origin,
   };
 
   const { rows, total, pageSize } =
@@ -249,6 +253,7 @@ export default async function BrowsePage({
         <div className="min-w-0 space-y-5">
           <RedFlagBanner />
 
+          <OriginNotice origin={origin} />
           <AvoidSwitch basePath="/browse" searchParams={{ concern, tier, active, free, hsa, sort, pregnancy }} selected={freeFromIds} />
 
           <div className="flex flex-wrap items-center justify-between gap-3">

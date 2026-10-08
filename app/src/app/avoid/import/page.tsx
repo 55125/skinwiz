@@ -89,7 +89,7 @@ export default async function AvoidImportPage({ searchParams }: { searchParams: 
           </h2>
           <ul className="divide-y rounded-2xl border bg-card">
             {decoded.avoidIds.map((id) => {
-              const names = watchForNames(id);
+              const names = watchForNames(id, Infinity);
               return (
                 <li key={id} className="space-y-1 p-4">
                   <div className="flex flex-wrap items-baseline justify-between gap-2">
@@ -146,15 +146,6 @@ export default async function AvoidImportPage({ searchParams }: { searchParams: 
         </section>
       )}
 
-      {!signedInAs && (
-        <EmailSignupCard
-          signedInAs={null}
-          next="/avoid"
-          title="Keep this list on every device"
-          blurb="Optional. Add your email and your avoid list is saved to your account, so it's there on any phone or computer you sign in on, along with your shelf and any plans from your clinic. No password; we send a one-time link."
-        />
-      )}
-
       {decoded.notOnLabel.length > 0 && (
         <section className="space-y-3" aria-labelledby="import-off-label">
           <h2 id="import-off-label" className="text-base font-semibold">
@@ -162,7 +153,7 @@ export default async function AvoidImportPage({ searchParams }: { searchParams: 
           </h2>
           <p className="text-sm text-muted-foreground">
             We can&apos;t check products for these, since they aren&apos;t listed as ingredients. Here&apos;s where they
-            usually turn up:
+            usually turn up. They aren&apos;t saved to your avoid list, so keep your printed sheet or this link.
           </p>
           <ul className="divide-y rounded-2xl border border-dashed">
             {decoded.notOnLabel.map((id) => (
@@ -173,6 +164,16 @@ export default async function AvoidImportPage({ searchParams }: { searchParams: 
             ))}
           </ul>
         </section>
+      )}
+
+      {!signedInAs && decoded.avoidIds.length > 0 && (
+        <EmailSignupCard
+          signedInAs={null}
+          // Back here after the emailed sign-in link, so a list not yet added isn't lost.
+          next={`/avoid/import?a=${encodeURIComponent(one(params.a) ?? "")}${date ? `&d=${date}` : ""}`}
+          title="Keep this list on every device"
+          blurb="Optional. Add your email and your avoid list is saved to your account, so it's there on any phone or computer you sign in on, along with your shelf and any plans from your clinic. No password; we send a one-time link."
+        />
       )}
 
       {decoded.unknown > 0 && (

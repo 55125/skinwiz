@@ -17,7 +17,7 @@ export default function PatchTestReaderPage() {
       <PageHeader
         eyebrow="Clinic tools"
         title="Patch-test reader"
-        description="Pick the series, tap each chamber to grade it, then copy the write-up to the chart and hand the patient their avoid list. Everything stays on this device; nothing is sent to us."
+        description="Pick the series, tap each chamber to grade it, then copy the write-up to the chart and hand the patient their avoid list. Grades, the write-up and the patient's name stay on this device; only the avoid-list link (allergen code and date) leaves it, when you share it."
       />
       <PatchTestReader />
       <p className="text-xs text-muted-foreground">

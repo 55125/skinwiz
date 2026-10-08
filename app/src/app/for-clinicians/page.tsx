@@ -42,7 +42,7 @@ export default function ForCliniciansPage() {
       <section className="space-y-2 rounded-2xl border border-brand/30 bg-brand-soft/40 p-4 text-sm">
         <h2 className="text-base font-medium text-foreground">Patch-test results sheet with a QR code</h2>
         <p className="text-muted-foreground">
-          At the reading, tick your patient&apos;s positives on the T.R.U.E. Test or core series and print a one-page
+          At the reading, tick your patient&apos;s positives on the T.R.U.E. Test, an ACDS or NAC-80 tray, or the core series, and print a one-page
           sheet. The patient scans the QR code and their {SITE_NAME} avoid list is filled in with every label name for
           each allergen. No account for either of you, and nothing is stored.
         </p>

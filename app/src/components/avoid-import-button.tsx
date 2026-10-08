@@ -41,7 +41,7 @@ export function AvoidImportButton({ ids, allPresent }: { ids: string[]; allPrese
           <Check className="h-4 w-4" />
           {result
             ? result.added > 0
-              ? `Added ${result.added} to your avoid list. It's saved in this browser.`
+              ? `Added ${result.added} to your avoid list.`
               : "Everything here was already on your avoid list."
             : "Everything here is already on your avoid list."}
         </p>
@@ -66,7 +66,7 @@ export function AvoidImportButton({ ids, allPresent }: { ids: string[]; allPrese
         <Plus className="h-4 w-4" /> {isPending ? "Adding…" : "Add to my avoid list"}
       </Button>
       {error && <p className="text-sm text-destructive">That didn&apos;t save. Check your connection and try again.</p>}
-      <p className="text-xs text-muted-foreground">Saved in this browser only. No account, and you can edit or clear it any time.</p>
+      <p className="text-xs text-muted-foreground">Saved in this browser, and to your account if you&apos;re signed in. No account needed; you can edit or clear it any time.</p>
     </div>
   );
 }

@@ -18,7 +18,9 @@ export async function POST(request: Request) {
     if (added.length > 0) await writeAvoidIds(merged);
     return NextResponse.json({ ok: true, ids: merged, added, already });
   }
-  const ids = sanitizeAvoidIds(body?.ids);
+  // Anything else is a malformed request, not "clear my list".
+  if (!Array.isArray(body?.ids)) return NextResponse.json({ ok: false, error: "Expected ids or add." }, { status: 400 });
+  const ids = sanitizeAvoidIds(body.ids);
   await writeAvoidIds(ids);
   return NextResponse.json({ ok: true, ids });
 }

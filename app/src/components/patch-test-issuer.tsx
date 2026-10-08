@@ -2,7 +2,7 @@
 
 import { useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
-import { Check, Copy, ExternalLink, Printer } from "lucide-react";
+import { AlertTriangle, Check, Copy, ExternalLink, Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -12,6 +12,7 @@ import { resolveAllergenId } from "@/db/contact-allergens";
 import { getNotOnLabel, importItemName, mainlyOffLabel, watchForNames } from "@/db/patch-test-series";
 import { MAX_NOTE_LENGTH, buildImportPath, cleanDetails } from "@/lib/avoid-import";
 import { SITE_NAME } from "@/lib/brand";
+import { PRIVACY_HIT_TEXT, findPrivacyHits } from "@/lib/note-privacy";
 
 const noop = () => () => {};
 export const useOrigin = () =>
@@ -45,6 +46,7 @@ export function PatchTestIssuer({ lists = [], initialIds = [] }: { lists?: { id:
   const avoidIds = [...selected].filter((id) => resolveAllergenId(id));
   const offLabel = [...selected].filter((id) => getNotOnLabel(id));
   const details = cleanDetails({ date, note });
+  const privacyHits = findPrivacyHits(note);
   const path = buildImportPath(selected, details);
   const url = `${origin}${path}`;
   const ready = selected.size > 0 && origin !== "";
@@ -101,6 +103,15 @@ export function PatchTestIssuer({ lists = [], initialIds = [] }: { lists?: { id:
           <Field label="Note to the patient" hint={`Shown on the sheet and in the link. ${note.length}/${MAX_NOTE_LENGTH}`}>
             <Textarea value={note} maxLength={MAX_NOTE_LENGTH} rows={2} onChange={(e) => setNote(e.target.value)} placeholder="e.g. Avoid fragrance entirely for 3 months." />
           </Field>
+          {privacyHits.length > 0 && (
+            <p role="alert" className="flex gap-2 rounded-xl border border-amber-300 bg-amber-50 p-3 text-xs text-amber-950 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-100">
+              <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+              <span>
+                The note may include {privacyHits.map((h) => PRIVACY_HIT_TEXT[h.kind]).join(" and ")} (&ldquo;{privacyHits[0].match}&rdquo;). The note
+                travels in the link, so please remove it; the patient&apos;s name goes in the box below, which stays on this device.
+              </span>
+            </p>
+          )}
           <Field
             label="Patient name (printed only)"
             hint="Stays in this browser tab. It is never sent to us and is not part of the link or QR code."
@@ -238,7 +249,7 @@ export function PrintSheet({
                 <tr key={id} style={{ borderBottom: "0.5px solid #999", verticalAlign: "top" }}>
                   <td style={{ padding: "1.2mm 2mm 1.2mm 0", fontWeight: 600 }}>{importItemName(id)}</td>
                   <td style={{ padding: "1.2mm 0" }}>
-                    {watchForNames(id).join(", ") || (mainlyOffLabel(id) ? null : "—")}
+                    {watchForNames(id, Infinity).join(", ") || (mainlyOffLabel(id) ? null : "—")}
                     {mainlyOffLabel(id) && <span style={{ display: "block" }}>{mainlyOffLabel(id)}</span>}
                   </td>
                 </tr>

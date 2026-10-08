@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { Check, ListChecks, Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ALLERGEN_GROUPS, normalizeForAllergens, resolveAllergenId, searchAllergens } from "@/db/contact-allergens";
+import { ALLERGEN_GROUPS, PATCH_TEST_FAMILY, normalizeForAllergens, resolveAllergenId, searchAllergens } from "@/db/contact-allergens";
 import {
   NOT_ON_LABELS,
   PATCH_TEST_SERIES,
@@ -37,7 +37,8 @@ export function PatchTestChecklist({ selected, onChange }: { selected: Set<strin
     if (itemOn(it, selected)) {
       for (const id of it.ids) next.delete(id);
       if (it.notOnLabel) next.delete(it.notOnLabel);
-      if (family) next.delete(family.id);
+      // Keep the family while another ticked allergen still extends to it (PPD and PTD).
+      if (family && ![...next].some((id) => PATCH_TEST_FAMILY[id]?.id === family.id)) next.delete(family.id);
     } else {
       for (const id of it.ids) next.add(id);
       if (it.notOnLabel) next.add(it.notOnLabel);

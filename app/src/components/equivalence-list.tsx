@@ -3,6 +3,8 @@ import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { displayManufacturer } from "@/lib/format";
 import type { EquivalenceGroup, EquivalenceMember } from "@/lib/equivalence";
+import { avoidVerdict, avoidedIngredientName, readAvoidIds, type AvoidVerdict } from "@/lib/avoid";
+import { getProduct } from "@/lib/queries";
 
 export const STORE_BRAND_CLASS = "border-teal-300 text-teal-700 dark:border-teal-800 dark:text-teal-300";
 
@@ -24,7 +26,10 @@ export function EquivalenceExplainer({ group }: { group: EquivalenceGroup }) {
   );
 }
 
-export function EquivalenceRows({
+// Same active and strength, but a different vehicle: a store-brand
+// hydrocortisone can carry the lanolin or parabens someone avoids, so each
+// swap is checked against the visitor's avoid list like a product card.
+export async function EquivalenceRows({
   members,
   compareWith,
   prices,
@@ -34,10 +39,19 @@ export function EquivalenceRows({
   // Live (non-demo) prices only, keyed by member id. Empty today.
   prices?: Map<string, { price: number; perUnit: string | null }>;
 }) {
+  const avoidIds = await readAvoidIds();
+  const verdicts = new Map<string, AvoidVerdict | null>();
+  if (avoidIds.length > 0) {
+    for (const m of members) {
+      const p = getProduct(m.id);
+      verdicts.set(m.id, p ? avoidVerdict(p, avoidIds) : { status: "unassessed" });
+    }
+  }
   return (
     <div className="grid gap-3 sm:grid-cols-2">
       {members.map((m) => {
         const price = prices?.get(m.id);
+        const avoid = verdicts.get(m.id) ?? null;
         return (
           <div key={m.id} className="flex min-w-0 items-center justify-between gap-3 rounded-xl border bg-card p-4">
             <div className="min-w-0 space-y-1">
@@ -58,6 +72,7 @@ export function EquivalenceRows({
                   </span>
                 )}
               </div>
+              {avoid && <AvoidLine avoid={avoid} />}
             </div>
             {compareWith && compareWith !== m.id && (
               <Link
@@ -71,5 +86,32 @@ export function EquivalenceRows({
         );
       })}
     </div>
+  );
+}
+
+function AvoidLine({ avoid }: { avoid: AvoidVerdict }) {
+  if (avoid.status === "conflicts")
+    return (
+      <Badge variant="outline" className="border-red-300 bg-red-50 text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-400">
+        Contains {avoidedIngredientName(avoid.conflicts[0])}
+        {avoid.conflicts.length > 1 ? ` +${avoid.conflicts.length - 1} more you avoid` : ""}
+      </Badge>
+    );
+  if (avoid.status === "possible")
+    return (
+      <Badge variant="outline" className="border-amber-300 bg-amber-50 text-amber-800 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-300">
+        Fragrance may hide {avoid.possible.length === 1 ? avoidedIngredientName(avoid.possible[0]) : `${avoid.possible.length} you avoid`}
+      </Badge>
+    );
+  if (avoid.status === "clear")
+    return (
+      <Badge variant="outline" className="border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-400">
+        Clear of your avoid list
+      </Badge>
+    );
+  return (
+    <Badge variant="outline" className="text-muted-foreground">
+      Couldn&apos;t check against your avoid list
+    </Badge>
   );
 }

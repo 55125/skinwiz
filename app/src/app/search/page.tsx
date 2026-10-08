@@ -11,6 +11,7 @@ import { parseFreeParam } from "@/lib/avoid-shared";
 import { AvoidSwitch } from "@/components/avoid-switch";
 import { SearchHints } from "@/components/search-hints";
 import { parseSearch } from "@/lib/search-terms";
+import { SearchBeacon } from "@/components/analytics-beacon";
 
 export async function generateMetadata({
   searchParams,
@@ -50,6 +51,7 @@ export default async function SearchPage({
 
   return (
     <div className="mx-auto max-w-6xl space-y-8 px-4 py-10">
+      {query && <SearchBeacon term={query} results={activeResults.length + productTotal} />}
       <div className="space-y-5">
         <PageHeader
           eyebrow="Search"

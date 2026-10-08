@@ -2,10 +2,12 @@
 
 import Link from "next/link";
 import { Button, buttonVariants } from "@/components/ui/button";
+import { ErrorBeacon } from "@/components/analytics-beacon";
 
 export default function Error({ error, retry }: { error: Error & { digest?: string }; retry: () => void }) {
   return (
     <div className="mx-auto max-w-xl px-4 py-20 text-center space-y-6">
+      <ErrorBeacon digest={error.digest} />
       <h1 className="text-3xl font-semibold">Something went wrong</h1>
       <p className="text-muted-foreground">
         This page hit a problem on our side. Trying again usually works; if it keeps happening, let us know.

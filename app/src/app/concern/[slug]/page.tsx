@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ProductGrid } from "@/components/product-grid";
@@ -170,6 +171,18 @@ export default async function ConcernPage({
     <div className="mx-auto max-w-6xl space-y-8 px-4 py-10">
       <JsonLd data={breadcrumbLd(siteUrl(), [["Home", "/"], [concern.name, `/concern/${slug}`]])} />
       <PageHeader eyebrow="Concern" title={concern.name} description={concern.description} />
+      {slug === "dry-skin-eczema" && (
+        <p className="text-sm">
+          For a child?{" "}
+          <Link href="/guide/kids/peds-eczema" className="font-medium text-brand hover:underline">
+            Caring for your child&apos;s eczema
+          </Link>{" "}
+          ·{" "}
+          <Link href="/guide/kids" className="font-medium text-brand hover:underline">
+            All children&apos;s skin guides
+          </Link>
+        </p>
+      )}
 
       {escalation ? (
         <div className="space-y-2">

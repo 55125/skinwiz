@@ -13,15 +13,15 @@ const HINTS: Record<SearchHint, { title: string; body: string; href: string; cta
   },
   "rx-retinoid": {
     title: "Using a prescription retinoid?",
-    body: "Prescription medicines like tretinoin aren't in our product catalog, and we don't give directions for them: your prescriber does. You can mark one on your regimen so its cautions about pairing with acids and benzoyl peroxide account for it.",
-    href: "/regimen",
-    cta: "Open my regimen",
+    body: "Prescription medicines like tretinoin aren't in our product catalog, and we don't give directions for them: your prescriber does. Our guide covers the everyday products that usually pair well with one, and what to space out.",
+    href: "/guide/prescription-retinoids",
+    cta: "Read the prescription retinoid guide",
   },
   kids: {
-    title: "Products for children",
-    body: "Check each product's label directions for the ages it covers; many say to ask a doctor below a certain age. A pediatrician or dermatologist can help with a rash that isn't settling.",
-    href: "/search?q=baby",
-    cta: "Products labeled for babies",
+    title: "Children's skin",
+    body: "Plain-language guides for parents on eczema, diaper rash, cradle cap, molluscum and more. Check each product's label for the ages it covers; many say to ask a doctor below a certain age.",
+    href: "/guide/kids",
+    cta: "Guides for parents",
   },
 };
 

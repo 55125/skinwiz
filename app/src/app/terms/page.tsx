@@ -45,7 +45,7 @@ export default function TermsPage() {
       <ul>
         <li>
           Everything on the Service is for general information and education. This includes ingredient
-          summaries, match scores, flags, cautions about product combinations, Derm Scores, User Scores and
+          summaries, match scores, flags, cautions about product combinations, User Scores, Derm Scores (once the dermatologist panel launches) and
           community routines. None of it is medical advice, a diagnosis or a treatment plan for you.
         </li>
         <li>
@@ -83,7 +83,7 @@ export default function TermsPage() {
         Scores and flags are opinions and screening aids, not guarantees:
       </p>
       <ul>
-        <li>A Derm Score reflects the views of individual clinicians.</li>
+        <li>A Derm Score, once the dermatologist panel launches, will reflect the views of individual clinicians.</li>
         <li>A User Score reflects outcomes that other users reported themselves, which we cannot verify.</li>
         <li>An ingredient flag or avoid-list check is not an exhaustive allergen or safety screen.</li>
       </ul>
@@ -95,8 +95,8 @@ export default function TermsPage() {
       <h2 id="affiliate">4. Affiliate links, retailers and third-party sites</h2>
       <p>
         Some links on {SITE_NAME} are affiliate links. We may earn a commission if you buy through them, at no
-        extra cost to you, and each one is labeled. Commercial relationships do not affect Derm Scores or User
-        Scores.
+        extra cost to you, and each one is labeled. Commercial relationships do not affect User Scores or, once
+        launched, Derm Scores.
       </p>
       <p>
         {SITE_NAME} does not sell products. A purchase you make is between you and the retailer, whose terms

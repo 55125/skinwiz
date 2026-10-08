@@ -32,6 +32,7 @@ const ewgCached = ttlCache(getIngredientEwgSummary);
 import { checksFailedByIngredient } from "@/db/ingredient-flags";
 import { allergenMembers, allergensInIngredient, getAllergen, groupsContaining, type ContactAllergen } from "@/db/contact-allergens";
 import { MONOGRAPH_RANGES, formatRange } from "@/db/monograph-ranges";
+import { RETINOIDS } from "@/lib/retinoids";
 import { formatPct } from "@/db/strength";
 import { readAvoidIds } from "@/lib/avoid";
 import { readProfile } from "@/lib/profile";
@@ -206,6 +207,14 @@ export default async function IngredientPage({
           {active ? (
             <section className="space-y-4 rounded-2xl border bg-card p-5 sm:p-6">
               <h2 className="text-lg font-semibold">What we know about {active.canonicalName}</h2>
+              {RETINOIDS.includes(active.id) && (
+                <p className="rounded-xl border bg-muted/40 p-3 text-sm">
+                  Also using a prescription retinoid such as tretinoin?{" "}
+                  <Link href="/guide/prescription-retinoids" className="font-medium text-brand hover:underline">
+                    What usually pairs well with one, and what to space out
+                  </Link>
+                </p>
+              )}
               <div className="flex flex-wrap gap-2">
                 {active.categories.map((cat) => {
                   const match = notes.find((n) => n.concernId.includes(cat) || n.concernName.toLowerCase().includes(cat.split("-")[0]));

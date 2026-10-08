@@ -5,6 +5,7 @@ import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { siteUrl } from "@/lib/site-url";
 import { SITE_NAME } from "@/lib/brand";
+import { AnalyticsBeacon } from "@/components/analytics-beacon";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -70,6 +71,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <SiteHeader />
         <main id="main" className="flex-1">{children}</main>
         <SiteFooter />
+        <AnalyticsBeacon />
       </body>
     </html>
   );

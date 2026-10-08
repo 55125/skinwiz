@@ -138,6 +138,9 @@ export type ProductIngredient = { id: string; position: number; isActive: boolea
 export type MatchReason = { tone: "good" | "bad"; text: string; points: number };
 export type Match = { score: number; label: "Great match" | "Good match" | "Mixed" | "Poor match"; reasons: MatchReason[] };
 
+// Also the listing pages' "Sensitive skin" filter (free-from-filters.tsx).
+export const SENSITIVE_SKIN_FREE = ["fragrance-free", "alcohol-free", "essential-oil-free"];
+
 const SENSITIVE_TRIGGERS: { flag: string; text: string }[] = [
   { flag: "fragrance-free", text: "contains fragrance" },
   { flag: "alcohol-free", text: "contains drying alcohol" },

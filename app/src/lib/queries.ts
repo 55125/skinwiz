@@ -187,6 +187,8 @@ export type BrowseFilters = {
   freeFromIds?: string[];
   hsaOnly?: boolean;
   excludeIngredientIds?: string[];
+  /** With activeId: only this label strength (concern pages). */
+  strengthPct?: number;
 };
 
 export function browseWhere(filters: BrowseFilters): SQL | undefined {
@@ -195,6 +197,7 @@ export function browseWhere(filters: BrowseFilters): SQL | undefined {
   if (filters.concernId) clauses.push(eq(products.concernId, filters.concernId));
   if (filters.dataSources && filters.dataSources.length > 0) clauses.push(inArray(products.dataSource, filters.dataSources));
   if (filters.activeId) clauses.push(jsonArrayContains(products.activeIds, filters.activeId));
+  if (filters.activeId && filters.strengthPct !== undefined) clauses.push(sql`${strengthExpr(filters.activeId)} = ${filters.strengthPct}`);
   // The eligible set is computed in lib/otc-index.ts (label-text rules for
   // sunscreens), bound here as one JSON array parameter.
   if (filters.hsaOnly) clauses.push(sql`${products.id} IN (SELECT value FROM json_each(${hsaEligibleIdsJson()}))`);
@@ -664,11 +667,28 @@ export function suggestIngredients(q: string, limit = 4) {
 // does NOT claim to be a quality ranking. The UI must caption it honestly.
 // RANDOM() within each tier gives a rotating showcase rather than the same
 // 8 products forever, cheap enough at this catalog size.
+// A showcase is a first impression, so it sticks to face and body skincare
+// with a full ingredient list, a picture and a clean title: no shampoos,
+// lip balms, "[Subscription]" listings, kits or overlong retail titles.
+const SHOWCASE_SKIP = [
+  "[", "_", "subscription", "shampoo", "conditioner", "lip ", "lip balm", "lipstick", "kit", "bundle", "sample", "travel size", "set of",
+  "refill", "essentials", "gift", " duo", " trio", "mini ",
+];
+
 export function getTopProducts(limit = 8) {
   return db
     .select()
     .from(products)
-    .where(LISTED_OTC)
+    .where(
+      and(
+        LISTED_OTC,
+        sql`${products.freeFromFlags} IS NOT NULL`,
+        sql`${products.imageUrl} IS NOT NULL`,
+        sql`LENGTH(${products.brandName}) <= 60`,
+        sql`${products.concernId} NOT IN ('dandruff-seb-derm', 'excessive-sweating', 'antifungal')`,
+        ...SHOWCASE_SKIP.map((w) => sql`LOWER(${products.brandName}) NOT LIKE ${`%${w.replace(/[\\%_]/g, (c) => `\\${c}`)}%`} ESCAPE '\\'`),
+      ),
+    )
     .orderBy(
       sql`CASE ${products.dataSource} WHEN 'brand_direct' THEN 0 WHEN 'openfda' THEN 1 WHEN 'dailymed' THEN 2 ELSE 3 END`,
       sql`RANDOM()`,

@@ -33,6 +33,9 @@ export default async function HandoutPreviewPage({ params }: { params: Promise<{
           >
             Use and customize
           </Link>
+          <Link href={`/clinic-tools/handouts/${t.id}/patient-view`} className="text-sm font-medium text-brand hover:underline">
+            See the patient view
+          </Link>
           <span className="text-xs text-muted-foreground">Free clinician account; your name and clinic go on the copy.</span>
         </div>
       </PageHeader>

@@ -1,7 +1,9 @@
 // Writes review/clinical-content-review.html (repo root) -- the
 // dermatologist's sign-off copy of the gated clinical content:
-// pregnancy/lactation classifications (db/pregnancy-lactation.ts) and
-// "When OTC isn't enough" guidance (db/escalation-guidance.ts).
+// pregnancy/lactation classifications (db/pregnancy-lactation.ts),
+// "When OTC isn't enough" guidance (db/escalation-guidance.ts), and the
+// clinical calls from the October 2026 persona testing (Part D,
+// db/clinical-review-part-d.ts).
 //
 //   npx tsx src/db/clinical-review.ts        (from app/)
 //
@@ -15,6 +17,7 @@ import { PREGNANCY_ENTRIES, pregnancyEntryFor, type Classification, type Pregnan
 import { ESCALATION_GUIDANCE, ESCALATION_URGENT_SOURCES, UNIVERSAL_URGENT, type EscalationGuidance } from "./escalation-guidance";
 import { CONCERN_DEFINITIONS } from "./actives";
 import { DERM_FINDER } from "../lib/derm-finder";
+import { partD } from "./clinical-review-part-d";
 
 const OUT = path.join(process.cwd(), "..", "review", "clinical-content-review.html");
 const DB_PATH = process.env.DATABASE_PATH ?? path.join(process.cwd(), "data", "skinwiz.db");
@@ -139,6 +142,8 @@ const OPEN_QUESTIONS = [
   "Many AAD sources are cited as “AAD public guidance on …” rather than an exact page title / URL, because the drafter couldn't verify exact titles. Kaplan et al. (hydroquinone review) is cited without a year for the same reason. Please confirm or replace.",
 ];
 
+const D = partD(DB_PATH);
+
 const pregnancyByLevel = (["avoid", "caution", "ok"] as SafetyLevel[]).map((lvl) => ({
   lvl,
   entries: PREGNANCY_ENTRIES.filter((e) => e.pregnancy.level === lvl),
@@ -147,7 +152,7 @@ const statementCount = ESCALATION_GUIDANCE.reduce((t, g) => t + 1 + g.seeDermato
 const today = new Date().toISOString().slice(0, 10);
 
 const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Actively pregnancy mode &amp; escalation guidance — draft for review</title>
+<title>Actively clinical content — draft for review</title>
 <style>
 :root{--ink:#141b24;--muted:#5d646c;--line:#d7d4cc;--paper:#f6f4ee;--card:#fff;--teal:#006761;--amber:#8a5a00}
 body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.6 Georgia, "Times New Roman", serif}
@@ -170,8 +175,8 @@ tbody th{width:110px;font-weight:600} td.src{width:28%;color:var(--muted);font-s
 pre{font:13px ui-monospace,monospace;background:#eeece5;padding:10px 12px;border-radius:8px;white-space:pre-wrap}
 @media print{body{background:#fff} article{border-color:#bbb}}
 </style></head><body><main>
-<h1>Actively pregnancy mode &amp; escalation guidance — draft for review</h1>
-<p class="lede">Generated ${today} from <code>app/src/db/pregnancy-lactation.ts</code> and <code>app/src/db/escalation-guidance.ts</code> · ${PREGNANCY_ENTRIES.length} ingredient classifications · ${ESCALATION_GUIDANCE.length} concerns, ${statementCount} escalation statements${dbNote}</p>
+<h1>Actively clinical content — draft for review</h1>
+<p class="lede">Generated ${today} from <code>app/src/db/pregnancy-lactation.ts</code>, <code>app/src/db/escalation-guidance.ts</code> and the Part D sources · ${D.ruleCount} Part D items · ${PREGNANCY_ENTRIES.length} ingredient classifications · ${ESCALATION_GUIDANCE.length} concerns, ${statementCount} escalation statements${dbNote}</p>
 
 <h2>How to review</h2>
 <p>Everything below was drafted by Claude (AI) for your review as the site's board-certified dermatologist. Both features sit behind flags that default to <b>off in production</b> (see the status check below for what is live today).</p>
@@ -193,9 +198,11 @@ FEATURE_ESCALATION=on       # Part B: "When OTC isn't enough" on concern pages, 
 
 <h2>Open questions to resolve first</h2>
 <div class="callout"><ol>${OPEN_QUESTIONS.map((q) => `<li>${q}</li>`).join("")}</ol></div>
+<h3>Part D (live now)</h3>
+<div class="callout"><ol>${D.questions.map((q) => `<li>${q}</li>`).join("")}</ol></div>
 
 <h2>Contents</h2>
-<nav>${pregnancyByLevel.map((g) => `<div><a href="#lvl-${g.lvl}">Pregnancy: ${LEVEL[g.lvl]}</a> (${g.entries.length})</div>`).join("")}<div><a href="#rules">How the screen decides (rules)</a> (${RULES.length})</div><div><a href="#escalation">When OTC isn't enough</a> (${ESCALATION_GUIDANCE.length})</div><div><a href="#ui-copy">Fixed UI copy</a> (${UI_COPY.length})</div></nav>
+<nav>${pregnancyByLevel.map((g) => `<div><a href="#lvl-${g.lvl}">Pregnancy: ${LEVEL[g.lvl]}</a> (${g.entries.length})</div>`).join("")}<div><a href="#rules">How the screen decides (rules)</a> (${RULES.length})</div><div><a href="#escalation">When OTC isn't enough</a> (${ESCALATION_GUIDANCE.length})</div><div><a href="#ui-copy">Fixed UI copy</a> (${UI_COPY.length})</div><div><a href="#part-d">Part D: persona-testing changes, live</a> (${D.ruleCount})</div></nav>
 
 <h2>Part A — Pregnancy &amp; breastfeeding classifications</h2>
 <p class="meta">Levels: <span class="lvl avoid">Avoid</span> mainstream guidance says don't use it during this time (often precautionary) · <span class="lvl caution">Caution / ask first</span> fine in limited use, or not enough data · <span class="lvl ok">Generally OK</span> acceptable in normal use. Grouped by pregnancy level. The first entry whose patterns match an ingredient slug claims it; salicylate esters (butyloctyl, benzyl, tridecyl, methyl salicylate) deliberately don't match salicylic acid.</p>
@@ -221,6 +228,7 @@ ${ESCALATION_GUIDANCE.map(escalationHtml).join("\n")}
 ${UI_COPY.map(([w, t]) => `<tr><th style="width:200px">${esc(w)}</th><td>${esc(t)}</td>${BOX}</tr>`).join("\n")}
 </tbody></table>
 </section>
+${D.html}
 </main></body></html>
 `;
 

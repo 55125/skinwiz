@@ -32,11 +32,11 @@ export const ECZEMA_EXCLUDED_ACTIVES = [
   "ketoconazole",
 ];
 // The same, by name, for listings whose active wasn't recognized.
-const ECZEMA_EXCLUDED_TEXT = /\b(diphenhydramine|clotrimazole|miconazole|tolnaftate|terbinafine|butenafine|undecylenic|ketoconazole)\b/i;
+export const ECZEMA_EXCLUDED_TEXT = /\b(diphenhydramine|clotrimazole|miconazole|tolnaftate|terbinafine|butenafine|undecylenic|ketoconazole)\b/i;
 
-const DIAPER_RE = /\b(diaper|nappy|nappies)\b/i;
+export const DIAPER_RE = /\b(diaper|nappy|nappies)\b/i;
 
-const MAKEUP_RE =
+export const MAKEUP_RE =
   /\b(foundation|lipstick|lip ?gloss|lip ?balm|lip ?colou?r|concealer|[bc]c ?cream|primer|bronzer|blush|cushion|make-?up|mascara|eye ?shadow|powder|compact)\b/i;
 
 export type RankInput = {
@@ -81,7 +81,7 @@ export function excludedFromConcern(p: RankInput): boolean {
 /** 0 ranks first. Only the eczema and sun pages have tiers; everything else is 0. */
 // Sunscreen filters: on the eczema page, a product that has them is a lip
 // balm or a day cream with SPF, not eczema care.
-const SUNSCREEN_ACTIVES = ["avobenzone", "octinoxate", "octisalate", "octocrylene", "homosalate", "oxybenzone", "ensulizole", "meradimate"];
+export const SUNSCREEN_ACTIVES = ["avobenzone", "octinoxate", "octisalate", "octocrylene", "homosalate", "oxybenzone", "ensulizole", "meradimate"];
 
 export function concernTier(p: RankInput): 0 | 1 | 2 {
   if (p.concernId === ECZEMA_CONCERN) {

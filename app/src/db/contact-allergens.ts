@@ -960,8 +960,14 @@ const MATCHERS = CONTACT_ALLERGENS.map((a) => ({
   unless: a.unless?.length ? new RegExp(a.unless.map(termPattern).join("|"), "g") : null,
 }));
 
+// Marketing claims inside ingredient text ("Paraben-free.", "nickel free,
+// hypoallergenic") name what's absent: one word before "free" at the end of a
+// phrase, so a name that merely continues ("... free fatty acids") is kept.
+const FREE_CLAIM = /(?<![a-z0-9])[a-z0-9]+ free(?=\s*(?:[,.;!]|$| and | & ))/g;
+
 function matchNormalized(text: string): string[] {
-  return MATCHERS.filter((m) => m.re.test(m.unless ? text.replace(m.unless, " ") : text)).map((m) => m.id);
+  const t = text.replace(FREE_CLAIM, " ");
+  return MATCHERS.filter((m) => m.re.test(m.unless ? t.replace(m.unless, " ") : t)).map((m) => m.id);
 }
 
 /** Allergen ids named by one ingredient ("Parfum (Fragrance)" -> ["fragrance"]). */
@@ -991,7 +997,12 @@ export function computeAllergenHits(fullIngredientText: string | null | undefine
  */
 export function allergensInList(ingredientText: string): string[] {
   // Commas survive normalization, so a term can't run across two ingredients.
-  return matchNormalized(normalizeForAllergens(ingredientText.replace(/[;\n]/g, ",")));
+  const text = ingredientText.replace(/[;\n]/g, ",");
+  // Normalizing joins "1,2-hexanediol" into one name, but a label without
+  // spaces ("Benzophenone-3,4-Methylbenzylidene Camphor") looks the same, so
+  // the list is also read with every digit comma kept as a separator.
+  const split = text.replace(/(\d),(?=\d)/g, "$1, ");
+  return [...new Set([...matchNormalized(normalizeForAllergens(text)), ...matchNormalized(normalizeForAllergens(split))])];
 }
 
 export type AllergenFinding = { level: "contains" | "may-contain"; allergenIds: string[] };

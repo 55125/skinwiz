@@ -90,3 +90,10 @@ test("label spellings seen in the catalog, and short pasted lists", async () => 
   assert.equal(computeAllergenHits("Water, Glycerin, Parfum, Methylisothiazolinone"), null);
   assert.ok(allergensInList("Water, Glycerin, Parfum, Methylisothiazolinone").includes("methylisothiazolinone"));
 });
+
+test("labels without spaces after commas, and 'X-free' claims", () => {
+  const hits = computeAllergenHits("Water,Glycerin,Benzophenone-3,4-Methylbenzylidene Camphor,Quaternium-15,1,2-Hexanediol,Dimethicone");
+  assert.ok(hits?.includes("oxybenzone") && hits.includes("quaternium-15"), String(hits));
+  assert.deepEqual(computeAllergenHits("Water, Glycerin, 2-Bromo-2-Nitropropane-1,3-Diol, Dimethicone. Paraben-free, nickel free."), ["bronopol"]);
+  assert.ok(computeAllergenHits("Water, Glycerin, Dimethicone, Methylparaben, Phenoxyethanol, Tocopherol")?.includes("parabens"));
+});

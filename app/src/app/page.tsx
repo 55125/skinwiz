@@ -122,7 +122,7 @@ export default function Home() {
             Find your <span className="text-brand">actives</span>.
           </h1>
           <p className="mx-auto mt-5 max-w-xl text-lg font-medium text-foreground/85 sm:text-[19px]">
-            Every product, every ingredient. Build the perfect regimen.
+            Every product, every ingredient.
           </p>
           <div className="mx-auto mt-8 max-w-2xl [text-shadow:none]">
             <SearchBar large />

@@ -60,7 +60,7 @@ export const FREE_FROM_CHECKS: FreeFromCheck[] = [
   },
   { id: "mineral-oil-free", label: "Mineral oil-free", category: "clean", avoidSubstrings: ["mineral oil", "petrolatum", "paraffinum liquidum"] },
   { id: "dye-free", label: "Dye-free", category: "clean", avoidSubstrings: ["fd&c", "d&c "] },
-  { id: "peg-free", label: "PEG-free", category: "clean", avoidSubstrings: ["peg-", "polyethylene glycol"] },
+  { id: "peg-free", label: "PEG-free", category: "clean", avoidSubstrings: ["peg-", "peg/", "polyethylene glycol"] },
 
   // Contact allergens live in db/contact-allergens.ts: ~100 of them with
   // label synonyms, stored per product as hits rather than free-from flags.

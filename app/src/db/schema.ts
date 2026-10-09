@@ -131,7 +131,9 @@ export const products = sqliteTable("products", {
   // (store-brand equivalents) is a plain indexed equality match.
   strengths: text("strengths", { mode: "json" }).$type<Record<string, number> | null>(),
   strengthKey: text("strength_key"),
-  // "openfda" | "dailymed" | "open_beauty_facts" -- which pipeline produced
+  // "openfda" | "dailymed" | "open_beauty_facts" | "brand_direct" |
+  // "third_party" (a curated cosmetic whose brand publishes no ingredient
+  // list, taken from independent ingredient databases; unverified) -- which pipeline produced
   // this row. verified=true only for openfda/dailymed (derived from what a
   // manufacturer legally filed with the FDA); false for open_beauty_facts
   // (crowd-sourced, unverified -- confirmed real junk entries exist in it

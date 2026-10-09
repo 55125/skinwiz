@@ -28,6 +28,11 @@ Two kinds of row:
             may be left blank (matched with the brand-direct matcher) or set
             by hand. A cosmetic with no tracked active still lists; the seed
             allows that for this file only.
+  third_party  A cosmetic whose manufacturer publishes no ingredient list
+            (Curel Itch Defense). The list comes from independent ingredient
+            databases that agree with each other; `source_url` holds them,
+            space-separated. source="third_party", verified=false, and the
+            product page says where the list came from.
   drug      Everything comes from the DailyMed SPL for `spl_set_id`: actives
             and strengths, the product's structured inactive list, purpose
             and uses. source="dailymed". Package photos then come through the
@@ -182,8 +187,13 @@ def cosmetic_row(spec: dict) -> dict:
         "manufacturer_name": spec["manufacturer_name"],
         "active_ingredient_text": ingredients,
         "active_ingredients_structured": ";".join(active_ids),
-        "source": "brand_direct",
-        "verified": "true",
+        # A brand that publishes no ingredient list can still be listed from
+        # independent ingredient databases, as source="third_party",
+        # unverified, never passed off as the brand's own data. Its
+        # source_url names those databases and is not a "Buy directly" link
+        # (seed.ts only keeps source_url for brand_direct rows).
+        "source": "third_party" if spec["kind"] == "third_party" else "brand_direct",
+        "verified": "false" if spec["kind"] == "third_party" else "true",
         "source_url": spec["source_url"],
         "image_url": download_image(spec["image_source_url"], spec["product_id"]) if spec["image_source_url"] else "",
     }

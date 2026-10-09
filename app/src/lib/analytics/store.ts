@@ -5,7 +5,7 @@ import { randomBytes } from "node:crypto";
 import { and, eq, lt, sql } from "drizzle-orm";
 import { db } from "@/db/client";
 import { analyticsEvents, analyticsSalts, optOutTallies, serverErrors } from "@/db/schema";
-import { deviceFromUa, utcDay, visitorHash, type CleanEvent, type TallyKind } from "./core";
+import { deviceFromUa, utcDay, visitorHash, type CleanEvent, type OptOutSignal, type TallyKind } from "./core";
 
 export const ANALYTICS_RETENTION_DAYS = 395;
 const ERROR_RETENTION_DAYS = 90;
@@ -60,11 +60,11 @@ export function recordEvent(event: CleanEvent, client: { ip: string; ua: string 
     .run();
 }
 
-/** A Global Privacy Control visitor's page view or retailer click: +1 to the day's tally, nothing else. */
-export function tallyOptOut(kind: TallyKind, now = new Date()): void {
+/** An opted-out (GPC / Do Not Track) page view or outbound click: +1 to the day's tally, nothing else. */
+export function tallyOptOut(signal: OptOutSignal, kind: TallyKind, now = new Date()): void {
   db.insert(optOutTallies)
-    .values({ day: utcDay(now), kind, count: 1 })
-    .onConflictDoUpdate({ target: [optOutTallies.day, optOutTallies.kind], set: { count: sql`${optOutTallies.count} + 1` } })
+    .values({ day: utcDay(now), signal, kind, count: 1 })
+    .onConflictDoUpdate({ target: [optOutTallies.day, optOutTallies.signal, optOutTallies.kind], set: { count: sql`${optOutTallies.count} + 1` } })
     .run();
 }
 

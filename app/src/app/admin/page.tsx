@@ -144,15 +144,24 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
             <Bars rows={traffic.outboundByRetailer} empty="No outbound clicks yet." />
           </Section>
           <Section
-            title="Global Privacy Control"
-            note="Browsers that send GPC get plain retailer links, so their clicks earn no commission. They are only counted here, not in the figures above."
+            title="Privacy opt-outs"
+            note="Browsers sending Global Privacy Control or Do Not Track are only counted here, not in the figures above. GPC visitors get plain retailer links, so their clicks earn no commission; Do Not Track links are unchanged."
           >
-            <StatGrid
-              items={[
-                ["GPC pageviews", traffic.optOut.pageviews, `${share(traffic.optOut.pageviews, traffic.optOut.trackedPageviews)} of all pageviews`],
-                ["GPC retailer clicks", traffic.optOut.clicks, `${share(traffic.optOut.clicks, traffic.optOut.trackedClicks)} of all clicks earn nothing`],
-              ]}
-            />
+            {(() => {
+              const o = traffic.optOut;
+              const allViews = o.gpcPageviews + o.dntPageviews + o.trackedPageviews;
+              const allClicks = o.gpcClicks + o.dntClicks + o.trackedClicks;
+              return (
+                <StatGrid
+                  items={[
+                    ["GPC pageviews", o.gpcPageviews, `${share(o.gpcPageviews, allViews)} of all pageviews`],
+                    ["GPC clicks (no commission)", o.gpcClicks, `${share(o.gpcClicks, allClicks)} of all clicks`],
+                    ["Do Not Track pageviews", o.dntPageviews, `${share(o.dntPageviews, allViews)} of all pageviews`],
+                    ["Do Not Track clicks", o.dntClicks, `${share(o.dntClicks, allClicks)} of all clicks`],
+                  ]}
+                />
+              );
+            })()}
           </Section>
         </div>
         <Section title="Most-clicked products" note="Outbound clicks from product pages.">
@@ -461,10 +470,9 @@ function Empty({ children }: { children: React.ReactNode }) {
   return <p className="text-sm text-muted-foreground">{children}</p>;
 }
 
-/** gpc as a share of gpc + tracked, e.g. "4%". */
-function share(gpc: number, tracked: number): string {
-  const total = gpc + tracked;
-  return total ? `${Math.round((gpc / total) * 100)}%` : "0%";
+/** part as a share of total, e.g. "4%". */
+function share(part: number, total: number): string {
+  return total ? `${Math.round((part / total) * 100)}%` : "0%";
 }
 
 function KpiTile({ kpi }: { kpi: Kpi }) {

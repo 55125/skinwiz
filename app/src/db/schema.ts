@@ -998,19 +998,21 @@ export const analyticsEvents = sqliteTable(
   (table) => [index("analytics_events_kind_day_idx").on(table.kind, table.day), index("analytics_events_day_idx").on(table.day)],
 );
 
-// Browsers that send Global Privacy Control get no analytics_events rows.
-// The admin page still shows how many page views and retailer clicks come
-// from them (those clicks earn nothing: lib/gpc.ts), so each one adds 1 to
-// a per-day, per-kind tally. Nothing else -- no visitor id, page, link,
-// device or time beyond the day. Purged with the other statistics.
+// Browsers that send Global Privacy Control or Do Not Track get no
+// analytics_events rows. The admin page still shows how many page views and
+// outbound clicks come from them (GPC clicks earn nothing: lib/gpc.ts), so
+// each one adds 1 to a per-day tally by signal and kind. Nothing else -- no
+// visitor id, page, link, device or time beyond the day. A browser sending
+// both counts as "gpc". Purged with the other statistics.
 export const optOutTallies = sqliteTable(
   "opt_out_tallies",
   {
     day: text("day").notNull(), // UTC "YYYY-MM-DD"
+    signal: text("signal").notNull(), // "gpc" | "dnt"
     kind: text("kind").notNull(), // "pageview" | "outbound"
     count: integer("count").notNull().default(0),
   },
-  (table) => [primaryKey({ columns: [table.day, table.kind] })],
+  (table) => [primaryKey({ columns: [table.day, table.signal, table.kind] })],
 );
 
 // One random salt per UTC day for analytics_events.visitor; rows older than

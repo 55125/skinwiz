@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "c91e42b5-ee2a-4f28-bf01-2660a4f946b6",
+  "id": "d55d4bae-4b3c-4d2d-b5fc-ac3a22465d55",
   "prevId": "87073160-e20e-4032-a6cd-40c163800173",
   "tables": {
     "active_chem_data": {
@@ -1919,6 +1919,13 @@
           "notNull": true,
           "autoincrement": false
         },
+        "signal": {
+          "name": "signal",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
         "kind": {
           "name": "kind",
           "type": "text",
@@ -1938,12 +1945,13 @@
       "indexes": {},
       "foreignKeys": {},
       "compositePrimaryKeys": {
-        "opt_out_tallies_day_kind_pk": {
+        "opt_out_tallies_day_signal_kind_pk": {
           "columns": [
             "day",
+            "signal",
             "kind"
           ],
-          "name": "opt_out_tallies_day_kind_pk"
+          "name": "opt_out_tallies_day_signal_kind_pk"
         }
       },
       "uniqueConstraints": {},

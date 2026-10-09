@@ -24,12 +24,15 @@ export type CleanEvent = {
 // Browsers asking not to be tracked. Sec-GPC is Global Privacy Control
 // (the privacy policy promises to honor it); DNT is the older signal.
 export function optedOut(headers: Headers): boolean {
-  return headers.get("sec-gpc") === "1" || headers.get("dnt") === "1";
+  return optOutSignal(headers) !== null;
 }
 
-/** GPC opt-outs are tallied (count only) so the admin page can show unearned clicks. */
-export function sentGpc(headers: Headers): boolean {
-  return headers.get("sec-gpc")?.trim() === "1";
+export type OptOutSignal = "gpc" | "dnt";
+
+/** Which opt-out the browser sent (GPC wins when both are), or null. Opted-out visits are only tallied. */
+export function optOutSignal(headers: Headers): OptOutSignal | null {
+  if (headers.get("sec-gpc")?.trim() === "1") return "gpc";
+  return headers.get("dnt")?.trim() === "1" ? "dnt" : null;
 }
 
 export type TallyKind = "pageview" | "outbound";

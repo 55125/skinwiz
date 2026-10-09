@@ -29,8 +29,8 @@ export default function PrivacyPage() {
             avoid list and skin profile (but not any pregnancy or breastfeeding answers) across devices and to send the check-ins and safety alerts you choose, and you can delete it at any
             time. We do not sell your information, share it for targeted advertising, or run advertising or
             third-party analytics trackers. We count visits with our own cookieless statistics, which store no IP
-            addresses and skip browsers that send Do Not Track. For Global Privacy Control we only count page views
-            and shop clicks.
+            addresses. For browsers that send Global Privacy Control or Do Not Track we only count page views and
+            clicks.
           </p>
         </div>
       }
@@ -131,9 +131,9 @@ export default function PrivacyPage() {
         and browser type with a random value that changes every day and keep only a scrambled (hashed) result. The
         daily value is deleted after one day, after which that result cannot be traced back to you or linked to
         your visits on other days. These statistics are not linked to your session cookie, your email or your
-        skin profile, and are used only in aggregate. If your browser sends a Do Not Track signal, we record none
-        of them. If it sends Global Privacy Control, we record none of them either; we only add one to a daily
-        count of page views or of clicks on links to other sites, with nothing about you, the page or the link.
+        skin profile, and are used only in aggregate. If your browser sends a Global Privacy Control or Do Not Track
+        signal, we record none of this; we only add one to a daily count of page views or of clicks on links to
+        other sites, with nothing about you, the page or the link.
       </p>
 
       <h2 id="cookies">2. Cookies</h2>

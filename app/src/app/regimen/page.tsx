@@ -258,7 +258,7 @@ export default async function RegimenPage({ searchParams }: { searchParams: Prom
       <MySkinTabs />
       <PageHeader
         title={selected && list.length > 1 ? selected.name : "My products"}
-        description="What you use morning and night, in the order to apply it (thinnest to thickest, with sunscreen last in the morning), and what you own, want and have finished. Saved in this browser with no account. Add an email in the card below if you want it on other devices too."
+        description={`What you use morning and night, in the order to apply it (thinnest to thickest, with sunscreen last in the morning), and what you own, want and have finished. Saved in this browser with no account.${isEmpty ? "" : " Add an email in the card below if you want it on other devices too."}`}
       />
 
       <RedFlagBanner />
@@ -416,7 +416,8 @@ export default async function RegimenPage({ searchParams }: { searchParams: Prom
         </p>
       )}
 
-      <EmailSignupCard signedInAs={person?.email ?? null} />
+      {/* Asked for only once there's something here to keep. */}
+      {!isEmpty && <EmailSignupCard signedInAs={person?.email ?? null} />}
     </div>
   );
 }

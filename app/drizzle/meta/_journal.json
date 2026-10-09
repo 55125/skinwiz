@@ -183,6 +183,13 @@
       "when": 1791516454972,
       "tag": "0025_price_quote_stock",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "6",
+      "when": 1791520263647,
+      "tag": "0026_price_check_image",
+      "breakpoints": true
     }
   ]
 }

@@ -931,6 +931,9 @@ export const priceChecks = sqliteTable(
     status: text("status").notNull(), // "matched" | "listed" (carried, no price) | "miss" | "error"
     misses: integer("misses").notNull().default(0),
     nextCheckAt: text("next_check_at").notNull(),
+    // The source's own product photo URL (Kroger's front photo) from the last
+    // matched/listed lookup; cleared on a miss. Hotlinked, never downloaded.
+    imageUrl: text("image_url"),
   },
   (table) => [
     uniqueIndex("price_checks_product_source_idx").on(table.productId, table.source),

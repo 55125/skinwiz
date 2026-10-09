@@ -1,0 +1,1 @@
+ALTER TABLE `price_checks` ADD `image_url` text;

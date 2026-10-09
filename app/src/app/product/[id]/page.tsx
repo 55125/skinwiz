@@ -66,7 +66,15 @@ import { EquivalenceExplainer, EquivalenceRows } from "@/components/equivalence-
 import { FEATURES } from "@/lib/feature-flags";
 import { productPregnancyFindings } from "@/lib/pregnancy";
 import { PregnancyNotice } from "@/components/pregnancy-notice";
-import { DAILYMED_IMAGE_CAPTION, isOpenBeautyFactsImageUrl, isDailymedImageUrl, productImageAlt, thumbnailUrl } from "@/lib/image-urls";
+import {
+  DAILYMED_IMAGE_CAPTION,
+  isKrogerImageUrl,
+  isOpenBeautyFactsImageUrl,
+  isDailymedImageUrl,
+  KROGER_IMAGE_CAPTION,
+  productImageAlt,
+  thumbnailUrl,
+} from "@/lib/image-urls";
 import { recallsForProduct } from "@/lib/recalls";
 import { RecallBanner } from "@/components/recall-banner";
 import { canViewRxReference } from "@/lib/clinicians";
@@ -74,7 +82,7 @@ import { isAmazonLink, manualLinkHref, manualLinkLabel } from "@/lib/manual-link
 import { headers } from "next/headers";
 import { gpcEnabled } from "@/lib/gpc";
 import { livePricesEnabled } from "@/lib/prices/config";
-import { getDisplayQuotes, recordProductView } from "@/lib/prices/store";
+import { getDisplayQuotes, getKrogerImages, recordProductView } from "@/lib/prices/store";
 import { outboundLink } from "@/lib/prices/redirect";
 import { formatPerUnit, sortByUnitPrice, storeBrandSavings, type LivePrice } from "@/lib/prices/unit";
 import { PriceList, StoreBrandSavingsNote } from "@/components/price-list";
@@ -135,7 +143,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
 
   // Its other listings: their barcodes/NDCs as aliases, and the best photo.
   const duplicates = getMergedDuplicates(product.id);
-  const { photo: imageUrl, label: labelImageUrl } = productImages(product, duplicates);
+  const { photo: imageUrl, label: labelImageUrl } = productImages(product, duplicates, getKrogerImages([product.id]).get(product.id) ?? null);
   const aliasCodes = [...duplicates.map((d) => d.id), ...getRetailBarcodes([product.id, ...duplicates.map((d) => d.id)])]
     .filter((c, i, all) => c !== product.id && !c.startsWith("http") && all.indexOf(c) === i);
 
@@ -274,6 +282,9 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
             </div>
             {isDailymedImageUrl(imageUrl) && (
               <figcaption className="text-center text-xs text-muted-foreground">{DAILYMED_IMAGE_CAPTION}</figcaption>
+            )}
+            {isKrogerImageUrl(imageUrl) && (
+              <figcaption className="text-center text-xs text-muted-foreground">{KROGER_IMAGE_CAPTION}</figcaption>
             )}
             {isOpenBeautyFactsImageUrl(imageUrl) && (
               <figcaption className="text-center text-xs text-muted-foreground">

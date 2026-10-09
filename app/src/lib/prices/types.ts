@@ -43,9 +43,10 @@ export type LookupProduct = {
 /**
  * matched: priced offers found. listed: the source's catalog carries the
  * product but has no price for it right now (Kroger: not priced at our
- * store). miss: not found.
+ * store). miss: not found. image: the source's own product photo URL for a
+ * matched or listed product (Kroger only), hotlinked, never downloaded.
  */
-export type LookupResult = { status: "matched" | "listed" | "miss"; quotes: PriceQuote[] };
+export type LookupResult = { status: "matched" | "listed" | "miss"; quotes: PriceQuote[]; image?: string | null };
 
 /**
  * A price source. lookup() makes its own HTTP calls (rate-limited, with

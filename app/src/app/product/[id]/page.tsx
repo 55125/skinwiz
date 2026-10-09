@@ -90,6 +90,8 @@ import { getDisplayQuotes, getKrogerImages, recordProductView } from "@/lib/pric
 import { outboundLink } from "@/lib/prices/redirect";
 import { formatPerUnit, sortByUnitPrice, storeBrandSavings, type LivePrice } from "@/lib/prices/unit";
 import { PriceList, StoreBrandSavingsNote } from "@/components/price-list";
+import { QuickBuyRow } from "@/components/quick-buy-row";
+import { quickBuyLinks } from "@/lib/quick-buy";
 
 // Crawlers and tools don't count as a "recently viewed" signal for price refreshes.
 const BOT_UA = /bot|crawl|spider|slurp|preview|fetch|curl|wget|python|headless|monitor/i;
@@ -208,6 +210,14 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
   );
   const brandLine = productBrand(product);
   const brandLink = product.sourceUrl ? outboundLink(product.sourceUrl, { placement: "product", rel: "noopener noreferrer", gpc }) : null;
+  const quickBuy = quickBuyLinks({
+    quotes,
+    manualLinks,
+    affiliateLinks,
+    brandLink,
+    brandName: product.manufacturer ? displayManufacturer(product.manufacturer) : null,
+    retailerSearches,
+  });
   if (livePricesEnabled() && !BOT_UA.test((await headers()).get("user-agent") ?? "")) recordProductView(product.id);
   const equivalents = equivalenceGroup ? { rows: [], total: 0 } : getEquivalentProducts(product);
   const hsaEligible = isHsaEligible(product.id);
@@ -410,6 +420,10 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
               inRegimen={regimenSlot !== null}
             />
           </div>
+
+          {/* The store buttons up top; the full Where to buy section below
+              keeps sizes, stock and per-store notes. */}
+          <QuickBuyRow links={quickBuy} moreHref="#where-to-buy" />
 
           {avoid?.status === "conflicts" && (
             <Alert className="border-red-300 bg-red-50 dark:border-red-900 dark:bg-red-950/40">
@@ -871,7 +885,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
         </section>
       )}
 
-      <section className="space-y-4">
+      <section id="where-to-buy" className="scroll-mt-24 space-y-4">
         <h2 className="text-xl font-semibold">Where to buy</h2>
         {/* Live prices (lib/prices): only while configured, only quotes under 72h old. */}
         {quotes.length > 0 && <PriceList quotes={quotes} />}

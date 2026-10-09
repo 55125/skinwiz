@@ -8,11 +8,15 @@ export { LIMITS } from "@/lib/limits";
 const buckets = new Map<string, { count: number; resetAt: number }>();
 
 export function clientIp(request: Request): string {
+  return clientIpFromHeaders(request.headers);
+}
+
+export function clientIpFromHeaders(headers: Headers): string {
   // Rightmost entry: the one appended by Railway's edge proxy (the single
   // trusted hop). Earlier entries are client-supplied and spoofable.
-  const forwarded = request.headers.get("x-forwarded-for");
+  const forwarded = headers.get("x-forwarded-for");
   if (forwarded) return forwarded.split(",").at(-1)!.trim();
-  return request.headers.get("x-real-ip") ?? "unknown";
+  return headers.get("x-real-ip") ?? "unknown";
 }
 
 export function rateLimit(

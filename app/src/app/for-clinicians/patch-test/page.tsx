@@ -65,8 +65,7 @@ export default async function PatchTestIssuePage({ searchParams }: { searchParam
           ; products without a full ingredient list show as &ldquo;couldn&apos;t check,&rdquo; never as clear.
         </p>
         <p>
-          No sign-in is needed for now, so a link can&apos;t prove who made it, and the patient page says so.
-          Verified clinician accounts (NPI-checked) are planned.{" "}
+          No sign-in is needed to make a sheet, so a link can&apos;t prove who made it, and the patient page says so.{" "}
           <Link href="/for-clinicians" className="font-medium text-brand hover:underline">
             More for dermatologists →
           </Link>

@@ -813,7 +813,7 @@ export const handoutVersions = sqliteTable(
 
 // Audit trail for the one way a version can be deleted: the owner purging
 // patient details a clinician typed in (npm run handouts:purge). The delete
-// trigger in migration 0022 lets a version go only once its id is listed
+// trigger in migration 0023 lets a version go only once its id is listed
 // here. Holds the ref and when -- never the purged content.
 export const handoutVersionPurges = sqliteTable("handout_version_purges", {
   versionId: integer("version_id").primaryKey(), // no FK: the version is gone afterwards
@@ -995,7 +995,13 @@ export const analyticsEvents = sqliteTable(
     value: integer("value"), // search: result count
     productId: text("product_id"), // outbound clicks from a product page
   },
-  (table) => [index("analytics_events_kind_day_idx").on(table.kind, table.day), index("analytics_events_day_idx").on(table.day)],
+  (table) => [
+    index("analytics_events_kind_day_idx").on(table.kind, table.day),
+    index("analytics_events_day_idx").on(table.day),
+    // The once-a-minute pageview de-duplication in recordEvent(); without it
+    // every beacon scanned all of today's events.
+    index("analytics_events_visitor_path_at_idx").on(table.visitor, table.path, table.at),
+  ],
 );
 
 // Browsers that send Global Privacy Control or Do Not Track get no

@@ -4,13 +4,17 @@ import { useMemo, useState } from "react";
 import { Check, ListChecks, Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ALLERGEN_GROUPS, normalizeForAllergens, resolveAllergenId, searchAllergens } from "@/db/contact-allergens";
+import { ALLERGEN_GROUPS, PATCH_TEST_FAMILY, normalizeForAllergens, resolveAllergenId, searchAllergens } from "@/db/contact-allergens";
 import {
   NOT_ON_LABELS,
   PATCH_TEST_SERIES,
   getNotOnLabel,
   importItemName,
   itemFamily,
+  itemIds,
+  seriesItemByKey,
+  seriesItemKey,
+  sharesIdsInSeries,
   type SeriesItem,
 } from "@/db/patch-test-series";
 import { cn } from "@/lib/utils";
@@ -22,35 +26,76 @@ import { cn } from "@/lib/utils";
 
 const SEARCH_TAB = "search";
 
-function itemOn(it: SeriesItem, selected: Set<string>): boolean {
-  return it.ids.length > 0 ? it.ids.every((id) => selected.has(id)) : selected.has(it.notOnLabel!);
+// An item is ticked when its ids are all on the list, except an item that
+// shares its ids with another in the same series (budesonide and
+// triamcinolone are both "class B"): that one is ticked only by name.
+function itemOn(key: string, it: SeriesItem, selected: Set<string>, ticked: Set<string>): boolean {
+  if (ticked.has(key)) return true;
+  return !sharesIdsInSeries(key) && itemIds(it).every((id) => selected.has(id));
 }
 
-export function PatchTestChecklist({ selected, onChange }: { selected: Set<string>; onChange: (next: Set<string>) => void }) {
+// Ticked items whose ids are no longer all on the list are unticked.
+function prune(ticked: Set<string>, selected: Set<string>): Set<string> {
+  return new Set([...ticked].filter((k) => {
+    const it = seriesItemByKey(k);
+    return it && itemIds(it).every((id) => selected.has(id));
+  }));
+}
+
+export function PatchTestChecklist({
+  selected,
+  onChange,
+  ticked: tickedProp,
+  onTickedChange,
+}: {
+  selected: Set<string>;
+  onChange: (next: Set<string>) => void;
+  // Series items ticked by name (seriesItemKey), for callers that print them.
+  ticked?: Set<string>;
+  onTickedChange?: (next: Set<string>) => void;
+}) {
   const [tab, setTab] = useState(PATCH_TEST_SERIES[0].id);
   const [query, setQuery] = useState("");
+  const [ownTicked, setOwnTicked] = useState<Set<string>>(() => new Set());
+  const ticked = tickedProp ?? ownTicked;
+  const setTicked = onTickedChange ?? setOwnTicked;
   const series = PATCH_TEST_SERIES.find((s) => s.id === tab);
 
-  function toggleItem(it: SeriesItem) {
+  function commit(next: Set<string>, nextTicked: Set<string>) {
+    onChange(next);
+    setTicked(prune(nextTicked, next));
+  }
+
+  function toggleItem(key: string, it: SeriesItem) {
     const next = new Set(selected);
+    const nextTicked = new Set(ticked);
     const family = itemFamily(it);
-    if (itemOn(it, selected)) {
-      for (const id of it.ids) next.delete(id);
-      if (it.notOnLabel) next.delete(it.notOnLabel);
-      if (family) next.delete(family.id);
+    if (itemOn(key, it, selected, ticked)) {
+      nextTicked.delete(key);
+      // The same allergen ticked on another series' tab goes too, or the untick couldn't stick.
+      const seriesId = key.slice(0, key.indexOf(":"));
+      for (const k of ticked) {
+        const other = seriesItemByKey(k);
+        if (other && !k.startsWith(`${seriesId}:`) && itemIds(other).every((id) => itemIds(it).includes(id))) nextTicked.delete(k);
+      }
+      // Keep ids another ticked item still stands for (caine mix and benzocaine).
+      const stillNeeded = new Set([...nextTicked].flatMap((k) => (seriesItemByKey(k) ? itemIds(seriesItemByKey(k)!) : [])));
+      for (const id of itemIds(it)) if (!stillNeeded.has(id)) next.delete(id);
+      // Keep the family while another ticked allergen still extends to it (PPD and PTD).
+      if (family && ![...next].some((id) => PATCH_TEST_FAMILY[id]?.id === family.id)) next.delete(family.id);
     } else {
-      for (const id of it.ids) next.add(id);
-      if (it.notOnLabel) next.add(it.notOnLabel);
+      nextTicked.add(key);
+      for (const id of itemIds(it)) next.add(id);
       if (family?.byDefault) next.add(family.id);
     }
-    onChange(next);
+    commit(next, nextTicked);
   }
 
   function toggleId(id: string) {
     const next = new Set(selected);
     if (next.has(id)) next.delete(id);
     else next.add(id);
-    onChange(next);
+    commit(next, ticked);
   }
 
   const results = useMemo(() => {
@@ -110,9 +155,20 @@ export function PatchTestChecklist({ selected, onChange }: { selected: Set<strin
             <fieldset key={g.title} className="space-y-2">
               <legend className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">{g.title}</legend>
               <div className="grid gap-1.5 sm:grid-cols-2">
-                {g.items.map((it) => (
-                  <SeriesRow key={`${g.title}:${it.name}`} item={it} selected={selected} onToggle={() => toggleItem(it)} onToggleId={toggleId} />
-                ))}
+                {g.items.map((it) => {
+                  const key = seriesItemKey(series.id, it);
+                  return (
+                    <SeriesRow
+                      key={key}
+                      item={it}
+                      on={itemOn(key, it, selected, ticked)}
+                      covered={sharesIdsInSeries(key) && !ticked.has(key) && itemIds(it).every((id) => selected.has(id))}
+                      selected={selected}
+                      onToggle={() => toggleItem(key, it)}
+                      onToggleId={toggleId}
+                    />
+                  );
+                })}
               </div>
             </fieldset>
           ))}
@@ -146,23 +202,28 @@ export function PatchTestChecklist({ selected, onChange }: { selected: Set<strin
 
 function SeriesRow({
   item,
+  on,
+  covered,
   selected,
   onToggle,
   onToggleId,
 }: {
   item: SeriesItem;
+  on: boolean;
+  // Not ticked itself, but its allergens are already on the list via another item.
+  covered: boolean;
   selected: Set<string>;
   onToggle: () => void;
   onToggleId: (id: string) => void;
 }) {
-  const on = itemOn(item, selected);
   const family = itemFamily(item);
   const mapped = item.ids.map((id) => importItemName(id) ?? id).join(" + ");
-  const hint = item.notOnLabel
+  const base = item.notOnLabel
     ? "Not on cosmetic labels; listed for information"
     : normalizeForAllergens(mapped) === normalizeForAllergens(item.name)
       ? undefined
       : `Checks labels for ${mapped}`;
+  const hint = covered ? `${base ? `${base}. ` : ""}Already on the list from another tick; tick it too if it was positive.` : base;
   return (
     <div className={cn("rounded-xl border", on ? "border-brand/50 bg-brand-soft" : "bg-card")}>
       <Tick on={on} onToggle={onToggle} label={item.pos ? `${item.pos}. ${item.name}` : item.name} hint={hint} bare />
@@ -219,7 +280,7 @@ function Tick({
 
 // For patients without a QR: tick positives off the series their
 // dermatologist used, then add the label-checkable ones to the avoid list.
-export function PatchTestSeriesPicker({ onAdd, defaultOpen }: { onAdd: (ids: string[]) => void; defaultOpen?: boolean }) {
+export function PatchTestSeriesPicker({ onAdd, defaultOpen }: { onAdd: (ids: string[], notOnLabel: string[]) => void; defaultOpen?: boolean }) {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [added, setAdded] = useState<number | null>(null);
   const avoidIds = [...selected].filter((id) => resolveAllergenId(id));
@@ -234,7 +295,7 @@ export function PatchTestSeriesPicker({ onAdd, defaultOpen }: { onAdd: (ids: str
         <span>
           <span className="block text-sm font-semibold">Pick from a patch-test series</span>
           <span className="block text-xs text-muted-foreground">
-            Tick your positives on the T.R.U.E. Test or the core series, in the order your results sheet lists them.
+            Tick your positives on the series your dermatologist used: the T.R.U.E. Test, an ACDS or NAC-80 tray, or the core series.
           </span>
         </span>
       </summary>
@@ -248,21 +309,21 @@ export function PatchTestSeriesPicker({ onAdd, defaultOpen }: { onAdd: (ids: str
         />
         {offLabel.length > 0 && (
           <p className="text-xs leading-relaxed text-muted-foreground">
-            Not on cosmetic labels, so we can&apos;t check products for:{" "}
+            Saved to your list for reference, but not on cosmetic labels, so we can&apos;t check products for:{" "}
             {offLabel.map((id) => `${getNotOnLabel(id)!.name} (${getNotOnLabel(id)!.foundIn.replace(/\.$/, "").toLowerCase()})`).join("; ")}.
           </p>
         )}
         <div className="flex flex-wrap items-center gap-3">
           <Button
             type="button"
-            disabled={avoidIds.length === 0}
+            disabled={avoidIds.length + offLabel.length === 0}
             onClick={() => {
-              onAdd(avoidIds);
-              setAdded(avoidIds.length);
+              onAdd(avoidIds, offLabel);
+              setAdded(avoidIds.length + offLabel.length);
             }}
             className="rounded-full"
           >
-            Add {avoidIds.length || ""} to my list
+            Add {avoidIds.length + offLabel.length || ""} to my list
           </Button>
           {added !== null && (
             <span className="flex items-center gap-1 text-sm text-emerald-700 dark:text-emerald-400">

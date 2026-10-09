@@ -1,7 +1,7 @@
 // The owner's purge for a handout version that a clinician filled with
 // patient details. Versions are otherwise immutable (migration 0010's
 // triggers), so this is the only delete path: it records the purge in
-// handout_version_purges, which the delete trigger (migration 0022) checks,
+// handout_version_purges, which the delete trigger (migration 0023) checks,
 // then removes the version, its printouts and the patient plans saved from
 // them. Run from the server: `npm run handouts:purge -- <ref> "<reason>"`.
 import { and, desc, eq, inArray, max } from "drizzle-orm";

@@ -35,6 +35,8 @@ export const IMPORT_CODES: readonly string[] = [
   // ACDS 2020 core series and quinoline mix additions
   "chlorquinaldol", "benzisothiazolinone", "octylisothiazolinone", "benzalkonium-chloride", "sorbic-acid", "ethylhexylglycerin",
   "cocamide-dea", "bht", "gallates", "carmine", "shellac", "diphenylguanidine", "disperse-orange-3", "disperse-yellow-3",
+  // 2026-10-08
+  "other-uv-filters",
 ];
 
 const CODE_INDEX = new Map(IMPORT_CODES.map((id, i) => [id, i]));

@@ -36,7 +36,8 @@ export default async function NewHandoutPage({
       steps: source.content.steps.map((s, i) => ({ uid: `v${i}`, slot: s.slot, label: s.label, productId: s.productId, kind: s.kind, productName: s.productName, directions: s.directions, search: "" })),
       stopRules: source.content.stopRules,
       notes: source.content.notes,
-      avoidCode: source.content.avoidCode ?? "",
+      // A patch-test list belongs to one patient: a duplicate starts without it.
+      avoidCode: editing ? (source.content.avoidCode ?? "") : "",
     };
   } else {
     const t = getTemplate(templateId);

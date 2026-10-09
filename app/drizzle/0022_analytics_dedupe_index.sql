@@ -1,0 +1,1 @@
+CREATE INDEX `analytics_events_visitor_path_at_idx` ON `analytics_events` (`visitor`,`path`,`at`);

@@ -34,7 +34,10 @@ export default function ClinicToolsPage() {
       title: "Patch-test reader",
       body: "For MAs: tap each chamber to grade it, then copy a ready-to-chart write-up and hand the patient a QR code. Already read? Tick the positives and print a one-page sheet instead.",
     },
-    { href: "/clinicians#lists", icon: ListChecks, title: "Starter lists", body: "Save your practice's standard avoid lists (for example, fragrance-allergic) and issue them in one click." },
+    // Starter lists live on the clinician dashboard, which is a 404 while handouts are off.
+    ...(FEATURES.HANDOUTS
+      ? [{ href: "/clinicians#lists", icon: ListChecks, title: "Starter lists", body: "Save your practice's standard avoid lists (for example, fragrance-allergic) and issue them in one click." }]
+      : []),
   ];
 
   return (

@@ -153,9 +153,9 @@ export function SearchBar({
           aria-controls={listId}
           aria-autocomplete="list"
           aria-activedescendant={expanded && activeIndex >= 0 ? `${listId}-${activeIndex}` : undefined}
-          aria-label="Search products or ingredients"
+          aria-label="Search products, ingredients or a barcode"
           placeholder={
-            compact ? "Search products or ingredients" : "Search products or ingredients — e.g. niacinamide, CeraVe, sunscreen"
+            compact ? "Search products or ingredients" : "Search products, ingredients or a barcode — e.g. niacinamide, CeraVe, sunscreen"
           }
           className={cn(
             large

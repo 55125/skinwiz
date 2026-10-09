@@ -54,6 +54,25 @@ test("sign-in tokens are single use and expire after 15 minutes", () => {
   assert.equal(m.identity.recentTokenCount("a@example.com", mins(1)), 2);
 });
 
+test("typed sign-in codes: any live code works once, wrong guesses are capped per address", async () => {
+  const { createSignInToken, consumeSignInCode, consumeSignInToken, MAX_CODE_ATTEMPTS } = m.identity;
+  const { hashSignInCode } = await import("./tokens");
+  const h = (email: string, code: string) => hashSignInCode("test-secret", email, code);
+  const t1 = createSignInToken("c@example.com", "dev-c", T0, h("c@example.com", "111111"));
+  createSignInToken("c@example.com", "dev-c", T0, h("c@example.com", "222222"));
+  assert.equal(consumeSignInCode("c@example.com", h("c@example.com", "111111"), mins(1))?.email, "c@example.com", "older code still works");
+  assert.equal(consumeSignInToken(t1, mins(1)), null, "its link is used up with it");
+  assert.equal(consumeSignInCode("c@example.com", h("c@example.com", "111111"), mins(1)), null, "single use");
+  assert.equal(consumeSignInCode("d@example.com", h("d@example.com", "222222"), mins(1)), null, "bound to the address");
+  assert.equal(consumeSignInCode("c@example.com", h("c@example.com", "222222"), mins(15)), null, "expired at 15 minutes");
+
+  createSignInToken("e@example.com", "dev-e", T0, h("e@example.com", "333333"));
+  const t4 = createSignInToken("e@example.com", "dev-e", T0, h("e@example.com", "444444"));
+  for (let i = 0; i < MAX_CODE_ATTEMPTS; i++) assert.equal(consumeSignInCode("e@example.com", h("e@example.com", "000000"), mins(1)), null);
+  assert.equal(consumeSignInCode("e@example.com", h("e@example.com", "333333"), mins(1)), null, "locked after too many wrong codes");
+  assert.equal(consumeSignInToken(t4, mins(1))?.email, "e@example.com", "the link in that email still works");
+});
+
 test("signing in creates a person and moves the requesting browser's shelf under them", () => {
   shelf("dev-a", "p1", "own", true, "2026-01-01 10:00:00");
   shelf("dev-a", "p2", "want", false, "2026-01-01 10:00:00");

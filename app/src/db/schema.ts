@@ -585,6 +585,11 @@ export const emailTokens = sqliteTable(
     expiresAt: text("expires_at").notNull(),
     usedAt: text("used_at"),
     createdAt: text("created_at").notNull(),
+    // The 6-digit code in the same email, for typing in where the link can't
+    // open (an installed home-screen app on iPhone opens links in Safari).
+    // Keyed hash (lib/tokens.ts hashSignInCode), never the code itself.
+    codeHash: text("code_hash"),
+    codeAttempts: integer("code_attempts").notNull().default(0),
   },
   (table) => [index("email_tokens_email_idx").on(table.email, table.createdAt)],
 );

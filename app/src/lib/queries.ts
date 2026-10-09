@@ -877,9 +877,9 @@ export function getIngredientStats(id: string) {
       COUNT(*) AS products,
       COUNT(DISTINCT LOWER(COALESCE(p.manufacturer, ''))) AS brands,
       SUM(pi.is_active) AS asActive,
-      SUM(CASE WHEN p.data_source IN ('open_beauty_facts','brand_direct') THEN 1 ELSE 0 END) AS inciLists,
-      SUM(CASE WHEN p.data_source IN ('open_beauty_facts','brand_direct') AND pi.position BETWEEN 1 AND 5 THEN 1 ELSE 0 END) AS topFive,
-      AVG(CASE WHEN p.data_source IN ('open_beauty_facts','brand_direct') THEN pi.position END) AS avgPosition,
+      SUM(CASE WHEN p.data_source IN ('open_beauty_facts','brand_direct','third_party') THEN 1 ELSE 0 END) AS inciLists,
+      SUM(CASE WHEN p.data_source IN ('open_beauty_facts','brand_direct','third_party') AND pi.position BETWEEN 1 AND 5 THEN 1 ELSE 0 END) AS topFive,
+      AVG(CASE WHEN p.data_source IN ('open_beauty_facts','brand_direct','third_party') THEN pi.position END) AS avgPosition,
       '' AS bySource
     FROM product_ingredients pi
     JOIN products p ON p.id = pi.product_id

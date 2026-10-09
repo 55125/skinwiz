@@ -86,7 +86,7 @@ type CatalogRow = {
   // active_ingredients_structured already holds canonical active ids (from
   // that script's own matching against the full ingredient list) — trust it
   // directly rather than re-deriving via matchActiveIds().
-  source?: "open_beauty_facts" | "brand_direct";
+  source?: "open_beauty_facts" | "brand_direct" | "third_party";
   verified?: "true" | "false";
   // Also only present in those two CSVs. FDA rows get their DailyMed
   // package image linked after insert instead (linkPackageImages below).
@@ -127,7 +127,7 @@ type RxCatalogRow = {
 
 const firstPackage = (descriptions: string | undefined) => descriptions?.split(" | ")[0]?.trim() || null;
 
-const PRE_MATCHED_SOURCES = new Set(["open_beauty_facts", "brand_direct"]);
+const PRE_MATCHED_SOURCES = new Set(["open_beauty_facts", "brand_direct", "third_party"]);
 
 const SUNSCREEN_ACTIVE_IDS = new Set(ACTIVE_DEFINITIONS.filter((a) => a.categories.includes("sunscreen")).map((a) => a.id));
 const ACNE_ACTIVE_IDS = new Set(ACTIVE_DEFINITIONS.filter((a) => a.categories.includes("acne")).map((a) => a.id));

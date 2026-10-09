@@ -36,6 +36,13 @@ const MAX_PLAUSIBLE_PCT = 100;
 const SEGMENT_RE =
   /^\s*(.+?)\s+(\d*\.?\d+)\s*(%|kg|g|mg|ug|mcg|L|mL|uL)(?:\s*(?:\/|in)\s*(\d*\.?\d+)?\s*(kg|g|mg|ug|mcg|L|mL|uL))?\s*$/i;
 
+// Segments are normally ";"-separated, but Drug Facts text often joins them
+// with commas ("Avobenzone 3%, Homosalate 10%, ...") or kit parts with "|".
+// A comma only splits when it follows a quantity, so a comma inside a name
+// or a thousands separator ("1,000 mg") is left alone. Without this split
+// the whole line is one segment and every active got the last percent.
+const SEGMENT_SPLIT_RE = /;|\||(?<=\d\s*(?:%|kg|g|mg|ug|mcg|l|ml|ul)\)?)\s*,/i;
+
 function parseSegment(segment: string): { name: string; pct: number } | null {
   const m = SEGMENT_RE.exec(segment);
   if (!m) return null;
@@ -73,21 +80,25 @@ export function parseStrengths(activeIngredientText: string | null | undefined):
       if (!(id in out)) out[id] = pct;
     }
   };
-  for (const segment of activeIngredientText.split(";")) {
-    const parsed = parseSegment(segment);
-    if (parsed) add(parsed.name, parsed.pct);
-  }
-  // Some labels carry the Drug Facts table flattened into one line
+  // Some labels carry the Drug Facts table flattened into one segment
   // ("Active ingredients Purpose Homosalate 10% Sunscreen Octisalate 5%
-  // Sunscreen ...") -- no separators, so the per-segment parse above finds
-  // nothing. Fall back to scanning for every "<name> <n>%" pair; the name
-  // capture runs back to the previous match and may include a stray word
-  // like "Sunscreen", which matchActiveIds' substring matching tolerates.
-  if (Object.keys(out).length === 0 && activeIngredientText.includes("%")) {
-    for (const m of activeIngredientText.matchAll(/([A-Za-z][A-Za-z\s'\-]*?)\s*\(?(\d*\.?\d+)\s*%\)?/g)) {
+  // Sunscreen ...") -- no separators, so the single-quantity parse would
+  // give every name the last number. A segment with more than one percent,
+  // or one the single parse can't read, is scanned for every "<name> <n>%"
+  // pair instead; the name capture runs back to the previous match and may
+  // include a stray word like "Sunscreen", which matchActiveIds' substring
+  // matching tolerates.
+  const scan = (segment: string) => {
+    for (const m of segment.matchAll(/([A-Za-z][A-Za-z\s'\-]*?)\s*:?\s*\(?(\d*\.?\d+)\s*%\)?/g)) {
       const pct = parseFloat(m[2]);
       if (pct >= MIN_PLAUSIBLE_PCT && pct <= MAX_PLAUSIBLE_PCT) add(m[1], Math.round(pct * 100) / 100);
     }
+  };
+  for (const segment of activeIngredientText.split(SEGMENT_SPLIT_RE)) {
+    const percents = segment.match(/\d\s*%/g)?.length ?? 0;
+    const parsed = percents > 1 ? null : parseSegment(segment);
+    if (parsed) add(parsed.name, parsed.pct);
+    else if (percents > 0) scan(segment);
   }
   return Object.keys(out).length > 0 ? out : null;
 }

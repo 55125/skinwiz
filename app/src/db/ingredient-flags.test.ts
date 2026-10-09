@@ -24,3 +24,8 @@ test("abbreviations only match a whole ingredient name", () => {
   // "dep" inside another word must not trip the check
   assert.ok(computeFreeFromFlags(`${BASE}, Sodium Dehydroacetate`)!.includes("phthalate-free"));
 });
+
+test("computeFreeFromFlags: a PEG/PPG copolymer is not PEG-free", () => {
+  const flags = computeFreeFromFlags("Water, Glycerin, PEG/PPG-17/6 Copolymer, Dimethicone") ?? [];
+  assert.ok(!flags.includes("peg-free"));
+});

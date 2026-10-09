@@ -4,5 +4,5 @@
 export const TRUST_TIERS: { label: string; dataSources: string[] }[] = [
   { label: "FDA-sourced", dataSources: ["openfda", "dailymed"] },
   { label: "Brand-sourced", dataSources: ["brand_direct"] },
-  { label: "Community-sourced", dataSources: ["open_beauty_facts"] },
+  { label: "Community-sourced", dataSources: ["open_beauty_facts", "third_party"] },
 ];

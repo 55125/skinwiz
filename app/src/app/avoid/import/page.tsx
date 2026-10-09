@@ -11,7 +11,7 @@ import { personForSession } from "@/lib/identity";
 import { readDeviceSessionId } from "@/lib/session";
 import { FilterChip } from "@/components/filter-chip";
 
-// Where a dermatologist's QR code lands (/for-clinicians/patch-test). A
+// Where a dermatologist's QR code lands (/clinic-tools/patch-test-reader). A
 // tool page: noindex, and /avoid is disallowed in robots.txt anyway.
 export const metadata: Metadata = {
   title: "Add your patch-test allergens",

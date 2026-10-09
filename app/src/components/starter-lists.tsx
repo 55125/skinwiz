@@ -77,7 +77,7 @@ export function StarterLists({ lists }: { lists: StarterList[] }) {
       {lists.length === 0 ? (
         <p className="rounded-2xl border border-dashed p-4 text-sm text-muted-foreground">
           No lists yet. Save the avoid lists you give often (for example &ldquo;Fragrance-allergic starter&rdquo; or &ldquo;Hair dye
-          (PPD)&rdquo;) and issue them in one click from the patch-test sheet or a handout.
+          (PPD)&rdquo;) and issue them in one click from the patch-test reader or a handout.
         </p>
       ) : (
         <ul className="divide-y rounded-2xl border bg-card">
@@ -87,7 +87,7 @@ export function StarterLists({ lists }: { lists: StarterList[] }) {
                 <p className="font-medium">{l.name}</p>
                 <p className="truncate text-xs text-muted-foreground">{l.ids.map((id) => importItemName(id) ?? id).join(", ")}</p>
               </div>
-              <Link href={`/for-clinicians/patch-test?list=${l.id}`} className="text-sm font-medium text-brand hover:underline">
+              <Link href={`/clinic-tools/patch-test-reader?mode=tick&list=${l.id}`} className="text-sm font-medium text-brand hover:underline">
                 Issue sheet
               </Link>
               <Button type="button" size="sm" variant="outline" onClick={() => setEditing({ id: l.id, name: l.name, ids: new Set(l.ids) })}>

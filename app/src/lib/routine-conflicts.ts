@@ -15,14 +15,14 @@ export const CLASS_IDS: Record<ClassId, string[]> = {
   "vitamin-c": ["vitamin-c", "l-ascorbic-acid"],
 };
 
-const CLASS_LABEL: Record<ClassId, string> = {
+export const CLASS_LABEL: Record<ClassId, string> = {
   retinoid: "a retinoid",
   exfoliant: "an exfoliating acid",
   "benzoyl-peroxide": "benzoyl peroxide",
   "vitamin-c": "vitamin C",
 };
 
-const RULES: { a: ClassId; b: ClassId; note: string }[] = [
+export const RULES: { a: ClassId; b: ClassId; note: string }[] = [
   {
     a: "retinoid",
     b: "exfoliant",

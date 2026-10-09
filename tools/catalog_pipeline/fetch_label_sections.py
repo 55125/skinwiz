@@ -14,8 +14,9 @@ a person needs to use the product as labeled:
 Text is stored as the label states it (only a leading section heading like
 "Directions" is trimmed); the app shows it verbatim as "From the FDA label".
 
-Input:  output/acne_sun_catalog.csv, output/dailymed_resolved_catalog.csv
-        (the two catalogs whose rows carry spl_set_id)
+Input:  output/curated_catalog.csv, output/acne_sun_catalog.csv,
+        output/dailymed_resolved_catalog.csv (the catalogs whose rows carry
+        spl_set_id)
 Output: output/label_sections.csv, one row per set id found
 
 Set ids are queried 40 at a time (OR'd in one search) to stay well inside
@@ -33,7 +34,7 @@ import urllib.request
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT_DIR = os.path.join(HERE, "output")
-INPUTS = ["acne_sun_catalog.csv", "dailymed_resolved_catalog.csv"]
+INPUTS = ["curated_catalog.csv", "acne_sun_catalog.csv", "dailymed_resolved_catalog.csv"]
 OUT = os.path.join(OUT_DIR, "label_sections.csv")
 BATCH = 40
 SLEEP = 0.3

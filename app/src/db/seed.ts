@@ -26,8 +26,12 @@ const REPO_ROOT = path.resolve(process.cwd(), "..");
 // (crowd-sourced, unverified), and the brand-direct catalog (scraped from
 // a manufacturer's own product pages — a higher-trust middle tier between
 // the two). Any file may not exist yet if its generating script hasn't
-// been run — handled below.
+// been run — handled below. The hand-picked curated catalog
+// (build_curated_catalog.py) goes first: the first row per id wins, so a
+// curated row also replaces a bad bulk row with the same id.
+const CURATED_CSV = path.join(REPO_ROOT, "tools/catalog_pipeline/output/curated_catalog.csv");
 const CATALOG_CSVS = [
+  CURATED_CSV,
   path.join(REPO_ROOT, "tools/catalog_pipeline/output/acne_sun_catalog.csv"),
   path.join(REPO_ROOT, "tools/catalog_pipeline/output/dailymed_resolved_catalog.csv"),
   path.join(REPO_ROOT, "tools/catalog_pipeline/output/cosmetic_catalog.csv"),
@@ -372,7 +376,9 @@ function reseed() {
         .filter((slug) => ANYWHERE_LISTED_ACTIVE_IDS.has(slug) && !labeledActiveIds.includes(slug));
       const activeIds = [...labeledActiveIds, ...new Set(listedFilters)];
 
-      if (activeIds.length === 0) {
+      // Curated rows were each reviewed by hand, so one with no tracked
+      // active (a hydrocolloid patch, a plain lotion) still lists.
+      if (activeIds.length === 0 && csvPath !== CURATED_CSV) {
         skippedNoActive++;
         continue;
       }

@@ -29,10 +29,11 @@ BASE = "https://dailymed.nlm.nih.gov/dailymed/services/v2/spls"
 IMAGE_BASE = "https://dailymed.nlm.nih.gov/dailymed/image.cfm"
 USER_AGENT = "Actively catalog pipeline (hello@activelyskin.com)"
 
-# Catalog CSVs whose rows carry an SPL set id, in fetch-priority order:
-# DailyMed-resolved rows first (they need the inactive list), then the
+# Catalog CSVs whose rows carry an SPL set id, in fetch-priority order: the
+# hand-picked curated rows, then DailyMed-resolved rows (they need the inactive list), then the
 # openFDA catalog, then Rx (images only, for clinician views).
 SOURCES = [
+    ("curated_catalog.csv", "curated"),
     ("dailymed_resolved_catalog.csv", "dailymed"),
     ("acne_sun_catalog.csv", "openfda"),
     ("rx_catalog.csv", "rx"),

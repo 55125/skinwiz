@@ -133,6 +133,7 @@ Neutrogena Mineral Invisible Daily Defense Face Sunscreen Broad Spectrum SPF 30 
 - `output/acne_sun_unmatched.csv` — 21,266 rows with no resolvable NDC from openFDA, real ingredient/purpose data
 - `output/dailymed_resolved_catalog.csv` — 4,747 more rows recovered from that unmatched set via DailyMed (see above); same column schema, seed.ts reads both
 - `output/catalog_summary.json` — run stats for the primary build (by-niche breakdown)
+- `output/curated_catalog.csv` — hand-picked products the bulk passes miss, built by `build_curated_catalog.py` from `curated_products.csv` (one reviewed row each, with a note on its source). seed.ts reads it first, so a curated row also replaces a bulk row with the same id, and it may list a product with no tracked active (a hydrocolloid patch, a plain lotion). To add one, add a row to `curated_products.csv` and rerun the script; for a drug row, then rerun `fetch_dailymed_media.py` for its package photo.
 
 # build_rx_catalog.py (Rx catalog, 2026-10-02)
 

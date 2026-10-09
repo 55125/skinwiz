@@ -20,7 +20,8 @@ function catalogSize(): number {
   return n;
 }
 
-function weigh(ids: string[]): Weighted[] {
+/** Each id's rarity weight, ln((N+1) / (products listing it + 1)). */
+export function weigh(ids: string[]): Weighted[] {
   if (ids.length === 0) return [];
   const N = catalogSize();
   const rows = db.all<{ id: string; c: number }>(sql`SELECT id, product_count AS c FROM ingredients WHERE id IN (${sql.join(ids.map((i) => sql`${i}`), sql`, `)})`);

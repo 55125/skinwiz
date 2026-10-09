@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { sqliteTable, text, integer, real, index, uniqueIndex } from "drizzle-orm/sqlite-core";
+import { sqliteTable, text, integer, real, index, uniqueIndex, primaryKey } from "drizzle-orm/sqlite-core";
 
 // A "concern" is a launch niche slice (acne, sun protection) — see project.md
 // §11's data-driven niche decision. Kept as a table, not an enum, so a third
@@ -811,6 +811,18 @@ export const handoutVersions = sqliteTable(
   (table) => [uniqueIndex("handout_versions_handout_version_idx").on(table.handoutId, table.version)],
 );
 
+// Audit trail for the one way a version can be deleted: the owner purging
+// patient details a clinician typed in (npm run handouts:purge). The delete
+// trigger in migration 0023 lets a version go only once its id is listed
+// here. Holds the ref and when -- never the purged content.
+export const handoutVersionPurges = sqliteTable("handout_version_purges", {
+  versionId: integer("version_id").primaryKey(), // no FK: the version is gone afterwards
+  ref: text("ref").notNull(),
+  handoutId: text("handout_id").notNull(),
+  reason: text("reason").notNull(),
+  purgedAt: text("purged_at").notNull(),
+});
+
 // One printout / QR. The claim token is shown only on the paper (and once to
 // the clinician's browser); only its SHA-256 is stored. The first browser to
 // confirm it claims it: claimedSessionId is that browser's resolved session
@@ -990,6 +1002,23 @@ export const analyticsEvents = sqliteTable(
     // every beacon scanned all of today's events.
     index("analytics_events_visitor_path_at_idx").on(table.visitor, table.path, table.at),
   ],
+);
+
+// Browsers that send Global Privacy Control or Do Not Track get no
+// analytics_events rows. The admin page still shows how many page views and
+// outbound clicks come from them (GPC clicks earn nothing: lib/gpc.ts), so
+// each one adds 1 to a per-day tally by signal and kind. Nothing else -- no
+// visitor id, page, link, device or time beyond the day. A browser sending
+// both counts as "gpc". Purged with the other statistics.
+export const optOutTallies = sqliteTable(
+  "opt_out_tallies",
+  {
+    day: text("day").notNull(), // UTC "YYYY-MM-DD"
+    signal: text("signal").notNull(), // "gpc" | "dnt"
+    kind: text("kind").notNull(), // "pageview" | "outbound"
+    count: integer("count").notNull().default(0),
+  },
+  (table) => [primaryKey({ columns: [table.day, table.signal, table.kind] })],
 );
 
 // One random salt per UTC day for analytics_events.visitor; rows older than

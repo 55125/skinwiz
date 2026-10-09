@@ -162,6 +162,20 @@
       "when": 1791513170215,
       "tag": "0022_analytics_dedupe_index",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "6",
+      "when": 1791515830207,
+      "tag": "0023_handout_version_purge",
+      "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "6",
+      "when": 1791515831388,
+      "tag": "0024_opt_out_tallies",
+      "breakpoints": true
     }
   ]
 }

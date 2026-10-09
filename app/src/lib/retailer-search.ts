@@ -34,11 +34,12 @@ export function retailerSearchLinks(
   name: string,
   brand?: string | null,
   env: NodeJS.ProcessEnv = process.env,
+  gpc = false,
 ): ({ name: string } & OutboundLink)[] {
   const q = retailerQuery(name, brand);
   if (!q) return [];
   return RETAILER_SEARCHES.map((r) => ({
     name: r.name,
-    ...outboundLink(r.url(q), { placement: "product", rel: "noopener noreferrer" }, env),
+    ...outboundLink(r.url(q), { placement: "product", rel: "noopener noreferrer", gpc }, env),
   }));
 }

@@ -5,6 +5,9 @@ import { cn } from "@/lib/utils";
 // version (lib/regimens.ts listRegimens / getClinicianPlan), never from
 // anything the visitor can edit, so it always means "exactly what your
 // clinician wrote". The credential is the clinician's own (MD, DO, PA-C, NP).
+// The check mark appears only with a credential from the NPPES registry: a
+// plain "Clinician" (not yet verified, or an unlisted credential) has none,
+// so it never looks like a verification we didn't make.
 export function MdBadge({ credential, className }: { credential: string; className?: string }) {
   return (
     <span
@@ -14,7 +17,7 @@ export function MdBadge({ credential, className }: { credential: string; classNa
       )}
       title="Issued by your clinician. Read-only: make a personal copy to change it."
     >
-      <BadgeCheck className="h-3.5 w-3.5" aria-hidden /> {credential}
+      {credential !== "Clinician" && <BadgeCheck className="h-3.5 w-3.5" aria-hidden />} {credential}
     </span>
   );
 }

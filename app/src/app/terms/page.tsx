@@ -140,13 +140,46 @@ export default function TermsPage() {
         </li>
       </ul>
 
-      <h2 id="clinicians">6. Clinician applications</h2>
+      <h2 id="clinicians">6. Clinicians</h2>
+      <h3>Panel applications</h3>
       <p>
         If you apply to join our dermatologist panel, you confirm that the credentials you give are accurate
         and current, and you agree that we may verify them using public sources such as the NPI registry.
         Applying does not create employment, a contract or any promise that you will be accepted. Any
         participation will be governed by a separate written agreement.
       </p>
+      <h3 id="clinic-tools">Clinic tools</h3>
+      <p>
+        If you use the handout builder, handout library, patch-test tools, starter lists or prescription references
+        (the &ldquo;clinic tools&rdquo;) as a clinician or for a practice, these terms also apply:
+      </p>
+      <ul>
+        <li>
+          You confirm that you are a licensed clinician, or act for one at their direction, and that the NPI, name and
+          clinic details you give are your own and accurate. Do not use someone else&apos;s NPI or identity. We may
+          suspend clinician access at any time, including while we verify it.
+        </li>
+        <li>
+          The clinic tools are information and convenience tools. You remain responsible for every clinical decision,
+          for reading and editing each handout before you give it out, and for what you tell your patients. Library
+          handouts were drafted with AI assistance, and many have not yet had physician review.
+        </li>
+        <li>
+          The clinic tools are built so that patient information does not reach us. Do not type patient names, dates
+          of birth, record numbers, contact details or any other identifying detail into handout text, notes, list names
+          or any other field we store. We do not act as your business associate and do not sign business associate
+          agreements. A patient who scans your code and saves a plan does so as a user of {SITE_NAME}, under our Privacy
+          Policy.
+        </li>
+        <li>
+          The patient&apos;s view of a plan may include affiliate links for over-the-counter products, from which{" "}
+          {SITE_NAME} may earn a commission, as explained in section 4. Prescription steps never carry one.
+        </li>
+        <li>
+          You may use the clinic tools and the handouts you make in your practice, despite the personal-use limit in
+          section 8.
+        </li>
+      </ul>
 
       <h2 id="acceptable-use">7. Acceptable use</h2>
       <p>You agree not to:</p>
@@ -177,7 +210,9 @@ export default function TermsPage() {
         <a href="https://world.openbeautyfacts.org" target="_blank" rel="noopener noreferrer">
           Open Beauty Facts
         </a>
-        , and FDA data is in the public domain. {SITE_NAME} and its logo are our trademarks.
+        , and FDA data is in the public domain. {SITE_NAME} and its logo are our trademarks. Product, brand and retailer
+        names belong to their owners and are used only to identify products. Their use does not mean any brand or
+        retailer endorses {SITE_NAME} or is affiliated with us.
       </p>
       <p>
         If you send us feedback or suggestions, we may use them without any obligation to you.

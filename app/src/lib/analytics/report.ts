@@ -66,6 +66,8 @@ export function trafficReport(now: Date, days: RangeDays) {
     one(sql`SELECT COUNT(*) FROM ${sql.identifier(table)} WHERE substr(${sql.identifier(col)}, 1, 10) BETWEEN ${a} AND ${b}`);
 
   const kpi = (label: string, cur: number, prev: number, hint?: string): Kpi => ({ label, value: cur, change: percentChange(cur, prev), hint });
+  const tally = (signal: string, kind: string) =>
+    one(sql`SELECT COALESCE(SUM(count), 0) FROM opt_out_tallies WHERE signal = ${signal} AND kind = ${kind} AND ${inRange}`);
   const kpis: Kpi[] = [
     kpi("Visitors", sumVisitors(from, to), sumVisitors(prevFrom, prevTo), "Unique per day, summed"),
     kpi("Pageviews", countKind("pageview", from, to), countKind("pageview", prevFrom, prevTo)),
@@ -108,6 +110,16 @@ export function trafficReport(now: Date, days: RangeDays) {
       WHERE ${pv} AND (path LIKE '/for-clinicians%' OR path LIKE '/clinic-tools%' OR path LIKE '/clinicians%' OR path = '/h/[token]')
       GROUP BY path ORDER BY n DESC`),
     clientErrors: countKind("client_error", from, to),
+    // Global Privacy Control / Do Not Track visitors: bare daily counts
+    // (opt_out_tallies), not part of any figure above. GPC links skip Sovrn.
+    optOut: {
+      gpcPageviews: tally("gpc", "pageview"),
+      gpcClicks: tally("gpc", "outbound"),
+      dntPageviews: tally("dnt", "pageview"),
+      dntClicks: tally("dnt", "outbound"),
+      trackedPageviews: countKind("pageview", from, to),
+      trackedClicks: countKind("outbound", from, to),
+    },
   };
 }
 

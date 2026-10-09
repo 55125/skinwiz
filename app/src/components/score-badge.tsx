@@ -87,7 +87,7 @@ export function DualScoreBadges({
 }) {
   // No Derm Score slot until the dermatologist panel launches: an empty
   // "coming soon" badge on every product reads as an unfinished site.
-  const showDerm = DERM_PANEL_LAUNCHED || dermScore.status === "scored";
+  const showDerm = DERM_PANEL_LAUNCHED;
   if (compact) {
     return (
       <div className="flex items-center gap-4 text-xs">

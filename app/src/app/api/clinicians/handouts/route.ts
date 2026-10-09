@@ -4,6 +4,7 @@ import { FEATURES } from "@/lib/feature-flags";
 import { currentClinician, isVerified } from "@/lib/clinicians";
 import { addVersion, createHandout, validateHandoutInput } from "@/lib/handouts";
 import { getTemplate } from "@/db/handout-templates";
+import { findPrivacyHits, handoutFreeText, PRIVACY_HIT_TEXT } from "@/lib/note-privacy";
 
 // Save a handout: a new handout (version 1), or with handoutId a NEW version
 // of an existing one. Versions are never edited in place.
@@ -20,6 +21,11 @@ export async function POST(request: Request) {
 
   const result = validateHandoutInput(body, { allowRx: isVerified(clinician) });
   if (!result.ok) return NextResponse.json({ error: result.error }, { status: 400 });
+  // Versions can't be deleted, so a labelled patient identifier never gets stored.
+  const blocked = findPrivacyHits(handoutFreeText({ title: result.title, ...result.content, sections: result.content.sections ?? [] })).find((h) => h.blocking);
+  if (blocked) {
+    return NextResponse.json({ error: `Remove ${PRIVACY_HIT_TEXT[blocked.kind]} (“${blocked.match}”) before saving. Handouts can't hold patient details.` }, { status: 400 });
+  }
   const templateId = getTemplate(typeof body.templateId === "string" ? body.templateId : null)?.id ?? null;
   const input = { title: result.title, templateId, content: result.content };
   const now = new Date();

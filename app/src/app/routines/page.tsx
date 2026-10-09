@@ -32,7 +32,7 @@ export default async function RoutinesPage({
   return (
     <div className="mx-auto max-w-4xl space-y-8 px-4 py-10">
       <div className="flex flex-wrap items-end justify-between gap-4">
-        <PageHeader eyebrow="Community" title="Routines" description="Community-submitted routines, ranked by vote." />
+        <PageHeader eyebrow="Community" title="Routines" description="Starter routines from published dermatology guidance, plus routines posted by visitors, ranked by vote." />
         <Link href="/routines/new" className={cn(buttonVariants({ variant: "default", size: "lg" }), "rounded-full px-5")}>
           Post a routine
         </Link>
@@ -59,7 +59,14 @@ export default async function RoutinesPage({
                 className="flex items-center justify-between gap-4 rounded-2xl border bg-card p-5 transition-all hover:-translate-y-0.5 hover:border-brand/40 hover:shadow-lg hover:shadow-brand/5"
               >
                 <div className="min-w-0 space-y-1">
-                  <h2 className="truncate font-semibold">{r.title}</h2>
+                  <h2 className="truncate font-semibold">
+                    {r.isStarter ? (
+                      <span className="mr-2 rounded-full bg-brand-soft px-2 py-0.5 align-middle text-xs font-medium text-brand-foreground">
+                        Starter
+                      </span>
+                    ) : null}
+                    {r.title}
+                  </h2>
                   <p className="text-sm text-muted-foreground">
                     {r.stepCount} step{r.stepCount === 1 ? "" : "s"}
                     {r.authorName ? ` · by ${r.authorName}` : ""}

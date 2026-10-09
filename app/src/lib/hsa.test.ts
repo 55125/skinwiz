@@ -1,7 +1,7 @@
 // `npm test`: HSA/FSA tagging edge cases (lib/hsa.ts).
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { hsaStatus, spfFromName, sunscreenLabelFlags, type HsaInput } from "./hsa";
+import { hsaSaidOnce, hsaStatus, spfFromName, sunscreenLabelFlags, type HsaInput } from "./hsa";
 
 function p(over: Partial<HsaInput>): HsaInput {
   return { dataSource: "openfda", concernId: "acne", activeIds: ["benzoyl-peroxide"], brandName: "Acne Wash", label: null, ...over };
@@ -82,4 +82,11 @@ test("homeopathic and prescription rows are never tagged", () => {
   assert.deepEqual(hsaStatus(p({ marketingCategory: "ANDA" })), { eligible: true, reason: "otc-drug" });
   assert.deepEqual(hsaStatus(p({ marketingCategory: null })), { eligible: true, reason: "otc-drug" });
   assert.deepEqual(hsaStatus(p({ isRx: true, marketingCategory: "NDA" })), { eligible: false, reason: "prescription" });
+});
+
+test("a listing names HSA/FSA once only when most of it is eligible", () => {
+  assert.equal(hsaSaidOnce(10, 12), true);
+  assert.equal(hsaSaidOnce(6, 12), false);
+  assert.equal(hsaSaidOnce(2, 12), false);
+  assert.equal(hsaSaidOnce(2, 2), false);
 });

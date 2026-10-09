@@ -32,6 +32,7 @@ import { isDailymedImageUrl } from "@/lib/image-urls";
 import { LISTED, inProductGroup } from "@/lib/canonical";
 import { originIdsJson } from "@/lib/origin";
 import { ORIGINS, type OriginId } from "@/lib/origin-shared";
+import { discontinuedIdsJson, importIdsJson, inStockIdsJson, popularIdsJson } from "@/lib/availability";
 
 // Prescription rows (products.isRx) are reference/handout data and must never
 // reach a consumer listing, search, count, score, equivalence list or the
@@ -569,7 +570,22 @@ export function getVideoLinksForProduct(productId: string) {
 // order of magnitude or search feels slow in practice.
 const SEARCH_LIMIT = 40;
 
-type SearchFilters = { concernId?: string; dataSources?: string[]; freeFromIds?: string[]; origin?: OriginId };
+// Search results come in three sections (lib/availability-rules.ts): sold
+// in the US, imported brands, and likely discontinued. Picking a "Brand
+// from" region asks for imports, so it folds them back into the main list.
+export type SearchShelf = "main" | "import" | "discontinued";
+
+type SearchFilters = { concernId?: string; dataSources?: string[]; freeFromIds?: string[]; origin?: OriginId; shelf?: SearchShelf };
+
+const inIds = (json: string) => sql`${products.id} IN (SELECT value FROM json_each(${json}))`;
+
+function shelfClause(shelf: SearchShelf, origin: OriginId | undefined): SQL {
+  const discontinued = inIds(discontinuedIdsJson());
+  if (shelf === "discontinued") return discontinued;
+  if (origin) return shelf === "main" ? sql`NOT (${discontinued})` : sql`0`;
+  const imported = inIds(importIdsJson());
+  return shelf === "import" ? imported : sql`NOT (${discontinued}) AND NOT (${imported})`;
+}
 
 // One parsed word (lib/search-terms.ts) against one column: any alternative,
 // as a substring or, for short words, at the start of a word.
@@ -613,6 +629,7 @@ function buildSearchWhere(terms: SearchTerm[], filters: SearchFilters) {
   if (filters.concernId) clauses.push(inConcern(filters.concernId));
   if (filters.dataSources && filters.dataSources.length > 0) clauses.push(inArray(products.dataSource, filters.dataSources));
   if (filters.origin) clauses.push(originClause(filters.origin));
+  if (filters.shelf) clauses.push(shelfClause(filters.shelf, filters.origin));
   return and(...clauses);
 }
 
@@ -651,9 +668,17 @@ function searchOrder(terms: SearchTerm[]): SQL[] {
     ];
   });
   const relevance = [...inName, ...contains];
+  // Within equally relevant results, what people can actually buy comes
+  // first: in stock at a US retailer now, then popular on this site, then
+  // anything not imported (lib/availability.ts). Likely-discontinued
+  // products always go last; the search page lists them in their own section.
   return [
+    sql`CASE WHEN ${inIds(discontinuedIdsJson())} THEN 1 ELSE 0 END`,
     poorTitleLast(),
     ...(relevance.length ? [sql`(${sql.join(relevance, sql` + `)}) DESC`] : []),
+    sql`CASE WHEN ${inIds(inStockIdsJson())} THEN 0 ELSE 1 END`,
+    sql`CASE WHEN ${inIds(popularIdsJson())} THEN 0 ELSE 1 END`,
+    sql`CASE WHEN ${inIds(importIdsJson())} THEN 1 ELSE 0 END`,
     sql`CASE ${products.dataSource} WHEN 'brand_direct' THEN 0 WHEN 'openfda' THEN 1 WHEN 'dailymed' THEN 2 ELSE 3 END`,
     sql`LENGTH(${products.brandName})`,
   ];
@@ -664,7 +689,7 @@ const RETINOID_IDS_SQL = sql`(${sql.join(
   sql`, `,
 )})`;
 
-export function searchProducts(q: string, filters: SearchFilters = {}) {
+export function searchProducts(q: string, filters: SearchFilters = {}, limit = SEARCH_LIMIT) {
   const { terms } = parseSearch(q);
   if (!terms.length) return [];
   return db
@@ -672,7 +697,7 @@ export function searchProducts(q: string, filters: SearchFilters = {}) {
     .from(products)
     .where(buildSearchWhere(terms, filters))
     .orderBy(...searchOrder(terms))
-    .limit(SEARCH_LIMIT)
+    .limit(limit)
     .all();
 }
 
@@ -693,6 +718,23 @@ export function searchProductsCount(q: string, filters: SearchFilters = {}) {
   return count;
 }
 
+/** How many results fall in each search section (filters.shelf is ignored). */
+export function searchShelfCounts(q: string, filters: SearchFilters = {}): Record<SearchShelf, number> {
+  const { terms } = parseSearch(q);
+  if (!terms.length) return { main: 0, import: 0, discontinued: 0 };
+  const shelves: SearchShelf[] = ["main", "import", "discontinued"];
+  const row = db
+    .select(
+      Object.fromEntries(
+        shelves.map((s) => [s, sql<number>`coalesce(sum(CASE WHEN ${shelfClause(s, filters.origin)} THEN 1 ELSE 0 END), 0)`]),
+      ) as Record<SearchShelf, SQL<number>>,
+    )
+    .from(products)
+    .where(buildSearchWhere(terms, { ...filters, shelf: undefined }))
+    .get();
+  return { main: Number(row?.main ?? 0), import: Number(row?.import ?? 0), discontinued: Number(row?.discontinued ?? 0) };
+}
+
 export function searchOriginCounts(q: string, filters: SearchFilters = {}): Map<OriginId, number> {
   const { terms } = parseSearch(q);
   if (!terms.length) return new Map();
@@ -708,8 +750,9 @@ export function searchActives(q: string) {
 }
 
 // Autocomplete: matches product/brand names only (not ingredient text, which
-// makes every suggestion for "water" a wall of unrelated products). Name
-// prefix hits rank first, then verified-tier sources, then shorter names.
+// makes every suggestion for "water" a wall of unrelated products). Likely
+// discontinued products go last; then name prefix hits, products in stock
+// at a US retailer, verified-tier sources, and shorter names.
 // Over-fetches then dedupes on name because a variant (travel vs. full size)
 // or a re-listed product would otherwise fill the dropdown with lookalikes.
 export function suggestProducts(q: string, limit = 6) {
@@ -731,7 +774,9 @@ export function suggestProducts(q: string, limit = 6) {
       ),
     )
     .orderBy(
+      sql`CASE WHEN ${inIds(discontinuedIdsJson())} THEN 1 ELSE 0 END`,
       sql`CASE WHEN ${likeOrFolded(products.brandName, prefix)} THEN 0 WHEN ${likeOrFolded(products.manufacturer, prefix)} THEN 1 ELSE 2 END`,
+      sql`CASE WHEN ${inIds(inStockIdsJson())} THEN 0 ELSE 1 END`,
       sql`CASE ${products.dataSource} WHEN 'brand_direct' THEN 0 WHEN 'openfda' THEN 1 WHEN 'dailymed' THEN 2 ELSE 3 END`,
       sql`LENGTH(${products.brandName})`,
     )

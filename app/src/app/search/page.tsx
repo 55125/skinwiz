@@ -6,7 +6,7 @@ import { OriginChips } from "@/components/origin-chips";
 import { parseOrigin } from "@/lib/origin-shared";
 import { FilterChip } from "@/components/filter-chip";
 import { PageHeader } from "@/components/page-header";
-import { searchOriginCounts, searchProducts, searchProductsCount, searchActives, getConcerns } from "@/lib/queries";
+import { searchOriginCounts, searchProducts, searchShelfCounts, searchActives, getConcerns } from "@/lib/queries";
 import { TRUST_TIERS } from "@/lib/trust-tiers";
 import type { Metadata } from "next";
 import { parseFreeParam } from "@/lib/avoid-shared";
@@ -27,6 +27,8 @@ export async function generateMetadata({
   };
 }
 
+const SECTION_LIMIT = 12;
+
 export default async function SearchPage({
   searchParams,
 }: {
@@ -41,8 +43,16 @@ export default async function SearchPage({
   const origin = parseOrigin(fromParam);
   const searchFilters = { concernId: concern, dataSources: selectedTier?.dataSources, freeFromIds, origin };
   const activeResults = query ? searchActives(query) : [];
-  const productResults = query ? searchProducts(query, searchFilters) : [];
-  const productTotal = query ? searchProductsCount(query, searchFilters) : 0;
+  // Sold in the US first; imported brands and likely-discontinued products
+  // in their own sections below (lib/availability-rules.ts), each fetched
+  // only when it has results.
+  const shelfCounts = query ? searchShelfCounts(query, searchFilters) : { main: 0, import: 0, discontinued: 0 };
+  const productResults = shelfCounts.main ? searchProducts(query, { ...searchFilters, shelf: "main" }) : [];
+  const importResults = shelfCounts.import ? searchProducts(query, { ...searchFilters, shelf: "import" }, SECTION_LIMIT) : [];
+  const discontinuedResults = shelfCounts.discontinued
+    ? searchProducts(query, { ...searchFilters, shelf: "discontinued" }, SECTION_LIMIT)
+    : [];
+  const productTotal = shelfCounts.main + shelfCounts.import + shelfCounts.discontinued;
   const originCounts = query ? searchOriginCounts(query, searchFilters) : new Map();
   const hints = query ? parseSearch(query).hints : [];
 
@@ -103,7 +113,7 @@ export default async function SearchPage({
 
       <SearchHints hints={hints} />
 
-      {query && activeResults.length === 0 && productResults.length === 0 && hints.length === 0 && (
+      {query && activeResults.length === 0 && productTotal === 0 && hints.length === 0 && (
         <div className="rounded-2xl border border-dashed p-10 text-center text-muted-foreground">
           No results for &quot;{query}&quot;.
         </div>
@@ -131,10 +141,10 @@ export default async function SearchPage({
           <h2 className="text-xl font-semibold">
             Products{" "}
             <span className="text-base font-normal tabular-nums text-muted-foreground">
-              {productTotal.toLocaleString()}
+              {shelfCounts.main.toLocaleString()}
             </span>
           </h2>
-          {productTotal > productResults.length && (
+          {shelfCounts.main > productResults.length && (
             <p className="text-xs text-muted-foreground">
               Showing the first {productResults.length} — narrow with a filter above or refine your search to see
               others.
@@ -142,6 +152,43 @@ export default async function SearchPage({
           )}
           <ProductGrid products={productResults} />
         </div>
+      )}
+
+      {importResults.length > 0 && (
+        <section aria-labelledby="search-imports" className="space-y-4">
+          <div className="space-y-1">
+            <h2 id="search-imports" className="text-xl font-semibold">
+              Imported brands{" "}
+              <span className="text-base font-normal tabular-nums text-muted-foreground">
+                {shelfCounts.import.toLocaleString()}
+              </span>
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              Brands from abroad that we haven&apos;t found at a US store. They&apos;re usually bought online from import
+              sellers, so shipping takes longer and labels may not be in English.
+              {shelfCounts.import > importResults.length && <> Pick a region under &ldquo;From&rdquo; above to see them all.</>}
+            </p>
+          </div>
+          <ProductGrid products={importResults} />
+        </section>
+      )}
+
+      {discontinuedResults.length > 0 && (
+        <details className="group space-y-4 rounded-2xl border border-dashed p-4">
+          <summary className="cursor-pointer list-none text-base font-semibold [&::-webkit-details-marker]:hidden">
+            <span className="mr-1 inline-block transition-transform group-open:rotate-90" aria-hidden>
+              ›
+            </span>
+            Likely discontinued{" "}
+            <span className="font-normal tabular-nums text-muted-foreground">{shelfCounts.discontinued.toLocaleString()}</span>
+          </summary>
+          <p className="text-sm text-muted-foreground">
+            Products that stores no longer seem to carry, kept here for reference: their ingredient lists still help if you
+            have one at home.
+            {shelfCounts.discontinued > discontinuedResults.length && <> Showing the first {discontinuedResults.length}.</>}
+          </p>
+          <ProductGrid products={discontinuedResults} />
+        </details>
       )}
 
       <p className="text-xs text-muted-foreground">

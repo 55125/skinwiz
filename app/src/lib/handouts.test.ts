@@ -242,3 +242,40 @@ test("dashboard counts: printed, opened, saved -- aggregates only", () => {
   m.h.claimInstance(a.token, "count-s", at(1));
   assert.deepEqual(m.h.countsForVersions([version.id]).get(version.id), { printed: 2, opened: 1, saved: 1 });
 });
+
+test("purge: the owner can delete one version with patient details; the rest of the handout keeps working", async () => {
+  const { purgeHandoutVersion } = await import("./handout-purge");
+  const { handoutId, version: v1 } = newHandout();
+  const edited = m.h.validateHandoutInput(input({ notes: "DOB 03/14/1987" }), { allowRx: true });
+  assert.ok(edited.ok);
+  const v2 = m.h.addVersion(clinician, handoutId, { title: "Leaky", templateId: null, content: edited.content }, at(1))!.version;
+  const { token } = m.h.createInstance(v2.id, at(1));
+  const claimed = m.h.claimInstance(token, "patient-p", at(1));
+  assert.equal(claimed.status, "claimed");
+  const reg = m.r.createClinicianRegimen("patient-p", m.h.findInstance(token)!.instance.id, "Leaky", at(1));
+  m.r.setStepState("patient-p", reg.id, "s1", { done: true }, at(1));
+
+  assert.equal(purgeHandoutVersion(v2.ref, "  ", at(2)).ok, false, "a reason is required");
+  assert.equal(purgeHandoutVersion("ZZZZ-ZZZZ", "x", at(2)).ok, false);
+  const res = purgeHandoutVersion(v2.ref.toLowerCase(), "clinician typed a DOB", at(2));
+  assert.deepEqual(res, { ok: true, ref: v2.ref, handoutId, printouts: 1, plans: 1, handoutDeleted: false });
+
+  assert.equal(m.h.getVersionById(v2.id), null);
+  assert.equal(m.h.findInstance(token), null, "the printout's QR stops working");
+  assert.deepEqual(m.r.listRegimens("patient-p"), []);
+  assert.equal(m.db.all(m.sql`SELECT * FROM regimen_step_states WHERE regimen_id = ${reg.id}`).length, 0);
+  const raw = JSON.stringify(m.db.all(m.sql`SELECT * FROM handout_version_purges`));
+  assert.ok(raw.includes(v2.ref) && !raw.includes("1987"), "the record keeps the ref, never the content");
+  assert.equal(m.h.getOwnedHandout(handoutId, clinician.id)?.latestVersion, 1, "points back at the remaining version");
+  assert.ok(m.h.getVersionById(v1.id));
+  const immutable = (e: unknown) => /immutable/.test(String((e as { cause?: unknown }).cause ?? e));
+  assert.throws(() => m.db.run(m.sql`DELETE FROM handout_versions WHERE id = ${v1.id}`), immutable, "other versions stay undeletable");
+
+  const again = m.h.addVersion(clinician, handoutId, { title: "Fixed", templateId: null, content: edited.content }, at(3))!;
+  assert.equal(again.version.version, 2, "the next save reuses the free number");
+
+  const only = newHandout();
+  const solo = purgeHandoutVersion(only.version.ref, "test", at(4));
+  assert.ok(solo.ok && solo.handoutDeleted);
+  assert.equal(m.h.getOwnedHandout(only.handoutId, clinician.id), null);
+});

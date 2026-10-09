@@ -6,7 +6,7 @@ import { AlertTriangle, ArrowDown, ArrowUp, Plus, Search, Trash2, X } from "luci
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { findPrivacyHits, PRIVACY_HIT_TEXT } from "@/lib/note-privacy";
+import { findPrivacyHits, handoutFreeText, hasBlockingHit, PRIVACY_HIT_TEXT } from "@/lib/note-privacy";
 import {
   HANDOUT_SLOTS,
   MAX_DIRECTIONS,
@@ -81,13 +81,7 @@ export function HandoutBuilder({
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
 
-  const freeText = [
-    title,
-    notes,
-    ...rules,
-    ...sections.map((x) => `${x.heading}\n${x.body}`),
-    ...steps.map((s) => `${s.label} ${s.directions}`),
-  ].join("\n");
+  const freeText = handoutFreeText({ title, notes, stopRules: rules, sections, steps });
   const updateSection = (u: string, patch: Partial<{ heading: string; body: string }>) =>
     setSections((all) => all.map((x) => (x.uid === u ? { ...x, ...patch } : x)));
   const moveSection = (i: number, d: -1 | 1) =>
@@ -99,6 +93,7 @@ export function HandoutBuilder({
       return next;
     });
   const privacyHits = useMemo(() => findPrivacyHits(freeText), [freeText]);
+  const privacyBlocked = hasBlockingHit(privacyHits);
 
   const update = (u: string, patch: Partial<BuilderStep>) => setSteps((all) => all.map((s) => (s.uid === u ? { ...s, ...patch } : s)));
   const move = (i: number, d: -1 | 1) =>
@@ -390,13 +385,14 @@ export function HandoutBuilder({
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
           <p>
             This looks like it may include {privacyHits.map((h) => PRIVACY_HIT_TEXT[h.kind]).join(" and ")} (&ldquo;{privacyHits[0].match}&rdquo;). Handouts
-            are stored without patient details; please remove it. The patient&apos;s name goes in the print box only, which never leaves your browser.
+            are stored without patient details; please remove it{privacyBlocked ? " before saving" : ""}. The patient&apos;s name goes in the print box only, which
+            never leaves your browser.
           </p>
         </div>
       )}
 
       <div className="flex flex-wrap items-center gap-3 border-t pt-4">
-        <Button type="button" onClick={save} disabled={pending || (steps.length === 0 && sections.length === 0)}>
+        <Button type="button" onClick={save} disabled={pending || privacyBlocked || (steps.length === 0 && sections.length === 0)}>
           {pending ? "Saving…" : initial.handoutId ? "Save as a new version" : "Save handout"}
         </Button>
         {initial.handoutId && (

@@ -9,7 +9,9 @@
 // processes a bounded batch per run (--limit, default 90, leaving quota
 // headroom) and caches results in video_links; re-run it periodically
 // (e.g. daily via cron) to slowly build up coverage. Products already in
-// video_links are skipped, so repeated runs make forward progress.
+// video_links are skipped, so repeated runs make forward progress. Rows
+// older than 30 days are deleted by the hourly cleanup job, as YouTube's
+// API policy requires (lib/retention.ts), so those products come round again.
 //
 // TikTok and Instagram have no equivalent here — see
 // src/lib/video-links.ts's comment for why (no accessible free search API

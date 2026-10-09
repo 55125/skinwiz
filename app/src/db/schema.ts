@@ -811,6 +811,18 @@ export const handoutVersions = sqliteTable(
   (table) => [uniqueIndex("handout_versions_handout_version_idx").on(table.handoutId, table.version)],
 );
 
+// Audit trail for the one way a version can be deleted: the owner purging
+// patient details a clinician typed in (npm run handouts:purge). The delete
+// trigger in migration 0022 lets a version go only once its id is listed
+// here. Holds the ref and when -- never the purged content.
+export const handoutVersionPurges = sqliteTable("handout_version_purges", {
+  versionId: integer("version_id").primaryKey(), // no FK: the version is gone afterwards
+  ref: text("ref").notNull(),
+  handoutId: text("handout_id").notNull(),
+  reason: text("reason").notNull(),
+  purgedAt: text("purged_at").notNull(),
+});
+
 // One printout / QR. The claim token is shown only on the paper (and once to
 // the clinician's browser); only its SHA-256 is stored. The first browser to
 // confirm it claims it: claimedSessionId is that browser's resolved session

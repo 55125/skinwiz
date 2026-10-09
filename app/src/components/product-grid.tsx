@@ -1,5 +1,5 @@
 import { ProductCard } from "@/components/product-card";
-import { getEwgScoresForProducts } from "@/lib/queries";
+import { getBestProductImages, getEwgScoresForProducts } from "@/lib/queries";
 import { getScoresForProducts } from "@/lib/scoring";
 import { readAvoidIds } from "@/lib/avoid";
 import { avoidLabelsFor, getIngredientMembership, matchProduct, readProfile } from "@/lib/profile";
@@ -18,6 +18,8 @@ export async function ProductGrid({
 }) {
   const scores = getScoresForProducts(rows.map((p) => ({ productId: p.id, concernId: p.concernId })));
   const ewg = getEwgScoresForProducts(rows.map((p) => p.id));
+  // A merged listing's retail photo beats the canonical row's label artwork.
+  const images = getBestProductImages(rows.map((p) => p.id));
   const avoidIds = await readAvoidIds();
   const profile = await readProfile();
   const avoidLabels = avoidLabelsFor(avoidIds);
@@ -28,7 +30,7 @@ export async function ProductGrid({
       {rows.map((product) => (
         <ProductCard
           key={product.id}
-          product={product}
+          product={{ ...product, imageUrl: images.get(product.id) ?? product.imageUrl }}
           scores={scores.get(product.id)!}
           ewgScore={ewg.get(product.id) ?? null}
           avoidIds={avoidIds}

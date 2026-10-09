@@ -23,6 +23,7 @@ import {
   getMergedDuplicates,
   getRetailBarcodes,
   bestProductImage,
+  productImages,
 } from "@/lib/queries";
 import { getScoresForProducts } from "@/lib/scoring";
 import { getVideoSearchLinks } from "@/lib/video-links";
@@ -64,7 +65,7 @@ import { EquivalenceExplainer, EquivalenceRows } from "@/components/equivalence-
 import { FEATURES } from "@/lib/feature-flags";
 import { productPregnancyFindings } from "@/lib/pregnancy";
 import { PregnancyNotice } from "@/components/pregnancy-notice";
-import { DAILYMED_IMAGE_CAPTION, isOpenBeautyFactsImageUrl, isDailymedImageUrl, productImageAlt } from "@/lib/image-urls";
+import { DAILYMED_IMAGE_CAPTION, isOpenBeautyFactsImageUrl, isDailymedImageUrl, productImageAlt, thumbnailUrl } from "@/lib/image-urls";
 import { recallsForProduct } from "@/lib/recalls";
 import { RecallBanner } from "@/components/recall-banner";
 import { canViewRxReference } from "@/lib/clinicians";
@@ -111,7 +112,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     alternates: { canonical },
     ...(image
       ? {
-          openGraph: { type: "website", siteName: SITE_NAME, locale: "en_US", title, description, url: canonical, images: [{ url: image, alt: productImageAlt(product) }] },
+          openGraph: { type: "website", siteName: SITE_NAME, locale: "en_US", title, description, url: canonical, images: [{ url: image, alt: productImageAlt({ brandName: product.brandName, imageUrl: image }) }] },
           twitter: { card: "summary", images: [image] },
         }
       : {}),
@@ -133,7 +134,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
 
   // Its other listings: their barcodes/NDCs as aliases, and the best photo.
   const duplicates = getMergedDuplicates(product.id);
-  const imageUrl = bestProductImage(product, duplicates);
+  const { photo: imageUrl, label: labelImageUrl } = productImages(product, duplicates);
   const aliasCodes = [...duplicates.map((d) => d.id), ...getRetailBarcodes([product.id, ...duplicates.map((d) => d.id)])]
     .filter((c, i, all) => c !== product.id && !c.startsWith("http") && all.indexOf(c) === i);
 
@@ -261,7 +262,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
               {/* eslint-disable-next-line @next/next/no-img-element -- mix of self-hosted (brand-direct, pre-rendered DailyMed WebP) and external OBF-hosted photos; not worth a next/image remotePatterns allowlist for the OBF case alone */}
               <img
                 src={imageUrl}
-                alt={productImageAlt(product)}
+                alt={productImageAlt({ brandName: product.brandName, imageUrl })}
                 width={800}
                 height={800}
                 className="h-full w-full object-contain p-8"
@@ -278,6 +279,27 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
                   CC BY-SA 3.0
                 </a>
               </figcaption>
+            )}
+            {/* The retail photo leads; the FDA label artwork, when there is one, comes second. */}
+            {labelImageUrl && (
+              <a
+                href={labelImageUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mx-auto flex w-fit items-center gap-3 rounded-xl border bg-card p-2 pr-3 text-xs text-muted-foreground hover:text-foreground"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element -- pre-rendered DailyMed WebP thumbnail */}
+                <img
+                  src={thumbnailUrl(labelImageUrl)}
+                  alt={`${product.brandName} package label`}
+                  width={64}
+                  height={64}
+                  className="h-16 w-16 rounded-lg bg-white object-contain p-1"
+                  loading="lazy"
+                  decoding="async"
+                />
+                {DAILYMED_IMAGE_CAPTION}
+              </a>
             )}
           </figure>
         )}

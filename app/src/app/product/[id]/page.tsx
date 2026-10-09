@@ -30,6 +30,8 @@ import { getVideoSearchLinks } from "@/lib/video-links";
 import { dataSourceBadge } from "@/lib/data-source";
 import { FREE_FROM_CHECKS, getFreeFromCheck, ingredientFailsCheck } from "@/db/ingredient-flags";
 import { findSafeSwaps, findSimilarProductsCached } from "@/lib/similar";
+import { findDupesCached } from "@/lib/dupes";
+import { DupeEmpty, DupeExplainer, DupeRows } from "@/components/dupe-list";
 import { ewgHazardBadge } from "@/lib/ewg";
 import { readSessionId } from "@/lib/session";
 import { getSessionOutcome } from "@/lib/outcomes";
@@ -249,6 +251,8 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
           })
           .slice(0, 4)
       : findSimilarProductsCached(listedIngredients.map((r) => r.ingredientId), { excludeId: product.id, limit: 4 });
+  // Same actives, same form, closest inactives (lib/dupes.ts).
+  const dupes = findDupesCached(product.id, 4);
   const safeSwaps = needsSwap
     ? findSafeSwaps(product, ingredientRows.filter((r) => r.position > 0).map((r) => r.ingredientId), avoidIds)
     : [];
@@ -395,13 +399,24 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
                 </a>
               )}
             </div>
+            {dupes.total > 0 && (
+              <a href="#dupes" className="inline-block text-sm font-medium text-brand hover:underline">
+                Find dupes: {dupes.total} {dupes.total === 1 ? "product" : "products"} with the same actives ↓
+              </a>
+            )}
           </div>
 
           <RecallBanner recalls={recallsForProduct(product.id)} />
 
           <DiscontinuedBanner
             reason={availabilityOf(product.id).discontinued}
-            alternatives={concern ? { href: `/concern/${concern.id}`, label: `Find an alternative among ${concern.name} products` } : undefined}
+            alternatives={
+              dupes.total > 0
+                ? { href: "#dupes", label: `See ${dupes.total} ${dupes.total === 1 ? "dupe" : "dupes"} with the same actives` }
+                : concern
+                  ? { href: `/concern/${concern.id}`, label: `Find an alternative among ${concern.name} products` }
+                  : undefined
+            }
           />
 
           {/* No score card until there is a score: "Not enough reports yet"
@@ -847,6 +862,20 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
           <ProductGrid products={equivalents.rows} columns="sm:grid-cols-2 lg:grid-cols-4" />
         </section>
       )}
+
+      <section id="dupes" className="scroll-mt-24 space-y-4">
+        <div className="space-y-1">
+          <h2 className="text-xl font-semibold">Dupes</h2>
+          {dupes.total > 0 ? <DupeExplainer result={dupes} sunscreen={isSunscreen(product)} /> : <DupeEmpty result={dupes} />}
+        </div>
+        {dupes.rows.length > 0 && <DupeRows rows={dupes.rows} compareWith={product.id} />}
+        {(dupes.total > dupes.rows.length || dupes.sameBrandTotal > 0) && (
+          <Link href={`/product/${encodeURIComponent(product.id)}/dupes`} className="inline-block text-sm font-medium text-brand hover:underline">
+            {dupes.total > dupes.rows.length ? `See all ${dupes.total} dupes` : "See all dupes"}
+            {dupes.sameBrandTotal > 0 ? `, and ${dupes.sameBrandTotal} from the same brand` : ""} →
+          </Link>
+        )}
+      </section>
 
       {similar.length > 0 && (
         <section className="space-y-4">

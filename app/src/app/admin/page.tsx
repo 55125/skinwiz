@@ -21,11 +21,15 @@ import { openForReview } from "@/lib/review-mode";
 import { krogerConfig, livePricesEnabled, sovrnSiteKey } from "@/lib/prices/config";
 import { clientIpFromHeaders } from "@/lib/api-guard";
 import { clientIp as botLimitIp } from "@/lib/anti-scrape";
+import { availabilitySummary } from "@/lib/availability";
+import { listAvailabilityOverrides } from "@/lib/availability-admin";
+import { LABEL_STALE_YEARS, RETAIL_GONE_DAYS } from "@/lib/availability-rules";
 
 // The owner's dashboard. Not linked from anywhere on the site, kept out of
 // search engines (noindex here and an X-Robots-Tag header in next.config),
 // and behind ADMIN_PASSWORD (lib/admin-auth.ts). Deliberately not listed in
-// robots.txt, which anyone can read. Read-only: nothing here changes data.
+// robots.txt, which anyone can read. Read-only apart from the product
+// availability form (POST /api/admin/availability).
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
@@ -58,7 +62,7 @@ function duration(s: number): string {
   return `${(s / 86_400).toFixed(1)} days`;
 }
 
-export default async function AdminPage({ searchParams }: { searchParams: Promise<{ days?: string; e?: string; locked?: string }> }) {
+export default async function AdminPage({ searchParams }: { searchParams: Promise<{ days?: string; e?: string; locked?: string; avail?: string }> }) {
   if (!adminPassword()) notFound();
   const params = await searchParams;
   const token = (await cookies()).get(ADMIN_COOKIE)?.value;
@@ -72,6 +76,8 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
   const catalog = catalogReport(now);
   const errors = errorReport(now, days);
   const health = healthReport();
+  const availability = availabilitySummary();
+  const overrides = listAvailabilityOverrides();
   const warning = passwordWarning(adminPassword()!);
   // The login/sign-in-code limits and the bot limits read the visitor's IP
   // from different headers. Both should show this browser's public address;
@@ -342,6 +348,74 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
           </div>
         </div>
       </Section>
+
+      <div id="availability">
+        <Section
+          title="Product availability"
+          note={`Search lists likely-discontinued products last, in their own section, with a banner on the product page. Automatic flags: no US retail listing, and either retailers stopped carrying it ${RETAIL_GONE_DAYS}+ days ago or its FDA drug listing lapsed with a label ${LABEL_STALE_YEARS}+ years old.`}
+        >
+          <div className="grid gap-6 lg:grid-cols-2">
+            <div className="space-y-4">
+              <StatGrid
+                items={[
+                  ["In stock at a US retailer", availability.inStock, "fresh price, retailer or affiliate link"],
+                  ["Imported brands", availability.imports, "own section in search"],
+                  ["Discontinued: old FDA listing", availability.discontinued.label, "automatic"],
+                  ["Discontinued: dropped by retailers", availability.discontinued.retail, "automatic"],
+                  ["Discontinued: marked by you", availability.discontinued.manual],
+                ]}
+              />
+              <form action="/api/admin/availability" method="post" className="space-y-2 rounded-xl border p-3 text-sm">
+                {params.avail && (
+                  <p className={params.avail === "ok" ? "text-emerald-700 dark:text-emerald-400" : "text-red-700 dark:text-red-400"}>
+                    {params.avail === "ok" ? "Saved." : params.avail === "notfound" ? "No product with that id or URL." : "Something was missing."}
+                  </p>
+                )}
+                <label className="block space-y-1">
+                  <span className="text-xs font-medium text-muted-foreground">Product page URL or id</span>
+                  <input name="product" required maxLength={500} className="w-full rounded-md border bg-background px-2 py-1" />
+                </label>
+                <label className="block space-y-1">
+                  <span className="text-xs font-medium text-muted-foreground">Note shown on the banner (optional)</span>
+                  <input name="note" maxLength={300} className="w-full rounded-md border bg-background px-2 py-1" />
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  <button type="submit" name="action" value="discontinued" className="rounded-full border px-3 py-1 hover:bg-muted">
+                    Mark discontinued
+                  </button>
+                  <button type="submit" name="action" value="available" className="rounded-full border px-3 py-1 hover:bg-muted">
+                    Mark available
+                  </button>
+                  <button type="submit" name="action" value="clear" className="rounded-full border px-3 py-1 hover:bg-muted">
+                    Remove my call
+                  </button>
+                </div>
+                <p className="text-xs text-muted-foreground">&ldquo;Mark available&rdquo; overrides an automatic flag that got it wrong.</p>
+              </form>
+            </div>
+            <div>
+              <p className="mb-2 text-xs font-medium text-muted-foreground">Your calls, newest first</p>
+              {overrides.length === 0 ? (
+                <Empty>None yet.</Empty>
+              ) : (
+                <ul className="space-y-1.5 text-sm">
+                  {overrides.map((o) => (
+                    <li key={o.productId}>
+                      <Link href={`/product/${encodeURIComponent(o.productId)}`} className="underline underline-offset-2">
+                        {o.name ?? o.productId}
+                      </Link>{" "}
+                      <span className="text-muted-foreground">
+                        · {o.status} · {ago(o.updatedAt, now)}
+                        {o.note ? ` · ${o.note}` : ""}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
+        </Section>
+      </div>
 
       <Section title="Errors" note={`Server errors are kept 90 days. Browser-side crashes in range: ${fmt(traffic.clientErrors)}.`}>
         <div className="grid gap-6 lg:grid-cols-2">

@@ -67,6 +67,7 @@ export const MONOGRAPH_RANGES: Record<string, MonographRange> = {
   lidocaine: { min: 0.5, max: 4, cfr: "21 CFR 348.10" },
   benzocaine: { min: 5, max: 20, cfr: "21 CFR 348.10" },
   phenol: { min: 0.5, max: 1.5, cfr: "21 CFR 348.10" },
+  capsaicin: { min: 0.025, max: 0.25, cfr: "21 CFR 348.10" },
   // Menthol and camphor have no entry: their higher counterirritant
   // (pain-relief) strengths are also monograph-permitted, and an itch-only
   // maximum would wrongly flag those products as above range.

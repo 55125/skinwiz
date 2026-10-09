@@ -433,6 +433,17 @@ export const ACTIVE_DEFINITIONS: ActiveDefinition[] = [
     countsAnywhereListed: true,
   },
 
+  {
+    id: "ethyl-methoxycinnamate",
+    canonicalName: "Ethyl Methoxycinnamate",
+    categories: ["sunscreen"],
+    synonyms: ["ethyl methoxycinnamate", "ethyl p-methoxycinnamate", "ethyl 4-methoxycinnamate"],
+    summary:
+      "A UVB-absorbing cinnamate (the main active compound in Kaempferia galanga root), a close relative of octinoxate. Not a recognized UV filter in the US or EU.",
+    typicalConcentrationText: "Concentration varies by product; not a US monograph active.",
+    countsAnywhereListed: true,
+  },
+
   // --- Antifungal (athlete's foot, ringworm, jock itch, yeast) ---
   {
     id: "clotrimazole",
@@ -498,6 +509,15 @@ export const ACTIVE_DEFINITIONS: ActiveDefinition[] = [
     summary:
       "An essential oil from Melaleuca alternifolia used in acne and antifungal products. Not an FDA OTC monograph active; a known fragrance-type contact allergen, especially once oxidized.",
     typicalConcentrationText: "Commonly 1%–5% in leave-on products; not standardized.",
+  },
+  {
+    id: "hexamidine-diisethionate",
+    canonicalName: "Hexamidine Diisethionate",
+    categories: ["antifungal"],
+    synonyms: ["hexamidine diisethionate", "hexamidine"],
+    summary:
+      "An antiseptic with antibacterial and antifungal activity, used in European pharmacy skin care and as a cosmetic preservative. Not an FDA OTC monograph antifungal active.",
+    typicalConcentrationText: "Commonly 0.05%–0.1%; EU cosmetic maximum is 0.1%.",
   },
 
   // --- Antidandruff / seborrheic dermatitis ---
@@ -601,6 +621,15 @@ export const ACTIVE_DEFINITIONS: ActiveDefinition[] = [
     synonyms: ["phenol"],
     summary: "An external analgesic active (21 CFR part 348) for temporary relief of itch and minor skin pain, best known in calamine-phenol lotions.",
     typicalConcentrationText: "0.5%–1.5% for itch relief.",
+  },
+  {
+    id: "capsaicin",
+    canonicalName: "Capsaicin",
+    categories: ["anti-itch"],
+    synonyms: ["capsaicin"],
+    summary:
+      "A chili-pepper compound recognized as an external analgesic counterirritant (21 CFR part 348) for minor muscle and joint pain; sometimes used for localized nerve-related itch.",
+    typicalConcentrationText: "0.025%–0.25% under the external analgesic monograph.",
   },
 
   // --- Skin protectant (dry skin, eczema, diaper rash, chapped skin) ---
@@ -746,6 +775,15 @@ export const ACTIVE_DEFINITIONS: ActiveDefinition[] = [
     summary:
       "A family of FDA OTC monograph antiperspirant actives (differing in aluminum:zirconium ratio), grouped here as one canonical entry since the ratio distinction isn't a consumer-meaningful difference without a dermatologist's input.",
     typicalConcentrationText: "Concentration varies by product strength (regular vs. clinical-strength).",
+  },
+  {
+    id: "magnesium-hydroxide",
+    canonicalName: "Magnesium Hydroxide",
+    categories: ["antiperspirant"],
+    synonyms: ["magnesium carbonate hydroxide", "magnesium hydroxide"],
+    summary:
+      "A mineral used in aluminum-free \"natural\" underarm products to neutralize odor. Not an FDA OTC antiperspirant active: it doesn't block sweat ducts the way aluminum salts do.",
+    typicalConcentrationText: "Concentration varies by product; not a US monograph active.",
   },
 
   // --- Brightening & texture (cosmetic ingredients, NOT FDA drug actives) ---

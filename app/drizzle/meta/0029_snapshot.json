@@ -1,8 +1,8 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "dc53b39e-f55a-4e18-8ca8-59e645b852a3",
-  "prevId": "ae26e96f-f204-42ac-847d-7a4e66c06599",
+  "id": "c5566236-b1b8-4f08-a7f7-e8c33794f1aa",
+  "prevId": "dc53b39e-f55a-4e18-8ca8-59e645b852a3",
   "tables": {
     "active_chem_data": {
       "name": "active_chem_data",
@@ -2479,6 +2479,13 @@
         },
         "last_matched_at": {
           "name": "last_matched_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "image_url": {
+          "name": "image_url",
           "type": "text",
           "primaryKey": false,
           "notNull": false,

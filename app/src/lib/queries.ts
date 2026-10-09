@@ -1,4 +1,4 @@
-import { and, eq, inArray, sql, type SQL, type SQLWrapper } from "drizzle-orm";
+import { and, eq, inArray, or, sql, type SQL, type SQLWrapper } from "drizzle-orm";
 import { db } from "@/db/client";
 import {
   concerns,
@@ -13,6 +13,8 @@ import {
   productIngredients,
   manualAffiliateLinks,
   productBarcodes,
+  priceQuotes,
+  labelBarcodes,
 } from "@/db/schema";
 import { isAllowedManualLinkUrl } from "@/lib/manual-links";
 import { concernIdToNiche } from "@/db/actives";
@@ -29,7 +31,8 @@ import { concernExcludedIdsJson, concernTierJson, duplicateIdsJson, poorTitleIds
 import { POTENT_RETINOIDS } from "@/lib/retinoids";
 import { RX_CONCERN_ID } from "@/db/rx";
 import { isDailymedImageUrl } from "@/lib/image-urls";
-import { LISTED, inProductGroup } from "@/lib/canonical";
+import { LISTED, canonicalIdsOf, inProductGroup } from "@/lib/canonical";
+import { parseProductCode } from "@/lib/product-codes";
 import { originIdsJson } from "@/lib/origin";
 import { ORIGINS, type OriginId } from "@/lib/origin-shared";
 import { discontinuedIdsJson, importIdsJson, inStockIdsJson, popularIdsJson } from "@/lib/availability";
@@ -749,6 +752,68 @@ export function searchActives(q: string) {
     .all();
 }
 
+// Exact lookup for a barcode, NDC, Kroger productId or DailyMed set id typed
+// into search (lib/product-codes.ts reads the entry). null when the entry
+// isn't an identifier, so the caller falls back to keyword search; an empty
+// list when it is one and nothing in the catalog carries it. Matches on any
+// listing resolve to the product that stands for it (lib/canonical.ts), and
+// Rx rows never come back.
+export function lookupProductsByCode(q: string, limit = SEARCH_LIMIT) {
+  const code = parseProductCode(q);
+  if (!code) return null;
+  const ids = new Set<string>();
+  const idCandidates = [...code.barcodes, ...code.productNdcs];
+  const direct = or(
+    idCandidates.length ? inArray(products.id, idCandidates) : undefined,
+    code.setId ? eq(products.splSetId, code.setId) : undefined,
+  );
+  if (direct) for (const r of db.select({ id: products.id }).from(products).where(direct).all()) ids.add(r.id);
+  if (code.barcodes.length) {
+    for (const r of db
+      .select({ id: productBarcodes.productId })
+      .from(productBarcodes)
+      .where(inArray(productBarcodes.barcode, code.barcodes))
+      .all())
+      ids.add(r.id);
+  }
+  // Barcodes read off label photos (lib/label-barcodes.ts) belong to a label,
+  // which can cover several products (package sizes).
+  if (code.barcodes.length) {
+    const sets = db
+      .selectDistinct({ setId: labelBarcodes.splSetId })
+      .from(labelBarcodes)
+      .where(inArray(labelBarcodes.barcode, code.barcodes))
+      .all()
+      .map((r) => r.setId);
+    if (sets.length) {
+      for (const r of db.select({ id: products.id }).from(products).where(inArray(sql`lower(${products.splSetId})`, sets)).all()) ids.add(r.id);
+    }
+  }
+  // Kroger products matched by keywords carry no stored barcode; their
+  // kroger.com page ends in the productId.
+  for (const kid of code.krogerIds) {
+    for (const r of db
+      .select({ id: priceQuotes.productId })
+      .from(priceQuotes)
+      .where(and(eq(priceQuotes.source, "kroger"), sql`${priceQuotes.url} LIKE ${`%/${kid}`}`))
+      .all())
+      ids.add(r.id);
+  }
+  if (ids.size === 0) return [];
+  const listed = [...new Set(canonicalIdsOf([...ids]).values())];
+  return db
+    .select()
+    .from(products)
+    .where(and(LISTED_OTC, inArray(products.id, listed)))
+    .orderBy(
+      sql`CASE WHEN ${inIds(discontinuedIdsJson())} THEN 1 ELSE 0 END`,
+      sql`CASE ${products.dataSource} WHEN 'brand_direct' THEN 0 WHEN 'openfda' THEN 1 WHEN 'dailymed' THEN 2 ELSE 3 END`,
+      products.brandName,
+    )
+    .limit(limit)
+    .all();
+}
+
 // Autocomplete: matches product/brand names only (not ingredient text, which
 // makes every suggestion for "water" a wall of unrelated products). Likely
 // discontinued products go last; then name prefix hits, products in stock
@@ -1094,16 +1159,27 @@ export function getMergedDuplicates(id: string) {
   return db.select().from(products).where(and(eq(products.canonicalId, id), OTC_ONLY)).orderBy(products.id).all();
 }
 
-/** Retail barcodes (not the NDC-derived guesses) recorded for any of these ids. */
+/**
+ * Retail barcodes (not the NDC-derived guesses) recorded for any of these
+ * ids: from the catalog first, then any read off their DailyMed label.
+ */
 export function getRetailBarcodes(ids: string[]): string[] {
   if (ids.length === 0) return [];
-  return db
+  const catalog = db
     .selectDistinct({ barcode: productBarcodes.barcode })
     .from(productBarcodes)
     .where(and(inArray(productBarcodes.productId, ids), sql`${productBarcodes.source} != 'ndc_derived'`))
     .orderBy(productBarcodes.barcode)
     .all()
     .map((r) => r.barcode);
+  const label = db
+    .selectDistinct({ barcode: labelBarcodes.barcode })
+    .from(labelBarcodes)
+    .where(sql`${labelBarcodes.splSetId} IN (SELECT lower(spl_set_id) FROM products WHERE id IN (SELECT value FROM json_each(${JSON.stringify(ids)})))`)
+    .orderBy(labelBarcodes.barcode)
+    .all()
+    .map((r) => r.barcode);
+  return [...new Set([...catalog, ...label])];
 }
 
 /**

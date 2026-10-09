@@ -6,7 +6,9 @@
 // products that are due, and does nothing until a price source (Sovrn or
 // Kroger) is configured (lib/prices/refresh.ts). The image sync downloads a capped batch of
 // DailyMed package photos per run (lib/product-images/sync.ts), so a fresh
-// volume fills itself over the first day or two after a deploy.
+// volume fills itself over the first day or two after a deploy. The label
+// scan then reads barcodes off the label images of OTC products that have
+// none (lib/label-barcodes.ts), also capped per run.
 import { purgeExpiredTokens } from "@/lib/identity";
 import { purgeOldRaterApplications, purgeStaleYoutubeData } from "@/lib/retention";
 import { sendDueCheckins, type CheckinRunResult } from "@/lib/checkins";
@@ -15,10 +17,11 @@ import { purgeAnalytics } from "@/lib/analytics/store";
 import { refreshPrices, type PriceRefreshReport } from "@/lib/prices/refresh";
 import { PRICE_RUN_HOUR_UTC, priceRunDay } from "@/lib/prices/config";
 import { syncDailymedImages, type ImageSyncReport } from "@/lib/product-images/sync";
+import { scanLabelBarcodes, type LabelScanReport } from "@/lib/label-barcodes";
 
-export type JobName = "checkins" | "recalls" | "cleanup" | "prices" | "images";
-// images last: it's the slowest step and nothing else waits on it
-export const ALL_JOBS: JobName[] = ["recalls", "checkins", "cleanup", "prices", "images"];
+export type JobName = "checkins" | "recalls" | "cleanup" | "prices" | "images" | "labels";
+// images and labels last: they're the slowest steps and nothing else waits on them
+export const ALL_JOBS: JobName[] = ["recalls", "checkins", "cleanup", "prices", "images", "labels"];
 
 // Per-run cap for the image sync, count and wall clock, whichever comes
 // first (IMAGE_SYNC_PER_RUN, IMAGE_SYNC_SECONDS; IMAGE_SYNC=off disables).
@@ -28,6 +31,16 @@ export function imageSyncBudget(env: Record<string, string | undefined> = proces
   const seconds = Number(env.IMAGE_SYNC_SECONDS ?? 240);
   if (!(limit > 0)) return null;
   return { limit, deadlineMs: (seconds > 0 ? seconds : 240) * 1000 };
+}
+
+// Per-run cap for the label barcode scan, images and wall clock
+// (LABEL_SCAN_PER_RUN, LABEL_SCAN_SECONDS; LABEL_SCAN=off disables).
+export function labelScanBudget(env: Record<string, string | undefined> = process.env): { limit: number; deadlineMs: number } | null {
+  if (env.LABEL_SCAN === "off") return null;
+  const limit = Number(env.LABEL_SCAN_PER_RUN ?? 200);
+  const seconds = Number(env.LABEL_SCAN_SECONDS ?? 120);
+  if (!(limit > 0)) return null;
+  return { limit, deadlineMs: (seconds > 0 ? seconds : 120) * 1000 };
 }
 
 export type JobReport = {
@@ -41,6 +54,7 @@ export type JobReport = {
   purgedAnalytics?: number;
   prices?: PriceRefreshReport | { error: string } | { skipped: string };
   images?: ImageSyncReport | { error: string } | { skipped: string };
+  labels?: LabelScanReport | { error: string } | { skipped: string };
 };
 
 let running = false;
@@ -91,6 +105,17 @@ export async function runJobs(now: Date, jobs: JobName[] = ALL_JOBS, opts: { for
           report.images = await syncDailymedImages(budget);
         } catch (err) {
           report.images = { error: (err as Error).message };
+        }
+      }
+    }
+    if (jobs.includes("labels")) {
+      const budget = labelScanBudget();
+      if (!budget) report.labels = { skipped: "LABEL_SCAN is off" };
+      else {
+        try {
+          report.labels = await scanLabelBarcodes(budget);
+        } catch (err) {
+          report.labels = { error: (err as Error).message };
         }
       }
     }

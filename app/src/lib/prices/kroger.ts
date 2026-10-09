@@ -221,7 +221,7 @@ export function krogerSearchTerm(p: LookupProduct): string {
     .join(" ");
 }
 
-const CONFIDENCE: Record<string, number> = { openfda_upc: 0.95, obf_id: 0.9, ndc_derived: 0.7, keywords: 0.6 };
+const CONFIDENCE: Record<string, number> = { openfda_upc: 0.95, obf_id: 0.9, label_scan: 0.9, ndc_derived: 0.7, keywords: 0.6 };
 
 export type KrogerDeps = {
   fetch?: typeof fetch;

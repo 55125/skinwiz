@@ -77,6 +77,46 @@ export default function AboutPage() {
         </p>
       </section>
 
+      {/* Linked from the listing filters and the product page's ingredient
+          notes ("How we check"), which keep only a one-line summary. */}
+      <section id="how-we-check" className="scroll-mt-24 space-y-2">
+        <h2 className="text-lg font-medium">How we check ingredients</h2>
+        <p className="text-sm text-muted-foreground">
+          Ingredient flags (&ldquo;Fragrance-free&rdquo;, &ldquo;Paraben-free&rdquo; and the rest), the free-from
+          filters on product lists, contact-allergen matches and your avoid-list checks are all computed from each
+          product&apos;s published ingredient list, not a brand&apos;s marketing claim or a certification. A flag means
+          we didn&apos;t find that ingredient in the list. It is not exhaustive: see a
+          board-certified dermatologist about your own known allergens.
+        </p>
+        <ul className="list-disc space-y-1 pl-5 text-sm text-muted-foreground">
+          <li>
+            Products we don&apos;t have a full ingredient list for (most openFDA-only listings) won&apos;t match any
+            filter rather than being assumed clean.
+          </li>
+          <li>
+            A product listing only &ldquo;fragrance&rdquo; doesn&apos;t pass a fragrance-allergen filter, since the blend
+            could contain it. Where it matters for your avoid list, we say the fragrance may hide it.
+          </li>
+          <li>
+            Ingredient lists can change when a brand reformulates, and community-sourced lists aren&apos;t independently
+            verified. Check the label on the product you buy.
+          </li>
+          <li>
+            Match scores weigh a product&apos;s ingredient list against your{" "}
+            <Link href="/profile" className="underline underline-offset-2">
+              skin profile
+            </Link>{" "}
+            and{" "}
+            <Link href="/avoid" className="underline underline-offset-2">
+              avoid list
+            </Link>
+            : an ingredient you avoid caps the score low, and ones that suit your skin type or concerns raise it. They
+            describe the ingredient list only, not how well a product works, and products without a full ingredient list
+            can&apos;t be scored.
+          </li>
+        </ul>
+      </section>
+
       <section className="space-y-2">
         <h2 className="text-lg font-medium">Affiliate disclosure</h2>
         <p className="text-sm text-muted-foreground">

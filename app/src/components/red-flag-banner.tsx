@@ -19,8 +19,8 @@ export function RedFlagBanner() {
       <p>
         <strong className="font-semibold text-amber-950 dark:text-amber-100">See a board-certified dermatologist first</strong>{" "}
         if you have a changing or bleeding lesion, rapid spread, pain or fever, eye involvement, or no improvement
-        after 8–12 weeks of consistent use. Fever with a spreading rash, blistering or peeling skin, swelling of the
-        face or lips, or trouble breathing needs urgent care or 911 today. {SITE_NAME} is educational and doesn&apos;t diagnose your skin.
+        within the time on the product&apos;s label (as short as 7 days for hydrocortisone). Fever with a spreading rash, blistering or
+        peeling skin, swelling of the face or lips, or trouble breathing needs urgent care or 911 today. {SITE_NAME} is educational and doesn&apos;t diagnose your skin.
       </p>
     </div>
   );

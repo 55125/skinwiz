@@ -474,7 +474,7 @@ export const ACTIVE_DEFINITIONS: ActiveDefinition[] = [
     canonicalName: "Terbinafine Hydrochloride",
     categories: ["antifungal"],
     synonyms: ["terbinafine"],
-    summary: "An FDA OTC monograph antifungal active for athlete's foot, jock itch, and ringworm.",
+    summary: "An OTC antifungal for athlete's foot, jock itch, and ringworm. It is sold OTC under an FDA-approved application (an Rx-to-OTC switch), not the OTC antifungal monograph.",
     typicalConcentrationText: "Typically formulated at 1%.",
   },
   {
@@ -482,7 +482,7 @@ export const ACTIVE_DEFINITIONS: ActiveDefinition[] = [
     canonicalName: "Butenafine Hydrochloride",
     categories: ["antifungal"],
     synonyms: ["butenafine"],
-    summary: "An FDA OTC monograph antifungal active for athlete's foot, jock itch, and ringworm.",
+    summary: "An OTC antifungal for athlete's foot, jock itch, and ringworm. It is sold OTC under an FDA-approved application (an Rx-to-OTC switch), not the OTC antifungal monograph.",
     typicalConcentrationText: "Typically formulated at 1%.",
   },
   {
@@ -663,7 +663,7 @@ export const ACTIVE_DEFINITIONS: ActiveDefinition[] = [
     categories: ["skin-protectant"],
     synonyms: ["allantoin"],
     summary: "An FDA OTC monograph skin protectant recognized for soothing dry or irritated skin.",
-    typicalConcentrationText: "Typically formulated at 0.5%–2%.",
+    typicalConcentrationText: "Typically formulated at up to 2%.",
   },
   {
     id: "lanolin",
@@ -806,7 +806,8 @@ export const ACTIVE_DEFINITIONS: ActiveDefinition[] = [
     canonicalName: "Aluminum Chlorohydrate",
     categories: ["antiperspirant"],
     synonyms: ["aluminum chlorohydrate", "aluminum chloride", "aluminum sesquichlorohydrate"],
-    summary: "An FDA OTC monograph antiperspirant active that works by temporarily blocking sweat ducts.",
+    summary:
+      "An FDA OTC monograph antiperspirant active that works by temporarily blocking sweat ducts. Aluminum chloride and aluminum sesquichlorohydrate are separate FDA-recognized antiperspirant actives, grouped under this entry for now.",
     typicalConcentrationText: "Concentration varies by product strength (regular vs. clinical-strength).",
   },
   {
@@ -824,7 +825,7 @@ export const ACTIVE_DEFINITIONS: ActiveDefinition[] = [
       "aluminum zirconium pentachlorohydrate",
     ],
     summary:
-      "A family of FDA OTC monograph antiperspirant actives (differing in aluminum:zirconium ratio), grouped here as one entry.",
+      "A family of FDA OTC monograph antiperspirant actives (differing in their aluminum, zirconium and chloride ratios), grouped here as one entry.",
     typicalConcentrationText: "Concentration varies by product strength (regular vs. clinical-strength).",
   },
   {
@@ -880,7 +881,7 @@ export const ACTIVE_DEFINITIONS: ActiveDefinition[] = [
     categories: ["brightening-texture"],
     synonyms: ["retinol"],
     summary:
-      "A cosmetic vitamin-A derivative, distinct from the FDA OTC monograph acne active adapalene and from prescription retinoids (tretinoin) — retinol itself has no OTC monograph or FDA drug status. Potency and stability vary widely by formulation.",
+      "A cosmetic vitamin-A derivative, distinct from adapalene (an OTC acne drug sold under an FDA-approved Rx-to-OTC switch, not the acne monograph) and from prescription retinoids (tretinoin) — retinol itself has no OTC monograph or FDA drug status. Potency and stability vary widely by formulation.",
     typicalConcentrationText: "Concentration varies widely by product; not standardized.",
   },
   {

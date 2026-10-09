@@ -5,6 +5,10 @@
 //  - SOVRN_SITE_API_KEY + SOVRN_SECRET_KEY turn on the Price Comparison API:
 //    lookups, view recording, and showing stored quotes. Without both, no
 //    quote is ever shown, even if rows exist.
+//  - KROGER_CLIENT_ID + KROGER_CLIENT_SECRET turn on Kroger's Products API
+//    (kroger.ts): shelf prices and stock at one Kroger store, found nearest
+//    to KROGER_ZIP (default 45202, downtown Cincinnati) or pinned with
+//    KROGER_LOCATION_ID. That zip is ours, never a visitor's.
 
 import { PRICE_MAX_AGE_MS } from "@/lib/equivalence";
 
@@ -21,9 +25,27 @@ export function sovrnConfig(env: NodeJS.ProcessEnv = process.env): SovrnConfig |
   return siteKey && secret ? { siteKey, secret } : null;
 }
 
-/** True when any live price source is configured (only Sovrn today). */
+export type KrogerConfig = { clientId: string; clientSecret: string; zip: string; locationId: string | null };
+
+export const KROGER_DEFAULT_ZIP = "45202";
+
+export function krogerConfig(env: NodeJS.ProcessEnv = process.env): KrogerConfig | null {
+  const clientId = env.KROGER_CLIENT_ID?.trim();
+  const clientSecret = env.KROGER_CLIENT_SECRET?.trim();
+  if (!clientId || !clientSecret) return null;
+  const zip = env.KROGER_ZIP?.trim();
+  const locationId = env.KROGER_LOCATION_ID?.trim();
+  return {
+    clientId,
+    clientSecret,
+    zip: zip && /^\d{5}$/.test(zip) ? zip : KROGER_DEFAULT_ZIP,
+    locationId: locationId && /^[A-Za-z0-9]{8}$/.test(locationId) ? locationId : null,
+  };
+}
+
+/** True when any live price source is configured (Sovrn or Kroger). */
 export function livePricesEnabled(env: NodeJS.ProcessEnv = process.env): boolean {
-  return sovrnConfig(env) !== null;
+  return sovrnConfig(env) !== null || krogerConfig(env) !== null;
 }
 
 const HOUR = 3_600_000;
@@ -45,4 +67,12 @@ export const SOVRN_MIN_INTERVAL_MS = 100;
 export function maxRequestsPerRun(env: NodeJS.ProcessEnv = process.env): number {
   const n = Number(env.SOVRN_MAX_REQUESTS_PER_RUN);
   return Number.isFinite(n) && n > 0 ? Math.floor(n) : 300;
+}
+
+/** Kroger allows 10,000 Products API calls a day; 24 hourly runs of 200 stay well under. */
+export const KROGER_MIN_INTERVAL_MS = 200;
+
+export function krogerMaxRequestsPerRun(env: NodeJS.ProcessEnv = process.env): number {
+  const n = Number(env.KROGER_MAX_REQUESTS_PER_RUN);
+  return Number.isFinite(n) && n > 0 ? Math.floor(n) : 200;
 }

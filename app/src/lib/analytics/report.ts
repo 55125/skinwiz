@@ -176,7 +176,14 @@ export function catalogReport(now: Date) {
     quotesStale: one(sql`SELECT COUNT(*) FROM price_quotes WHERE fetched_at < ${fresh}`),
     pricedProducts: one(sql`SELECT COUNT(DISTINCT product_id) FROM price_quotes WHERE fetched_at >= ${fresh}`),
     lastPriceFetch: (db.get<{ v: string | null }>(sql`SELECT MAX(fetched_at) AS v FROM price_quotes`)?.v ?? null) as string | null,
-    priceChecks: counts(sql`SELECT status AS label, COUNT(*) AS n FROM price_checks GROUP BY status ORDER BY n DESC`),
+    // The Kroger catalog check: of the OTC products Kroger has been asked
+    // about, how many it carries (priced at our store, or listed without one).
+    krogerChecked: one(sql`SELECT COUNT(*) FROM price_checks WHERE source = 'kroger' AND status != 'error'`),
+    krogerCarried: one(sql`SELECT COUNT(*) FROM price_checks WHERE source = 'kroger' AND status IN ('matched', 'listed')`),
+    krogerPriced: one(sql`SELECT COUNT(DISTINCT product_id) FROM price_quotes WHERE source = 'kroger' AND fetched_at >= ${fresh}`),
+    krogerStore: (db.get<{ v: string | null }>(sql`SELECT location AS v FROM price_quotes WHERE source = 'kroger' ORDER BY fetched_at DESC LIMIT 1`)?.v ??
+      null) as string | null,
+    priceChecks: counts(sql`SELECT source || ' ' || status AS label, COUNT(*) AS n FROM price_checks GROUP BY source, status ORDER BY source, n DESC`),
     images: counts(sql`SELECT status AS label, COUNT(*) AS n FROM dailymed_images GROUP BY status ORDER BY n DESC`),
     recalls: one(sql`SELECT COUNT(*) FROM recalls`),
     recallMatches: one(sql`SELECT COUNT(DISTINCT product_id) FROM recall_matches`),

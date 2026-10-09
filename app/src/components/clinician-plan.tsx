@@ -43,8 +43,9 @@ export function ClinicianPlan({
   const hidden = steps.filter((s) => states.get(s.key)?.hidden);
   const otcProducts = steps.filter((s) => s.kind === "otc" && s.productId && products.has(s.productId));
   const links = getAffiliateLinksForProducts(otcProducts.map((s) => s.productId!));
-  // Fresh live-price quotes (OTC only; none while prices are off).
-  const quotes = getDisplayQuotesFor(otcProducts.map((s) => s.productId!));
+  // Fresh live-price quotes (OTC only; none while prices are off). Affiliate
+  // ones only: the buy links here are labeled as affiliate links.
+  const quotes = getDisplayQuotesFor(otcProducts.map((s) => s.productId!)).filter((q) => q.affiliatable);
   const order = buildOrderPlan(
     otcProducts.map((s) => ({ productId: s.productId!, name: s.productName ?? s.label })),
     [

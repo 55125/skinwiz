@@ -162,6 +162,13 @@
       "when": 1791513170215,
       "tag": "0022_analytics_dedupe_index",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "6",
+      "when": 1791515750862,
+      "tag": "0023_price_quote_stock",
+      "breakpoints": true
     }
   ]
 }

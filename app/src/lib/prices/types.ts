@@ -1,9 +1,11 @@
-// Shapes shared by every live-price source (Sovrn today; Impact, CJ and
-// Kroger feeds later). Pure types, no imports beyond the package-size type.
+// Shapes shared by every live-price source (Sovrn and Kroger today; Impact
+// and CJ feeds later). Pure types, no imports beyond the package-size type.
 import type { PackageSize } from "@/lib/equivalence";
 
 export type PriceSourceId = "sovrn" | "impact" | "cj" | "kroger";
 export type MatchType = "barcode" | "plainlink" | "keywords";
+/** In-store stock, for sources that report it (Kroger); null when unknown. */
+export type Availability = "in_stock" | "low" | "out_of_stock";
 
 /** One merchant's live offer for one catalog product. */
 export type PriceQuote = {
@@ -14,13 +16,15 @@ export type PriceQuote = {
   price: number;
   retailPrice: number | null;
   currency: string; // always "USD" once stored
-  url: string; // the source's tracked affiliate deeplink
-  affiliatable: boolean;
+  url: string; // the source's tracked affiliate deeplink, or a plain product page when not affiliatable
+  affiliatable: boolean; // false for direct retailer sources (Kroger): a plain link that earns nothing
   matchType: MatchType;
   matchConfidence: number; // 0..1
   offerName: string | null;
   pack: PackageSize | null; // read from the offer's own title
   fetchedAt: string; // ISO
+  availability?: Availability | null;
+  location?: string | null; // where the store the price is for is, e.g. "Cincinnati, OH 45202"
 };
 
 /** What a source needs to know about a catalog product to look it up. */
@@ -36,7 +40,12 @@ export type LookupProduct = {
   barcodes: { barcode: string; source: string }[]; // already in confidence order
 };
 
-export type LookupResult = { status: "matched" | "miss"; quotes: PriceQuote[] };
+/**
+ * matched: priced offers found. listed: the source's catalog carries the
+ * product but has no price for it right now (Kroger: not priced at our
+ * store). miss: not found.
+ */
+export type LookupResult = { status: "matched" | "listed" | "miss"; quotes: PriceQuote[] };
 
 /**
  * A price source. lookup() makes its own HTTP calls (rate-limited, with

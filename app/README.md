@@ -298,6 +298,31 @@ next to the site ("generate secret key" for the secret,
 `npm run prices:backfill -- --top 500` looks up the top 500 due products now,
 same order and rules (`--max-requests N` to cap it; default 4 × top).
 
+### Kroger: store prices, stock and the catalog check
+
+Off until both `KROGER_CLIENT_ID` and `KROGER_CLIENT_SECRET` are set (a
+[Kroger developer](https://developer.kroger.com) app with the Products
+API; the job asks for scope `product.compact`). It runs as part of the same
+`prices` step and backfill, alongside Sovrn or on its own, with its own
+`price_checks` rows (`source = 'kroger'`).
+
+| Variable | What it does |
+| --- | --- |
+| `KROGER_CLIENT_ID` + `KROGER_CLIENT_SECRET` | Client-credentials token, then shelf prices and stock at one Kroger store. Product pages show a Kroger row with "In stock / Low stock / Out of stock at Kroger in <city>" and a plain kroger.com link labeled "Not an affiliate link"; equivalence lists use the price like any other. Clinician plans' buy links stay affiliate-only. |
+| `KROGER_ZIP` | Optional. The store is the nearest Kroger-family store to this zip (default `45202`, downtown Cincinnati). This is a server setting; no visitor's location is ever sent. |
+| `KROGER_LOCATION_ID` | Optional. Pins an exact store (8 characters, from the Locations API) instead of the zip search. |
+| `KROGER_MAX_REQUESTS_PER_RUN` | Optional request cap per job run (default 200, at most 5 a second; Kroger allows 10,000 product calls a day). |
+
+Per product (`src/lib/prices/kroger.ts`): each barcode becomes a Kroger
+productId (the UPC without its check digit, padded to 13) and is looked up at
+the store; with no barcode hit, a keyword search checked by the same strict
+`match.ts` rules as Sovrn. The result doubles as the **catalog check**:
+`matched` (priced at the store), `listed` (Kroger carries it, no price at this
+store; rechecked in 24h like a match) or `miss`. The admin dashboard shows
+"Kroger carries N of M checked" and lookups by source and result. Migration
+`0023` adds `price_quotes.availability` and `.location`.
+
+
 ## What's real vs. not
 
 This matters more than usual for a health product — read before demoing.

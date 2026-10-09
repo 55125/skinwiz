@@ -1,0 +1,24 @@
+{
+  "data": {
+    "productId": "0030299491045",
+    "upc": "0030299491045",
+    "productPageURI": "/p/differin-adapalene-gel-0-1-acne-treatment/0030299491045?cid=dis.api.tpi_products-api_20240521_b:all_c:p_t:",
+    "aisleLocations": [{ "description": "Health & Beauty", "number": "12" }],
+    "brand": "Differin",
+    "categories": ["Health & Beauty"],
+    "countryOrigin": "UNITED STATES",
+    "description": "Differin Adapalene Gel 0.1% Acne Treatment",
+    "items": [
+      {
+        "itemId": "0030299491045",
+        "inventory": { "stockLevel": "LOW" },
+        "favorite": false,
+        "fulfillment": { "curbside": true, "delivery": true, "instore": true, "shiptohome": false },
+        "price": { "regular": 15.99, "promo": 13.49, "regularPerUnitEstimate": 15.99, "promoPerUnitEstimate": 13.49 },
+        "size": "1.6 oz",
+        "soldBy": "UNIT"
+      }
+    ],
+    "temperature": { "indicator": "Ambient", "heatSensitive": false }
+  }
+}

@@ -2,8 +2,8 @@
 // idempotent, so calling it twice in a row (or overlapping) is harmless:
 // check-ins and recall emails are claimed row-by-row before sending, and the
 // recall sync throttles itself to every 6 hours. The price refresh only
-// touches products that are due, and does nothing until both Sovrn keys are
-// set (lib/prices/refresh.ts). The image sync downloads a capped batch of
+// touches products that are due, and does nothing until a price source
+// (Sovrn or Kroger) is configured (lib/prices/refresh.ts). The image sync downloads a capped batch of
 // DailyMed package photos per run (lib/product-images/sync.ts), so a fresh
 // volume fills itself over the first day or two after a deploy.
 import { purgeExpiredTokens } from "@/lib/identity";

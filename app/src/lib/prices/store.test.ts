@@ -17,8 +17,11 @@ const NOW = new Date("2026-10-03T12:00:00Z");
 const hoursAgo = (h: number) => new Date(NOW.getTime() - h * 3_600_000).toISOString();
 const KEYS = { SOVRN_SITE_API_KEY: "site", SOVRN_SECRET_KEY: "secret" };
 
-function setEnv(on: boolean) {
-  for (const [k, v] of Object.entries(KEYS)) {
+const KROGER_KEYS = { KROGER_CLIENT_ID: "client", KROGER_CLIENT_SECRET: "secret" };
+
+function setEnv(on: boolean, keys: Record<string, string> = KEYS) {
+  if (!on) for (const k of Object.keys(KROGER_KEYS)) delete process.env[k];
+  for (const [k, v] of Object.entries(keys)) {
     if (on) process.env[k] = v;
     else delete process.env[k];
   }
@@ -190,4 +193,73 @@ test("priority: users' products, then recent views, then the sweep", () => {
   store.recordProductView("otc-2", NOW);
   assert.deepEqual(refresh.pickDueProducts(NOW, 10), ["otc-3", "otc-2", "otc-1"]);
   assert.deepEqual(refresh.pickDueProducts(NOW, 10, { sweep: false }), ["otc-3", "otc-2"]);
+});
+
+test("Kroger alone: plain-link quotes with stock are shown, the catalog check is booked, Sovrn is never called", async () => {
+  setEnv(true, KROGER_KEYS);
+  const hosts = new Set<string>();
+  const fetchMock = (async (input: string | URL | Request) => {
+    const u = new URL(String(input));
+    hosts.add(u.hostname);
+    if (u.pathname.endsWith("/token")) return new Response(JSON.stringify({ access_token: "t", expires_in: 1800 }));
+    if (u.pathname === "/v1/locations")
+      return new Response(JSON.stringify({ data: [{ locationId: "01400943", chain: "KROGER", address: { city: "Cincinnati", state: "OH", zipCode: "45202" } }] }));
+    const term = u.searchParams.get("filter.term") ?? "";
+    const item = (price: number | null) => [{ price: price == null ? undefined : { regular: price, promo: 0 }, size: "1.6 oz", inventory: { stockLevel: "HIGH" } }];
+    // otc-1 (Differin): priced. otc-2 (Rite Aid adapalene): Kroger carries a match but no price here.
+    const data = /differin/.test(term)
+      ? [{ productId: "0030299491045", description: "Differin Adapalene Gel 0.1% Acne Treatment", productPageURI: "/p/differin/0030299491045", items: item(14.99) }]
+      : /rite adapalene/.test(term)
+        ? [{ productId: "0001", description: "Rite Aid Adapalene Gel 0.1% 15 g", items: item(null) }]
+        : [];
+    return new Response(JSON.stringify({ data }));
+  }) as typeof fetch;
+
+  const r = await refresh.refreshPrices(NOW, { krogerDeps: { fetch: fetchMock, sleep: async () => {}, minIntervalMs: 0 }, maxRequests: 50 });
+  assert.deepEqual(Object.keys(r.sources), ["kroger"]);
+  assert.deepEqual([...hosts], ["api.kroger.com"]);
+  assert.equal(r.sources.kroger!.matched, 1);
+  assert.equal(r.sources.kroger!.listed, 1);
+
+  const [q] = store.getDisplayQuotes("otc-1", NOW);
+  assert.equal(q.source, "kroger");
+  assert.equal(q.affiliatable, false);
+  assert.equal(q.url, "https://www.kroger.com/p/differin/0030299491045");
+  assert.equal(q.availability, "in_stock");
+  assert.equal(q.location, "Cincinnati, OH 45202");
+  assert.equal(queries.getLivePrices(new Map([["g", ["otc-1"]]]), NOW).get("g")?.price, 14.99);
+
+  const checks = db.all<{ id: string; status: string }>(sql`SELECT product_id AS id, status FROM price_checks WHERE source = 'kroger' ORDER BY product_id`);
+  assert.deepEqual(checks, [
+    { id: "otc-1", status: "matched" },
+    { id: "otc-2", status: "listed" },
+    { id: "otc-3", status: "miss" }, // no known size, so the strict keyword check can't pass
+  ]);
+  // A listed product is due again in a day, like a match, not backed off like a miss.
+  assert.ok(!refresh.pickDueProducts(new Date(NOW.getTime() + 3_600_000), 10, { source: "kroger" }).includes("otc-2"));
+  assert.ok(refresh.pickDueProducts(new Date(NOW.getTime() + 25 * 3_600_000), 10, { source: "kroger" }).includes("otc-2"));
+});
+
+test("a non-affiliate quote from a non-direct source is still never shown", () => {
+  setEnv(true);
+  db.run(sql`INSERT INTO price_quotes (product_id, source, merchant_id, merchant_name, price, currency, url, affiliatable, match_type, match_confidence, fetched_at)
+    VALUES ('otc-1', 'sovrn', 'm', 'Somewhere', 3, 'USD', 'https://x.invalid', 0, 'barcode', 0.9, ${hoursAgo(1)})`);
+  assert.deepEqual(store.getDisplayQuotes("otc-1", NOW), []);
+});
+
+test("Sovrn and Kroger run side by side, each with its own bookkeeping", async () => {
+  setEnv(true);
+  Object.assign(process.env, KROGER_KEYS);
+  const sovrnFetch = (async () => new Response("[]")) as typeof fetch;
+  const krogerFetch = (async (input: string | URL | Request) => {
+    const u = new URL(String(input));
+    if (u.pathname.endsWith("/token")) return new Response(JSON.stringify({ access_token: "t" }));
+    if (u.pathname === "/v1/locations") return new Response(JSON.stringify({ data: [{ locationId: "01400943", chain: "KROGER" }] }));
+    return new Response(JSON.stringify({ data: [] }));
+  }) as typeof fetch;
+  const fast = { sleep: async () => {}, minIntervalMs: 0 };
+  const r = await refresh.refreshPrices(NOW, { deps: { fetch: sovrnFetch, ...fast }, krogerDeps: { fetch: krogerFetch, ...fast }, maxRequests: 50 });
+  assert.deepEqual(Object.keys(r.sources).sort(), ["kroger", "sovrn"]);
+  assert.equal(r.misses, 6);
+  assert.equal(db.get<{ n: number }>(sql`SELECT COUNT(*) AS n FROM price_checks`)!.n, 6);
 });

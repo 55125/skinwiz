@@ -1,43 +1,59 @@
 // The live-price refresh, run hourly by lib/jobs.ts (and by the backfill
-// script). Does nothing at all -- no queries to Sovrn, no writes -- unless
-// both Sovrn keys are set.
+// script). Each configured source runs in turn with its own budget and its
+// own bookkeeping (price_checks is per product + source); with no source
+// configured it does nothing at all -- no queries, no writes.
+//   - Sovrn (both Sovrn keys): SOVRN_MAX_REQUESTS_PER_RUN (default 300, <= 10 req/s)
+//   - Kroger (KROGER_CLIENT_ID + KROGER_CLIENT_SECRET):
+//     KROGER_MAX_REQUESTS_PER_RUN (default 200, <= 5 req/s). Its lookups
+//     double as the Kroger catalog check: "listed" means Kroger carries the
+//     product but our store has no price for it.
 //
-// Each run spends at most SOVRN_MAX_REQUESTS_PER_RUN requests (default 300,
-// at <= 10 req/s), on products that are due (never checked, matched more
-// than 24h ago, or past a miss's back-off), in this order:
+// Each source looks at products that are due for it (never checked, matched
+// or listed more than 24h ago, or past a miss's back-off), in this order:
 //   1. products on someone's shelf, regimen or a clinician plan
 //   2. product pages viewed in the last 7 days, most recent first
 //   3. the rest of the OTC catalog, never-checked first and products with a
 //      barcode or brand page ahead of keyword-only ones
 // Rx rows are never selected. A 401/403, or a 429/5xx that survives the
-// backoff retries, stops the run; the product in hand keeps its old quotes.
+// backoff retries, stops that source's run (the others still run); the
+// product in hand keeps its old quotes.
 import { sql } from "drizzle-orm";
 import { db } from "@/db/client";
-import { maxRequestsPerRun, RECENT_VIEW_MS, sovrnConfig } from "./config";
+import { krogerConfig, krogerMaxRequestsPerRun, maxRequestsPerRun, RECENT_VIEW_MS, sovrnConfig } from "./config";
+import { KrogerSource, type KrogerDeps } from "./kroger";
 import { SovrnSource, type SovrnDeps } from "./sovrn";
 import { loadLookupProducts, saveLookup, saveLookupError } from "./store";
-import { BudgetExhausted, SourceUnavailable, type PriceSource } from "./types";
+import { BudgetExhausted, SourceUnavailable, type PriceSource, type PriceSourceId } from "./types";
 
-export type PriceRefreshReport = {
-  enabled: boolean;
+export type SourceReport = {
   requests: number;
   checked: number;
   matched: number;
+  listed: number;
   misses: number;
   stopped?: string;
 };
 
-const SOURCE = "sovrn";
+/** Totals across sources, plus each source's own figures. */
+export type PriceRefreshReport = SourceReport & {
+  enabled: boolean;
+  sources: Partial<Record<PriceSourceId, SourceReport>>;
+};
 
 // Listed products only: a merged duplicate's barcodes are looked up as its
 // canonical's aliases (lib/canonical.ts), and user rows saved under a
 // duplicate's id stand for the canonical.
-const due = (now: string) => sql`p.is_rx = 0 AND p.canonical_id IS NULL AND NOT EXISTS (
-  SELECT 1 FROM price_checks c WHERE c.product_id = p.id AND c.source = ${SOURCE} AND c.next_check_at > ${now})`;
+const due = (now: string, source: PriceSourceId) => sql`p.is_rx = 0 AND p.canonical_id IS NULL AND NOT EXISTS (
+  SELECT 1 FROM price_checks c WHERE c.product_id = p.id AND c.source = ${source} AND c.next_check_at > ${now})`;
 
-/** Due product ids in priority order, at most `limit`. Exported for tests. */
-export function pickDueProducts(now: Date, limit: number, opts: { sweep?: boolean; only?: string[] } = {}): string[] {
+/** Due product ids for one source in priority order, at most `limit`. Exported for tests. */
+export function pickDueProducts(
+  now: Date,
+  limit: number,
+  opts: { sweep?: boolean; only?: string[]; source?: PriceSourceId } = {},
+): string[] {
   const at = now.toISOString();
+  const SOURCE = opts.source ?? "sovrn";
   const out: string[] = [];
   const seen = new Set<string>();
   const add = (ids: { id: string | null }[]) => {
@@ -49,12 +65,12 @@ export function pickDueProducts(now: Date, limit: number, opts: { sweep?: boolea
   };
   if (opts.only) {
     const list = JSON.stringify(opts.only);
-    add(db.all<{ id: string }>(sql`SELECT p.id FROM products p JOIN json_each(${list}) j ON j.value = p.id WHERE ${due(at)} ORDER BY j.key`));
+    add(db.all<{ id: string }>(sql`SELECT p.id FROM products p JOIN json_each(${list}) j ON j.value = p.id WHERE ${due(at, SOURCE)} ORDER BY j.key`));
     return out;
   }
   add(
     db.all<{ id: string }>(sql`
-      SELECT p.id FROM products p WHERE ${due(at)} AND p.id IN (
+      SELECT p.id FROM products p WHERE ${due(at, SOURCE)} AND p.id IN (
         SELECT COALESCE(d.canonical_id, u.pid) FROM (
           SELECT product_id AS pid FROM shelf_items WHERE status IN ('own', 'want')
           UNION SELECT product_id FROM regimen_items
@@ -68,7 +84,7 @@ export function pickDueProducts(now: Date, limit: number, opts: { sweep?: boolea
     add(
       db.all<{ id: string }>(sql`
         SELECT p.id FROM product_views v JOIN products p ON p.id = v.product_id
-        WHERE v.last_viewed_at >= ${since} AND ${due(at)}
+        WHERE v.last_viewed_at >= ${since} AND ${due(at, SOURCE)}
         ORDER BY v.last_viewed_at DESC LIMIT ${limit}`),
     );
   }
@@ -76,7 +92,7 @@ export function pickDueProducts(now: Date, limit: number, opts: { sweep?: boolea
     add(
       db.all<{ id: string }>(sql`
         SELECT p.id FROM products p LEFT JOIN price_checks c ON c.product_id = p.id AND c.source = ${SOURCE}
-        WHERE ${due(at)}
+        WHERE ${due(at, SOURCE)}
         ORDER BY c.product_id IS NOT NULL,
           (p.source_url IS NOT NULL OR EXISTS (SELECT 1 FROM product_barcodes b WHERE b.product_id = p.id)) DESC,
           c.next_check_at, p.id
@@ -93,34 +109,66 @@ export async function refreshPrices(
     maxProducts?: number;
     only?: string[];
     sweep?: boolean;
+    /** Test hooks for the Sovrn source (and `source` replaces it outright). */
     deps?: SovrnDeps;
     source?: PriceSource;
+    krogerDeps?: KrogerDeps;
     log?: (s: string) => void;
   } = {},
 ): Promise<PriceRefreshReport> {
-  const cfg = sovrnConfig();
-  const report: PriceRefreshReport = { enabled: !!cfg, requests: 0, checked: 0, matched: 0, misses: 0 };
-  if (!cfg) return report;
+  const report: PriceRefreshReport = { enabled: false, requests: 0, checked: 0, matched: 0, listed: 0, misses: 0, sources: {} };
+  const runs: { id: PriceSourceId; budget: { remaining: number }; source: PriceSource }[] = [];
+  const sovrn = sovrnConfig();
+  if (sovrn) {
+    const budget = { remaining: opts.maxRequests ?? maxRequestsPerRun() };
+    runs.push({ id: "sovrn", budget, source: opts.source ?? new SovrnSource(sovrn, { ...opts.deps, budget }) });
+  }
+  const kroger = krogerConfig();
+  if (kroger) {
+    const budget = { remaining: opts.maxRequests ?? krogerMaxRequestsPerRun() };
+    runs.push({ id: "kroger", budget, source: new KrogerSource(kroger, { ...opts.krogerDeps, budget }) });
+  }
 
-  const budget = { remaining: opts.maxRequests ?? maxRequestsPerRun() };
+  for (const run of runs) {
+    const r = await refreshSource(now, run.id, run.source, run.budget, opts);
+    report.enabled = true;
+    report.sources[run.id] = r;
+    report.requests += r.requests;
+    report.checked += r.checked;
+    report.matched += r.matched;
+    report.listed += r.listed;
+    report.misses += r.misses;
+    if (r.stopped) report.stopped = [report.stopped, `${run.id}: ${r.stopped}`].filter(Boolean).join(" ");
+  }
+  return report;
+}
+
+async function refreshSource(
+  now: Date,
+  id: PriceSourceId,
+  source: PriceSource,
+  budget: { remaining: number },
+  opts: { maxProducts?: number; only?: string[]; sweep?: boolean; log?: (s: string) => void },
+): Promise<SourceReport> {
+  const report: SourceReport = { requests: 0, checked: 0, matched: 0, listed: 0, misses: 0 };
   const start = budget.remaining;
-  const source = opts.source ?? new SovrnSource(cfg, { ...opts.deps, budget });
-  const ids = pickDueProducts(now, Math.min(budget.remaining, opts.maxProducts ?? Infinity), { only: opts.only, sweep: opts.sweep });
+  const ids = pickDueProducts(now, Math.min(budget.remaining, opts.maxProducts ?? Infinity), { only: opts.only, sweep: opts.sweep, source: id });
 
   try {
     for (const p of loadLookupProducts(ids)) {
       if (budget.remaining <= 0) break;
       try {
         const result = await source.lookup(p, now);
-        saveLookup(p.id, SOURCE, result, now);
+        saveLookup(p.id, id, result, now);
         report.checked++;
         if (result.status === "matched") report.matched++;
+        else if (result.status === "listed") report.listed++;
         else report.misses++;
-        opts.log?.(`${p.id}: ${result.status}${result.quotes.length ? ` (${result.quotes.length} offers)` : ""}`);
+        opts.log?.(`${id} ${p.id}: ${result.status}${result.quotes.length ? ` (${result.quotes.length} offers)` : ""}`);
       } catch (err) {
         if (err instanceof BudgetExhausted) break;
         if (err instanceof SourceUnavailable) {
-          if (err.status !== 401 && err.status !== 403) saveLookupError(p.id, SOURCE, now);
+          if (err.status !== 401 && err.status !== 403) saveLookupError(p.id, id, now);
           report.stopped = err.message;
           break;
         }

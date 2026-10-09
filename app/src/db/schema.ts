@@ -875,14 +875,15 @@ export const productBarcodes = sqliteTable(
 // One live offer per product + price source + merchant, upserted by the
 // refresh job (lib/prices/refresh.ts). Not seeded; survives deploys. No FK
 // to products so a reseed never trips over it (seed.ts deletes orphans
-// instead). `url` is the source's own tracked affiliate deeplink. Quotes
-// older than 72h are never shown (lib/prices/store.ts).
+// instead). `url` is the source's own tracked affiliate deeplink, or for a
+// direct retailer source (Kroger, affiliatable = false) its plain product
+// page. Quotes older than 72h are never shown (lib/prices/store.ts).
 export const priceQuotes = sqliteTable(
   "price_quotes",
   {
     id: integer("id").primaryKey({ autoIncrement: true }),
     productId: text("product_id").notNull(),
-    source: text("source").notNull(), // "sovrn" (later "impact" | "cj" | "kroger")
+    source: text("source").notNull(), // "sovrn" | "kroger" (later "impact" | "cj")
     merchantId: text("merchant_id").notNull(),
     merchantName: text("merchant_name").notNull(),
     price: real("price").notNull(),
@@ -898,6 +899,10 @@ export const priceQuotes = sqliteTable(
     packAmount: real("pack_amount"),
     packUnit: text("pack_unit"), // "g" | "mL" | "count"
     fetchedAt: text("fetched_at").notNull(),
+    // In-store stock and the store the price is for, from sources that are
+    // per store (Kroger); null for Sovrn.
+    availability: text("availability"), // "in_stock" | "low" | "out_of_stock"
+    location: text("location"),
   },
   (table) => [uniqueIndex("price_quotes_product_source_merchant_idx").on(table.productId, table.source, table.merchantId)],
 );
@@ -911,7 +916,7 @@ export const priceChecks = sqliteTable(
     productId: text("product_id").notNull(),
     source: text("source").notNull(),
     checkedAt: text("checked_at").notNull(),
-    status: text("status").notNull(), // "matched" | "miss" | "error"
+    status: text("status").notNull(), // "matched" | "listed" (carried, no price) | "miss" | "error"
     misses: integer("misses").notNull().default(0),
     nextCheckAt: text("next_check_at").notNull(),
   },

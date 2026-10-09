@@ -6,6 +6,7 @@ import { FlaskConical, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { ingredientHref } from "@/components/ingredient-link";
 
 type Suggestion = { key: string; kind: "ingredient" | "product" | "all"; label: string; sub?: string | null; href: string };
 
@@ -73,7 +74,7 @@ export function SearchBar({
           kind: "ingredient",
           label: i.name,
           sub: `Ingredient · ${i.productCount.toLocaleString()} products`,
-          href: `/ingredient/${encodeURIComponent(i.id)}`,
+          href: ingredientHref(i.id),
         })),
         ...current.products.map((p): Suggestion => ({
           key: `p:${p.id}`,

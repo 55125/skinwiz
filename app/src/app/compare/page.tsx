@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Check, X, Minus } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
+import { IngredientLink } from "@/components/ingredient-link";
 import { ComparePicker } from "@/components/compare-picker";
 import { DualScoreBadges } from "@/components/score-badge";
 import { Badge } from "@/components/ui/badge";
@@ -212,15 +213,12 @@ function Chips({ items, tone }: { items: { ingredientId: string; rawName: string
     <ul className="flex flex-wrap gap-1 text-sm">
       {items.map((i) => (
         <li key={i.ingredientId}>
-          <Link
-            href={`/ingredient/${encodeURIComponent(i.ingredientId)}`}
-            className={cn(
-              "rounded-md px-1.5 py-0.5 hover:underline",
-              tone === "both" ? "bg-muted" : "bg-brand-soft text-brand-foreground",
-            )}
+          <IngredientLink
+            id={i.ingredientId}
+            className={cn("rounded-md px-1.5 py-0.5", tone === "both" ? "bg-muted" : "bg-brand-soft text-brand-foreground")}
           >
             {i.rawName}
-          </Link>
+          </IngredientLink>
         </li>
       ))}
     </ul>

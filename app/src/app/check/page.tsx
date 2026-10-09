@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { ProductGrid } from "@/components/product-grid";
+import { IngredientLink } from "@/components/ingredient-link";
 import { FREE_FROM_CHECKS, computeFreeFromFlags, ingredientFailsCheck, type FreeFromCheck } from "@/db/ingredient-flags";
 import { CONTACT_ALLERGENS, allergensInIngredient, allergensInList, getAllergen, groupsContaining } from "@/db/contact-allergens";
 import { avoidConflicts, type AvoidableProduct } from "@/lib/avoid-shared";
@@ -32,6 +33,17 @@ const GROUPS: { title: string; category: FreeFromCheck["category"] }[] = [
   { title: "Clean-beauty preferences", category: "clean" },
 ];
 
+// Pasted names, each linked to its ingredient page when we have one worth
+// visiting (the same rule as the highlighted list above).
+function PastedNames({ items }: { items: { raw: string; slug: string; linkable: boolean }[] }) {
+  return items.map((i, n) => (
+    <span key={i.slug}>
+      {n > 0 && ", "}
+      {i.linkable ? <IngredientLink id={i.slug}>{i.raw}</IngredientLink> : i.raw}
+    </span>
+  ));
+}
+
 export default async function CheckPage({ searchParams }: { searchParams: Promise<{ list?: string }> }) {
   const { list: rawList } = await searchParams;
   const text = (rawList ?? "").slice(0, MAX_CHARS);
@@ -50,16 +62,16 @@ export default async function CheckPage({ searchParams }: { searchParams: Promis
   const enough = items.length >= 4;
   const results = FREE_FROM_CHECKS.map((check) => ({
     check,
-    hits: items.filter((i) => ingredientFailsCheck(check, i.raw)).map((i) => i.raw),
+    hits: items.filter((i) => ingredientFailsCheck(check, i.raw)),
   }));
   // Allergens: matched per name for the "listed as" mapping, and on the
   // whole text for presence (chemical names with commas survive that way).
   const allergenHits = enough ? allergensInList(text) : [];
   const allergenRows = allergenHits.flatMap((id) => {
     const a = getAllergen(id);
-    return a ? [{ allergen: a, names: items.filter((i) => allergensInIngredient(i.raw).includes(id)).map((i) => i.raw) }] : [];
+    return a ? [{ allergen: a, names: items.filter((i) => allergensInIngredient(i.raw).includes(id)) }] : [];
   });
-  const flaggedNames = new Set([...results.flatMap((r) => r.hits), ...allergenRows.flatMap((r) => r.names)]);
+  const flaggedNames = new Set([...results.flatMap((r) => r.hits), ...allergenRows.flatMap((r) => r.names)].map((i) => i.raw));
   const found = enough ? avoidConflicts({ freeFromFlags: computeFreeFromFlags(text) ?? [], allergenHits }, avoidIds) : null;
   // Patch-test results name the mix ("Fragrance mix I"), labels name the
   // chemicals: say which mixes the allergens found here belong to.
@@ -196,12 +208,9 @@ export default async function CheckPage({ searchParams }: { searchParams: Promis
                 return (
                   <li key={i.slug} className="inline-flex">
                     {i.linkable ? (
-                      <Link
-                        href={`/ingredient/${encodeURIComponent(i.slug)}`}
-                        className={cn(cls, "underline decoration-border underline-offset-4 hover:decoration-brand")}
-                      >
+                      <IngredientLink id={i.slug} className={cls}>
                         {i.raw}
-                      </Link>
+                      </IngredientLink>
                     ) : (
                       <span className={cls}>{i.raw}</span>
                     )}
@@ -240,7 +249,7 @@ export default async function CheckPage({ searchParams }: { searchParams: Promis
                       </p>
                       {hits.length > 0 && (
                         <p className="mt-1.5 text-xs text-muted-foreground">
-                          {hits.slice(0, 8).join(", ")}
+                          <PastedNames items={hits.slice(0, 8)} />
                           {hits.length > 8 ? ` +${hits.length - 8} more` : ""}
                         </p>
                       )}
@@ -271,7 +280,7 @@ export default async function CheckPage({ searchParams }: { searchParams: Promis
                         {allergen.name}
                       </Link>
                     </p>
-                    {names.length > 0 && <p className="mt-1.5 text-xs text-muted-foreground">Listed as {names.slice(0, 4).join(", ")}</p>}
+                    {names.length > 0 && <p className="mt-1.5 text-xs text-muted-foreground">Listed as <PastedNames items={names.slice(0, 4)} /></p>}
                     {allergen.id === "fragrance" && (
                       <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">
                         May contain any fragrance allergen without naming it.

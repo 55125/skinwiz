@@ -6,7 +6,8 @@ import { OriginChips } from "@/components/origin-chips";
 import { parseOrigin } from "@/lib/origin-shared";
 import { FilterChip } from "@/components/filter-chip";
 import { PageHeader } from "@/components/page-header";
-import { searchOriginCounts, searchProducts, searchProductsCount, searchActives, getConcerns } from "@/lib/queries";
+import { searchOriginCounts, searchProducts, searchProductsCount, searchActives, getConcerns, getIngredient } from "@/lib/queries";
+import { ingredientHref } from "@/components/ingredient-link";
 import { TRUST_TIERS } from "@/lib/trust-tiers";
 import type { Metadata } from "next";
 import { parseFreeParam } from "@/lib/avoid-shared";
@@ -116,7 +117,7 @@ export default async function SearchPage({
             {activeResults.map((a) => (
               <Link
                 key={a.id}
-                href={`/browse?active=${encodeURIComponent(a.id)}`}
+                href={getIngredient(a.id) ? ingredientHref(a.id) : `/browse?active=${encodeURIComponent(a.id)}`}
                 className="inline-flex h-8 items-center rounded-full border bg-card px-3 text-sm transition-colors hover:border-brand/40 hover:bg-brand-soft"
               >
                 {a.canonicalName}

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound, permanentRedirect, redirect } from "next/navigation";
-import { AlertTriangle, ChevronLeft, ExternalLink, Info, PlaySquare, Music2, Camera, ShieldCheck } from "lucide-react";
+import { AlertTriangle, ChevronLeft, ExternalLink, Info, Music2, Camera, ShieldCheck } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -25,7 +25,7 @@ import {
   bestProductImage,
   productImages,
 } from "@/lib/queries";
-import { getScoresForProducts } from "@/lib/scoring";
+import { DERM_PANEL_LAUNCHED, getScoresForProducts } from "@/lib/scoring";
 import { getVideoSearchLinks } from "@/lib/video-links";
 import { dataSourceBadge } from "@/lib/data-source";
 import { FREE_FROM_CHECKS, getFreeFromCheck, ingredientFailsCheck } from "@/db/ingredient-flags";
@@ -38,7 +38,8 @@ import { getSessionOutcome } from "@/lib/outcomes";
 import { readAvoidIds, avoidVerdict, avoidedIngredientName } from "@/lib/avoid";
 import { avoidConflicts } from "@/lib/avoid-shared";
 import { AllergenFindings } from "@/components/allergen-findings";
-import { activeName, describeStrengths } from "@/lib/strength-display";
+import { activeName, describeStrengths, labelAmounts, labelQuantityCount } from "@/lib/strength-display";
+import { activeUse } from "@/db/active-uses";
 import { formatPct } from "@/db/strength";
 import { monographStatus, formatRangeWithUse } from "@/db/monograph-ranges";
 import { brandDirectStatus } from "@/db/labeled-actives";
@@ -91,6 +92,8 @@ import { getDisplayQuotes, getKrogerImages, recordProductView } from "@/lib/pric
 import { outboundLink } from "@/lib/prices/redirect";
 import { formatPerUnit, sortByUnitPrice, storeBrandSavings, type LivePrice } from "@/lib/prices/unit";
 import { PriceList, StoreBrandSavingsNote } from "@/components/price-list";
+import { QuickBuyRow } from "@/components/quick-buy-row";
+import { quickBuyLinks } from "@/lib/quick-buy";
 
 // Crawlers and tools don't count as a "recently viewed" signal for price refreshes.
 const BOT_UA = /bot|crawl|spider|slurp|preview|fetch|curl|wget|python|headless|monitor/i;
@@ -105,6 +108,16 @@ function FreeFromLink({ id }: { id: string }) {
       <Badge variant="outline" className={`${FREE_FROM_BADGE} hover:bg-emerald-50 dark:hover:bg-emerald-950/40`}>
         {getFreeFromCheck(id)?.label ?? id}
       </Badge>
+    </Link>
+  );
+}
+
+// The product page's notes stay one line each; the method behind them
+// (sources, matching, what a check can't see) is on the About page.
+function HowWeCheck() {
+  return (
+    <Link href="/about#how-we-check" className="font-medium text-brand hover:underline">
+      How we check
     </Link>
   );
 }
@@ -209,6 +222,14 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
   );
   const brandLine = productBrand(product);
   const brandLink = product.sourceUrl ? outboundLink(product.sourceUrl, { placement: "product", rel: "noopener noreferrer", gpc }) : null;
+  const quickBuy = quickBuyLinks({
+    quotes,
+    manualLinks,
+    affiliateLinks,
+    brandLink,
+    brandName: product.manufacturer ? displayManufacturer(product.manufacturer) : null,
+    retailerSearches,
+  });
   if (livePricesEnabled() && !BOT_UA.test((await headers()).get("user-agent") ?? "")) recordProductView(product.id);
   const equivalents = equivalenceGroup ? { rows: [], total: 0 } : getEquivalentProducts(product);
   const hsaEligible = isHsaEligible(product.id);
@@ -254,6 +275,16 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
         .filter((id) => product.strengths && id in product.strengths)
         .map((id) => ({ id, pct: product.strengths![id], monograph: monographStatus(id, product.strengths![id], product) }))
     : [];
+
+  // Label actives the strength rows don't cover, and whether the label's own
+  // line still says something the rows don't (more amounts than rows, or a
+  // kit's per-part lines).
+  const strengthAmounts = isDrugLabel ? labelAmounts(product.activeIngredientText) : {};
+  const uncoveredActives = isDrugLabel && strengthRows.length > 0 ? labelActives.filter((r) => !strengthRows.some((s) => s.id === r.ingredientId)) : [];
+  const showLabelLine =
+    isDrugLabel &&
+    strengthRows.length > 0 &&
+    (uncoveredActives.length > 0 || (product.activeIngredientText ?? "").includes("|") || labelQuantityCount(product.activeIngredientText) !== strengthRows.length);
 
   const brandStatus = product.dataSource === "brand_direct" ? brandDirectStatus(product) : null;
 
@@ -388,22 +419,36 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
             }
           />
 
-          <DualScoreBadges dermScore={dermScore} audienceScore={audienceScore} />
+          {/* No score card until there is a score: "Not enough reports yet"
+              on nearly every product was a row of nothing. The outcome form
+              below says how the score is made. */}
+          {(audienceScore.status === "scored" || (DERM_PANEL_LAUNCHED && dermScore.status === "scored")) && (
+            <DualScoreBadges dermScore={dermScore} audienceScore={audienceScore} />
+          )}
 
-          <RegimenButton
-            productId={product.id}
-            initialSlot={regimenSlot}
-            suggestedSlot={slotSuggestion.slot}
-            suggestedReason={slotSuggestion.reason}
-          />
+          {/* Add to regimen and the shelf pills share a row (wrapping on
+              phones); once it's in the regimen, the regimen card takes the
+              full width above the pills. */}
+          <div className={regimenSlot === null ? "flex flex-wrap items-center gap-2" : "space-y-3"}>
+            <RegimenButton
+              productId={product.id}
+              initialSlot={regimenSlot}
+              suggestedSlot={slotSuggestion.slot}
+              suggestedReason={slotSuggestion.reason}
+            />
 
-          <ShelfButton
-            key={`${shelfEntry?.status ?? "none"}-${shelfEntry?.opened ?? false}-${regimenSlot ?? "out"}`}
-            productId={product.id}
-            initialStatus={shelfEntry?.status ?? null}
-            initialOpened={shelfEntry?.opened ?? false}
-            inRegimen={regimenSlot !== null}
-          />
+            <ShelfButton
+              key={`${shelfEntry?.status ?? "none"}-${shelfEntry?.opened ?? false}-${regimenSlot ?? "out"}`}
+              productId={product.id}
+              initialStatus={shelfEntry?.status ?? null}
+              initialOpened={shelfEntry?.opened ?? false}
+              inRegimen={regimenSlot !== null}
+            />
+          </div>
+
+          {/* The store buttons up top; the full Where to buy section below
+              keeps sizes, stock and per-store notes. */}
+          <QuickBuyRow links={quickBuy} moreHref="#where-to-buy" />
 
           {avoid?.status === "conflicts" && (
             <Alert className="border-red-300 bg-red-50 dark:border-red-900 dark:bg-red-950/40">
@@ -451,8 +496,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
           )}
           {avoid?.status === "unassessed" && (
             <p className="rounded-xl border border-dashed px-3.5 py-2.5 text-sm text-muted-foreground">
-              Couldn&apos;t check this product against your avoid list — no full ingredient list is available for
-              it, so it&apos;s unknown, not clear.
+              Couldn&apos;t check against your avoid list: there&apos;s no full ingredient list, so it&apos;s unknown, not clear.
             </p>
           )}
 
@@ -483,68 +527,19 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
                 <p className="text-sm text-muted-foreground">Nothing in this ingredient list stands out for or against your profile.</p>
               )}
               <p className="text-xs text-muted-foreground">
-                A rule-based estimate from the published ingredient list and your{" "}
+                A rule-based estimate from the ingredient list and your{" "}
                 <Link href="/profile" className="underline">
                   profile
                 </Link>
-                , not a prediction of how your skin will react.
+                , not a prediction. <HowWeCheck />
               </p>
             </div>
           ) : (
             !hasProfile(profile) && (
-              <Link href="/profile" className="block rounded-xl border border-dashed px-3.5 py-2.5 text-sm text-muted-foreground hover:bg-muted">
-                Tell us your skin type and concerns to see how well this product matches you →
+              <Link href="/profile" className="block w-fit text-sm font-medium text-brand hover:underline">
+                Add your skin type and concerns to see your match →
               </Link>
             )
-          )}
-
-          {strengthRows.length > 0 && (
-            <div className="rounded-xl border bg-card p-4">
-              <h2 className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                Strength (from the FDA label)
-              </h2>
-              <ul className="space-y-2">
-                {strengthRows.map((row) => (
-                  <li key={row.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
-                    <span className="font-semibold tabular-nums">
-                      <IngredientLink id={row.id}>{activeName(row.id)}</IngredientLink> {formatPct(row.pct)}
-                    </span>
-                    {row.monograph && (
-                      <Badge
-                        variant="outline"
-                        title={`${row.monograph.range.cite}: ${formatRangeWithUse(row.monograph.range)}`}
-                        className={
-                          row.monograph.status === "within"
-                            ? "border-emerald-300 text-emerald-700 dark:border-emerald-900 dark:text-emerald-400"
-                            : "border-amber-300 text-amber-700 dark:border-amber-900 dark:text-amber-400"
-                        }
-                      >
-                        {row.monograph.status === "within"
-                          ? `Within FDA OTC monograph range (${formatRangeWithUse(row.monograph.range)})`
-                          : `${row.monograph.status === "above" ? "Above" : "Below"} FDA OTC monograph range (${formatRangeWithUse(row.monograph.range)})`}
-                      </Badge>
-                    )}
-                  </li>
-                ))}
-              </ul>
-              {strengthRows.some((r) => r.monograph?.status === "above") && (
-                <p className="mt-2 rounded-lg border border-amber-300 bg-amber-50 p-2.5 text-xs text-amber-900 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
-                  {strengthRows
-                    .filter((r) => r.monograph?.status === "above")
-                    .map((r) => `${activeName(r.id)} is listed at ${formatPct(r.pct)}, above the ${formatPct(r.monograph!.range.max)} OTC limit.`)
-                    .join(" ")}{" "}
-                  That&apos;s usually a filing error, so check the strength on the package. Until it&apos;s clear, we leave this product
-                  off our concern lists.
-                </p>
-              )}
-              <p className="mt-2 text-xs text-muted-foreground">
-                The monograph range is the strength the FDA&apos;s OTC monograph allows for this active in products sold
-                without their own FDA approval — a regulatory fact, not a rating. A strength outside it usually means
-                the label states the active a different way (for example, as a coal tar solution rather than coal tar,
-                or an antiperspirant salt weighed with its water), the product is sold under its own FDA approval
-                instead of the monograph, or the listing data are wrong. Check the label on the package.
-              </p>
-            </div>
           )}
 
           {ewgScore && (
@@ -564,7 +559,89 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
             <span className="sr-only"> (opens in new tab)</span></a>
           )}
 
-          {product.activeIngredientText && (
+          {/* One card per active: name, strength (and the label's own amount),
+              FDA range status and what it's for; the range explanation sits
+              behind a disclosure. */}
+          {strengthRows.length > 0 && (
+            <div className="rounded-xl border bg-card p-4">
+              <h2 className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                {strengthRows.length + uncoveredActives.length > 1 ? "Active ingredients" : "Active ingredient"} (from{" "}
+                {isDrugLabel ? "FDA label" : "the label"})
+              </h2>
+              <ul className="space-y-2.5">
+                {strengthRows.map((row) => {
+                  const note = evidenceNotes.find((n) => n.activeId === row.id);
+                  const use = activeUse(row.id) ?? note?.summary;
+                  return (
+                    <li key={row.id} className="space-y-0.5 text-sm">
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                        <span className="font-semibold tabular-nums">
+                          <IngredientLink id={row.id}>{activeName(row.id)}</IngredientLink> {formatPct(row.pct)}
+                          {strengthAmounts[row.id] && (
+                            <span className="font-normal text-muted-foreground"> ({strengthAmounts[row.id]})</span>
+                          )}
+                        </span>
+                        {row.monograph && (
+                          <Badge
+                            variant="outline"
+                            title={`${row.monograph.range.cite}: ${formatRangeWithUse(row.monograph.range)}`}
+                            className={
+                              row.monograph.status === "within"
+                                ? "border-emerald-300 text-emerald-700 dark:border-emerald-900 dark:text-emerald-400"
+                                : "border-amber-300 text-amber-700 dark:border-amber-900 dark:text-amber-400"
+                            }
+                          >
+                            {row.monograph.status === "within" ? "Within" : row.monograph.status === "above" ? "Above" : "Below"} the FDA range
+                          </Badge>
+                        )}
+                      </div>
+                      {use && <p className="leading-relaxed text-muted-foreground">{use}</p>}
+                    </li>
+                  );
+                })}
+              </ul>
+              {strengthRows.some((r) => r.monograph?.status === "above") && (
+                <p className="mt-2 rounded-lg border border-amber-300 bg-amber-50 p-2.5 text-xs text-amber-900 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
+                  {strengthRows
+                    .filter((r) => r.monograph?.status === "above")
+                    .map((r) => `${activeName(r.id)} is listed at ${formatPct(r.pct)}, above the ${formatPct(r.monograph!.range.max)} OTC limit.`)
+                    .join(" ")}{" "}
+                  That&apos;s usually a filing error, so check the strength on the package. Until it&apos;s clear, we leave this product
+                  off our concern lists.
+                </p>
+              )}
+              {uncoveredActives.length > 0 && (
+                <IngredientList items={uncoveredActives} className="mt-2" likes={profile.likes} dislikes={profile.dislikes} />
+              )}
+              {showLabelLine && (
+                <p className="mt-2 text-xs text-muted-foreground">On the label: {product.activeIngredientText}</p>
+              )}
+              <ActiveNotes notes={evidenceNotes.filter((n) => !strengthRows.some((r) => r.id === n.activeId))} className="mt-4 border-t pt-4" />
+              {strengthRows.some((r) => r.monograph) && (
+                <details className="group/fda mt-3 text-xs text-muted-foreground">
+                  <summary className="w-fit cursor-pointer font-medium text-brand">What does this mean?</summary>
+                  <ul className="mt-1.5 space-y-0.5">
+                    {strengthRows
+                      .filter((r) => r.monograph)
+                      .map((r) => (
+                        <li key={r.id}>
+                          {activeName(r.id)}: the FDA OTC monograph range is {formatRangeWithUse(r.monograph!.range)} ({r.monograph!.range.cite}).
+                        </li>
+                      ))}
+                  </ul>
+                  <p className="mt-1.5">
+                    The monograph range is the strength the FDA&apos;s OTC monograph allows for this active in products sold
+                    without their own FDA approval — a regulatory fact, not a rating. A strength outside it usually means
+                    the label states the active a different way (for example, as a coal tar solution rather than coal tar,
+                    or an antiperspirant salt weighed with its water), the product is sold under its own FDA approval
+                    instead of the monograph, or the listing data are wrong. Check the label on the package.
+                  </p>
+                </details>
+              )}
+            </div>
+          )}
+
+          {!(isDrugLabel && strengthRows.length > 0) && product.activeIngredientText && (
             <div className="rounded-xl border bg-card p-4">
               <h2 className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                 {isDrugLabel
@@ -587,14 +664,13 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
               )}
               {!isDrugLabel && ingredientRows.length > 0 && (
                 <p className="mt-2 text-xs text-muted-foreground">
-                  Tap any ingredient to see what it is and every product that contains it. Bold items are actives
-                  we track.
+                  Tap an ingredient for what it is and where else it&apos;s used. Bold ones are actives we track.
                 </p>
               )}
-              <ActiveNotes notes={evidenceNotes} className="mt-4 border-t pt-4" />
+              <ActiveNotes notes={evidenceNotes.filter((n) => !strengthRows.some((r) => r.id === n.activeId))} className="mt-4 border-t pt-4" />
             </div>
           )}
-          {!product.activeIngredientText && evidenceNotes.length > 0 && (
+          {strengthRows.length === 0 && !product.activeIngredientText && evidenceNotes.length > 0 && (
             <div className="rounded-xl border bg-card p-4">
               <ActiveNotes notes={evidenceNotes} />
             </div>
@@ -665,8 +741,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
                 </div>
               )}
               <p className="mt-2 text-xs text-muted-foreground">
-                Computed from the published ingredient list above, not a certification — not exhaustive, and not a
-                substitute for checking your own known allergens.
+                From the ingredient list, not a certification; check your own allergens too. <HowWeCheck />
               </p>
             </div>
           )}
@@ -685,9 +760,8 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
           <Info className="h-4 w-4 text-amber-600" />
           <AlertTitle>Community-sourced listing, not FDA-verified</AlertTitle>
           <AlertDescription className="text-[13px]">
-            This product&apos;s data comes from Open Beauty Facts, a crowd-edited database — anyone can
-            submit or edit an entry. Unlike the rest of the catalog, this listing hasn&apos;t been
-            independently verified. Ingredient names and amounts may be incomplete or inaccurate. Data from{" "}
+            Anyone can edit this entry and it hasn&apos;t been verified, so names and amounts may be incomplete or
+            wrong. Data from{" "}
             <a href="https://world.openbeautyfacts.org" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2">
               Open Beauty Facts
             </a>
@@ -695,7 +769,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
             <a href="https://opendatacommons.org/licenses/odbl/1-0/" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2">
               Open Database License
             </a>
-            .
+            . <HowWeCheck />
           </AlertDescription>
         </Alert>
       )}
@@ -706,9 +780,8 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
           <AlertTitle>Third-party listing, not from the manufacturer</AlertTitle>
           <AlertDescription className="text-[13px]">
             {product.manufacturer ? displayManufacturer(product.manufacturer) : "The brand"} doesn&apos;t publish this
-            product&apos;s ingredient list, so it comes from independent ingredient databases that agree with each other.
-            It hasn&apos;t been checked against the package, and older stock may have a different formula. Check the
-            label if an ingredient matters to you.
+            list; it&apos;s from independent databases that agree, not checked against the package, and older stock may
+            differ. <HowWeCheck />
           </AlertDescription>
         </Alert>
       )}
@@ -718,24 +791,16 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
           <Info className="h-4 w-4 text-sky-600" />
           <AlertTitle>Sourced directly from the manufacturer</AlertTitle>
           <AlertDescription className="text-[13px]">
-            This ingredient list comes from {product.manufacturer ? displayManufacturer(product.manufacturer) : "the brand"}&apos;s own published
-            product page, not a crowd-edited database.{" "}
-            {brandStatus?.kind === "drug" ? (
-              <>
-                {brandStatus.drugActiveIds.length > 0
-                  ? `The page labels ${brandStatus.drugActiveIds.map((id) => activeName(id)).join(", ")} as the active ingredient${brandStatus.drugActiveIds.length > 1 ? "s" : ""}, so this is sold as an OTC drug.`
-                  : "The page shows a Drug Facts panel, so this is sold as an OTC drug."}
-                The list is the manufacturer&apos;s own disclosed claim, not the FDA drug label; check the Drug Facts
-                panel on the package.
-              </>
-            ) : brandStatus?.kind === "drug-ingredient" ? (
-              <>It isn&apos;t an FDA drug filing, but it is the manufacturer&apos;s own disclosed claim.</>
-            ) : (
-              <>
-                It isn&apos;t an FDA drug filing (none of its tracked actives has OTC monograph status), but it is the
-                manufacturer&apos;s own disclosed claim.
-              </>
-            )}
+            From {product.manufacturer ? displayManufacturer(product.manufacturer) : "the brand"}&apos;s own product page, not a
+            crowd-edited database.{" "}
+            {brandStatus?.kind === "drug"
+              ? brandStatus.drugActiveIds.length > 0
+                ? `It labels ${brandStatus.drugActiveIds.map((id) => activeName(id)).join(", ")} as the active${brandStatus.drugActiveIds.length > 1 ? "s" : ""}, so it's an OTC drug, but this isn't the FDA label: check the Drug Facts panel on the package.`
+                : "It shows a Drug Facts panel, so it's an OTC drug, but this isn't the FDA label: check the Drug Facts panel on the package."
+              : brandStatus?.kind === "drug-ingredient"
+                ? "Not an FDA drug filing."
+                : "Not an FDA drug filing (no tracked active has OTC monograph status)."}{" "}
+            <HowWeCheck />
           </AlertDescription>
         </Alert>
       )}
@@ -789,7 +854,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
               {equivalents.total.toLocaleString()} other {equivalents.total === 1 ? "product lists" : "products list"} the
               identical active ingredient{product.activeIds.length > 1 ? "s" : ""} at the identical strength
               {product.dosageForm ? ` in the same form (${product.dosageForm.toLowerCase()})` : ""} on the FDA label — often a
-              store brand or generic. Inactive ingredients, texture, and price can still differ.
+              store brand or generic. Inactive ingredients, texture and price can differ.
               {isSunscreen(product) &&
                 " For sunscreens, SPF and broad-spectrum protection are tested on each finished product, so the same filters don't guarantee the same SPF — check each label."}
             </p>
@@ -817,9 +882,8 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
           <div className="space-y-1">
             <h2 className="text-xl font-semibold">Similar formulas</h2>
             <p className="text-sm text-muted-foreground">
-              Products whose ingredient lists overlap most with this one, weighting distinctive ingredients over
-              common ones like water and glycerin. Similar lists are not identical formulas — concentrations,
-              texture and price differ.{avoidIds.length > 0 ? " Only formulas clear of everything on your avoid list are shown." : ""}
+              Ingredient lists that overlap most with this one. Similar isn&apos;t identical: amounts, texture and price
+              differ.{avoidIds.length > 0 ? " Only formulas clear of your avoid list are shown." : ""}
             </p>
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
@@ -846,7 +910,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
         </section>
       )}
 
-      <section className="space-y-4">
+      <section id="where-to-buy" className="scroll-mt-24 space-y-4">
         <h2 className="text-xl font-semibold">Where to buy</h2>
         {/* Live prices (lib/prices): only while configured, only quotes under 72h old. */}
         {quotes.length > 0 && <PriceList quotes={quotes} />}
@@ -953,9 +1017,10 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
         )}
       </section>
 
-      <section className="space-y-4">
-        <h2 className="text-xl font-semibold">Video reviews</h2>
-        {videoLinks.length > 0 ? (
+      {/* With nothing indexed, the review search links are one line rather than a whole section. */}
+      {videoLinks.length > 0 ? (
+        <section className="space-y-4">
+          <h2 className="text-xl font-semibold">Video reviews</h2>
           <div className="grid gap-3 sm:grid-cols-3">
             {videoLinks.map((v) => (
               <a
@@ -976,44 +1041,48 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
               <span className="sr-only"> (opens in new tab)</span></a>
             ))}
           </div>
-        ) : (
-          <p className="text-sm text-muted-foreground">
-            We haven&apos;t indexed specific videos for this product yet — search directly:
-          </p>
-        )}
-        <div className="flex flex-wrap gap-2">
-          {videoLinks.length === 0 && (
+          <div className="flex flex-wrap gap-2">
             <a
-              href={videoSearchLinks.youtube}
+              href={videoSearchLinks.tiktok}
               target="_blank"
               rel="noopener noreferrer"
               className={buttonVariants({ variant: "outline", size: "sm" })}
             >
-              <PlaySquare className="h-3.5 w-3.5" /> YouTube
+              <Music2 className="h-3.5 w-3.5" /> TikTok
             <span className="sr-only"> (opens in new tab)</span></a>
-          )}
-          <a
-            href={videoSearchLinks.tiktok}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={buttonVariants({ variant: "outline", size: "sm" })}
-          >
-            <Music2 className="h-3.5 w-3.5" /> TikTok
-          <span className="sr-only"> (opens in new tab)</span></a>
-          <a
-            href={videoSearchLinks.instagram}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={buttonVariants({ variant: "outline", size: "sm" })}
-          >
-            <Camera className="h-3.5 w-3.5" /> Instagram
-          <span className="sr-only"> (opens in new tab)</span></a>
-        </div>
-        <p className="text-xs italic text-muted-foreground">
-          These are search links, not vetted reviews — {SITE_NAME} doesn&apos;t screen or endorse social
-          content. Only the scores above come from feedback collected on {SITE_NAME}.
+            <a
+              href={videoSearchLinks.instagram}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={buttonVariants({ variant: "outline", size: "sm" })}
+            >
+              <Camera className="h-3.5 w-3.5" /> Instagram
+            <span className="sr-only"> (opens in new tab)</span></a>
+          </div>
+          <p className="text-xs italic text-muted-foreground">
+            These are search links, not vetted reviews — {SITE_NAME} doesn&apos;t screen or endorse social
+            content.
+          </p>
+        </section>
+      ) : (
+        <p className="text-sm text-muted-foreground">
+          Looking for reviews? Search{" "}
+          {([
+            ["YouTube", videoSearchLinks.youtube],
+            ["TikTok", videoSearchLinks.tiktok],
+            ["Instagram", videoSearchLinks.instagram],
+          ] as const).map(([label, href], i) => (
+            <span key={label}>
+              {i === 2 ? " or " : i === 1 ? ", " : ""}
+              <a href={href} target="_blank" rel="noopener noreferrer" className="font-medium text-brand hover:underline">
+                {label}
+                <span className="sr-only"> (opens in new tab)</span>
+              </a>
+            </span>
+          ))}
+          . These are search links; {SITE_NAME} doesn&apos;t screen or endorse social content.
         </p>
-      </section>
+      )}
 
       {aliasCodes.length > 0 && (
         <p className="text-xs text-muted-foreground">

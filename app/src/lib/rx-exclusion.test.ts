@@ -98,7 +98,8 @@ test("ingredient and allergen pages", () => {
   assert.equal(q.getProductsForIngredient("adapalene", 1).total, 2);
   assert.deepEqual(q.getIngredientConcernCounts("adapalene").map((c) => c.count), [2]);
   assert.equal(q.getIngredientStats("adapalene").products, 2);
-  assert.equal(q.getIngredientTopBrands("adapalene")[0].count, 2);
+  // No brand in these FDA listing names, so the card's fallback: the labeler.
+  assert.deepEqual(q.getIngredientTopBrands("adapalene"), [{ brand: "Galderma", count: 2 }]);
   assert.equal(q.getActiveStrengthStats("adapalene").n, 2);
   db.run(sql`UPDATE products SET allergen_hits = '["fragrance"]'`);
   assert.equal(q.getAllergenProductCounts().get("fragrance"), 2);

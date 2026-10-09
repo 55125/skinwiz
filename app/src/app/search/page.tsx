@@ -2,10 +2,8 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { SearchBar } from "@/components/search-bar";
 import { ProductGrid } from "@/components/product-grid";
-import { FreeFromFilters } from "@/components/free-from-filters";
-import { OriginChips } from "@/components/origin-chips";
+import { FilteredListing, ListingFilters } from "@/components/listing-filters";
 import { parseOrigin } from "@/lib/origin-shared";
-import { FilterChip } from "@/components/filter-chip";
 import { PageHeader } from "@/components/page-header";
 import {
   lookupProductsByCode,
@@ -78,54 +76,20 @@ export default async function SearchPage({
     return `/search?${params.toString()}`;
   }
 
-  return (
-    <div className="mx-auto max-w-6xl space-y-8 px-4 py-10">
-      {query && <SearchBeacon term={query} results={codeMatches ? codeMatches.length : activeResults.length + productTotal} />}
-      <div className="space-y-5">
-        <PageHeader
-          eyebrow="Search"
-          title={query ? `Results for “${query}”` : "Search the catalog"}
-          description={query ? undefined : "Search by product name, brand, active ingredient, or a barcode or NDC."}
-        />
-        <div className="max-w-2xl">
-          <SearchBar defaultValue={query} large />
-        </div>
-      </div>
+  const filters = (
+    <ListingFilters
+      hrefWith={hrefWith}
+      concern={{ selected: concern, options: concerns }}
+      origin={{ selected: origin, counts: originCounts }}
+      freeFrom={{ basePath: "/search", searchParams: { q, concern, tier, free, from: origin }, selected: freeFromIds }}
+      source={{ selected: tier }}
+    />
+  );
+  const filterCount = [concern, selectedTier, origin].filter(Boolean).length + freeFromIds.length;
+  const grid = keyword ? "sm:grid-cols-2 xl:grid-cols-3" : undefined;
 
-      {keyword && (
-        <div className="space-y-4">
-          <div className="flex flex-wrap items-center gap-1.5">
-            <span className="mr-1 w-16 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-              Concern
-            </span>
-            <FilterChip href={hrefWith({ concern: undefined })} selected={!concern}>
-              All
-            </FilterChip>
-            {concerns.map((c) => (
-              <FilterChip key={c.id} href={hrefWith({ concern: c.id })} selected={concern === c.id}>
-                {c.name}
-              </FilterChip>
-            ))}
-          </div>
-          <div className="flex flex-wrap items-center gap-1.5">
-            <span className="mr-1 w-16 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-              Source
-            </span>
-            <FilterChip href={hrefWith({ tier: undefined })} selected={!tier}>
-              All
-            </FilterChip>
-            {TRUST_TIERS.map((t) => (
-              <FilterChip key={t.label} href={hrefWith({ tier: t.label })} selected={tier === t.label}>
-                {t.label}
-              </FilterChip>
-            ))}
-          </div>
-          <OriginChips selected={origin} counts={originCounts} hrefFor={(next) => hrefWith({ from: next })} label="From" labelClassName="w-16" />
-          <FreeFromFilters basePath="/search" searchParams={{ q, concern, tier, free, from: origin }} selected={freeFromIds} />
-          <AvoidSwitch basePath="/search" searchParams={{ q, concern, tier, from: origin }} selected={freeFromIds} />
-        </div>
-      )}
-
+  const results = (
+    <>
       <SearchHints hints={hints} />
 
       {codeMatches && codeMatches.length === 0 && (
@@ -180,11 +144,11 @@ export default async function SearchPage({
           </h2>
           {shelfCounts.main > productResults.length && (
             <p className="text-xs text-muted-foreground">
-              Showing the first {productResults.length} — narrow with a filter above or refine your search to see
+              Showing the first {productResults.length} — narrow with a filter or refine your search to see
               others.
             </p>
           )}
-          <ProductGrid products={productResults} />
+          <ProductGrid products={productResults} columns={grid} />
         </div>
       )}
 
@@ -200,10 +164,10 @@ export default async function SearchPage({
             <p className="text-sm text-muted-foreground">
               Brands from abroad that we haven&apos;t found at a US store. They&apos;re usually bought online from import
               sellers, so shipping takes longer and labels may not be in English.
-              {shelfCounts.import > importResults.length && <> Pick a region under &ldquo;From&rdquo; above to see them all.</>}
+              {shelfCounts.import > importResults.length && <> Pick a region under &ldquo;Brand from&rdquo; in the filters to see them all.</>}
             </p>
           </div>
-          <ProductGrid products={importResults} />
+          <ProductGrid products={importResults} columns={grid} />
         </section>
       )}
 
@@ -221,10 +185,34 @@ export default async function SearchPage({
             have one at home.
             {shelfCounts.discontinued > discontinuedResults.length && <> Showing the first {discontinuedResults.length}.</>}
           </p>
-          <ProductGrid products={discontinuedResults} />
+          <ProductGrid products={discontinuedResults} columns={grid} />
         </details>
       )}
+    </>
+  );
 
+  return (
+    <div className="mx-auto max-w-6xl space-y-8 px-4 py-10">
+      {query && <SearchBeacon term={query} results={codeMatches ? codeMatches.length : activeResults.length + productTotal} />}
+      <div className="space-y-5">
+        <PageHeader
+          eyebrow="Search"
+          title={query ? `Results for “${query}”` : "Search the catalog"}
+          description={query ? undefined : "Search by product name, brand, active ingredient, or a barcode or NDC."}
+        />
+        <div className="max-w-2xl">
+          <SearchBar defaultValue={query} large />
+        </div>
+      </div>
+
+      {keyword ? (
+        <FilteredListing filters={filters} filterCount={filterCount}>
+          <AvoidSwitch basePath="/search" searchParams={{ q, concern, tier, from: origin }} selected={freeFromIds} />
+          {results}
+        </FilteredListing>
+      ) : (
+        results
+      )}
       <p className="text-xs text-muted-foreground">
         Looking for a full catalog browse instead?{" "}
         <Link href="/browse" className="underline">

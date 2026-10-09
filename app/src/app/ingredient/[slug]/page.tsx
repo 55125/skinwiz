@@ -41,7 +41,6 @@ import { IngredientPreference } from "@/components/ingredient-preference";
 import { pubchemLinkText } from "@/lib/pubchem";
 import { canonicalSlug } from "@/db/ingredient-parse";
 import { ewgHazardBadge } from "@/lib/ewg";
-import { displayManufacturer } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { variantRobots, breadcrumbLd } from "@/lib/seo";
 import { JsonLd } from "@/components/json-ld";
@@ -106,6 +105,7 @@ export default async function IngredientPage({
   const selectedConcern = concernCounts.find((c) => c.concernId === concern);
   const { rows, total, pageSize } = productsCached(id, page, selectedConcern?.concernId);
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const allTotal = selectedConcern ? productsCached(id, 1, undefined).total : total;
   const brands = topBrandsCached(id);
   const ewg = ewgCached(id);
 
@@ -120,7 +120,6 @@ export default async function IngredientPage({
   const profile = await readProfile();
   const preference = profile.likes.includes(id) ? "like" : profile.dislikes.includes(id) ? "dislike" : null;
 
-  const inciShare = stats.inciLists >= 10 ? Math.round((stats.topFive / stats.inciLists) * 100) : null;
   const avgPos = stats.inciLists >= 10 && stats.avgPosition ? Math.round(stats.avgPosition) : null;
 
   function hrefWith(overrides: { concern?: string; page?: number }) {
@@ -160,18 +159,13 @@ export default async function IngredientPage({
         <IngredientPreference id={id} initial={preference} />
       </header>
 
-      <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <dl className="grid grid-cols-3 gap-3">
         <Stat value={stats.products.toLocaleString()} label={stats.products === 1 ? "product contains it" : "products contain it"} />
         <Stat value={stats.brands.toLocaleString()} label={stats.brands === 1 ? "brand" : "brands"} />
         {stats.asActive > 0 ? (
           <Stat value={stats.asActive.toLocaleString()} label="list it as an active" />
         ) : (
           <Stat value="—" label="list it as an active" />
-        )}
-        {inciShare !== null ? (
-          <Stat value={`${inciShare}%`} label={`of ${stats.inciLists.toLocaleString()} full ingredient lists put it in the first 5`} />
-        ) : (
-          <Stat value="—" label="position data needs 10+ full ingredient lists" />
         )}
       </dl>
 
@@ -390,9 +384,9 @@ export default async function IngredientPage({
               <h2 className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Most-used by</h2>
               <ul className="space-y-1.5 text-sm">
                 {brands.map((b) => (
-                  <li key={b.manufacturer} className="flex items-center justify-between gap-3">
-                    <Link href={`/search?q=${encodeURIComponent(b.manufacturer)}`} rel="nofollow" className="truncate hover:text-brand">
-                      {displayManufacturer(b.manufacturer)}
+                  <li key={b.brand} className="flex items-center justify-between gap-3">
+                    <Link href={`/search?q=${encodeURIComponent(b.brand)}`} rel="nofollow" className="truncate hover:text-brand">
+                      {b.brand}
                     </Link>
                     <span className="shrink-0 text-xs tabular-nums text-muted-foreground">{b.count.toLocaleString()}</span>
                   </li>
@@ -429,7 +423,7 @@ export default async function IngredientPage({
                 !selectedConcern ? "border-brand bg-brand-soft font-medium text-brand-foreground" : "hover:border-brand/40",
               )}
             >
-              All ({stats.products.toLocaleString()})
+              All ({allTotal.toLocaleString()})
             </Link>
             {concernCounts.map((c) => (
               <Link

@@ -1,10 +1,12 @@
 import { ProductCard } from "@/components/product-card";
+import { HsaListingNote } from "@/components/hsa-badge";
 import { getBestProductImages, getEwgScoresForProducts } from "@/lib/queries";
 import { getScoresForProducts } from "@/lib/scoring";
 import { readAvoidIds } from "@/lib/avoid";
-import { avoidLabelsFor, getIngredientMembership, matchProduct, readProfile } from "@/lib/profile";
+import { avoidLabelsFor, getIngredientMembership, hasProfile, matchProduct, readProfile } from "@/lib/profile";
 import { cn } from "@/lib/utils";
 import { isHsaEligible } from "@/lib/otc-index";
+import { hsaSaidOnce } from "@/lib/hsa";
 import type { products } from "@/db/schema";
 
 // Fetches every card's scores and EWG rating in one query each, rather
@@ -23,9 +25,12 @@ export async function ProductGrid({
   const avoidIds = await readAvoidIds();
   const profile = await readProfile();
   const avoidLabels = avoidLabelsFor(avoidIds);
-  const personalized = avoidLabels.length > 0 || profile.skin || profile.sensitive || profile.concerns.length + profile.likes.length + profile.dislikes.length > 0;
+  const personalized = avoidLabels.length > 0 || hasProfile(profile);
   const membership = personalized ? getIngredientMembership(rows.map((p) => p.id)) : null;
-  return (
+  const hsa = new Set(rows.filter((p) => isHsaEligible(p.id)).map((p) => p.id));
+  // Mostly eligible: said once above the grid, not on every card.
+  const hsaOnce = hsaSaidOnce(hsa.size, rows.length);
+  const grid = (
     <div className={cn("grid gap-5", columns ?? "sm:grid-cols-2 lg:grid-cols-3")}>
       {rows.map((product) => (
         <ProductCard
@@ -35,9 +40,16 @@ export async function ProductGrid({
           ewgScore={ewg.get(product.id) ?? null}
           avoidIds={avoidIds}
           match={membership ? matchProduct(product, membership.get(product.id), profile, avoidLabels) : null}
-          hsaEligible={isHsaEligible(product.id)}
+          hsaEligible={!hsaOnce && hsa.has(product.id)}
         />
       ))}
+    </div>
+  );
+  if (!hsaOnce) return grid;
+  return (
+    <div className="space-y-3">
+      <HsaListingNote />
+      {grid}
     </div>
   );
 }

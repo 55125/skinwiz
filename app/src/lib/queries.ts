@@ -33,6 +33,7 @@ import { RX_CONCERN_ID } from "@/db/rx";
 import { isDailymedImageUrl } from "@/lib/image-urls";
 import { LISTED, canonicalIdsOf, inProductGroup } from "@/lib/canonical";
 import { parseProductCode } from "@/lib/product-codes";
+import { productBrand } from "@/lib/product-brand";
 import { originIdsJson } from "@/lib/origin";
 import { ORIGINS, type OriginId } from "@/lib/origin-shared";
 import { discontinuedIdsJson, importIdsJson, inStockIdsJson, popularIdsJson } from "@/lib/availability";
@@ -202,6 +203,20 @@ function concernTierOrder(concernId: string): SQL {
   return sql`CASE WHEN ${products.id} IN (SELECT value FROM json_each(${tier2})) THEN 2 WHEN ${products.id} IN (SELECT value FROM json_each(${tier1})) THEN 1 ELSE 0 END`;
 }
 
+// A concern page's default order, shared by ingredient pages: the concern's
+// tiers (when there is one), poor titles last, then FDA-listed OTC drugs (the
+// actives a concern page is built on) before cosmetics matched on an
+// ingredient, then listings with a photo, then catalog order.
+function listingOrder(concernId?: string): SQL[] {
+  return [
+    ...(concernId ? [concernTierOrder(concernId)] : []),
+    poorTitleLast(),
+    sql`CASE WHEN ${products.dataSource} IN ('openfda', 'dailymed') THEN 0 ELSE 1 END`,
+    sql`${products.imageUrl} IS NULL`,
+    sql`${products}.rowid`,
+  ];
+}
+
 const PAGE_SIZE = 24;
 
 // json_extract path for one active's parsed strength; the id goes in as a
@@ -229,15 +244,7 @@ export function getProductsForConcern(
   }
   const whereClause = and(...clauses);
 
-  const rows = db.select().from(products).where(whereClause).orderBy(
-        concernTierOrder(concernId),
-        poorTitleLast(),
-        // FDA-listed OTC drugs (the actives a concern page is built on) before
-        // cosmetics matched on an ingredient, then listings with a photo.
-        sql`CASE WHEN ${products.dataSource} IN ('openfda', 'dailymed') THEN 0 ELSE 1 END`,
-        sql`${products.imageUrl} IS NULL`,
-        sql`${products}.rowid`,
-      ).limit(PAGE_SIZE).offset(offset).all();
+  const rows = db.select().from(products).where(whereClause).orderBy(...listingOrder(concernId)).limit(PAGE_SIZE).offset(offset).all();
   const [{ count }] = db.select({ count: sql<number>`count(*)` }).from(products).where(whereClause).all();
 
   return { rows, total: count, pageSize: PAGE_SIZE, page };
@@ -962,28 +969,21 @@ export function getIngredientsForProduct(productId: string) {
     .all();
 }
 
-// Products containing an ingredient: where it is a labelled active first,
-// then higher-trust sources, then earlier in the list (INCI order is
-// roughly descending concentration, so an earlier slot is a real signal
-// for cosmetic sources).
+// Products containing an ingredient, one row per product, in the same order
+// as a concern page's default listing (listingOrder).
 export function getProductsForIngredient(id: string, page: number, concernId?: string) {
   const offset = (page - 1) * INGREDIENT_PAGE_SIZE;
   const membership = sql`${products.id} IN (SELECT product_id FROM product_ingredients WHERE ingredient_id = ${id})`;
-  const where = concernId ? and(LISTED_OTC, membership, inConcern(concernId)) : and(LISTED_OTC, membership);
+  const where = and(LISTED_OTC, membership, notDuplicate(), concernId ? inConcern(concernId) : undefined);
   const rows = db
-    .select({ product: products, position: productIngredients.position, isActive: productIngredients.isActive })
-    .from(productIngredients)
-    .innerJoin(products, eq(products.id, productIngredients.productId))
-    .where(and(LISTED_OTC, eq(productIngredients.ingredientId, id), concernId ? inConcern(concernId) : undefined))
-    .orderBy(
-      sql`${productIngredients.isActive} DESC`,
-      sql`CASE ${products.dataSource} WHEN 'brand_direct' THEN 0 WHEN 'openfda' THEN 1 WHEN 'dailymed' THEN 2 ELSE 3 END`,
-      sql`CASE WHEN ${productIngredients.position} > 0 THEN ${productIngredients.position} ELSE 0 END`,
-      products.brandName,
-    )
+    .select()
+    .from(products)
+    .where(where)
+    .orderBy(...listingOrder(concernId))
     .limit(INGREDIENT_PAGE_SIZE)
     .offset(offset)
-    .all();
+    .all()
+    .map((product) => ({ product }));
   const [{ count }] = db.select({ count: sql<number>`count(*)` }).from(products).where(where).all();
   return { rows, total: count, pageSize: INGREDIENT_PAGE_SIZE };
 }
@@ -995,6 +995,7 @@ export function getIngredientConcernCounts(id: string) {
     JOIN products p ON p.id = pi.product_id
     JOIN concerns c ON c.id IN (SELECT value FROM json_each(p.concern_ids))
     WHERE pi.ingredient_id = ${id} AND p.is_rx = 0 AND p.canonical_id IS NULL
+      AND p.id NOT IN (SELECT value FROM json_each(${duplicateIdsJson()}))
     GROUP BY c.id
     ORDER BY count DESC
   `);
@@ -1027,16 +1028,28 @@ export function getIngredientStats(id: string) {
   return s;
 }
 
+// Brands as the product cards name them (lib/product-brand.ts: the brand in
+// an FDA listing's name, else its labeler), so "Kenvue Brands" counts under
+// Neutrogena, Aveeno and so on.
 export function getIngredientTopBrands(id: string, limit = 8) {
-  return db.all<{ manufacturer: string; count: number }>(sql`
-    SELECT p.manufacturer AS manufacturer, COUNT(*) AS count
+  const rows = db.all<{ dataSource: string; brandName: string; manufacturer: string | null }>(sql`
+    SELECT p.data_source AS dataSource, p.brand_name AS brandName, p.manufacturer AS manufacturer
     FROM product_ingredients pi
     JOIN products p ON p.id = pi.product_id
-    WHERE pi.ingredient_id = ${id} AND p.is_rx = 0 AND p.canonical_id IS NULL AND p.manufacturer IS NOT NULL AND p.manufacturer != ''
-    GROUP BY LOWER(p.manufacturer)
-    ORDER BY count DESC, p.manufacturer
-    LIMIT ${limit}
+    WHERE pi.ingredient_id = ${id} AND p.is_rx = 0 AND p.canonical_id IS NULL
   `);
+  const counts = new Map<string, { brand: string; count: number }>();
+  for (const r of rows) {
+    const { brand } = productBrand(r);
+    if (!brand) continue;
+    const key = brand.toLowerCase();
+    const entry = counts.get(key) ?? { brand, count: 0 };
+    entry.count++;
+    counts.set(key, entry);
+  }
+  return [...counts.values()]
+    .sort((a, b) => b.count - a.count || a.brand.localeCompare(b.brand))
+    .slice(0, limit);
 }
 
 // Parsed label strengths for a tracked active (FDA rows, plus brand pages
@@ -1115,6 +1128,17 @@ export function getIngredientLetters(): string[] {
     .map((r) => r.l)
     .filter((l) => l === "0-9" || /^[A-Z]$/.test(l))
     .sort((a, b) => (a === "0-9" ? -1 : b === "0-9" ? 1 : a.localeCompare(b)));
+}
+
+/** Product counts for the given ingredient ids, for those that have a page. */
+export function getIngredientCounts(ids: string[]): Map<string, number> {
+  if (ids.length === 0) return new Map();
+  const rows = db
+    .select({ id: ingredients.id, productCount: ingredients.productCount })
+    .from(ingredients)
+    .where(inArray(ingredients.id, ids))
+    .all();
+  return new Map(rows.map((r) => [r.id, r.productCount]));
 }
 
 export function getPopularIngredients(limit = 12) {

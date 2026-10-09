@@ -18,6 +18,7 @@ import { RX_CONCERN } from "./rx";
 import { steroidPotencyClass, type Ingredient } from "./steroid-potency";
 import { drugInactiveList, groupSplInactive, type SplInactiveCsvRow } from "./spl-inactive";
 import { linkAllDailymedImages } from "@/lib/product-images/link";
+import { seedStarterRoutines } from "./starter-routines";
 import { resolveMerges, reviewedMergeRows, type FlaggedRow, type MergeRow } from "./product-merges";
 
 const REPO_ROOT = path.resolve(process.cwd(), "..");
@@ -228,6 +229,7 @@ async function main() {
   const hasCatalog = !!db.get<{ one: number }>(sql`SELECT 1 AS one FROM products LIMIT 1`);
   if (process.env.FORCE_SEED !== "1" && hasCatalog && storedSeedHash() === inputsHash) {
     console.log(`Seed inputs unchanged (${inputsHash.slice(0, 12)}); keeping the current catalog. FORCE_SEED=1 reseeds anyway.`);
+    addStarterRoutines();
     return;
   }
   console.log(`Seeding ${SITE_NAME} database...`);
@@ -270,7 +272,15 @@ async function main() {
   } finally {
     db.run(sql`PRAGMA foreign_keys = ON`);
   }
+  addStarterRoutines();
   console.log("Done. dermRaters, dermRatings, audienceOutcomes, routines (incl. votes/reports), shelves and regimens are intentionally left untouched.");
+}
+
+// Runs whether or not the catalog was reseeded: it only adds starter
+// routines that are missing, so a new one ships with the next deploy.
+function addStarterRoutines() {
+  const added = seedStarterRoutines();
+  if (added) console.log(`  added ${added} starter routines`);
 }
 
 function reseed() {

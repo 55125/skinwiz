@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { ChevronDown, Menu, UserRound, X } from "lucide-react";
+import { ChevronDown, Menu, Search, UserRound, X } from "lucide-react";
 import { SearchBar } from "@/components/search-bar";
 import { cn } from "@/lib/utils";
 import { INGREDIENT_ITEMS, MY_SKIN_ITEMS, isActive, type NavItem } from "@/lib/nav";
@@ -111,6 +111,58 @@ function NavMenu({
   );
 }
 
+// Phones get a search icon in the header instead of the md+ search pill, so a
+// search is one tap away without opening the menu.
+function PhoneSearch({ pathname }: { pathname: string }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const [lastPath, setLastPath] = useState(pathname);
+  if (pathname !== lastPath) {
+    setLastPath(pathname);
+    setOpen(false);
+  }
+  useEffect(() => {
+    if (!open) return;
+    ref.current?.querySelector<HTMLInputElement>("input[name=q]")?.focus();
+    const onPointer = (e: PointerEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    // While suggestions show, Escape closes them (the search bar handles
+    // that); otherwise it closes the bar and puts focus back on the icon.
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape" || ref.current?.querySelector("[role=listbox]")) return;
+      setOpen(false);
+      buttonRef.current?.focus();
+    };
+    document.addEventListener("pointerdown", onPointer);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("pointerdown", onPointer);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+  return (
+    <div ref={ref} className="-mr-2 ml-auto md:hidden">
+      <button
+        ref={buttonRef}
+        type="button"
+        aria-expanded={open}
+        aria-label={open ? "Close search" : "Search"}
+        onClick={() => setOpen((o) => !o)}
+        className="flex h-9 w-9 items-center justify-center rounded-full border transition-colors hover:bg-muted"
+      >
+        {open ? <X className="h-4 w-4" /> : <Search className="h-4 w-4" />}
+      </button>
+      {open && (
+        <div className="absolute inset-x-0 top-full z-30 border-b bg-background px-4 py-3 shadow-xl shadow-foreground/5">
+          <SearchBar compact />
+        </div>
+      )}
+    </div>
+  );
+}
+
 function MobileMenu({ pathname, concerns, showSearch }: { pathname: string; concerns: Concern[]; showSearch: boolean }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -162,7 +214,7 @@ function MobileMenu({ pathname, concerns, showSearch }: { pathname: string; conc
             <div className="grid grid-cols-2">{INGREDIENT_ITEMS.map(link)}</div>
             <div className="mt-4 border-t pt-3" />
             {link({ href: "/routines", label: "Community routines" })}
-            {link({ href: "/for-clinicians", label: "For clinicians" })}
+            {link({ href: "/clinic-tools", label: "For clinicians" })}
             {link({ href: "/about", label: "About" })}
           </nav>
         </div>
@@ -211,10 +263,9 @@ export function SiteNav({ concerns }: { concerns: Concern[] }) {
         />
         {pill("/routines", "Routines", isActive(pathname, "/routines"))}
         {pill(
-          "/for-clinicians",
+          "/clinic-tools",
           "For clinicians",
           ["/for-clinicians", "/clinic-tools", "/clinicians"].some((h) => isActive(pathname, h)),
-          "text-xs",
         )}
         <div className="ml-1">
           <NavMenu
@@ -227,6 +278,7 @@ export function SiteNav({ concerns }: { concerns: Concern[] }) {
           />
         </div>
       </nav>
+      {showSearch && <PhoneSearch pathname={pathname} />}
       <MobileMenu pathname={pathname} concerns={concerns} showSearch={showSearch} />
     </>
   );

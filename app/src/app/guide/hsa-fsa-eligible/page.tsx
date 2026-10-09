@@ -49,7 +49,7 @@ export default function HsaGuidePage() {
   const total = hsaEligibleCount();
   const byConcern = db.all<{ id: string; name: string; n: number }>(sql`
     SELECT c.id AS id, c.name AS name, COUNT(*) AS n
-    FROM products p JOIN concerns c ON c.id = p.concern_id
+    FROM products p JOIN concerns c ON c.id IN (SELECT value FROM json_each(p.concern_ids))
     WHERE p.is_rx = 0 AND p.id IN (SELECT value FROM json_each(${hsaEligibleIdsJson()}))
     GROUP BY c.id ORDER BY n DESC
   `);

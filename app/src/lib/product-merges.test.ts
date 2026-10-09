@@ -34,10 +34,10 @@ before(async () => {
   db.run(sql`INSERT INTO actives (id, canonical_name, categories, synonyms) VALUES ('adapalene', 'Adapalene', '["acne"]', '[]')`);
   db.run(sql`INSERT INTO ingredients (id, name, aliases, product_count) VALUES ('adapalene', 'Adapalene', '[]', 3)`);
   const product = (id: string, name: string, maker: string, opts: { rx?: boolean; canonical?: string; image?: string } = {}) =>
-    db.run(sql`INSERT INTO products (id, concern_id, brand_name, manufacturer, dosage_form, active_ingredient_text, active_ids,
+    db.run(sql`INSERT INTO products (id, concern_id, concern_ids, brand_name, manufacturer, dosage_form, active_ingredient_text, active_ids,
         spl_set_id, free_from_flags, allergen_hits, strengths, strength_key, data_source, verified, is_rx, canonical_id, image_url,
         package_description, marketing_category)
-      VALUES (${id}, ${opts.rx ? "rx" : "acne"}, ${name}, ${maker}, 'GEL', 'ADAPALENE 1 mg/g', '["adapalene"]', NULL,
+      VALUES (${id}, ${opts.rx ? "rx" : "acne"}, json_array(${opts.rx ? "rx" : "acne"}), ${name}, ${maker}, 'GEL', 'ADAPALENE 1 mg/g', '["adapalene"]', NULL,
         '["fragrance-free"]', '[]', '{"adapalene":0.1}', 'adapalene:0.1', 'openfda', 1, ${opts.rx ? 1 : 0},
         ${opts.canonical ?? null}, ${opts.image ?? null}, '45 g in 1 TUBE', 'NDA')`);
   product(CANON, "Differin Adapalene Gel 0.1%", "Galderma");

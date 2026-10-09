@@ -9,7 +9,6 @@ type Note = {
   activeName: string;
   summary: string;
   typicalConcentrationText: string | null;
-  needsClinicianReview: boolean;
   pubchemCid: number | null;
   molecularFormula: string | null;
 };
@@ -42,11 +41,6 @@ export function ActiveNotes({ notes, className }: { notes: Note[]; className?: s
               )}
               <p className="text-sm leading-relaxed text-muted-foreground">{note.summary}</p>
               {note.typicalConcentrationText && <p className="text-xs text-muted-foreground">{note.typicalConcentrationText}</p>}
-              {note.needsClinicianReview && (
-                <p className="text-xs italic text-amber-700 dark:text-amber-400">
-                  Clinical evidence grade: pending board-certified dermatologist review.
-                </p>
-              )}
               {note.pubchemCid && (
                 <p className="text-xs">
                   <a

@@ -36,7 +36,8 @@ import { getSessionOutcome } from "@/lib/outcomes";
 import { readAvoidIds, avoidVerdict, avoidedIngredientName } from "@/lib/avoid";
 import { avoidConflicts } from "@/lib/avoid-shared";
 import { AllergenFindings } from "@/components/allergen-findings";
-import { activeName, describeStrengths } from "@/lib/strength-display";
+import { activeName, describeStrengths, labelAmounts, labelQuantityCount } from "@/lib/strength-display";
+import { activeUse } from "@/db/active-uses";
 import { formatPct } from "@/db/strength";
 import { monographStatus, formatRangeWithUse } from "@/db/monograph-ranges";
 import { brandDirectStatus } from "@/db/labeled-actives";
@@ -250,6 +251,16 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
         .filter((id) => product.strengths && id in product.strengths)
         .map((id) => ({ id, pct: product.strengths![id], monograph: monographStatus(id, product.strengths![id], product) }))
     : [];
+
+  // Label actives the strength rows don't cover, and whether the label's own
+  // line still says something the rows don't (more amounts than rows, or a
+  // kit's per-part lines).
+  const strengthAmounts = isDrugLabel ? labelAmounts(product.activeIngredientText) : {};
+  const uncoveredActives = isDrugLabel && strengthRows.length > 0 ? labelActives.filter((r) => !strengthRows.some((s) => s.id === r.ingredientId)) : [];
+  const showLabelLine =
+    isDrugLabel &&
+    strengthRows.length > 0 &&
+    (uncoveredActives.length > 0 || (product.activeIngredientText ?? "").includes("|") || labelQuantityCount(product.activeIngredientText) !== strengthRows.length);
 
   const brandStatus = product.dataSource === "brand_direct" ? brandDirectStatus(product) : null;
 
@@ -483,55 +494,6 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
             )
           )}
 
-          {strengthRows.length > 0 && (
-            <div className="rounded-xl border bg-card p-4">
-              <h2 className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                Strength (from the FDA label)
-              </h2>
-              <ul className="space-y-2">
-                {strengthRows.map((row) => (
-                  <li key={row.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
-                    <span className="font-semibold tabular-nums">
-                      <IngredientLink id={row.id}>{activeName(row.id)}</IngredientLink> {formatPct(row.pct)}
-                    </span>
-                    {row.monograph && (
-                      <Badge
-                        variant="outline"
-                        title={`${row.monograph.range.cite}: ${formatRangeWithUse(row.monograph.range)}`}
-                        className={
-                          row.monograph.status === "within"
-                            ? "border-emerald-300 text-emerald-700 dark:border-emerald-900 dark:text-emerald-400"
-                            : "border-amber-300 text-amber-700 dark:border-amber-900 dark:text-amber-400"
-                        }
-                      >
-                        {row.monograph.status === "within"
-                          ? `Within FDA OTC monograph range (${formatRangeWithUse(row.monograph.range)})`
-                          : `${row.monograph.status === "above" ? "Above" : "Below"} FDA OTC monograph range (${formatRangeWithUse(row.monograph.range)})`}
-                      </Badge>
-                    )}
-                  </li>
-                ))}
-              </ul>
-              {strengthRows.some((r) => r.monograph?.status === "above") && (
-                <p className="mt-2 rounded-lg border border-amber-300 bg-amber-50 p-2.5 text-xs text-amber-900 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
-                  {strengthRows
-                    .filter((r) => r.monograph?.status === "above")
-                    .map((r) => `${activeName(r.id)} is listed at ${formatPct(r.pct)}, above the ${formatPct(r.monograph!.range.max)} OTC limit.`)
-                    .join(" ")}{" "}
-                  That&apos;s usually a filing error, so check the strength on the package. Until it&apos;s clear, we leave this product
-                  off our concern lists.
-                </p>
-              )}
-              <p className="mt-2 text-xs text-muted-foreground">
-                The monograph range is the strength the FDA&apos;s OTC monograph allows for this active in products sold
-                without their own FDA approval — a regulatory fact, not a rating. A strength outside it usually means
-                the label states the active a different way (for example, as a coal tar solution rather than coal tar,
-                or an antiperspirant salt weighed with its water), the product is sold under its own FDA approval
-                instead of the monograph, or the listing data are wrong. Check the label on the package.
-              </p>
-            </div>
-          )}
-
           {ewgScore && (
             <a
               href={ewgScore.ewgProductUrl}
@@ -549,7 +511,89 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
             <span className="sr-only"> (opens in new tab)</span></a>
           )}
 
-          {product.activeIngredientText && (
+          {/* One card per active: name, strength (and the label's own amount),
+              FDA range status and what it's for; the range explanation sits
+              behind a disclosure. */}
+          {strengthRows.length > 0 && (
+            <div className="rounded-xl border bg-card p-4">
+              <h2 className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                {strengthRows.length + uncoveredActives.length > 1 ? "Active ingredients" : "Active ingredient"} (from{" "}
+                {isDrugLabel ? "FDA label" : "the label"})
+              </h2>
+              <ul className="space-y-2.5">
+                {strengthRows.map((row) => {
+                  const note = evidenceNotes.find((n) => n.activeId === row.id);
+                  const use = activeUse(row.id) ?? note?.summary;
+                  return (
+                    <li key={row.id} className="space-y-0.5 text-sm">
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                        <span className="font-semibold tabular-nums">
+                          <IngredientLink id={row.id}>{activeName(row.id)}</IngredientLink> {formatPct(row.pct)}
+                          {strengthAmounts[row.id] && (
+                            <span className="font-normal text-muted-foreground"> ({strengthAmounts[row.id]})</span>
+                          )}
+                        </span>
+                        {row.monograph && (
+                          <Badge
+                            variant="outline"
+                            title={`${row.monograph.range.cite}: ${formatRangeWithUse(row.monograph.range)}`}
+                            className={
+                              row.monograph.status === "within"
+                                ? "border-emerald-300 text-emerald-700 dark:border-emerald-900 dark:text-emerald-400"
+                                : "border-amber-300 text-amber-700 dark:border-amber-900 dark:text-amber-400"
+                            }
+                          >
+                            {row.monograph.status === "within" ? "Within" : row.monograph.status === "above" ? "Above" : "Below"} the FDA range
+                          </Badge>
+                        )}
+                      </div>
+                      {use && <p className="leading-relaxed text-muted-foreground">{use}</p>}
+                    </li>
+                  );
+                })}
+              </ul>
+              {strengthRows.some((r) => r.monograph?.status === "above") && (
+                <p className="mt-2 rounded-lg border border-amber-300 bg-amber-50 p-2.5 text-xs text-amber-900 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
+                  {strengthRows
+                    .filter((r) => r.monograph?.status === "above")
+                    .map((r) => `${activeName(r.id)} is listed at ${formatPct(r.pct)}, above the ${formatPct(r.monograph!.range.max)} OTC limit.`)
+                    .join(" ")}{" "}
+                  That&apos;s usually a filing error, so check the strength on the package. Until it&apos;s clear, we leave this product
+                  off our concern lists.
+                </p>
+              )}
+              {uncoveredActives.length > 0 && (
+                <IngredientList items={uncoveredActives} className="mt-2" likes={profile.likes} dislikes={profile.dislikes} />
+              )}
+              {showLabelLine && (
+                <p className="mt-2 text-xs text-muted-foreground">On the label: {product.activeIngredientText}</p>
+              )}
+              <ActiveNotes notes={evidenceNotes.filter((n) => !strengthRows.some((r) => r.id === n.activeId))} className="mt-4 border-t pt-4" />
+              {strengthRows.some((r) => r.monograph) && (
+                <details className="group/fda mt-3 text-xs text-muted-foreground">
+                  <summary className="w-fit cursor-pointer font-medium text-brand">What does this mean?</summary>
+                  <ul className="mt-1.5 space-y-0.5">
+                    {strengthRows
+                      .filter((r) => r.monograph)
+                      .map((r) => (
+                        <li key={r.id}>
+                          {activeName(r.id)}: the FDA OTC monograph range is {formatRangeWithUse(r.monograph!.range)} ({r.monograph!.range.cite}).
+                        </li>
+                      ))}
+                  </ul>
+                  <p className="mt-1.5">
+                    The monograph range is the strength the FDA&apos;s OTC monograph allows for this active in products sold
+                    without their own FDA approval — a regulatory fact, not a rating. A strength outside it usually means
+                    the label states the active a different way (for example, as a coal tar solution rather than coal tar,
+                    or an antiperspirant salt weighed with its water), the product is sold under its own FDA approval
+                    instead of the monograph, or the listing data are wrong. Check the label on the package.
+                  </p>
+                </details>
+              )}
+            </div>
+          )}
+
+          {!(isDrugLabel && strengthRows.length > 0) && product.activeIngredientText && (
             <div className="rounded-xl border bg-card p-4">
               <h2 className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                 {isDrugLabel
@@ -576,10 +620,10 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
                   we track.
                 </p>
               )}
-              <ActiveNotes notes={evidenceNotes} className="mt-4 border-t pt-4" />
+              <ActiveNotes notes={evidenceNotes.filter((n) => !strengthRows.some((r) => r.id === n.activeId))} className="mt-4 border-t pt-4" />
             </div>
           )}
-          {!product.activeIngredientText && evidenceNotes.length > 0 && (
+          {strengthRows.length === 0 && !product.activeIngredientText && evidenceNotes.length > 0 && (
             <div className="rounded-xl border bg-card p-4">
               <ActiveNotes notes={evidenceNotes} />
             </div>

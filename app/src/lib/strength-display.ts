@@ -1,4 +1,4 @@
-import { ACTIVE_DEFINITIONS } from "@/db/actives";
+import { ACTIVE_DEFINITIONS, matchActiveIds } from "@/db/actives";
 import { formatPct } from "@/db/strength";
 import { tidyIngredientName } from "@/lib/format";
 
@@ -16,6 +16,33 @@ export function describeStrengths(strengths: Record<string, number> | null | und
   return activeIds
     .map((id) => (id in strengths ? `${activeName(id)} ${formatPct(strengths[id])}` : activeName(id)))
     .join(" · ");
+}
+
+const AMOUNT_RE =
+  /^\s*(.+?)\s+(\d*\.?\d+\s*(?:kg|g|mg|ug|mcg|L|mL|uL)\s*(?:\/|in)\s*\d*\.?\d*\s*(?:kg|g|mg|ug|mcg|L|mL|uL))\s*$/i;
+
+// The label's own amount per tracked active, as printed ("20 mg/mL"), for
+// lines that state a weight per weight or volume rather than a percent. The
+// product page shows it next to the percent we work out from it, so
+// "Salicylic Acid 2% (20 mg/mL)" can be checked against the package. An
+// active named twice keeps the first amount, like parseStrengths.
+export function labelAmounts(text: string | null | undefined): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const segment of (text ?? "").split(/;|\|/)) {
+    const m = AMOUNT_RE.exec(segment);
+    if (!m) continue;
+    for (const id of matchActiveIds(m[1])) if (!(id in out)) out[id] = m[2].replace(/\s+/g, " ");
+  }
+  return out;
+}
+
+// How many amounts an FDA active line states ("AVOBENZONE 3%; HOMOSALATE 9
+// g/50mL" is 2). When it equals the number of actives shown with a strength,
+// the line says nothing the strength rows don't, so the page can leave it out.
+export function labelQuantityCount(text: string | null | undefined): number {
+  const unit = "(?:kg|g|mg|ug|mcg|L|mL|uL)";
+  const re = new RegExp(`\\d*\\.?\\d+\\s*(?:%|${unit}\\b(?:\\s*(?:\\/|in)\\s*\\d*\\.?\\d*\\s*${unit}\\b)?)`, "gi");
+  return (text ?? "").match(re)?.length ?? 0;
 }
 
 // An FDA active line the strength parser couldn't read ("SALICYLIC ACID 1.8

@@ -78,6 +78,8 @@ test("search and autocomplete", () => {
   noRx(q.searchProducts("adapalene").map((r) => r.id), "searchProducts");
   assert.equal(q.searchProductsCount("adapalene"), 2);
   noRx(q.suggestProducts("adapalene", 10).map((r) => r.id), "suggestProducts");
+  db.run(sql`INSERT INTO product_barcodes (product_id, barcode, source, rank) VALUES ('rx-bait-1', '0302994910458', 'openfda_upc', 0)`);
+  assert.deepEqual(q.lookupProductsByCode("302994910458"), [], "lookupProductsByCode leaked an Rx row");
 });
 
 test("product lookups, similar/dupes and equivalents", async () => {

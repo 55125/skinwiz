@@ -5,7 +5,7 @@
 // retailer sources (Kroger), whose links are plain product pages.
 import { and, eq, inArray, or, sql } from "drizzle-orm";
 import { db } from "@/db/client";
-import { priceChecks, priceQuotes, productBarcodes, products, productViews } from "@/db/schema";
+import { labelBarcodes, priceChecks, priceQuotes, productBarcodes, products, productViews } from "@/db/schema";
 import { inProductGroup, productGroupsFor } from "@/lib/canonical";
 import {
   ERROR_RETRY_MS,
@@ -235,6 +235,28 @@ export function loadLookupProducts(ids: string[]): LookupProduct[] {
     const owner = ownerOf.get(c.productId)!;
     const list = byProduct.get(owner) ?? byProduct.set(owner, []).get(owner)!;
     if (!list.some((x) => x.barcode === c.barcode)) list.push({ barcode: c.barcode, source: c.source });
+  }
+  // Barcodes read off a product's DailyMed label (lib/label-barcodes.ts) rank
+  // after the catalog's retail barcodes and before the NDC-derived guess.
+  const memberSets = db
+    .select({ id: products.id, setId: sql<string>`lower(${products.splSetId})` })
+    .from(products)
+    .where(and(inArray(products.id, [...ownerOf.keys()]), sql`${products.splSetId} IS NOT NULL`))
+    .all();
+  const setOwners = new Map<string, Set<string>>();
+  for (const m of memberSets) (setOwners.get(m.setId) ?? setOwners.set(m.setId, new Set()).get(m.setId)!).add(ownerOf.get(m.id)!);
+  const labelCodes = setOwners.size
+    ? db.select().from(labelBarcodes).where(inArray(labelBarcodes.splSetId, [...setOwners.keys()])).orderBy(labelBarcodes.barcode).all()
+    : [];
+  for (const c of labelCodes) {
+    for (const owner of setOwners.get(c.splSetId) ?? []) {
+      const list = byProduct.get(owner) ?? byProduct.set(owner, []).get(owner)!;
+      if (list.some((x) => x.barcode === c.barcode)) continue;
+      const derived = list.findIndex((x) => x.source === "ndc_derived");
+      const entry = { barcode: c.barcode, source: "label_scan" };
+      if (derived >= 0) list.splice(derived, 0, entry);
+      else list.push(entry);
+    }
   }
   const byId = new Map(rows.map((r) => [r.id, { ...r, barcodes: byProduct.get(r.id) ?? [] }]));
   return ids.flatMap((id) => (byId.has(id) ? [byId.get(id)!] : []));

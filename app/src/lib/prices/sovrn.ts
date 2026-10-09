@@ -115,7 +115,7 @@ export function buildSovrnUrl(siteKey: string, query: Record<string, string>): s
   return `${SOVRN_API_BASE}/${encodeURIComponent(siteKey)}/compare/prices/${MARKET}/by/accuracy?${qs}`;
 }
 
-const CONFIDENCE: Record<string, number> = { openfda_upc: 0.95, obf_id: 0.9, ndc_derived: 0.7, plainlink: 0.9, keywords: 0.6 };
+const CONFIDENCE: Record<string, number> = { openfda_upc: 0.95, obf_id: 0.9, label_scan: 0.9, ndc_derived: 0.7, plainlink: 0.9, keywords: 0.6 };
 
 export type SovrnDeps = {
   fetch?: typeof fetch;

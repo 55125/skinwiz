@@ -143,9 +143,9 @@ export default async function RegimenPage({ searchParams }: { searchParams: Prom
   const selected = list.find((x) => String(x.id) === r) ?? list.find((x) => x.active) ?? list[0] ?? null;
 
   const plan = sessionId && selected?.kind === "clinician" ? getClinicianPlan(sessionId, selected.id) : null;
+  const device = await readDeviceSessionId();
+  const person = device ? personForSession(device) : null;
   if (selected && plan) {
-    const device = await readDeviceSessionId();
-    const person = device ? personForSession(device) : null;
     return (
       <div className="mx-auto max-w-6xl space-y-8 px-4 py-10">
         <MySkinTabs />
@@ -198,7 +198,7 @@ export default async function RegimenPage({ searchParams }: { searchParams: Prom
       <MySkinTabs />
       <PageHeader
         title={selected && list.length > 1 ? selected.name : "My regimen"}
-        description="What you use morning and night, in the order to apply it: thinnest to thickest, with sunscreen last in the morning. Saved in this browser with no account. Add an email in Email settings if you want it on other devices too."
+        description="What you use morning and night, in the order to apply it: thinnest to thickest, with sunscreen last in the morning. Saved in this browser with no account. Add an email in the card below if you want it on other devices too."
       />
 
       <RedFlagBanner />
@@ -278,6 +278,8 @@ export default async function RegimenPage({ searchParams }: { searchParams: Prom
           </p>
         </>
       )}
+
+      <EmailSignupCard signedInAs={person?.email ?? null} />
     </div>
   );
 }

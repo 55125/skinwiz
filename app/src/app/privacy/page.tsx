@@ -70,7 +70,7 @@ export default function PrivacyPage() {
           part of an aggregate User Score, never individually.
         </li>
         <li>
-          <strong>Email address (optional)</strong>: if you choose &ldquo;Save your shelf &amp; get alerts,&rdquo;
+          <strong>Email address (optional)</strong>: if you choose &ldquo;Keep My skin on all your devices,&rdquo;
           we store your email address, when you confirmed it, which of your browsers are linked to it, and your
           email preferences. See <a href="#email">Email</a> below.
         </li>

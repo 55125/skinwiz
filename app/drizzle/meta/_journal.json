@@ -204,6 +204,13 @@
       "when": 1791522493331,
       "tag": "0028_label_barcodes",
       "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "6",
+      "when": 1791522684115,
+      "tag": "0029_price_check_image",
+      "breakpoints": true
     }
   ]
 }

@@ -940,6 +940,9 @@ export const priceChecks = sqliteTable(
     // "listed"); kept through later misses, so a product retailers stopped
     // carrying can be told from one they never had (lib/availability.ts).
     lastMatchedAt: text("last_matched_at"),
+    // The source's own product photo URL (Kroger's front photo) from the last
+    // matched/listed lookup; cleared on a miss. Hotlinked, never downloaded.
+    imageUrl: text("image_url"),
   },
   (table) => [
     uniqueIndex("price_checks_product_source_idx").on(table.productId, table.source),

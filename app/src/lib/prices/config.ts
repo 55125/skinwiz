@@ -69,6 +69,13 @@ export function priceRunDay(now: Date): string {
 export const PRICE_STALE_MS = 20 * HOUR;
 /** A quote older than this is never displayed, whatever the job did. */
 export const PRICE_DISPLAY_MAX_AGE_MS = PRICE_MAX_AGE_MS;
+/**
+ * A Kroger product photo URL is shown only while Kroger is configured and
+ * the lookup that found it is at most this old, so photos stop showing soon
+ * after our API access ends. Longer than the price window: the daily budget
+ * sweeps the catalog over weeks, and a photo doesn't go stale like a price.
+ */
+export const KROGER_IMAGE_MAX_AGE_MS = 30 * 24 * HOUR;
 /** A product with no match waits this long, doubling per miss, up to the cap. */
 export const MISS_RETRY_MS = 7 * 24 * HOUR;
 export const MISS_RETRY_MAX_MS = 90 * 24 * HOUR;

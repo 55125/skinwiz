@@ -22,7 +22,7 @@ import { getFreeFromCheck } from "@/db/ingredient-flags";
 import { allergenBlockers, resolveAllergenId } from "@/db/contact-allergens";
 import { hsaEligibleIdsJson } from "@/lib/otc-index";
 import { displayablePrice, parsePackageDescription, unitPrice } from "@/lib/equivalence";
-import { getDisplayQuotesFor } from "@/lib/prices/store";
+import { getDisplayQuotesFor, getKrogerImages } from "@/lib/prices/store";
 import { compareLivePrices, type LivePrice } from "@/lib/prices/unit";
 import { parseSearch, type SearchTerm } from "@/lib/search-terms";
 import { foldAccents } from "@/db/fold";
@@ -1187,31 +1187,39 @@ export function getRetailBarcodes(ids: string[]): string[] {
  * or the brand's site) from any of its listings before DailyMed label
  * artwork, the canonical's own first within each kind.
  */
-export function bestProductImage(product: { imageUrl: string | null }, duplicates: { imageUrl: string | null }[]): string | null {
-  return productImages(product, duplicates).photo;
+export function bestProductImage(
+  product: { imageUrl: string | null },
+  duplicates: { imageUrl: string | null }[],
+  krogerImage: string | null = null,
+): string | null {
+  return productImages(product, duplicates, krogerImage).photo;
 }
 
 /**
  * A product page's two images: `photo` is bestProductImage; `label` is the
  * DailyMed label artwork shown second, only when a retail photo took the
  * first spot (otherwise the label already is the photo, or there is none).
+ * Kroger's photo (prices/store.ts getKrogerImages) is the retail photo only
+ * when the product and its listings have none of their own, so the
+ * hand-picked manufacturer and Open Beauty Facts photos stay on top.
  */
 export function productImages(
   product: { imageUrl: string | null },
   duplicates: { imageUrl: string | null }[],
+  krogerImage: string | null = null,
 ): { photo: string | null; label: string | null } {
   const urls = [product, ...duplicates].map((p) => p.imageUrl).filter((u): u is string => !!u);
-  const retail = urls.find((u) => !isDailymedImageUrl(u));
+  const retail = urls.find((u) => !isDailymedImageUrl(u)) ?? krogerImage;
   const label = urls.find((u) => isDailymedImageUrl(u)) ?? null;
   return retail ? { photo: retail, label } : { photo: label, label: null };
 }
 
 /**
  * bestProductImage for a whole grid in one query: each product's image
- * after looking at its merged listings, so a card shows the same retail
- * photo as the product page rather than the canonical row's label artwork.
+ * after looking at its merged listings and Kroger's photo, so a card shows
+ * the same retail photo as the product page rather than the label artwork.
  */
-export function getBestProductImages(ids: string[]): Map<string, string | null> {
+export function getBestProductImages(ids: string[], now = new Date()): Map<string, string | null> {
   if (ids.length === 0) return new Map();
   const rows = db
     .select({ id: products.id, canonicalId: products.canonicalId, imageUrl: products.imageUrl })
@@ -1225,5 +1233,6 @@ export function getBestProductImages(ids: string[]): Map<string, string | null> 
     if (ids.includes(r.id)) own.set(r.id, r.imageUrl);
     if (r.canonicalId) dups.set(r.canonicalId, [...(dups.get(r.canonicalId) ?? []), r]);
   }
-  return new Map(ids.map((id) => [id, bestProductImage({ imageUrl: own.get(id) ?? null }, dups.get(id) ?? [])]));
+  const kroger = getKrogerImages(ids, now);
+  return new Map(ids.map((id) => [id, bestProductImage({ imageUrl: own.get(id) ?? null }, dups.get(id) ?? [], kroger.get(id) ?? null)]));
 }

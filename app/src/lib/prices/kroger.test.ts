@@ -5,7 +5,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
-import { krogerPrice, krogerProductIds, KrogerSource, parseKrogerLocation, parseKrogerProducts } from "./kroger";
+import { krogerFrontImage, krogerPrice, krogerProductIds, KrogerSource, parseKrogerLocation, parseKrogerProducts } from "./kroger";
 import { krogerConfig, type KrogerConfig } from "./config";
 import { BudgetExhausted, SourceUnavailable, type LookupProduct } from "./types";
 
@@ -83,6 +83,7 @@ test("parses a store and its products", () => {
     regular: 15.99,
     promo: 13.49,
     availability: "low",
+    image: "https://www.kroger.com/product/images/large/front/0030299491045",
   });
   assert.equal(krogerPrice(one), 13.49, "promo price wins");
 
@@ -92,8 +93,28 @@ test("parses a store and its products", () => {
   assert.equal(krogerPrice(list[0]), 9.99, "a 0 promo means none");
   assert.equal(list[1].availability, "out_of_stock");
   assert.equal(list[2].url, "https://www.kroger.com/p/item/0030299491099");
+  assert.equal(list[0].image, null, "no images array, no photo");
   assert.deepEqual(parseKrogerProducts(null), []);
   assert.deepEqual(parseKrogerProducts({ data: [{ productId: "1", description: "x", productPageURI: "https://evil.example/p" }] })[0].url, "https://www.kroger.com/p/item/1");
+});
+
+test("product photo: the featured front shot, large first, only from kroger.com over https", () => {
+  const front = (url: string, size = "large", featured?: boolean) => ({ perspective: "front", featured, sizes: [{ size, url }] });
+  assert.equal(krogerFrontImage(DIFFERIN.data.images), "https://www.kroger.com/product/images/large/front/0030299491045");
+  assert.equal(
+    krogerFrontImage([front("https://www.kroger.com/a.jpg"), front("https://www.kroger.com/b.jpg", "large", true)]),
+    "https://www.kroger.com/b.jpg",
+    "the featured front wins",
+  );
+  assert.equal(krogerFrontImage([front("https://www.kroger.com/m.jpg", "medium")]), "https://www.kroger.com/m.jpg", "a smaller size when that's all");
+  assert.equal(krogerFrontImage([front("https://www.kroger.com/t.jpg", "thumbnail")]), null, "a thumbnail is too small");
+  assert.equal(krogerFrontImage([{ perspective: "back", sizes: [{ size: "large", url: "https://www.kroger.com/back.jpg" }] }]), null);
+  assert.equal(krogerFrontImage([front("http://www.kroger.com/x.jpg")]), null, "https only");
+  assert.equal(krogerFrontImage([front("https://evil.example/x.jpg")]), null, "Kroger's host only");
+  assert.equal(krogerFrontImage([front("https://kroger.com.evil.example/x.jpg")]), null);
+  assert.equal(krogerFrontImage([front("javascript:alert(1)")]), null);
+  assert.equal(krogerFrontImage(undefined), null);
+  assert.equal(krogerFrontImage([null, 3, "x"]), null);
 });
 
 test("barcode lookup: token, nearest store, then the product at that store", async () => {
@@ -120,6 +141,7 @@ test("barcode lookup: token, nearest store, then the product at that store", asy
       location: "Cincinnati, OH 45202",
     },
   ]);
+  assert.equal(r.image, "https://www.kroger.com/product/images/large/front/0030299491045", "the matched product's photo comes back with it");
 
   const [tok, loc, prod] = m.calls;
   assert.equal(tok.method, "POST");
@@ -166,7 +188,7 @@ test("catalog check: carried but unpriced at the store is 'listed', with no quot
   const unpriced = { data: { ...DIFFERIN.data, items: [{ ...DIFFERIN.data.items[0], price: undefined }] } };
   const m = kroger((u) => (u.pathname.endsWith("/0030299491045") ? { body: unpriced } : { status: 404 }));
   const r = await source(m.fn).lookup(differin, NOW);
-  assert.deepEqual(r, { status: "listed", quotes: [] });
+  assert.deepEqual(r, { status: "listed", quotes: [], image: "https://www.kroger.com/product/images/large/front/0030299491045" }, "a carried product's photo is kept even with no price");
   assert.ok(!m.api().some((c) => c.url.pathname === "/v1/products"), "no keyword search once the catalog has it");
 });
 

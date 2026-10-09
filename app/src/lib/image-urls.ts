@@ -49,6 +49,21 @@ export function isOpenBeautyFactsImageUrl(url: string | null | undefined): boole
   }
 }
 
+/**
+ * Kroger's own product photos (from its Products API, prices/kroger.ts),
+ * loaded from Kroger's servers and credited "Photo: Kroger" on the product page.
+ */
+export function isKrogerImageUrl(url: string | null | undefined): boolean {
+  if (!url) return false;
+  try {
+    return /(^|\.)kroger\.com$/i.test(new URL(url).hostname);
+  } catch {
+    return false;
+  }
+}
+
+export const KROGER_IMAGE_CAPTION = "Photo: Kroger";
+
 /** Parses the route's file segment ("full.webp" / "thumb.webp"). */
 export function parseImageFile(file: string): ImageSize | null {
   const m = /^(full|thumb)\.webp$/.exec(file);

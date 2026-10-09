@@ -240,6 +240,30 @@ test("Kroger alone: plain-link quotes with stock are shown, the catalog check is
   assert.ok(refresh.pickDueProducts(new Date(NOW.getTime() + 25 * 3_600_000), 10, { source: "kroger" }).includes("otc-2"));
 });
 
+test("Kroger photos: stored per lookup, kept on an error, cleared on a miss, shown only while fresh and configured", () => {
+  const photo = "https://www.kroger.com/product/images/large/front/0030299491045";
+  const imageOf = (id: string) => db.get<{ u: string | null }>(sql`SELECT image_url AS u FROM price_checks WHERE product_id = ${id} AND source = 'kroger'`)?.u;
+  store.saveLookup("otc-1", "kroger", { status: "listed", quotes: [], image: photo }, NOW);
+  store.saveLookup("rx-1", "kroger", { status: "listed", quotes: [], image: photo }, NOW);
+  assert.equal(imageOf("otc-1"), photo);
+
+  assert.deepEqual(store.getKrogerImages(["otc-1"], NOW), new Map(), "nothing while Kroger isn't configured");
+  setEnv(true, KROGER_KEYS);
+  assert.deepEqual(store.getKrogerImages(["otc-1", "otc-2", "rx-1"], NOW), new Map([["otc-1", photo]]), "OTC only, and only products with a photo");
+  assert.deepEqual(store.getKrogerImages([], NOW), new Map());
+  const later = (days: number) => new Date(NOW.getTime() + days * 24 * 3_600_000);
+  assert.equal(store.getKrogerImages(["otc-1"], later(29)).get("otc-1"), photo);
+  assert.equal(store.getKrogerImages(["otc-1"], later(31)).get("otc-1"), undefined, "a lookup over 30 days old isn't shown");
+
+  store.saveLookupError("otc-1", "kroger", later(1));
+  assert.equal(imageOf("otc-1"), photo, "a failed lookup keeps the photo");
+  store.saveLookup("otc-1", "kroger", { status: "matched", quotes: [] }, later(2));
+  assert.equal(imageOf("otc-1"), null, "a lookup that found no photo clears it");
+  store.saveLookup("otc-1", "kroger", { status: "listed", quotes: [], image: photo }, later(3));
+  store.saveLookup("otc-1", "kroger", { status: "miss", quotes: [] }, later(4));
+  assert.equal(imageOf("otc-1"), null, "a miss clears it");
+});
+
 test("a non-affiliate quote from a non-direct source is still never shown", () => {
   setEnv(true);
   db.run(sql`INSERT INTO price_quotes (product_id, source, merchant_id, merchant_name, price, currency, url, affiliatable, match_type, match_confidence, fetched_at)

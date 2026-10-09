@@ -8,6 +8,21 @@
     "categories": ["Health & Beauty"],
     "countryOrigin": "UNITED STATES",
     "description": "Differin Adapalene Gel 0.1% Acne Treatment",
+    "images": [
+      {
+        "perspective": "back",
+        "sizes": [{ "size": "large", "url": "https://www.kroger.com/product/images/large/back/0030299491045" }]
+      },
+      {
+        "perspective": "front",
+        "featured": true,
+        "sizes": [
+          { "size": "xlarge", "url": "https://www.kroger.com/product/images/xlarge/front/0030299491045" },
+          { "size": "large", "url": "https://www.kroger.com/product/images/large/front/0030299491045" },
+          { "size": "thumbnail", "url": "https://www.kroger.com/product/images/thumbnail/front/0030299491045" }
+        ]
+      }
+    ],
     "items": [
       {
         "itemId": "0030299491045",

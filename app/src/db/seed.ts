@@ -5,7 +5,8 @@ import { parse } from "csv-parse/sync";
 import { sql } from "drizzle-orm";
 import { db } from "./client";
 import * as schema from "./schema";
-import { ACTIVE_DEFINITIONS, CONCERN_DEFINITIONS, matchActiveIds, nicheToConcernId } from "./actives";
+import { ACTIVE_DEFINITIONS, ANYWHERE_LISTED_ACTIVE_IDS, CONCERN_DEFINITIONS, matchActiveIds, nicheToConcernId } from "./actives";
+import { ACTIVE_TEXT_OVERRIDES } from "./active-overrides";
 import { computeFreeFromFlags } from "./ingredient-flags";
 import { computeAllergenHits } from "./contact-allergens";
 import { parseStrengths, strengthKey } from "./strength";
@@ -123,6 +124,15 @@ type RxCatalogRow = {
 const firstPackage = (descriptions: string | undefined) => descriptions?.split(" | ")[0]?.trim() || null;
 
 const PRE_MATCHED_SOURCES = new Set(["open_beauty_facts", "brand_direct"]);
+
+const SUNSCREEN_ACTIVE_IDS = new Set(ACTIVE_DEFINITIONS.filter((a) => a.categories.includes("sunscreen")).map((a) => a.id));
+const ACNE_ACTIVE_IDS = new Set(ACTIVE_DEFINITIONS.filter((a) => a.categories.includes("acne")).map((a) => a.id));
+
+// Homeopathic "drugs" list dilutions (Calendula 1X HPUS, Thuja 6X) as
+// actives. They're kept out of the catalog entirely, whatever else they list.
+function isHomeopathic(marketingCategory: string | undefined, activeText: string): boolean {
+  return /homeopathic/i.test(marketingCategory ?? "") || /\bHPUS\b|\[HP_[XC]\]/i.test(activeText);
+}
 
 type AffiliateRow = {
   network: string;
@@ -302,6 +312,8 @@ function reseed() {
 
   let inserted = 0;
   let skippedNoActive = 0;
+  let skippedHomeopathic = 0;
+  let skippedSunscreenNoFilter = 0;
   const productBatch: (typeof schema.products.$inferInsert)[] = [];
   const seenNdc = new Set<string>();
   const memberships: { productId: string; position: number; slug: string; rawName: string; isActive: boolean }[] = [];
@@ -331,27 +343,58 @@ function reseed() {
     for (const row of catalogRows) {
       if (!row.product_ndc || seenNdc.has(row.product_ndc)) continue;
 
-      const activeIds = row.source && PRE_MATCHED_SOURCES.has(row.source)
+      const isPreMatched = row.source && PRE_MATCHED_SOURCES.has(row.source);
+      const override = ACTIVE_TEXT_OVERRIDES[row.product_ndc];
+      if (override && !isPreMatched) {
+        row.active_ingredients_structured = override;
+        row.active_ingredient_text = override;
+      }
+      if (
+        !isPreMatched &&
+        isHomeopathic(packageInfo.get(row.product_ndc)?.marketing_category || row.marketing_category, `${row.substance_name} ${row.active_ingredient_text}`)
+      ) {
+        skippedHomeopathic++;
+        continue;
+      }
+      // Drug rows: the label's own inactive text, else the SPL XML's list
+      // (spl-inactive.ts). Neither = unknown, not "clean".
+      const inactive = isPreMatched ? null : drugInactiveList(row.inactive_ingredient_text, splInactive.get(row.product_ndc));
+      // Cosmetic sources: the single INCI list, in order.
+      const cosmeticList = isPreMatched ? parseIngredients(row.active_ingredient_text) : null;
+      const labeledActiveIds = isPreMatched
         ? (row.active_ingredients_structured ?? "").split(";").filter(Boolean)
         : matchActiveIds([row.active_ingredients_structured, row.substance_name, row.active_ingredient_text].join(" "));
+      // UV filters count wherever they're listed (actives.ts
+      // countsAnywhereListed): bemotrizinol in a label's "inactive" list or a
+      // cosmetic INCI list is still doing a sunscreen active's job.
+      const listedFilters = (cosmeticList ?? inactive?.parsed ?? [])
+        .map((ing) => canonicalSlug(ing.slug))
+        .filter((slug) => ANYWHERE_LISTED_ACTIVE_IDS.has(slug) && !labeledActiveIds.includes(slug));
+      const activeIds = [...labeledActiveIds, ...new Set(listedFilters)];
 
       if (activeIds.length === 0) {
         skippedNoActive++;
         continue;
       }
+      // A "sunscreen" label with no UV filter among its actives doesn't
+      // protect from UV. One with an acne active (a salicylic acid pad the
+      // openFDA sunscreen query also returned) is an acne product; anything
+      // else (only plant extracts, oils, centella) is left out.
+      if (!isPreMatched && row.niche === "sunscreen" && !activeIds.some((id) => SUNSCREEN_ACTIVE_IDS.has(id))) {
+        if (activeIds.some((id) => ACNE_ACTIVE_IDS.has(id))) {
+          row.niche = "acne";
+        } else {
+          skippedSunscreenNoFilter++;
+          continue;
+        }
+      }
       seenNdc.add(row.product_ndc);
       const trimmedBrandName = row.brand_name?.trim() || "(unnamed product)";
-      // Only openfda/dailymed rows get normalized -- brand_direct/OBF brand
-      // names are already human-written product names, not SPL label text.
-      const isPreMatched = row.source && PRE_MATCHED_SOURCES.has(row.source);
       // The full ingredient list for free-from-flag purposes -- NOT the
       // same text as activeIngredientText above, which for openfda/dailymed
       // is deliberately just the active-ingredient line for display. Using
       // that alone here would wrongly mark almost everything "paraben-free"
       // etc. just because an active-ingredient line never mentions parabens.
-      // Drug rows: the label's own inactive text, else the SPL XML's list
-      // (spl-inactive.ts). Neither = unknown, not "clean".
-      const inactive = isPreMatched ? null : drugInactiveList(row.inactive_ingredient_text, splInactive.get(row.product_ndc));
       if (inactive) inactiveSources[inactive.source ?? "none"] = (inactiveSources[inactive.source ?? "none"] ?? 0) + 1;
       const fullIngredientText = isPreMatched
         ? row.active_ingredient_text || null
@@ -367,8 +410,8 @@ function reseed() {
       // Drug labels: the tracked actives (position 0) plus the SPL's own
       // inactive list. Cosmetic sources: the single INCI list, in order.
       if (isPreMatched) {
-        parseIngredients(row.active_ingredient_text).forEach((ing, i) =>
-          memberships.push({ productId: row.product_ndc, position: i + 1, slug: ing.slug, rawName: ing.raw, isActive: activeIdSet.has(ing.slug) }),
+        cosmeticList!.forEach((ing, i) =>
+          memberships.push({ productId: row.product_ndc, position: i + 1, slug: ing.slug, rawName: ing.raw, isActive: activeIdSet.has(canonicalSlug(ing.slug)) }),
         );
       } else {
         const listed = new Set<string>();
@@ -379,12 +422,14 @@ function reseed() {
           memberships.push({ productId: row.product_ndc, position: -i, slug: id, rawName: id, isActive: true });
         });
         inactive!.parsed.forEach((ing, i) => {
-          if (!listed.has(ing.slug)) memberships.push({ productId: row.product_ndc, position: i + 1, slug: ing.slug, rawName: ing.raw, isActive: false });
+          if (!listed.has(canonicalSlug(ing.slug))) memberships.push({ productId: row.product_ndc, position: i + 1, slug: ing.slug, rawName: ing.raw, isActive: false });
         });
       }
       productBatch.push({
         id: row.product_ndc,
         concernId: nicheToConcernId(row.niche),
+        // Only openfda/dailymed rows get normalized -- brand_direct/OBF brand
+        // names are already human-written product names, not SPL label text.
         brandName: isPreMatched ? trimmedBrandName : normalizeBrandName(trimmedBrandName),
         manufacturer: row.manufacturer_name || null,
         dosageForm: row.dosage_form || null,
@@ -427,6 +472,7 @@ function reseed() {
     inserted += Math.min(BATCH_SIZE, productBatch.length - i);
   }
   console.log(`  inserted ${inserted} products, skipped ${skippedNoActive} with no recognized active ingredient`);
+  console.log(`  skipped ${skippedHomeopathic} homeopathic and ${skippedSunscreenNoFilter} "sunscreens" with no UV filter`);
   console.log(`  drug inactive lists by source: ${JSON.stringify(inactiveSources)}`);
 
   insertIngredients(memberships, duplicateIds);

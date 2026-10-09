@@ -116,7 +116,11 @@ Neutrogena Mineral Invisible Daily Defense Face Sunscreen Broad Spectrum SPF 30 
   are the same molecule). **Built 2026-09-27** in `app/src/db/actives.ts`
   (`matchActiveIds`) — 35 canonical actives across all 7 concerns, each
   with a synonym list; this is what the app's seed script runs every raw
-  CSV row through before it becomes a product.
+  CSV row through before it becomes a product. Expanded 2026-10-08 to 92
+  (bemotrizinol and the other UV filters, the remaining monograph actives
+  found on unmatched labels, retinal/HPR and the PHA/LHA acids). UV filters
+  are flagged `countsAnywhereListed`, so seed.ts also counts one found in a
+  label's inactive list or a cosmetic INCI list.
 - **`listing_expiration_date` is a recertification deadline, not a
   discontinuation flag.** `expired_listing_estimate` in
   `catalog_summary.json` is a rough proxy, not authoritative — it's 0 in

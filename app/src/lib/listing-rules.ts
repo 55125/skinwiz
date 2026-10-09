@@ -15,6 +15,7 @@
 //  - A stated strength above the OTC monograph maximum (e.g. salicylic acid
 //    2.88% for acne) is kept off concern listings: it's usually a labeling
 //    error, and the product page says so.
+import { ANYWHERE_LISTED_ACTIVE_IDS } from "@/db/actives";
 import { MONOGRAPH_RANGES } from "@/db/monograph-ranges";
 
 export const ECZEMA_CONCERN = "dry-skin-eczema";
@@ -81,11 +82,11 @@ export function excludedFromConcern(p: RankInput): boolean {
 /** 0 ranks first. Only the eczema and sun pages have tiers; everything else is 0. */
 // Sunscreen filters: on the eczema page, a product that has them is a lip
 // balm or a day cream with SPF, not eczema care.
-const SUNSCREEN_ACTIVES = ["avobenzone", "octinoxate", "octisalate", "octocrylene", "homosalate", "oxybenzone", "ensulizole", "meradimate"];
+const SUNSCREEN_ACTIVES = ANYWHERE_LISTED_ACTIVE_IDS;
 
 export function concernTier(p: RankInput): 0 | 1 | 2 {
   if (p.concernId === ECZEMA_CONCERN) {
-    const offTopic = /\blip\b|chapstick/i.test(p.brandName) || p.activeIds.some((id) => SUNSCREEN_ACTIVES.includes(id));
+    const offTopic = /\blip\b|chapstick/i.test(p.brandName) || p.activeIds.some((id) => SUNSCREEN_ACTIVES.has(id));
     return isDiaperProduct(p.brandName) || offTopic ? 1 : 0;
   }
   if (p.concernId !== SUN_CONCERN) return 0;

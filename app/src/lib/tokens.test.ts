@@ -1,7 +1,7 @@
 // Token hashing, signing and expiry: `npm test`.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { generateToken, hashToken, isExpired, maskEmail, normalizeEmail, signToken, verifyToken } from "./tokens";
+import { generateSignInCode, generateToken, hashSignInCode, hashToken, isExpired, maskEmail, normalizeEmail, signToken, verifyToken } from "./tokens";
 
 const SECRET = "test-secret-test-secret-test-secret!";
 const now = new Date("2026-10-01T12:00:00Z");
@@ -55,4 +55,13 @@ test("normalizeEmail lowercases, trims and rejects junk", () => {
 
 test("maskEmail hides all but the first letter of the local part", () => {
   assert.equal(maskEmail("michael@example.com"), "m•••@example.com");
+});
+
+test("sign-in codes are six digits and their hash is keyed and bound to the address", () => {
+  for (let i = 0; i < 50; i++) assert.match(generateSignInCode(), /^\d{6}$/);
+  const h = hashSignInCode("secret-a", "a@example.com", "012345");
+  assert.equal(h, hashSignInCode("secret-a", "a@example.com", "012345"));
+  assert.notEqual(h, hashSignInCode("secret-b", "a@example.com", "012345"));
+  assert.notEqual(h, hashSignInCode("secret-a", "b@example.com", "012345"));
+  assert.ok(!h.includes("012345"));
 });

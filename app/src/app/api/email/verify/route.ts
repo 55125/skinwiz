@@ -1,10 +1,7 @@
 import { rateLimit } from "@/lib/api-guard";
-import { getOrCreateDeviceSessionId } from "@/lib/session";
-import { completeSignIn, consumeSignInToken } from "@/lib/identity";
-import { scheduleForOpenedShelf } from "@/lib/checkins";
+import { consumeSignInToken } from "@/lib/identity";
 import { safeNextPath } from "@/lib/email-links";
-import { adoptAvoidListOnSignIn } from "@/lib/avoid";
-import { adoptProfileOnSignIn } from "@/lib/profile";
+import { finishSignIn } from "@/lib/sign-in";
 
 // The confirmation page (/email/verify) posts here. The emailed link itself
 // is a GET of that page, which changes nothing -- mail scanners that
@@ -19,11 +16,7 @@ export async function POST(request: Request) {
   const consumed = typeof token === "string" && token.length <= 128 ? consumeSignInToken(token, now) : null;
   if (!consumed) return seeOther("/email/verify?error=expired");
 
-  const deviceSessionId = await getOrCreateDeviceSessionId();
-  const { person } = completeSignIn({ email: consumed.email, requestSessionId: consumed.requestSessionId, deviceSessionId, now });
-  scheduleForOpenedShelf(person, now);
-  await adoptAvoidListOnSignIn(person.id);
-  await adoptProfileOnSignIn(person.id);
+  await finishSignIn(consumed, now);
   return seeOther(safeNextPath(form?.get("next")) ?? "/account?welcome=1");
 }
 

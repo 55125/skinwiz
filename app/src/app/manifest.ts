@@ -21,7 +21,7 @@ export default function manifest(): MetadataRoute.Manifest {
       { src: "/icons/icon-maskable-512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
     ],
     shortcuts: [
-      { name: "My shelf", url: "/shelf?utm_source=homescreen" },
+      { name: "My products", url: "/regimen?utm_source=homescreen" },
       { name: "Search products", url: "/search?utm_source=homescreen" },
     ],
   };

@@ -10,11 +10,11 @@ export const INGREDIENT_ITEMS: NavItem[] = [
   { href: "/compare", label: "Compare products", hint: "Two products side by side" },
 ];
 
-// The four personal pages, shown as tabs on each of them.
+// The personal pages, shown as tabs on each of them. /shelf redirects to
+// /regimen, which holds both the routine and what you own, want, finished.
 export const MY_SKIN_ITEMS: NavItem[] = [
   { href: "/profile", label: "Skin profile", hint: "Skin type, concerns, likes" },
-  { href: "/regimen", label: "Regimen", hint: "Your morning and night steps" },
-  { href: "/shelf", label: "Shelf", hint: "What you own, want, finished" },
+  { href: "/regimen", label: "My products", hint: "Morning and night steps, what you own and want" },
   { href: "/avoid", label: "Avoid list", hint: "Ingredients to screen out" },
 ];
 

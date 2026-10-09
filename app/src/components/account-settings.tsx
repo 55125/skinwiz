@@ -37,7 +37,7 @@ export function AccountSettings({ email, initial }: { email: string; initial: Pr
 
   async function signOut() {
     if (await call("/api/account/signout", "POST")) {
-      router.push("/shelf");
+      router.push("/regimen");
       router.refresh();
     }
   }

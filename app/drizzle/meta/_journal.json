@@ -187,8 +187,22 @@
     {
       "idx": 26,
       "version": "6",
-      "when": 1791520263647,
-      "tag": "0026_price_check_image",
+      "when": 1791519556342,
+      "tag": "0026_product_availability",
+      "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "6",
+      "when": 1791520835386,
+      "tag": "0027_product_concern_ids",
+      "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "6",
+      "when": 1791522631513,
+      "tag": "0028_price_check_image",
       "breakpoints": true
     }
   ]

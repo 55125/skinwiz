@@ -84,7 +84,12 @@ export const evidenceNotes = sqliteTable("evidence_notes", {
 // what an existing review/link/citation pointed at.
 export const products = sqliteTable("products", {
   id: text("id").primaryKey(), // product_ndc (drug) or barcode (cosmetic)
+  // The product's own concern: its page, evidence notes, scores and ratings.
   concernId: text("concern_id").notNull().references(() => concerns.id),
+  // Every concern it's listed under, concernId first: an SPF moisturizer is
+  // on both the sun protection and dry skin pages (db/labeled-actives.ts
+  // productNiches). Concern listings, filters and counts use this.
+  concernIds: text("concern_ids", { mode: "json" }).$type<string[]>().notNull().default(sql`'[]'`),
   brandName: text("brand_name").notNull(),
   manufacturer: text("manufacturer"),
   dosageForm: text("dosage_form"),
@@ -931,6 +936,10 @@ export const priceChecks = sqliteTable(
     status: text("status").notNull(), // "matched" | "listed" (carried, no price) | "miss" | "error"
     misses: integer("misses").notNull().default(0),
     nextCheckAt: text("next_check_at").notNull(),
+    // When this source last found the product (status "matched" or
+    // "listed"); kept through later misses, so a product retailers stopped
+    // carrying can be told from one they never had (lib/availability.ts).
+    lastMatchedAt: text("last_matched_at"),
     // The source's own product photo URL (Kroger's front photo) from the last
     // matched/listed lookup; cleared on a miss. Hotlinked, never downloaded.
     imageUrl: text("image_url"),
@@ -940,6 +949,19 @@ export const priceChecks = sqliteTable(
     index("price_checks_next_idx").on(table.nextCheckAt),
   ],
 );
+
+// The owner's call on whether a product is still sold, from /admin. Beats
+// the automatic "likely discontinued" rules in lib/availability.ts both
+// ways: "discontinued" marks a product that still looks available, and
+// "available" clears an automatic flag that got it wrong. Keyed by the
+// canonical product id. Not seeded and no FK, so it survives reseeds (a
+// product that drops out and comes back keeps its status).
+export const productAvailability = sqliteTable("product_availability", {
+  productId: text("product_id").primaryKey(),
+  status: text("status").notNull(), // "discontinued" | "available"
+  note: text("note"),
+  updatedAt: text("updated_at").notNull(),
+});
 
 // Recently viewed product pages, so their prices refresh ahead of the
 // catalog sweep. One row per product and no visitor data; written at most

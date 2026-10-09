@@ -1,8 +1,8 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "f0bb01b3-6685-4f1e-8999-54657ce793ae",
-  "prevId": "8e643bcd-0549-44cd-af41-35caaed89f34",
+  "id": "0f30d5b0-d45d-4b00-a321-f45ac7284d6a",
+  "prevId": "ae26e96f-f204-42ac-847d-7a4e66c06599",
   "tables": {
     "active_chem_data": {
       "name": "active_chem_data",
@@ -2353,6 +2353,13 @@
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
+        },
+        "image_url": {
+          "name": "image_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
         }
       },
       "indexes": {
@@ -2746,6 +2753,14 @@
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
+        },
+        "concern_ids": {
+          "name": "concern_ids",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'[]'"
         },
         "brand_name": {
           "name": "brand_name",

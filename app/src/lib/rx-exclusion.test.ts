@@ -33,10 +33,10 @@ before(async () => {
   db.run(sql`INSERT INTO actives (id, canonical_name, categories, synonyms) VALUES ('adapalene', 'Adapalene', '["acne"]', '[]')`);
   db.run(sql`INSERT INTO ingredients (id, name, aliases, product_count) VALUES ('adapalene', 'Adapalene', '[]', 4), ('water', 'Water', '[]', 4)`);
   const product = (id: string, concern: string, rx: boolean, name: string) =>
-    db.run(sql`INSERT INTO products (id, concern_id, brand_name, manufacturer, dosage_form, active_ingredient_text, active_ids,
+    db.run(sql`INSERT INTO products (id, concern_id, concern_ids, brand_name, manufacturer, dosage_form, active_ingredient_text, active_ids,
         spl_set_id, free_from_flags, allergen_hits, strengths, strength_key, data_source, verified, is_rx, generic_name,
         package_description, marketing_category)
-      VALUES (${id}, ${concern}, ${name}, 'Galderma', 'GEL', 'ADAPALENE 1 mg/g', '["adapalene"]', NULL,
+      VALUES (${id}, ${concern}, json_array(${concern}), ${name}, 'Galderma', 'GEL', 'ADAPALENE 1 mg/g', '["adapalene"]', NULL,
         '["fragrance-free"]', '[]', '{"adapalene":0.1}', 'adapalene:0.1', 'openfda', 1, ${rx ? 1 : 0}, 'adapalene',
         '45 g in 1 TUBE', ${rx ? "NDA" : "OTC MONOGRAPH DRUG"})`);
   product("otc-1", "acne", false, "Adapalene Gel 0.1%");

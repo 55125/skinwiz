@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound, permanentRedirect, redirect } from "next/navigation";
-import { AlertTriangle, ChevronLeft, ExternalLink, FlaskConical, Info, PlaySquare, Music2, Camera, ShieldCheck } from "lucide-react";
+import { AlertTriangle, ChevronLeft, ExternalLink, Info, PlaySquare, Music2, Camera, ShieldCheck } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -43,6 +43,8 @@ import { brandDirectStatus } from "@/db/labeled-actives";
 import { OutcomeForm } from "@/components/outcome-form";
 import { ProductGrid } from "@/components/product-grid";
 import { IngredientList } from "@/components/ingredient-list";
+import { IngredientLink } from "@/components/ingredient-link";
+import { ActiveNotes } from "@/components/active-notes";
 import { ShelfButton } from "@/components/shelf-button";
 import { getShelfEntry } from "@/lib/shelf";
 import { RegimenButton } from "@/components/regimen-button";
@@ -51,7 +53,6 @@ import { HowToUse } from "@/components/how-to-use";
 import { getLabelSections, getRegimenSlot, guidanceForActives, guidanceForStep, stepTypeOf, suggestSlot } from "@/lib/regimen";
 import { MatchBadge } from "@/components/match-badge";
 import { avoidLabelsFor, hasProfile, matchProduct, readProfile } from "@/lib/profile";
-import { pubchemLinkText } from "@/lib/pubchem";
 import { displayManufacturer, tidyIngredientName } from "@/lib/format";
 import { productBrand } from "@/lib/product-brand";
 import { productTitle, breadcrumbLd } from "@/lib/seo";
@@ -77,6 +78,8 @@ import {
 } from "@/lib/image-urls";
 import { recallsForProduct } from "@/lib/recalls";
 import { RecallBanner } from "@/components/recall-banner";
+import { DiscontinuedBanner } from "@/components/discontinued-banner";
+import { availabilityOf } from "@/lib/availability";
 import { canViewRxReference } from "@/lib/clinicians";
 import { isAmazonLink, manualLinkHref, manualLinkLabel } from "@/lib/manual-links";
 import { headers } from "next/headers";
@@ -148,6 +151,8 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
     .filter((c, i, all) => c !== product.id && !c.startsWith("http") && all.indexOf(c) === i);
 
   const concern = getConcern(product.concernId);
+  // Other concern pages it's listed on (an SPF moisturizer: sun protection and dry skin).
+  const alsoIn = (product.concernIds as string[]).filter((id) => id !== product.concernId).flatMap((id) => getConcern(id) ?? []);
   const evidenceNotes = getEvidenceNotesForActives(product.activeIds as string[], product.concernId);
   const affiliateLinks = getAffiliateLinksForProduct(product.id);
   const manualLinks = getManualLinksForProduct(product.id);
@@ -236,7 +241,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
   const flaggedSkin = product.freeFromFlags
     ? FREE_FROM_CHECKS.filter((c) => c.category === "skin" && !product.freeFromFlags!.includes(c.id)).map((c) => ({
         check: c,
-        hits: listedIngredients.filter((r) => ingredientFailsCheck(c, r.rawName)).map((r) => r.rawName),
+        hits: listedIngredients.filter((r) => ingredientFailsCheck(c, r.rawName)),
       }))
     : [];
   const strengthRows = product.strengths
@@ -264,6 +269,19 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
           <ChevronLeft className="h-4 w-4" />
           {concern.name}
         </Link>
+      )}
+      {concern && alsoIn.length > 0 && (
+        <span className="ml-3 text-sm text-muted-foreground">
+          Also in{" "}
+          {alsoIn.map((c, i) => (
+            <span key={c.id}>
+              {i > 0 && ", "}
+              <Link href={`/concern/${c.id}`} className="underline decoration-border underline-offset-4 hover:text-foreground">
+                {c.name}
+              </Link>
+            </span>
+          ))}
+        </span>
       )}
 
       <div className={imageUrl ? "grid gap-8 md:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] md:items-start" : ""}>
@@ -348,6 +366,11 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
           </div>
 
           <RecallBanner recalls={recallsForProduct(product.id)} />
+
+          <DiscontinuedBanner
+            reason={availabilityOf(product.id).discontinued}
+            alternatives={concern ? { href: `/concern/${concern.id}`, label: `Find an alternative among ${concern.name} products` } : undefined}
+          />
 
           <DualScoreBadges dermScore={dermScore} audienceScore={audienceScore} />
 
@@ -468,7 +491,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
                 {strengthRows.map((row) => (
                   <li key={row.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
                     <span className="font-semibold tabular-nums">
-                      {activeName(row.id)} {formatPct(row.pct)}
+                      <IngredientLink id={row.id}>{activeName(row.id)}</IngredientLink> {formatPct(row.pct)}
                     </span>
                     {row.monograph && (
                       <Badge
@@ -552,6 +575,12 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
                   we track.
                 </p>
               )}
+              <ActiveNotes notes={evidenceNotes} className="mt-4 border-t pt-4" />
+            </div>
+          )}
+          {!product.activeIngredientText && evidenceNotes.length > 0 && (
+            <div className="rounded-xl border bg-card p-4">
+              <ActiveNotes notes={evidenceNotes} />
             </div>
           )}
 
@@ -569,7 +598,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
           {product.allergenHits && (
             <AllergenFindings
               hits={product.allergenHits}
-              ingredientNames={ingredientRows.map((r) => r.rawName)}
+              ingredients={ingredientRows}
               avoidIds={avoidIds}
             />
           )}
@@ -608,7 +637,12 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
                     .map(({ check, hits }) => (
                       <p key={check.id}>
                         <span className="font-medium text-foreground">Not {check.label.toLowerCase()}:</span>{" "}
-                        {hits.slice(0, 6).map(tidyIngredientName).join(", ")}
+                        {hits.slice(0, 6).map((h, i) => (
+                          <span key={`${h.ingredientId}-${i}`}>
+                            {i > 0 && ", "}
+                            <IngredientLink id={h.ingredientId}>{tidyIngredientName(h.rawName)}</IngredientLink>
+                          </span>
+                        ))}
                         {hits.length > 6 ? ` +${hits.length - 6} more` : ""}
                       </p>
                     ))}
@@ -715,41 +749,6 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
         initial={myOutcome}
         finished={shelfEntry?.status === "empty"}
       />
-
-      <section className="space-y-4">
-        <h2 className="flex items-center gap-2 text-xl font-semibold">
-          <FlaskConical className="h-5 w-5 text-brand" />
-          Why this active
-        </h2>
-        <div className={evidenceNotes.length > 1 ? "grid gap-4 md:grid-cols-2" : undefined}>
-        {evidenceNotes.map((note) => (
-          <div key={note.activeId} className="space-y-2 rounded-2xl border bg-card p-5">
-            <h3 className="font-semibold">{note.activeName}</h3>
-            <p className="text-sm leading-relaxed text-muted-foreground">{note.summary}</p>
-            {note.typicalConcentrationText && (
-              <p className="text-xs text-muted-foreground">{note.typicalConcentrationText}</p>
-            )}
-            {note.needsClinicianReview && (
-              <p className="text-xs italic text-amber-700 dark:text-amber-400">
-                Clinical evidence grade: pending board-certified dermatologist review.
-              </p>
-            )}
-            {note.pubchemCid && (
-              <p className="text-xs">
-                <a
-                  href={`https://pubchem.ncbi.nlm.nih.gov/compound/${note.pubchemCid}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="font-medium text-brand hover:underline"
-                >
-                  {pubchemLinkText(note.activeId, note.molecularFormula)}
-                <span className="sr-only"> (opens in new tab)</span></a>
-              </p>
-            )}
-          </div>
-        ))}
-        </div>
-      </section>
 
       {equivalenceGroup && groupOthers.length > 0 && (
         <section className="space-y-4">

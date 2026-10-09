@@ -41,7 +41,7 @@ export default async function GuidePage({ params }: { params: Promise<{ slug: st
   const { rows, total } = browseProducts({ freeFromIds: [slug] }, 1);
   const byConcern = db.all<{ id: string; name: string; n: number }>(sql`
     SELECT c.id AS id, c.name AS name, COUNT(*) AS n
-    FROM products p JOIN concerns c ON c.id = p.concern_id
+    FROM products p JOIN concerns c ON c.id IN (SELECT value FROM json_each(p.concern_ids))
     WHERE p.is_rx = 0 AND p.canonical_id IS NULL AND p.free_from_flags LIKE ${`%"${slug}"%`}
     GROUP BY c.id ORDER BY n DESC
   `);

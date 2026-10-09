@@ -10,7 +10,7 @@ import { ACTIVE_TEXT_OVERRIDES } from "./active-overrides";
 import { computeFreeFromFlags } from "./ingredient-flags";
 import { computeAllergenHits } from "./contact-allergens";
 import { parseStrengths, strengthKey } from "./strength";
-import { labeledDrugActives } from "./labeled-actives";
+import { brandDirectNiche, labeledDrugActives, productNiches, sunscreenNiche } from "./labeled-actives";
 import { aliasesFor, canonicalSlug, parseIngredients, pickDisplayName } from "./ingredient-parse";
 import { SITE_NAME } from "@/lib/brand";
 import { validateManualLinks, type ManualLinkRow } from "@/lib/manual-links";
@@ -319,6 +319,8 @@ function reseed() {
   let skippedNoActive = 0;
   let skippedHomeopathic = 0;
   let skippedSunscreenNoFilter = 0;
+  let movedToSunscreen = 0;
+  let multiConcern = 0;
   const productBatch: (typeof schema.products.$inferInsert)[] = [];
   const seenNdc = new Set<string>();
   const memberships: { productId: string; position: number; slug: string; rawName: string; isActive: boolean }[] = [];
@@ -371,6 +373,11 @@ function reseed() {
       // matched cosmetic ids on them, so the drug active and its strength
       // come from that line here (labeled-actives.ts).
       const brandDrug = row.source === "brand_direct" ? labeledDrugActives(row.active_ingredient_text) : null;
+      // The niche the source filed it under, before the moves below.
+      const sourceNiche = row.niche;
+      // A brand-category row with an acne drug active (a BPO wash filed under
+      // "cleansers") belongs under Acne.
+      if (brandDrug) row.niche = brandDirectNiche(row.niche, row.brand_name, brandDrug.activeIds);
       const labeledActiveIds = isPreMatched
         ? [...new Set([...(brandDrug?.activeIds ?? []), ...(row.active_ingredients_structured ?? "").split(";").filter(Boolean)])]
         : matchActiveIds([row.active_ingredients_structured, row.substance_name, row.active_ingredient_text].join(" "));
@@ -400,6 +407,15 @@ function reseed() {
           continue;
         }
       }
+      // An SPF lotion or lip balm filed under another category (a brand's
+      // "moisturizers") belongs under Sun Protection. Only labeled drug
+      // actives count, not a UV filter in a cosmetic INCI list.
+      const niche = sunscreenNiche(row.niche, row.brand_name, isPreMatched ? (brandDrug?.activeIds ?? []) : labeledActiveIds);
+      if (niche !== row.niche) movedToSunscreen++;
+      row.niche = niche;
+      // Also listed under every other niche it fits (labeled-actives.ts).
+      const concernIds = productNiches(row.niche, sourceNiche, isPreMatched ? (brandDrug?.activeIds ?? []) : labeledActiveIds).map(nicheToConcernId);
+      if (concernIds.length > 1) multiConcern++;
       seenNdc.add(row.product_ndc);
       const trimmedBrandName = row.brand_name?.trim() || "(unnamed product)";
       // The full ingredient list for free-from-flag purposes -- NOT the
@@ -444,6 +460,7 @@ function reseed() {
       productBatch.push({
         id: row.product_ndc,
         concernId: nicheToConcernId(row.niche),
+        concernIds,
         // Only openfda/dailymed rows get normalized -- brand_direct/OBF brand
         // names are already human-written product names, not SPL label text.
         brandName: isPreMatched ? trimmedBrandName : normalizeBrandName(trimmedBrandName),
@@ -489,6 +506,7 @@ function reseed() {
   }
   console.log(`  inserted ${inserted} products, skipped ${skippedNoActive} with no recognized active ingredient`);
   console.log(`  skipped ${skippedHomeopathic} homeopathic and ${skippedSunscreenNoFilter} "sunscreens" with no UV filter`);
+  console.log(`  filed ${movedToSunscreen} SPF products from other categories under Sun Protection; ${multiConcern} products listed under more than one concern`);
   console.log(`  drug inactive lists by source: ${JSON.stringify(inactiveSources)}`);
 
   insertIngredients(memberships, duplicateIds);
@@ -613,6 +631,7 @@ function rxProducts(seenNdc: Set<string>): (typeof schema.products.$inferInsert)
     out.push({
       id: row.product_ndc,
       concernId: RX_CONCERN.id,
+      concernIds: [RX_CONCERN.id],
       brandName: normalizeBrandName(row.brand_name?.trim() || row.generic_name || "(unnamed product)"),
       manufacturer: row.labeler || null,
       dosageForm: row.dosage_form || null,

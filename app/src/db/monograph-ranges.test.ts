@@ -77,3 +77,14 @@ test("NDA citations for the Rx-to-OTC switches", () => {
   assert.match(MONOGRAPH_RANGES.butenafine[0].cite, /NDA 021307/);
   assert.match(MONOGRAPH_RANGES.terbinafine[0].cite, /NDA 020980/);
 });
+
+test("Differin Epiduo (adapalene 0.1% + BPO 2.5%) cites its own switch NDA", () => {
+  const epiduo = { concernId: "acne", brandName: "Differin Epiduo", dosageForm: "GEL", activeIds: ["adapalene", "benzoyl-peroxide"] };
+  assert.deepEqual(monographStatus("adapalene", 0.1, epiduo), { status: "within", range: MONOGRAPH_RANGES.adapalene[1] });
+  assert.match(monographStatus("benzoyl-peroxide", 2.5, epiduo)!.range.cite, /NDA 220736/);
+  // No OTC adapalene/BPO product above 2.5% BPO.
+  assert.equal(status("benzoyl-peroxide", 5, epiduo), "above");
+  // BPO on its own keeps the monograph range.
+  assert.match(monographStatus("benzoyl-peroxide", 5, { activeIds: ["benzoyl-peroxide"] })!.range.cite, /333\.310/);
+  assert.match(monographStatus("adapalene", 0.1, { activeIds: ["adapalene"] })!.range.cite, /NDA 020380/);
+});

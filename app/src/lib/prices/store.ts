@@ -95,6 +95,18 @@ export function getDisplayQuotesFor(productIds: string[], now = new Date()): Pri
   return out.sort((a, b) => a.price - b.price);
 }
 
+/** Product ids with a fresh displayable quote that isn't out of stock. Empty while disabled. */
+export function inStockQuoteProductIds(now = new Date()): string[] {
+  if (!livePricesEnabled()) return [];
+  const cutoff = new Date(now.getTime() - PRICE_DISPLAY_MAX_AGE_MS).toISOString();
+  return db
+    .selectDistinct({ productId: priceQuotes.productId })
+    .from(priceQuotes)
+    .where(and(displayable(cutoff), sql`coalesce(${priceQuotes.availability}, '') <> 'out_of_stock'`))
+    .all()
+    .map((r) => r.productId);
+}
+
 /** The cheapest fresh quote per product. */
 export function getBestQuotes(productIds: string[], now = new Date()): Map<string, PriceQuote> {
   const best = new Map<string, PriceQuote>();
@@ -141,6 +153,7 @@ export function saveLookup(productId: string, source: PriceSourceId, result: Loo
     .get();
   const misses = result.status === "miss" ? (prev?.misses ?? 0) + 1 : 0;
   const wait = result.status !== "miss" ? PRICE_STALE_MS : Math.min(MISS_RETRY_MAX_MS, MISS_RETRY_MS * 2 ** (misses - 1));
+  const found = result.status === "matched" || result.status === "listed";
   db.transaction((tx) => {
     tx.delete(priceQuotes).where(and(eq(priceQuotes.productId, productId), eq(priceQuotes.source, source))).run();
     for (const q of result.quotes) {
@@ -167,7 +180,7 @@ export function saveLookup(productId: string, source: PriceSourceId, result: Loo
         .onConflictDoNothing()
         .run();
     }
-    upsertCheck(tx, productId, source, at, result.status, misses, new Date(now.getTime() + wait).toISOString(), result.image ?? null);
+    upsertCheck(tx, productId, source, at, result.status, misses, new Date(now.getTime() + wait).toISOString(), found ? at : undefined, result.image ?? null);
   });
 }
 
@@ -189,14 +202,17 @@ function upsertCheck(
   status: string,
   misses: number,
   nextCheckAt: string,
+  lastMatchedAt?: string,
   // undefined (a failed lookup) keeps the stored photo; null clears it.
   imageUrl?: string | null,
 ) {
+  // lastMatchedAt only ever moves forward: a miss or an error keeps it.
+  const matched = lastMatchedAt ? { lastMatchedAt } : {};
   tx.insert(priceChecks)
-    .values({ productId, source, checkedAt, status, misses, nextCheckAt, imageUrl: imageUrl ?? null })
+    .values({ productId, source, checkedAt, status, misses, nextCheckAt, ...matched, imageUrl: imageUrl ?? null })
     .onConflictDoUpdate({
       target: [priceChecks.productId, priceChecks.source],
-      set: { checkedAt, status, misses, nextCheckAt, ...(imageUrl !== undefined && { imageUrl }) },
+      set: { checkedAt, status, misses, nextCheckAt, ...matched, ...(imageUrl !== undefined && { imageUrl }) },
     })
     .run();
 }

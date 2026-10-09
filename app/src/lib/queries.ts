@@ -1130,6 +1130,17 @@ export function getIngredientLetters(): string[] {
     .sort((a, b) => (a === "0-9" ? -1 : b === "0-9" ? 1 : a.localeCompare(b)));
 }
 
+/** Product counts for the given ingredient ids, for those that have a page. */
+export function getIngredientCounts(ids: string[]): Map<string, number> {
+  if (ids.length === 0) return new Map();
+  const rows = db
+    .select({ id: ingredients.id, productCount: ingredients.productCount })
+    .from(ingredients)
+    .where(inArray(ingredients.id, ids))
+    .all();
+  return new Map(rows.map((r) => [r.id, r.productCount]));
+}
+
 export function getPopularIngredients(limit = 12) {
   return db
     .select()

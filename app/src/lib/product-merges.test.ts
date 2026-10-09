@@ -165,6 +165,30 @@ test("canonical page data: URL, buy links, barcodes, best image", () => {
   assert.equal(q.bestProductImage({ imageUrl: "/img/dm/0a0a0a0a-0a0a-0a0a-0a0a-0a0a0a0a0a0a/0123456789ab/full.webp" }, [{ imageUrl: "https://x/y.jpg" }]), "https://x/y.jpg");
 });
 
+test("product photos lead, label artwork second, on the page and in grids", () => {
+  const label = "/img/dm/0a0a0a0a-0a0a-0a0a-0a0a-0a0a0a0a0a0a/0123456789ab/full.webp";
+  const photo = "https://x/y.jpg";
+  // both: the photo first, the label kept as the second image
+  assert.deepEqual(q.productImages({ imageUrl: label }, [{ imageUrl: photo }]), { photo, label });
+  assert.deepEqual(q.productImages({ imageUrl: photo }, [{ imageUrl: label }]), { photo, label });
+  // only a label: it is the image, with nothing second
+  assert.deepEqual(q.productImages({ imageUrl: label }, []), { photo: label, label: null });
+  assert.deepEqual(q.productImages({ imageUrl: null }, [{ imageUrl: null }]), { photo: null, label: null });
+
+  // a grid card uses the merged listing's photo over the canonical's own label
+  db.run(sql`UPDATE products SET image_url = ${label} WHERE id = ${CANON}`);
+  db.run(sql`UPDATE products SET image_url = ${label} WHERE id = 'otc-other'`);
+  try {
+    const images = q.getBestProductImages([CANON, "otc-other", "rx-1"]);
+    assert.equal(images.get(CANON), "https://images.example/differin.jpg");
+    assert.equal(images.get("otc-other"), label);
+    assert.equal(images.get("rx-1"), null);
+    assert.deepEqual(q.getBestProductImages([]), new Map());
+  } finally {
+    db.run(sql`UPDATE products SET image_url = NULL WHERE id IN (${CANON}, 'otc-other')`);
+  }
+});
+
 test("a duplicate's product page 308s to its canonical", async () => {
   const { default: ProductPage } = await import("@/app/product/[id]/page");
   await assert.rejects(

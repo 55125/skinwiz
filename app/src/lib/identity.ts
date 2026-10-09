@@ -6,7 +6,7 @@ import { randomUUID } from "node:crypto";
 import { and, eq, gt, isNull, sql } from "drizzle-orm";
 import { db } from "@/db/client";
 import { emailTokens, people, personSessions } from "@/db/schema";
-import { generateToken, hashToken, SIGN_IN_TTL_MS } from "@/lib/tokens";
+import { generateToken, hashToken, safeEqual, SIGN_IN_TTL_MS } from "@/lib/tokens";
 
 export type Person = typeof people.$inferSelect;
 
@@ -51,13 +51,14 @@ export function recentTokenCountAll(now: Date, windowMs = 60 * 60_000): number {
   return db.get<{ n: number }>(sql`SELECT count(*) AS n FROM email_tokens WHERE created_at > ${since}`)?.n ?? 0;
 }
 
-export function createSignInToken(email: string, requestSessionId: string | null, now: Date): string {
+export function createSignInToken(email: string, requestSessionId: string | null, now: Date, codeHash: string | null = null): string {
   const token = generateToken();
   db.insert(emailTokens)
     .values({
       tokenHash: hashToken(token),
       email,
       requestSessionId,
+      codeHash,
       expiresAt: iso(new Date(now.getTime() + SIGN_IN_TTL_MS)),
       createdAt: iso(now),
     })
@@ -87,6 +88,40 @@ export function consumeSignInToken(token: string, now: Date): { email: string; r
     .returning({ email: emailTokens.email, requestSessionId: emailTokens.requestSessionId })
     .all();
   return rows[0] ?? null;
+}
+
+/** Wrong codes allowed across an address's live sign-in emails before they all stop working. */
+export const MAX_CODE_ATTEMPTS = 5;
+
+/**
+ * The typed-code twin of consumeSignInToken. Any live code emailed to this
+ * address works. A wrong guess counts against every live one, so an address
+ * gets MAX_CODE_ATTEMPTS guesses in total, not that many per email sent;
+ * after that the links in those emails still work, the codes don't.
+ */
+export function consumeSignInCode(email: string, codeHash: string, now: Date): { email: string; requestSessionId: string | null } | null {
+  return db.transaction((tx) => {
+    const live = and(
+      eq(emailTokens.email, email),
+      isNull(emailTokens.usedAt),
+      gt(emailTokens.expiresAt, iso(now)),
+      sql`${emailTokens.codeHash} IS NOT NULL`,
+      sql`${emailTokens.codeAttempts} < ${MAX_CODE_ATTEMPTS}`,
+    );
+    const rows = tx.select({ id: emailTokens.id, codeHash: emailTokens.codeHash }).from(emailTokens).where(live).all();
+    const match = rows.find((r) => r.codeHash !== null && safeEqual(r.codeHash, codeHash));
+    if (!match) {
+      if (rows.length > 0) tx.update(emailTokens).set({ codeAttempts: sql`${emailTokens.codeAttempts} + 1` }).where(live).run();
+      return null;
+    }
+    const used = tx
+      .update(emailTokens)
+      .set({ usedAt: iso(now) })
+      .where(and(eq(emailTokens.id, match.id), isNull(emailTokens.usedAt)))
+      .returning({ email: emailTokens.email, requestSessionId: emailTokens.requestSessionId })
+      .all();
+    return used[0] ?? null;
+  });
 }
 
 // --- merging --------------------------------------------------------------

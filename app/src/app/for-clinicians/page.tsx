@@ -3,11 +3,6 @@ import { Separator } from "@/components/ui/separator";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { SITE_NAME } from "@/lib/brand";
-import { FEATURES } from "@/lib/feature-flags";
-
-// Dynamic so the handout-builder link follows FEATURE_HANDOUTS at runtime
-// instead of whatever the flag was at build time.
-export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   alternates: { canonical: "/for-clinicians" },
@@ -38,33 +33,6 @@ export default function ForCliniciansPage() {
           See the clinic tools →
         </Link>
       </section>
-
-      <section className="space-y-2 rounded-2xl border border-brand/30 bg-brand-soft/40 p-4 text-sm">
-        <h2 className="text-base font-medium text-foreground">Patch-test results sheet with a QR code</h2>
-        <p className="text-muted-foreground">
-          At the reading, tick your patient&apos;s positives on the T.R.U.E. Test, an ACDS or NAC-80 tray, or the core series, and print a one-page
-          sheet. The patient scans the QR code and their {SITE_NAME} avoid list is filled in with every label name for
-          each allergen. No account for either of you, and nothing is stored.
-        </p>
-        <Link href="/for-clinicians/patch-test" className="inline-block font-medium text-brand hover:underline">
-          Make a patch-test sheet →
-        </Link>
-      </section>
-
-      {FEATURES.HANDOUTS && (
-        <section className="space-y-2 rounded-2xl border border-brand/30 bg-brand-soft/40 p-4 text-sm">
-          <h2 className="text-base font-medium text-foreground">Patient handouts with a QR code</h2>
-          <p className="text-muted-foreground">
-            Start from the handout library or a blank page: patient information, OTC and prescription steps, your own directions
-            and when to call. Print it with a QR code, show the code, or email the link from your own email app, and paste a chart
-            note. Your patient scans it to save the plan privately on their phone. Sign in with your email
-            and NPI; no patient details are ever sent to us.
-          </p>
-          <Link href="/clinicians" className="inline-block font-medium text-brand hover:underline">
-            Open the handout builder →
-          </Link>
-        </section>
-      )}
 
       <section className="space-y-2 text-sm">
         <h2 className="text-base font-medium text-foreground">How the panel will work</h2>

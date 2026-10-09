@@ -154,8 +154,10 @@ export function ingredientKey(raw: string): string {
 }
 
 export function slugFor(key: string): string {
-  const active = ACTIVE_BY_KEY.get(key);
-  if (active) return active.id;
+  return ACTIVE_BY_KEY.get(key)?.id ?? plainSlug(key);
+}
+
+function plainSlug(key: string): string {
   return key
     .replace(/&/g, " and ")
     .replace(/[^a-z0-9]+/g, "-")
@@ -299,8 +301,21 @@ export function aliasesFor(slug: string, name: string, variants: Map<string, num
 const TYPO_ALIASES: Record<string, string> = typoAliases;
 const ACTIVE_IDS = new Set(ACTIVE_DEFINITIONS.map((a) => a.id));
 
+// The slug a tracked active's other names would get as plain ingredients
+// ("bis-ethylhexyloxyphenol-methoxyphenyl-triazine", "benzophenone-4") -> the
+// active's id, so links made before the active was tracked still resolve.
+const ACTIVE_NAME_SLUGS = new Map<string, string>();
+for (const a of ACTIVE_DEFINITIONS) {
+  for (const name of a.synonyms) {
+    const plain = plainSlug(ingredientKey(name));
+    if (plain && plain !== a.id && !ACTIVE_IDS.has(plain) && !ACTIVE_NAME_SLUGS.has(plain)) ACTIVE_NAME_SLUGS.set(plain, a.id);
+  }
+}
+
 // A misspelled label's slug -> the slug of its correct spelling. Tracked
 // actives are never treated as misspellings of anything.
 export function canonicalSlug(slug: string): string {
-  return ACTIVE_IDS.has(slug) ? slug : (TYPO_ALIASES[slug] ?? slug);
+  if (ACTIVE_IDS.has(slug)) return slug;
+  const spelled = TYPO_ALIASES[slug] ?? slug;
+  return ACTIVE_NAME_SLUGS.get(spelled) ?? spelled;
 }

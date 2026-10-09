@@ -612,6 +612,7 @@ setid,rank,image_name,score,section_code,caption,reasons,usable
 066d0e4a-bb78-43a9-944f-70a343c39448,1,Outer Package.jpg,13.0,51945-4,Outer Package,pdp-section carton package,1
 066d0e4a-bb78-43a9-944f-70a343c39448,2,Ablaze.jpg,9.5,51945-4,Ablaze,pdp-section title:package,1
 066d0e4a-bb78-43a9-944f-70a343c39448,3,Inner Package4.jpg,7.0,51945-4,Inner Package4,pdp-section title:package inner,1
+0670214e-520b-4126-8f28-71c765117276,1,ulta bday 15ml pdp.jpg,13.0,51945-4,image of label,pdp-section pdp,1
 067e718a-ec0b-4895-8f9f-82d64ab4c7b4,1,622-45-anti-itch-cream.jpg,11.5,51945-4,622-45-anti-itch-cream.jpg,pdp-section title:pdp,1
 0682580e-aff8-4b67-99ba-a29ab7b433db,1,5b764ltc1.jpg,12.0,51945-4,carton image,pdp-section carton,1
 0682580e-aff8-4b67-99ba-a29ab7b433db,2,chemstructure.jpg,-10.0,34089-3,chemstructure,section-34089-3,0
@@ -2475,6 +2476,8 @@ setid,rank,image_name,score,section_code,caption,reasons,usable
 1659f2ac-5dbc-553e-e063-6394a90a9a4d,1,Neutrogena_1.jpg,12.5,51945-4,Neutrogena,pdp-section title:pdp title:container,1
 1660b6a6-e24a-53e5-e063-6394a90aab3a,1,Cell Fusion C Laser Sunscreen SPF50 50mL.jpg,11.5,51945-4,Cell Fusion C Laser Sunscreen Broad Spectrum SPF50 50mL,pdp-section title:pdp,1
 1660b6a6-e24a-53e5-e063-6394a90aab3a,2,Cell Fusion C Laser Sunscreen SPF50 10mL.jpg,11.0,51945-4,Cell Fusion C Laser Sunscreen SPF50 10mL,pdp-section title:pdp,1
+1660f219-e789-91f1-e063-6294a90a7664,1,P11536.04 PanOxyl 10pct Wash Tube.jpg,12.0,51945-4,P11536.04 Tube,pdp-section container,1
+1660f219-e789-91f1-e063-6294a90a7664,2,P11731.05 10pct Wash.jpg,12.0,51945-4,10pct carton,pdp-section carton,1
 16638533-1d4a-4378-a5f0-e9911400178d,1,moisturizer-01.jpg,17.0,51945-4,PRINCIPAL DISPLAY PANEL - 50 mL Tube Carton - 0N1 Petal,pdp-section pdp carton container,1
 16638533-1d4a-4378-a5f0-e9911400178d,2,moisturizer-02.jpg,17.0,51945-4,PRINCIPAL DISPLAY PANEL - 50 mL Tube Carton - 0W1 Pearl,pdp-section pdp carton container,1
 16638533-1d4a-4378-a5f0-e9911400178d,3,moisturizer-03.jpg,17.0,51945-4,PRINCIPAL DISPLAY PANEL - 50 mL Tube Carton - 1C0 Cameo,pdp-section pdp carton container,1
@@ -3829,6 +3832,8 @@ setid,rank,image_name,score,section_code,caption,reasons,usable
 21b2dc1a-13da-47a6-99d9-40dfed4d3598,1,Outer Package.jpg,13.0,51945-4,Outer Package,pdp-section carton package,1
 21b2dc1a-13da-47a6-99d9-40dfed4d3598,2,Full Hearts.jpg,9.5,51945-4,Full Hearts,pdp-section title:package,1
 21b2dc1a-13da-47a6-99d9-40dfed4d3598,3,Inner Package7.jpg,7.0,51945-4,Inner Package7,pdp-section title:package inner,1
+21b3491f-7b02-9bc5-e063-6294a90a0dc3,1,Unseen Reform Secondary.jpg,12.0,51945-4,Carton,pdp-section carton,1
+21b3491f-7b02-9bc5-e063-6294a90a0dc3,2,Unseen Reform Primary.jpg,11.5,51945-4,Tube,pdp-section container,1
 21b35861-e495-4b3e-8a0a-926f432ebf08,1,PowerFusion1.jpg,11.5,51945-4,Power Fusion 1,pdp-section title:product,1
 21b35861-e495-4b3e-8a0a-926f432ebf08,2,PowerFusion2.jpg,11.0,51945-4,Power Fusion 2,pdp-section title:product,1
 21b4747b-b173-43c9-b0d4-1dbba5775ff8,1,Label.jpg,10.5,51945-4,Label,pdp-section title:package,1
@@ -13606,6 +13611,8 @@ setid,rank,image_name,score,section_code,caption,reasons,usable
 7b2d15c1-b9e1-4347-b138-9883f78822b3,1,Vital perfection Label.jpg,13.5,51945-4,Vital perfection Label,pdp-section title:pdp title:carton title:container,1
 7b2d15c1-b9e1-4347-b138-9883f78822b3,2,refill.jpg,13.5,51945-4,refill,pdp-section title:pdp title:carton title:container,1
 7b2e44b9-b1ac-48c8-994d-4e9682ec8bad,1,clotrimazole-01.jpg,17.0,51945-4,Principal Display Panel - 14.2 g Tube Carton,pdp-section pdp carton container,1
+7b301b94-3cc8-b05b-e053-2991aa0aa561,1,P11532.05_PanOxyl_4pct 6oz Tube.jpg,12.0,51945-4,PanOxyl 4% Tube,pdp-section container,1
+7b301b94-3cc8-b05b-e053-2991aa0aa561,2,P11730.05 4pct 6oz CRTN.jpg,12.0,51945-4,6oz carton,pdp-section carton,1
 7b42655b-2163-4637-9f5d-1d2efa1bdf1d,1,carton-1-oz.jpg,13.5,51945-4,carton label 1 oz,pdp-section title:pdp carton,1
 7b42655b-2163-4637-9f5d-1d2efa1bdf1d,2,carton-label-2-oz.jpg,13.0,51945-4,carton label 2 oz,pdp-section title:pdp carton,1
 7b42655b-2163-4637-9f5d-1d2efa1bdf1d,3,jar-label-15-oz.jpg,12.5,51945-4,jar label,pdp-section title:pdp container,1
@@ -14811,6 +14818,9 @@ setid,rank,image_name,score,section_code,caption,reasons,usable
 8dcf134e-0427-0c43-e053-2995a90a7c26,1,TCCal.jpg,9.5,51945-4,TCCal.jpg,pdp-section,1
 8dcf134e-0427-0c43-e053-2995a90a7c26,2,cl.jpg,9.0,51945-4,cl,pdp-section,1
 8dcf134e-0427-0c43-e053-2995a90a7c26,3,Top Care Calamine.jpg,6.0,51945-4,Top Care Calamine,pdp-section side,1
+8dd6b2f1-f438-4be1-a6c4-4f6c8902dfb6,1,front_label.jpg,4.5,48780-1,front label,product-data-section front label,1
+8dd6b2f1-f438-4be1-a6c4-4f6c8902dfb6,2,carton.jpg,1.0,48780-1,400 mL Carton,product-data-section carton,1
+8dd6b2f1-f438-4be1-a6c4-4f6c8902dfb6,3,back_label.jpg,-5.5,48780-1,back label,product-data-section label back,0
 8de23745-a2c5-4e82-a73a-dd3fcc1799bd,1,total-01.jpg,17.0,51945-4,PRINCIPAL DISPLAY PANEL - 15 mL Tube Carton,pdp-section pdp carton container,1
 8de31db2-46cf-7178-e053-2995a90a5024,1,Olay.jpg,13.5,51945-4,Olay,pdp-section title:pdp title:carton title:container,1
 8de4ec46-f60a-4c51-a16e-9140150e2162,1,Label_Bright.jpg,10.0,51945-4,image description,pdp-section,1
@@ -16211,6 +16221,10 @@ a161b69c-df9d-4827-ace8-f622aca9efc3,2,cortyx-gel-1.jpg,-18.0,34089-3,Structure,
 a162f9cd-37a8-4255-846c-3ed5dc1b80a0,1,Jafra CCCremeBroadUSA.jpg,12.0,51945-4,Carton,pdp-section carton,1
 a17782bf-82d9-443e-b308-4870d7625770,1,long-01.jpg,15.0,51945-4,Principal Display Panel - 30 ml Carton,pdp-section pdp carton,1
 a17b2c6e-9db8-bae4-e053-2a95a90adcf6,1,label.jpg,10.0,51945-4,label,pdp-section,1
+a17b7424-ee7e-4fcc-b6b3-0904932ae319,1,7ozfront.jpg,3.0,48780-1,200 mL front,product-data-section front,1
+a17b7424-ee7e-4fcc-b6b3-0904932ae319,2,4ozfront.jpg,3.0,48780-1,125 mL front,product-data-section front,1
+a17b7424-ee7e-4fcc-b6b3-0904932ae319,3,11ozfront.jpg,3.0,48780-1,325ml Front,product-data-section front,1
+a17b7424-ee7e-4fcc-b6b3-0904932ae319,4,14ozfront.jpg,3.0,48780-1,400 mL front,product-data-section front,1
 a18aff23-6295-a657-e053-2995a90a800a,1,58443-0295-3.jpg,13.0,51945-4,Principal Display Label,pdp-section pdp,1
 a18efbfc-0f29-4a51-87b1-eaa5dc94f8e0,1,CCcream75ml_BOX_JULY14.jpg,12.0,51945-4,Box image,pdp-section carton,1
 a1a700b5-d039-4bd2-8420-5c2053095706,1,Label7.jpg,10.5,51945-4,Label7,pdp-section title:package,1
@@ -23393,6 +23407,7 @@ f5c79f1a-cecd-2409-e053-2995a90ad06f,2,Label01.jpg,10.5,51945-4,Label01.jpg,pdp-
 f5c79f1a-cecd-2409-e053-2995a90ad06f,3,Inner Package2.jpg,7.0,51945-4,Inner Package2,pdp-section title:package inner,1
 f5c7b7ce-b3ed-3e96-e053-2995a90a8ea9,1,Outer Package4.jpg,12.5,51945-4,Outer Package4,pdp-section carton title:package,1
 f5c7b7ce-b3ed-3e96-e053-2995a90a8ea9,2,Inner Package4.jpg,7.0,51945-4,Inner Package4,pdp-section title:package inner,1
+f5c8c5b4-49bd-4dc7-8c29-8f1317c6ef88,1,400ml-box.jpg,1.0,48780-1,400mL Carton,product-data-section carton,1
 f5c8dccd-8e69-6a01-e053-2a95a90a6972,1,Kroger_AF Tolnaftate Powder Spray_50-105KR.jpg,13.5,51945-4,Image 1,pdp-section title:pdp container,1
 f5ca0416-548c-4be0-a69e-c7e1b52aba95,1,mm02.jpg,11.5,51945-4,image description,pdp-section title:pdp,1
 f5ca0416-548c-4be0-a69e-c7e1b52aba95,2,mm01.jpg,11.5,51945-4,image description,pdp-section title:pdp,1

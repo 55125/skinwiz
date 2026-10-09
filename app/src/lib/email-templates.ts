@@ -46,7 +46,7 @@ const NOT_ADVICE = "Not medical advice. If your skin gets much worse, blisters, 
 
 // --- sign-in --------------------------------------------------------------
 
-export function signInEmail(link: string): Rendered {
+export function signInEmail(link: string, code: string): Rendered {
   const subject = `Your ${SITE_NAME} sign-in link`;
   const html = layout(
     subject,
@@ -54,7 +54,8 @@ export function signInEmail(link: string): Rendered {
       p(`Use this link to save your shelf to this email address. It works once and expires in 15 minutes.`),
       p(button(link, "Confirm my email")),
       p(`Or paste this address into your browser:<br><a href="${escapeHtml(link)}" style="color:#1f5f4a;word-break:break-all;">${escapeHtml(link)}</a>`),
-      p(`If you didn't ask for this, you can ignore this email. Nothing happens unless the link is used.`),
+      p(`Using ${escapeHtml(SITE_NAME)} from your home screen? Type this code there instead:<br><strong style="font-size:24px;letter-spacing:4px;">${escapeHtml(code)}</strong>`),
+      p(`If you didn't ask for this, you can ignore this email. Nothing happens unless the link or code is used.`),
     ].join("\n"),
     `You're getting this one-time email because someone entered this address on ${escapeHtml(SITE_NAME)}.`,
   );
@@ -63,7 +64,9 @@ export function signInEmail(link: string): Rendered {
     "",
     link,
     "",
-    `If you didn't ask for this, you can ignore this email. Nothing happens unless the link is used.`,
+    `Using ${SITE_NAME} from your home screen? Type this code there instead: ${code}`,
+    "",
+    `If you didn't ask for this, you can ignore this email. Nothing happens unless the link or code is used.`,
   ].join("\n");
   return { subject, html, text };
 }

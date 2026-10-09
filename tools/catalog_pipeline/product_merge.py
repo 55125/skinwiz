@@ -320,6 +320,7 @@ GENERIC_FIRST = {
     "pyrithione", "selenium", "coal", "tar", "hydrocortisone", "pramoxine", "diphenhydramine", "calamine",
     "camphor", "menthol", "petrolatum", "dimethicone", "allantoin", "glycerin", "lanolin", "aluminum",
     "avobenzone", "octinoxate", "octisalate", "octocrylene", "homosalate", "oxybenzone", "ensulizole",
+    "bemotrizinol", "resorcinol", "lidocaine", "benzocaine", "kaolin", "hydroquinone",
     "daily", "ultra", "sheer", "tinted", "mineral", "lip", "clear", "anti", "antifungal", "antiperspirant",
     "deodorant", "athletes", "athlete", "jock", "itch", "diaper", "rash", "first", "aid", "baby", "kids",
     "moisturizer", "moisturizing", "hydrating", "face", "body", "hand", "foot", "acne", "spot", "treatment",

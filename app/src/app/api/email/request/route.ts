@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { isSameOrigin, rateLimit, readJsonBody } from "@/lib/api-guard";
 import { getOrCreateDeviceSessionId } from "@/lib/session";
 import { createSignInToken, recentTokenCount, recentTokenCountAll } from "@/lib/identity";
-import { normalizeEmail } from "@/lib/tokens";
+import { appSecret, generateSignInCode, hashSignInCode, normalizeEmail } from "@/lib/tokens";
 import { sendEmail } from "@/lib/email";
 import { signInEmail } from "@/lib/email-templates";
 import { safeNextPath, signInUrl } from "@/lib/email-links";
@@ -14,7 +14,7 @@ const PER_ADDRESS_PER_DAY = 8;
 // the Resend quota. Far above real sign-up volume; raise it if that changes.
 const ALL_ADDRESSES_PER_HOUR = 300;
 
-// Sends a one-time sign-in link. The response is identical whether or not
+// Sends a one-time sign-in link, with a code to type instead (api/email/code). The response is identical whether or not
 // the address is already known, and whether or not the per-address limit
 // held this one back, so it can't be used to probe who has signed up.
 export async function POST(request: Request) {
@@ -35,8 +35,9 @@ export async function POST(request: Request) {
     recentTokenCountAll(now) < ALL_ADDRESSES_PER_HOUR;
   if (!withinLimits) console.warn("[email] sign-in link held back by a send limit");
   if (withinLimits) {
-    const token = createSignInToken(email, deviceSessionId, now);
-    const msg = signInEmail(signInUrl(token, next));
+    const code = generateSignInCode();
+    const token = createSignInToken(email, deviceSessionId, now, hashSignInCode(appSecret(), email, code));
+    const msg = signInEmail(signInUrl(token, next), code);
     const res = await sendEmail({ to: email, ...msg, category: "transactional" });
     if (!res.ok) console.error(`[email] sign-in link failed: ${res.error}`);
   }

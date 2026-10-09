@@ -12,7 +12,8 @@ parsePackageDescription). And dailymed_resolved_catalog.csv has
 marketing_category for ~1% of rows. Rather than rewrite those large CSVs,
 this writes one small side file the seed joins on product_ndc:
 
-Input:  output/acne_sun_catalog.csv, output/dailymed_resolved_catalog.csv
+Input:  output/curated_catalog.csv, output/acne_sun_catalog.csv,
+        output/dailymed_resolved_catalog.csv
 Output: output/otc_package_info.csv
         product_ndc, marketing_category, product_type, package_descriptions
 
@@ -34,7 +35,7 @@ from build_rx_catalog import _get  # same retrying GET, same OPENFDA_API_KEY han
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT_DIR = os.path.join(HERE, "output")
-INPUTS = ["acne_sun_catalog.csv", "dailymed_resolved_catalog.csv"]
+INPUTS = ["curated_catalog.csv", "acne_sun_catalog.csv", "dailymed_resolved_catalog.csv"]
 OUT = os.path.join(OUT_DIR, "otc_package_info.csv")
 NDC_BASE = "https://api.fda.gov/drug/ndc.json"
 BATCH = 100

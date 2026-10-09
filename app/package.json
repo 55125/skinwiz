@@ -20,7 +20,7 @@
     "recalls:backfill": "tsx src/db/backfill-recalls.ts",
     "prices:backfill": "tsx src/db/backfill-prices.ts",
     "images:sync": "tsx src/db/sync-images.ts",
-    "test": "tsx --test src/db/*.test.ts src/lib/*.test.ts src/lib/prices/*.test.ts"
+    "test": "tsx --test src/db/*.test.ts src/lib/*.test.ts src/lib/prices/*.test.ts src/lib/analytics/*.test.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",

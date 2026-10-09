@@ -134,13 +134,14 @@ export function PatchTestIssuer({ lists = [], initialIds = [] }: { lists?: { id:
                 {avoidIds.length} to avoid{offLabel.length > 0 ? ` · ${offLabel.length} not on labels` : ""}
               </p>
               <div className="flex flex-wrap gap-2">
-                <Button type="button" onClick={() => window.print()} className="flex-1 rounded-full">
+                <Button type="button" data-track="patch-test:print" onClick={() => window.print()} className="flex-1 rounded-full">
                   <Printer className="h-4 w-4" /> Print sheet
                 </Button>
                 <Button
                   type="button"
                   variant="outline"
                   className="rounded-full"
+                  data-track="patch-test:copy-link"
                   onClick={async () => {
                     await navigator.clipboard?.writeText(url).catch(() => {});
                     setCopied(true);

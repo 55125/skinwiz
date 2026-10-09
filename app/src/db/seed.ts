@@ -9,7 +9,7 @@ import { ACTIVE_DEFINITIONS, ANYWHERE_LISTED_ACTIVE_IDS, CONCERN_DEFINITIONS, ma
 import { ACTIVE_TEXT_OVERRIDES } from "./active-overrides";
 import { computeFreeFromFlags } from "./ingredient-flags";
 import { computeAllergenHits } from "./contact-allergens";
-import { parseStrengths, strengthKey } from "./strength";
+import { labelFirstStrengths, strengthKey } from "./strength";
 import { brandDirectNiche, labeledDrugActives, productNiches, sunscreenNiche } from "./labeled-actives";
 import { aliasesFor, canonicalSlug, parseIngredients, pickDisplayName } from "./ingredient-parse";
 import { SITE_NAME } from "@/lib/brand";
@@ -433,11 +433,12 @@ function reseed() {
             `${row.active_ingredients_structured || ""} ${row.active_ingredient_text || ""} ${inactive.text}`
           : null;
       // Cosmetic sources never disclose concentrations, so only the FDA
-      // label line is parsed -- see db/strength.ts -- plus a brand page's
-      // own labeled drug-active line.
+      // label lines are parsed -- the printed Drug Facts percent first, then
+      // the filer's structured field (db/strength.ts labelFirstStrengths) --
+      // plus a brand page's own labeled drug-active line.
       const strengths = isPreMatched
         ? (brandDrug?.strengths ?? null)
-        : parseStrengths(row.active_ingredients_structured || row.active_ingredient_text);
+        : labelFirstStrengths(row.active_ingredients_structured, row.active_ingredient_text);
       const activeIdSet = new Set(activeIds);
       // Drug labels: the tracked actives (position 0) plus the SPL's own
       // inactive list. Cosmetic sources: the single INCI list, in order.

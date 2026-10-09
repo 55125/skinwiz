@@ -41,7 +41,6 @@ import { IngredientPreference } from "@/components/ingredient-preference";
 import { pubchemLinkText } from "@/lib/pubchem";
 import { canonicalSlug } from "@/db/ingredient-parse";
 import { ewgHazardBadge } from "@/lib/ewg";
-import { displayManufacturer } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { variantRobots, breadcrumbLd } from "@/lib/seo";
 import { JsonLd } from "@/components/json-ld";
@@ -390,9 +389,9 @@ export default async function IngredientPage({
               <h2 className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Most-used by</h2>
               <ul className="space-y-1.5 text-sm">
                 {brands.map((b) => (
-                  <li key={b.manufacturer} className="flex items-center justify-between gap-3">
-                    <Link href={`/search?q=${encodeURIComponent(b.manufacturer)}`} rel="nofollow" className="truncate hover:text-brand">
-                      {displayManufacturer(b.manufacturer)}
+                  <li key={b.brand} className="flex items-center justify-between gap-3">
+                    <Link href={`/search?q=${encodeURIComponent(b.brand)}`} rel="nofollow" className="truncate hover:text-brand">
+                      {b.brand}
                     </Link>
                     <span className="shrink-0 text-xs tabular-nums text-muted-foreground">{b.count.toLocaleString()}</span>
                   </li>

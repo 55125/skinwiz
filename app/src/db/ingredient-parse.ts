@@ -32,8 +32,14 @@ const SPELLINGS: [RegExp, string][] = [
 
 const ACTIVE_BY_KEY = new Map<string, { id: string; name: string }>();
 
+// Cyrillic letters that look like Latin ones, typed into otherwise Latin
+// names on some imported packs ("Аqua" with a Cyrillic А).
+const HOMOGLYPHS: Record<string, string> = { а: "a", е: "e", о: "o", р: "p", с: "c", у: "y", х: "x", і: "i", ј: "j", ѕ: "s" };
+
 function fold(s: string): string {
-  return s
+  const lower = s.toLowerCase();
+  const latin = /[a-z]/.test(lower) ? lower.replace(/[аеорсухіјѕ]/g, (c) => HOMOGLYPHS[c]) : lower;
+  return latin
     .normalize("NFKD")
     .replace(/[̀-ͯ]/g, "")
     .toLowerCase();
@@ -77,9 +83,14 @@ function splitTopLevel(text: string): string[] {
   return out;
 }
 
+// The organic footnote, alone or run onto the last ingredient before it:
+// "Shea Butter Denotes Certified Organic Ingredient", "* Organic Ingredients".
+const ORGANIC_FOOTNOTE = /\s*\*?\s*(?:denotes|indicates)?\s*(?:certified|cerified)?\s*organic\s+ingredients?\s*$/i;
+
 function cleanToken(t: string): string {
   return t
     .replace(/\s+/g, " ")
+    .replace(ORGANIC_FOOTNOTE, "")
     .replace(/^\s*(?:and|&|may contain|\+\/-|\(\+\/-\))[\s:]+/i, "")
     .replace(/^\(\+\/-\)\s*/, "")
     .replace(/\s*\(?\d+(?:\.\d+)?\s*%\)?\s*$/, "")
@@ -103,10 +114,25 @@ function decodeEntities(s: string): string {
 // the list; those aren't ingredients and shouldn't get pages.
 const NOT_AN_INGREDIENT =
   /\b(?:please|contains? one or more|seek medical|made in|ingredient lists?|external use|keep out|dermatologist|packaging|updated regularly|www\.|https?:|batch|e\.g\.|distributed|manufactured)/i;
+// The same warnings and footnotes in the French, Spanish and Portuguese text
+// of imported packs ("tenir hors de portée des enfants", "no ingerir",
+// "*ingrédients issus de l'agriculture biologique"), which otherwise got
+// ingredient pages of their own.
+const NOT_AN_INGREDIENT_INTL =
+  /\b(?:hors de port|fuera del? alcance|em caso de|en caso de|n[aã]o ingerir|no ingerir|n-o ingerir|issus? de l|agriculture biologique|agricultura (?:biol|ecol)|agents? de surface)/i;
+// A bare word left behind when a list is cut mid-name ("... Citric, Acid")
+// or by a company suffix: never an ingredient.
+const BARE_FRAGMENTS = new Set(["acid", "acid acid", "inc", "llc", "ltd", "s.l", "s.a"]);
+// The labeler's address that some FDA labels run straight into the list:
+// "... Corn starch. Manufactured For/ Distributed By: Marlex Pharmaceuticals,
+// Inc. New Castle, DE". Nothing after it is an ingredient, up to the next
+// kit part ("| Inactive Ingredients ...") if there is one.
+const LABELER_TAIL = /\b(?:manufactured|distributed|marketed|packed|made)\s+(?:for|by)\b[\s\S]*?(?=\||\b(?:inactive|other)\s+ingredients\b|$)/gi;
 
 function looksLikeIngredient(t: string): boolean {
   if (t.length < 3 || t.length > 100 || !/[a-z]/i.test(t)) return false;
-  if (NOT_AN_INGREDIENT.test(t)) return false;
+  if (NOT_AN_INGREDIENT.test(t) || NOT_AN_INGREDIENT_INTL.test(t)) return false;
+  if (BARE_FRAGMENTS.has(t.toLowerCase())) return false;
   const words = t.replace(/\([^)]*\)|\[[^\]]*\]/g, " ").trim().split(/\s+/);
   return words.length <= 8;
 }
@@ -114,6 +140,7 @@ function looksLikeIngredient(t: string): boolean {
 export function splitIngredientList(text: string | null | undefined): string[] {
   if (!text) return [];
   const normalized = decodeEntities(text)
+    .replace(LABELER_TAIL, "")
     .replace(/\\n(?=\\n|[A-Z])/g, ",")
     .replace(/[•·●▪|]/g, ",")
     .replace(/;/g, ",")

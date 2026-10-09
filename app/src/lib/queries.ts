@@ -33,6 +33,7 @@ import { RX_CONCERN_ID } from "@/db/rx";
 import { isDailymedImageUrl } from "@/lib/image-urls";
 import { LISTED, canonicalIdsOf, inProductGroup } from "@/lib/canonical";
 import { parseProductCode } from "@/lib/product-codes";
+import { productBrand } from "@/lib/product-brand";
 import { originIdsJson } from "@/lib/origin";
 import { ORIGINS, type OriginId } from "@/lib/origin-shared";
 import { discontinuedIdsJson, importIdsJson, inStockIdsJson, popularIdsJson } from "@/lib/availability";
@@ -1027,16 +1028,28 @@ export function getIngredientStats(id: string) {
   return s;
 }
 
+// Grouped by the brand a shopper sees on the product (lib/product-brand.ts),
+// not the raw manufacturer field: on FDA listings that field is the labeler
+// ("L'Oreal USA Products", "Kenvue Brands"), so grouping on it put parent
+// companies beside CeraVe and split one brand across its labelers. An FDA
+// listing whose name starts with no known brand falls back to its labeler.
 export function getIngredientTopBrands(id: string, limit = 8) {
-  return db.all<{ manufacturer: string; count: number }>(sql`
-    SELECT p.manufacturer AS manufacturer, COUNT(*) AS count
+  const rows = db.all<{ dataSource: string; brandName: string; manufacturer: string | null }>(sql`
+    SELECT p.data_source AS dataSource, p.brand_name AS brandName, p.manufacturer AS manufacturer
     FROM product_ingredients pi
     JOIN products p ON p.id = pi.product_id
-    WHERE pi.ingredient_id = ${id} AND p.is_rx = 0 AND p.canonical_id IS NULL AND p.manufacturer IS NOT NULL AND p.manufacturer != ''
-    GROUP BY LOWER(p.manufacturer)
-    ORDER BY count DESC, p.manufacturer
-    LIMIT ${limit}
+    WHERE pi.ingredient_id = ${id} AND p.is_rx = 0 AND p.canonical_id IS NULL
   `);
+  const counts = new Map<string, { brand: string; count: number }>();
+  for (const row of rows) {
+    const brand = productBrand(row).brand?.trim();
+    if (!brand) continue;
+    const key = brand.toLowerCase();
+    const cur = counts.get(key);
+    if (cur) cur.count++;
+    else counts.set(key, { brand, count: 1 });
+  }
+  return [...counts.values()].sort((a, b) => b.count - a.count || a.brand.localeCompare(b.brand)).slice(0, limit);
 }
 
 // Parsed label strengths for a tracked active (FDA rows, plus brand pages

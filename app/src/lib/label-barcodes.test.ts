@@ -2,8 +2,7 @@
 // lib/label-decode.ts) against a throwaway database, with DailyMed faked by
 // generated label images: decoding, the drug-UPC sanity check, the job's
 // queue and re-run state, the image sync's own scan, and what the rest of
-// the app does with a found barcode (search, aliases, price lookups,
-// retailer links). `npm test`.
+// the app does with a found barcode (search, aliases, price lookups). `npm test`.
 import { before, test } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
@@ -11,7 +10,6 @@ import os from "node:os";
 import path from "node:path";
 import sharp, { type OverlayOptions } from "sharp";
 import { gtinFromRead, upcEToUpcA } from "./barcode-read";
-import { retailerSearchLinks, storeUpc } from "./retailer-search";
 
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "label-scan-"));
 process.env.DATABASE_PATH = path.join(tmp, "test.db");
@@ -165,23 +163,4 @@ test("the image sync scans each photo it downloads", async () => {
   const scan = db.select().from(schema.labelScans).all().find((r) => r.splSetId === B && r.imageName === "pdp.jpg");
   assert.deepEqual(scan?.barcodes, ["5012345678900"]);
   assert.deepEqual(q.lookupProductsByCode("5012345678900")?.map((p) => p.id), ["1111-2222"]);
-});
-
-test("store links search Walmart and Target by UPC when there is one, CVS by name", () => {
-  const env = {} as NodeJS.ProcessEnv;
-  assert.equal(storeUpc("0302994910458"), "302994910458");
-  assert.equal(storeUpc("00302994910458"), "302994910458");
-  assert.equal(storeUpc("5012345678900"), "5012345678900");
-  assert.equal(storeUpc("0299-4910"), null);
-  assert.equal(storeUpc("96385074"), null);
-  const links = retailerSearchLinks("Differin Gel", null, env, false, "0302994910458");
-  assert.deepEqual(
-    links.map((l) => [l.name, l.byBarcode, l.href]),
-    [
-      ["Target", true, "https://www.target.com/s?searchTerm=302994910458"],
-      ["Walmart", true, "https://www.walmart.com/search?q=302994910458"],
-      ["CVS", false, "https://www.cvs.com/search?searchTerm=Differin%20Gel"],
-    ],
-  );
-  assert.ok(retailerSearchLinks("Differin Gel", null, env, false, null).every((l) => !l.byBarcode));
 });

@@ -62,7 +62,7 @@ import { SITE_NAME } from "@/lib/brand";
 import { getEquivalenceGroupForProduct, isHsaEligible } from "@/lib/otc-index";
 import { HSA_GUIDE_PATH, HSA_STORE_AFFILIATE, isSunscreen } from "@/lib/hsa";
 import { HsaBadge } from "@/components/hsa-badge";
-import { retailerSearchLinks, storeUpc } from "@/lib/retailer-search";
+import { retailerSearchLinks } from "@/lib/retailer-search";
 import { EquivalenceExplainer, EquivalenceRows } from "@/components/equivalence-list";
 import { FEATURES } from "@/lib/feature-flags";
 import { productPregnancyFindings } from "@/lib/pregnancy";
@@ -139,10 +139,6 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
   // Its other listings: their barcodes/NDCs as aliases, and the best photo.
   const duplicates = getMergedDuplicates(product.id);
   const { photo: imageUrl, label: labelImageUrl } = productImages(product, duplicates);
-  // This listing's own barcode first (its id, for barcode-keyed listings),
-  // then its merged listings'; used for exact store searches below.
-  const ownBarcodes = [product.id, ...getRetailBarcodes([product.id])];
-  const storeBarcode = [...ownBarcodes, ...getRetailBarcodes(duplicates.map((d) => d.id))].find((c) => storeUpc(c)) ?? null;
   const aliasCodes = [...duplicates.map((d) => d.id), ...getRetailBarcodes([product.id, ...duplicates.map((d) => d.id)])]
     .filter((c, i, all) => c !== product.id && !c.startsWith("http") && all.indexOf(c) === i);
 
@@ -199,7 +195,6 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
       : null,
     process.env,
     gpc,
-    storeBarcode,
   );
   const brandLine = productBrand(product);
   const brandLink = product.sourceUrl ? outboundLink(product.sourceUrl, { placement: "product", rel: "noopener noreferrer", gpc }) : null;
@@ -910,11 +905,8 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
             </div>
             <p className="text-xs text-muted-foreground">
               {retailerSearches[0]?.wrapped
-                ? "These open a search on each store's site; we may earn a commission."
-                : "These open a search on each store's site. Not affiliate links: we don't earn a commission on them."}{" "}
-              {retailerSearches.some((r) => r.byBarcode)
-                ? `${retailerSearches.filter((r) => r.byBarcode).map((r) => r.name).join(" and ")} search by this product's barcode. ${retailerSearches.filter((r) => !r.byBarcode).map((r) => r.name).join(" and ")} searches by name, so results there can include other sizes or similar products; check the label.`
-                : "Results can include other sizes or similar products, so check the label."}
+                ? "These open a search on each store's site; we may earn a commission. Results can include other sizes or similar products, so check the label."
+                : "These open a search on each store's site. Not affiliate links: we don't earn a commission on them. Results can include other sizes or similar products, so check the label."}
             </p>
           </div>
         )}

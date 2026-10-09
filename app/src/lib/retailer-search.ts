@@ -4,29 +4,12 @@
 // Sovrn's Redirect API once SOVRN_SITE_API_KEY is set and is a plain link
 // (labelled as such) until then. Pure apart from reading env.
 import { outboundLink, type OutboundLink } from "./prices/redirect";
-import { validGtin } from "./product-codes";
 
-// `upc`: the store's own search finds an item by its UPC, so a product with
-// a known barcode gets an exact search instead of a name search that can
-// list a dozen lookalikes. CVS's search doesn't match UPCs, so it keeps the name.
-export const RETAILER_SEARCHES: { name: string; upc: boolean; url: (q: string) => string }[] = [
-  { name: "Target", upc: true, url: (q) => `https://www.target.com/s?searchTerm=${encodeURIComponent(q)}` },
-  { name: "Walmart", upc: true, url: (q) => `https://www.walmart.com/search?q=${encodeURIComponent(q)}` },
-  { name: "CVS", upc: false, url: (q) => `https://www.cvs.com/search?searchTerm=${encodeURIComponent(q)}` },
+export const RETAILER_SEARCHES: { name: string; url: (q: string) => string }[] = [
+  { name: "Target", url: (q) => `https://www.target.com/s?searchTerm=${encodeURIComponent(q)}` },
+  { name: "Walmart", url: (q) => `https://www.walmart.com/search?q=${encodeURIComponent(q)}` },
+  { name: "CVS", url: (q) => `https://www.cvs.com/search?searchTerm=${encodeURIComponent(q)}` },
 ];
-
-/**
- * The barcode as US stores index it: a UPC-A (12 digits) when the code is
- * one, whatever length it was stored at; an EAN-13 otherwise. Null for
- * anything that isn't a valid retail GTIN, an EAN-8 or a 14-digit case code.
- */
-export function storeUpc(barcode: string | null | undefined): string | null {
-  const d = barcode?.trim() ?? "";
-  if (!/^\d+$/.test(d) || d.length === 8 || !validGtin(d)) return null;
-  const core = d.replace(/^0+/, "");
-  if (core.length <= 12) return core.padStart(12, "0");
-  return core.length === 13 ? core : null;
-}
 
 const MAX_QUERY = 80;
 
@@ -52,16 +35,11 @@ export function retailerSearchLinks(
   brand?: string | null,
   env: NodeJS.ProcessEnv = process.env,
   gpc = false,
-  // The product's retail barcode, when one is known (catalog or label scan).
-  barcode?: string | null,
-): ({ name: string; byBarcode: boolean } & OutboundLink)[] {
+): ({ name: string } & OutboundLink)[] {
   const q = retailerQuery(name, brand);
-  const upc = storeUpc(barcode);
-  if (!q && !upc) return [];
-  return RETAILER_SEARCHES.flatMap((r) => {
-    const byBarcode = !!upc && r.upc;
-    const term = byBarcode ? upc : q;
-    if (!term) return [];
-    return [{ name: r.name, byBarcode, ...outboundLink(r.url(term), { placement: "product", rel: "noopener noreferrer", gpc }, env) }];
-  });
+  if (!q) return [];
+  return RETAILER_SEARCHES.map((r) => ({
+    name: r.name,
+    ...outboundLink(r.url(q), { placement: "product", rel: "noopener noreferrer", gpc }, env),
+  }));
 }

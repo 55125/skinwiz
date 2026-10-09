@@ -38,13 +38,13 @@ export const CONCERN_DEFINITIONS: { niche: Concern; id: string; name: string; de
   { niche: "antifungal", id: "antifungal", name: "Antifungal", description: "OTC actives and products for athlete's foot, jock itch, and ringworm." },
   { niche: "antidandruff", id: "dandruff-seb-derm", name: "Dandruff & Seborrheic Dermatitis", description: "OTC actives and products for flaking, itchy, or seborrheic scalp." },
   { niche: "anti-itch", id: "itch-relief", name: "Itch Relief", description: "OTC actives and products for itch from eczema, insect bites, poison ivy, and minor irritation." },
-  { niche: "skin-protectant", id: "dry-skin-eczema", name: "Dry Skin & Eczema", description: "OTC skin-protectant actives and products for dry, chapped, or eczema-prone skin." },
+  { niche: "skin-protectant", id: "dry-skin-eczema", name: "Dry Skin & Eczema", description: "OTC skin-protectant actives and products that protect minor cuts, scrapes, and burns and relieve chapped or cracked skin; some also relieve itch from eczema or rashes, or treat diaper rash." },
   { niche: "antiperspirant", id: "excessive-sweating", name: "Excessive Sweating", description: "OTC antiperspirant actives and products." },
   {
     niche: "brightening-texture",
     id: "brightening-texture",
     name: "Brightening & Texture",
-    description: "Cosmetic actives and products for skin tone, texture, and pore appearance — not FDA drug claims.",
+    description: "Cosmetic ingredients and products for the look of skin tone, texture, and pores. None of these ingredients has OTC monograph status; a claim to change pigment production or treat a condition would make a product a drug.",
   },
 ];
 
@@ -103,8 +103,8 @@ export const ACTIVE_DEFINITIONS: ActiveDefinition[] = [
     categories: ["acne", "antidandruff"],
     synonyms: ["sulfur", "sulphur"],
     summary:
-      "An FDA OTC monograph active recognized for both acne and dandruff/seborrheic dermatitis, one of the oldest recognized topical treatments in either use.",
-    typicalConcentrationText: "Typically formulated at 3%–10%.",
+      "An FDA OTC monograph active for acne and for dandruff (not for seborrheic dermatitis), one of the oldest recognized topical treatments in either use.",
+    typicalConcentrationText: "3%–10% for acne (3%–8% when combined with resorcinol) and 2%–5% for dandruff.",
   },
   {
     id: "adapalene",
@@ -158,7 +158,7 @@ export const ACTIVE_DEFINITIONS: ActiveDefinition[] = [
     categories: ["sunscreen"],
     synonyms: ["avobenzone", "butyl methoxydibenzoylmethane"],
     summary:
-      "The only chemical sunscreen active on the FDA's OTC sunscreen monograph list that absorbs across the full UVA1 range. Often paired with other actives for photostability.",
+      "The main UVA1 filter among the long-standing US monograph sunscreen actives, which the FDA treats as generally recognized as safe and effective. Since August 2026, bemotrizinol, a broad-spectrum filter, is also in the monograph. Often paired with other actives for photostability.",
     typicalConcentrationText: "FDA monograph maximum is 3%.",
     countsAnywhereListed: true,
   },
@@ -498,8 +498,8 @@ export const ACTIVE_DEFINITIONS: ActiveDefinition[] = [
     canonicalName: "Tioconazole",
     categories: ["antifungal"],
     synonyms: ["tioconazole"],
-    summary: "An FDA OTC monograph antifungal active, most commonly formulated for vaginal yeast infections.",
-    typicalConcentrationText: "Typically formulated at 6.5% (single-dose vaginal products).",
+    summary: "An antifungal for vaginal yeast infections. Not an OTC monograph active: it is sold OTC under an FDA-approved application (Vagistat-1 and its generics).",
+    typicalConcentrationText: "6.5% ointment, single-dose vaginal products.",
   },
   {
     id: "tea-tree-oil",
@@ -527,7 +527,7 @@ export const ACTIVE_DEFINITIONS: ActiveDefinition[] = [
     categories: ["antidandruff"],
     synonyms: ["pyrithione zinc", "zinc pyrithione"],
     summary: "The most common FDA OTC monograph antidandruff active, found in most medicated dandruff shampoos.",
-    typicalConcentrationText: "Typically formulated at 1%–2%.",
+    typicalConcentrationText: "0.3%–2% in rinse-off dandruff products (0.95%–2% when labeled for seborrheic dermatitis); 0.1%–0.25% in leave-on products.",
   },
   {
     id: "selenium-sulfide",
@@ -563,7 +563,7 @@ export const ACTIVE_DEFINITIONS: ActiveDefinition[] = [
     synonyms: ["hydrocortisone"],
     summary:
       "The only FDA OTC monograph topical corticosteroid, for itch relief from eczema, insect bites, poison ivy, and minor skin irritation.",
-    typicalConcentrationText: "OTC formulations are 0.5%–1%; higher strengths are prescription-only.",
+    typicalConcentrationText: "OTC strengths are 0.25%–1% under the monograph, and most products are 1%; higher strengths are prescription-only.",
   },
   {
     id: "pramoxine",
@@ -647,7 +647,7 @@ export const ACTIVE_DEFINITIONS: ActiveDefinition[] = [
     categories: ["skin-protectant"],
     synonyms: ["oatmeal", "colloidal oatmeal"],
     summary: "An FDA OTC monograph skin protectant, the classic active in eczema-focused bath treatments and moisturizers.",
-    typicalConcentrationText: "Typically formulated at 0.5%–1% in leave-on products, higher in bath treatments.",
+    typicalConcentrationText: "Typically 0.5%–1% in leave-on products. Bath packets are mostly oatmeal but are diluted in the tub, so the bath itself is weaker (the monograph minimum is 0.007%).",
   },
   {
     id: "dimethicone",
@@ -662,7 +662,7 @@ export const ACTIVE_DEFINITIONS: ActiveDefinition[] = [
     canonicalName: "Allantoin",
     categories: ["skin-protectant"],
     synonyms: ["allantoin"],
-    summary: "An FDA OTC monograph skin protectant recognized for soothing dry or irritated skin.",
+    summary: "An FDA OTC monograph skin protectant (0.5%–2%) that temporarily protects minor cuts, scrapes, and burns, helps relieve chafed, chapped, or cracked skin and lips, and helps treat and prevent diaper rash.",
     typicalConcentrationText: "Typically formulated at up to 2%.",
   },
   {
@@ -780,7 +780,7 @@ export const ACTIVE_DEFINITIONS: ActiveDefinition[] = [
     canonicalName: "Betaine",
     categories: ["skin-protectant"],
     synonyms: ["betaine"],
-    summary: "A humectant from sugar beets used in moisturizers and toners. Not an FDA-regulated drug ingredient; no OTC monograph or FDA efficacy claim applies to it.",
+    summary: "A humectant from sugar beets used in moisturizers and toners. No OTC monograph or approved topical OTC drug status; a product's claims decide whether it is sold as a drug.",
     typicalConcentrationText: "Concentration varies by product; not standardized.",
   },
   {
@@ -788,7 +788,7 @@ export const ACTIVE_DEFINITIONS: ActiveDefinition[] = [
     canonicalName: "Sturgeon Extract",
     categories: ["skin-protectant"],
     synonyms: ["sturgeon extract", "sturgeon"],
-    summary: "A fish-derived (caviar/sturgeon) extract marketed for nourishing and firming. Not an FDA-regulated drug ingredient; no OTC monograph or FDA efficacy claim applies to it.",
+    summary: "A fish-derived (caviar/sturgeon) extract marketed for nourishing and firming. No OTC monograph or approved topical OTC drug status; a product's claims decide whether it is sold as a drug.",
     typicalConcentrationText: "Concentration varies by product; not standardized.",
   },
   {
@@ -796,7 +796,7 @@ export const ACTIVE_DEFINITIONS: ActiveDefinition[] = [
     canonicalName: "Asiatic Acid",
     categories: ["skin-protectant"],
     synonyms: ["asiatic acid"],
-    summary: "One of the active triterpenes in centella asiatica (cica), used for soothing and barrier support. Not an FDA-regulated drug ingredient.",
+    summary: "One of the active triterpenes in centella asiatica (cica), used for soothing and barrier support. No OTC monograph or approved topical OTC drug status; a product's claims decide whether it is sold as a drug.",
     typicalConcentrationText: "Commonly well under 1%; not standardized.",
   },
 
@@ -808,7 +808,7 @@ export const ACTIVE_DEFINITIONS: ActiveDefinition[] = [
     synonyms: ["aluminum chlorohydrate", "aluminum chloride", "aluminum sesquichlorohydrate"],
     summary:
       "An FDA OTC monograph antiperspirant active that works by temporarily blocking sweat ducts. Aluminum chloride and aluminum sesquichlorohydrate are separate FDA-recognized antiperspirant actives, grouped under this entry for now.",
-    typicalConcentrationText: "Concentration varies by product strength (regular vs. clinical-strength).",
+    typicalConcentrationText: "The monograph sets only maximums, calculated without water: 25% for aluminum chlorohydrate and sesquichlorohydrate, 15% for aluminum chloride (as a solution). \"Clinical strength\" is not a monograph term, and the label percentage alone doesn't show which product works better; effectiveness claims rest on sweat-reduction testing.",
   },
   {
     id: "aluminum-zirconium-complex",
@@ -826,7 +826,7 @@ export const ACTIVE_DEFINITIONS: ActiveDefinition[] = [
     ],
     summary:
       "A family of FDA OTC monograph antiperspirant actives (differing in their aluminum, zirconium and chloride ratios), grouped here as one entry.",
-    typicalConcentrationText: "Concentration varies by product strength (regular vs. clinical-strength).",
+    typicalConcentrationText: "The monograph sets only a maximum of 20%, calculated without water. \"Clinical strength\" is not a monograph term, and the label percentage alone doesn't show which product works better; effectiveness claims rest on sweat-reduction testing.",
   },
   {
     id: "magnesium-hydroxide",
@@ -851,7 +851,7 @@ export const ACTIVE_DEFINITIONS: ActiveDefinition[] = [
     categories: ["brightening-texture"],
     synonyms: ["niacinamide"],
     summary:
-      "A form of vitamin B3 widely used in cosmetic serums and moisturizers for skin tone and texture. A cosmetic ingredient, not an OTC drug active — no OTC monograph or FDA efficacy claim applies to it.",
+      "A form of vitamin B3 widely used in cosmetic serums and moisturizers for skin tone and texture. A cosmetic ingredient with no OTC monograph or approved topical OTC drug status (a product's claims decide whether it is sold as a drug).",
     typicalConcentrationText: "Commonly formulated at 2%–10% in cosmetic products; not a standardized concentration.",
   },
   {
@@ -860,7 +860,7 @@ export const ACTIVE_DEFINITIONS: ActiveDefinition[] = [
     categories: ["brightening-texture"],
     synonyms: ["ascorbic acid"],
     summary:
-      "An antioxidant used in cosmetic serums, often for brightening. A cosmetic ingredient, not an OTC drug active — no OTC monograph or FDA efficacy claim applies to it. Formulation and stability vary widely by product.",
+      "An antioxidant used in cosmetic serums, often for brightening. A cosmetic ingredient with no OTC monograph or approved topical OTC drug status (a product's claims decide whether it is sold as a drug). Formulation and stability vary widely by product.",
     typicalConcentrationText: "Commonly formulated at 5%–20% in cosmetic products; not a standardized concentration.",
   },
   {
@@ -872,7 +872,7 @@ export const ACTIVE_DEFINITIONS: ActiveDefinition[] = [
     categories: ["brightening-texture", "skin-protectant"],
     synonyms: ["hyaluronic acid", "sodium hyaluronate"],
     summary:
-      "A humectant that draws moisture into skin, used broadly in cosmetic serums and moisturizers. A cosmetic ingredient, not an OTC drug active — no OTC monograph or FDA efficacy claim applies to it.",
+      "A humectant that draws moisture into skin, used broadly in cosmetic serums and moisturizers. A cosmetic ingredient with no OTC monograph or approved topical OTC drug status (a product's claims decide whether it is sold as a drug).",
     typicalConcentrationText: "Concentration varies by molecular weight and formulation; not standardized.",
   },
   {
@@ -881,7 +881,7 @@ export const ACTIVE_DEFINITIONS: ActiveDefinition[] = [
     categories: ["brightening-texture"],
     synonyms: ["retinol"],
     summary:
-      "A cosmetic vitamin-A derivative, distinct from adapalene (an OTC acne drug sold under an FDA-approved Rx-to-OTC switch, not the acne monograph) and from prescription retinoids (tretinoin) — retinol itself has no OTC monograph or FDA drug status. Potency and stability vary widely by formulation.",
+      "A cosmetic vitamin-A derivative, distinct from adapalene (an OTC acne drug sold under an FDA-approved Rx-to-OTC switch, not the acne monograph) and from prescription retinoids (tretinoin) — retinol itself has no OTC monograph or approved OTC drug status. Potency and stability vary widely by formulation.",
     typicalConcentrationText: "Concentration varies widely by product; not standardized.",
   },
   {
@@ -890,7 +890,7 @@ export const ACTIVE_DEFINITIONS: ActiveDefinition[] = [
     categories: ["brightening-texture", "skin-protectant"],
     synonyms: ["ceramide"],
     summary:
-      "Lipids naturally found in skin's barrier, added to cosmetic moisturizers to support barrier function. A cosmetic ingredient, not an OTC drug active — no OTC monograph or FDA efficacy claim applies to it.",
+      "Lipids naturally found in skin's barrier, added to cosmetic moisturizers to support barrier function. A cosmetic ingredient with no OTC monograph or approved topical OTC drug status (a product's claims decide whether it is sold as a drug).",
     typicalConcentrationText: "Concentration varies by formulation; not standardized.",
   },
   {
@@ -899,7 +899,7 @@ export const ACTIVE_DEFINITIONS: ActiveDefinition[] = [
     categories: ["brightening-texture"],
     synonyms: ["alpha arbutin", "alpha-arbutin"],
     summary:
-      "A cosmetic brightening ingredient, often paired with hyaluronic acid in serums. A cosmetic ingredient, not an OTC drug active — no OTC monograph or FDA efficacy claim applies to it.",
+      "A cosmetic brightening ingredient, often paired with hyaluronic acid in serums. A cosmetic ingredient with no OTC monograph or approved topical OTC drug status (a product's claims decide whether it is sold as a drug).",
     typicalConcentrationText: "Commonly formulated at 1%–2% in cosmetic products; not a standardized concentration.",
   },
   {
@@ -908,7 +908,7 @@ export const ACTIVE_DEFINITIONS: ActiveDefinition[] = [
     categories: ["brightening-texture"],
     synonyms: ["glycolic acid"],
     summary:
-      "An alpha-hydroxy acid (AHA) exfoliant used in cosmetic peels and toners. A cosmetic ingredient, not an OTC drug active — no OTC monograph or FDA efficacy claim applies to it, unlike the OTC monograph acne actives.",
+      "An alpha-hydroxy acid (AHA) exfoliant used in cosmetic peels and toners. A cosmetic ingredient with no OTC monograph or approved topical OTC drug status (a product's claims decide whether it is sold as a drug), unlike the OTC monograph acne actives.",
     typicalConcentrationText: "Commonly formulated at 5%–30% depending on product type (leave-on vs. peel); not standardized.",
   },
   {
@@ -917,7 +917,7 @@ export const ACTIVE_DEFINITIONS: ActiveDefinition[] = [
     categories: ["brightening-texture", "skin-protectant"],
     synonyms: ["squalane"],
     summary:
-      "A stable, plant- or lab-derived emollient oil used in cosmetic moisturizers and face oils. A cosmetic ingredient, not an OTC drug active — no OTC monograph or FDA efficacy claim applies to it.",
+      "A stable, plant- or lab-derived emollient oil used in cosmetic moisturizers and face oils. A cosmetic ingredient with no OTC monograph or approved topical OTC drug status (a product's claims decide whether it is sold as a drug).",
     typicalConcentrationText: "Often used at or near 100% in single-ingredient face oils; varies in blended formulations.",
   },
   {
@@ -930,7 +930,7 @@ export const ACTIVE_DEFINITIONS: ActiveDefinition[] = [
     // constantly in searched cosmetic products.
     synonyms: ["palmitoyl pentapeptide", "palmitoyl tripeptide", "palmitoyl hexapeptide", "copper tripeptide", "copper peptide", "acetyl hexapeptide", "matrixyl"],
     summary:
-      "A broad family of short amino-acid chains added to cosmetic serums and moisturizers, often marketed for texture and firmness. A cosmetic ingredient, not an OTC drug active — no OTC monograph or FDA efficacy claim applies to it.",
+      "A broad family of short amino-acid chains added to cosmetic serums and moisturizers, often marketed for texture and firmness. A cosmetic ingredient with no OTC monograph or approved topical OTC drug status (a product's claims decide whether it is sold as a drug).",
     typicalConcentrationText: "Concentration and specific peptide compound vary widely by formulation; not standardized.",
   },
   {
@@ -939,7 +939,7 @@ export const ACTIVE_DEFINITIONS: ActiveDefinition[] = [
     categories: ["brightening-texture"],
     synonyms: ["bakuchiol"],
     summary:
-      "A plant-derived cosmetic ingredient often marketed as a gentler alternative to retinol. A cosmetic ingredient, not an OTC drug active — no OTC monograph or FDA efficacy claim applies to it, and it is chemically unrelated to retinol.",
+      "A plant-derived cosmetic ingredient often marketed as a gentler alternative to retinol. A cosmetic ingredient with no OTC monograph or approved topical OTC drug status (a product's claims decide whether it is sold as a drug), and it is chemically unrelated to retinol.",
     typicalConcentrationText: "Concentration varies widely by product; not standardized.",
   },
   {
@@ -948,7 +948,7 @@ export const ACTIVE_DEFINITIONS: ActiveDefinition[] = [
     categories: ["brightening-texture"],
     synonyms: ["tranexamic acid"],
     summary:
-      "A cosmetic brightening ingredient increasingly used for uneven tone. Separately, higher-dose tranexamic acid is also an oral/injectable prescription drug for unrelated uses — the cosmetic topical form here has no OTC drug monograph or FDA efficacy claim.",
+      "A cosmetic brightening ingredient increasingly used for uneven tone. Separately, higher-dose tranexamic acid is also an oral/injectable prescription drug for unrelated uses — topical tranexamic acid has no OTC monograph or approved OTC drug status, and a product's claims decide whether it is sold as a drug.",
     typicalConcentrationText: "Commonly formulated at 2%–5% in cosmetic products; not a standardized concentration.",
   },
   {
@@ -957,7 +957,7 @@ export const ACTIVE_DEFINITIONS: ActiveDefinition[] = [
     categories: ["brightening-texture", "skin-protectant"],
     synonyms: ["centella asiatica"],
     summary:
-      "A plant extract widely used in cosmetic moisturizers and serums for soothing/barrier-support marketing claims (often labeled \"cica\"). A cosmetic ingredient, not an OTC drug active — no OTC monograph or FDA efficacy claim applies to it.",
+      "A plant extract widely used in cosmetic moisturizers and serums for soothing/barrier-support marketing claims (often labeled \"cica\"). A cosmetic ingredient with no OTC monograph or approved topical OTC drug status (a product's claims decide whether it is sold as a drug).",
     typicalConcentrationText: "Concentration varies widely by formulation; not standardized.",
   },
   {
@@ -966,7 +966,7 @@ export const ACTIVE_DEFINITIONS: ActiveDefinition[] = [
     categories: ["brightening-texture", "skin-protectant"],
     synonyms: ["panthenol", "dexpanthenol", "provitamin b5"],
     summary:
-      "A provitamin-B5 derivative used broadly in cosmetic moisturizers for hydration and soothing marketing claims. A cosmetic ingredient, not an OTC drug active — no OTC monograph or FDA efficacy claim applies to it.",
+      "A provitamin-B5 derivative used broadly in cosmetic moisturizers for hydration and soothing marketing claims. A cosmetic ingredient with no OTC monograph or approved topical OTC drug status (a product's claims decide whether it is sold as a drug).",
     typicalConcentrationText: "Commonly formulated at 1%–5% in cosmetic products; not a standardized concentration.",
   },
   {
@@ -975,7 +975,7 @@ export const ACTIVE_DEFINITIONS: ActiveDefinition[] = [
     categories: ["brightening-texture"],
     synonyms: ["kojic acid"],
     summary:
-      "A fungal-derived cosmetic brightening ingredient. A cosmetic ingredient, not an OTC drug active — no OTC monograph or FDA efficacy claim applies to it.",
+      "A fungal-derived cosmetic brightening ingredient. A cosmetic ingredient with no OTC monograph or approved topical OTC drug status (a product's claims decide whether it is sold as a drug).",
     typicalConcentrationText: "Commonly formulated at 1%–4% in cosmetic products; not a standardized concentration.",
   },
   {
@@ -984,7 +984,7 @@ export const ACTIVE_DEFINITIONS: ActiveDefinition[] = [
     categories: ["brightening-texture"],
     synonyms: ["mandelic acid"],
     summary:
-      "An alpha-hydroxy acid (AHA) exfoliant, often marketed as gentler than glycolic acid due to its larger molecule size. A cosmetic ingredient, not an OTC drug active — no OTC monograph or FDA efficacy claim applies to it.",
+      "An alpha-hydroxy acid (AHA) exfoliant, often marketed as gentler than glycolic acid due to its larger molecule size. A cosmetic ingredient with no OTC monograph or approved topical OTC drug status (a product's claims decide whether it is sold as a drug).",
     typicalConcentrationText: "Commonly formulated at 5%–10% in cosmetic products; not a standardized concentration.",
   },
   {
@@ -993,7 +993,7 @@ export const ACTIVE_DEFINITIONS: ActiveDefinition[] = [
     categories: ["brightening-texture"],
     synonyms: ["lactic acid"],
     summary:
-      "An alpha-hydroxy acid (AHA) exfoliant with humectant properties, used in cosmetic peels, serums, and moisturizers. A cosmetic ingredient, not an OTC drug active — no OTC monograph or FDA efficacy claim applies to it.",
+      "An alpha-hydroxy acid (AHA) exfoliant with humectant properties, used in cosmetic peels, serums, and moisturizers. A cosmetic ingredient with no OTC monograph or approved topical OTC drug status (a product's claims decide whether it is sold as a drug).",
     typicalConcentrationText: "Commonly formulated at 5%–12% in cosmetic products; not a standardized concentration.",
   },
   {
@@ -1011,7 +1011,7 @@ export const ACTIVE_DEFINITIONS: ActiveDefinition[] = [
     categories: ["brightening-texture"],
     synonyms: ["retinaldehyde", "retinal"],
     summary:
-      "A cosmetic vitamin-A derivative one conversion step closer to retinoic acid than retinol. Not an FDA-regulated drug ingredient; no OTC monograph or FDA efficacy claim applies to it.",
+      "A cosmetic vitamin-A derivative one conversion step closer to retinoic acid than retinol. No OTC monograph or approved topical OTC drug status; a product's claims decide whether it is sold as a drug.",
     typicalConcentrationText: "Commonly 0.05%–0.1% in cosmetic products; not standardized.",
   },
   {
@@ -1020,7 +1020,7 @@ export const ACTIVE_DEFINITIONS: ActiveDefinition[] = [
     categories: ["brightening-texture"],
     synonyms: ["hydroxypinacolone retinoate"],
     summary:
-      "A cosmetic retinoid ester of retinoic acid (often sold as Granactive Retinoid). Not an FDA-regulated drug ingredient; no OTC monograph or FDA efficacy claim applies to it.",
+      "A cosmetic retinoid ester of retinoic acid (often sold as Granactive Retinoid). No OTC monograph or approved topical OTC drug status; a product's claims decide whether it is sold as a drug.",
     typicalConcentrationText: "Concentration varies by product; not standardized.",
   },
   {
@@ -1029,7 +1029,7 @@ export const ACTIVE_DEFINITIONS: ActiveDefinition[] = [
     categories: ["brightening-texture"],
     synonyms: ["retinyl retinoate"],
     summary:
-      "A cosmetic retinoid made by joining retinol and retinoic acid. Not an FDA-regulated drug ingredient; no OTC monograph or FDA efficacy claim applies to it.",
+      "A cosmetic retinoid made by joining retinol and retinoic acid. No OTC monograph or approved topical OTC drug status; a product's claims decide whether it is sold as a drug.",
     typicalConcentrationText: "Concentration varies by product; not standardized.",
   },
   {
@@ -1038,7 +1038,7 @@ export const ACTIVE_DEFINITIONS: ActiveDefinition[] = [
     categories: ["brightening-texture"],
     synonyms: ["gluconolactone"],
     summary:
-      "A polyhydroxy acid (PHA) exfoliant, often marketed as gentler than AHAs. Not an FDA-regulated drug ingredient; no OTC monograph or FDA efficacy claim applies to it. Also used at low levels as a preservative booster.",
+      "A polyhydroxy acid (PHA) exfoliant, often marketed as gentler than AHAs. No OTC monograph or approved topical OTC drug status; a product's claims decide whether it is sold as a drug. Also used at low levels as a preservative booster.",
     typicalConcentrationText: "Commonly 2%–10% when used as an exfoliant; not standardized.",
   },
   {
@@ -1047,7 +1047,7 @@ export const ACTIVE_DEFINITIONS: ActiveDefinition[] = [
     categories: ["brightening-texture"],
     synonyms: ["lactobionic acid"],
     summary:
-      "A polyhydroxy acid (PHA) exfoliant with humectant properties. Not an FDA-regulated drug ingredient; no OTC monograph or FDA efficacy claim applies to it.",
+      "A polyhydroxy acid (PHA) exfoliant with humectant properties. No OTC monograph or approved topical OTC drug status; a product's claims decide whether it is sold as a drug.",
     typicalConcentrationText: "Concentration varies by product; not standardized.",
   },
   {
@@ -1074,7 +1074,7 @@ export const ACTIVE_DEFINITIONS: ActiveDefinition[] = [
     categories: ["brightening-texture"],
     synonyms: ["retinyl palmitate", "vitamin a palmitate"],
     summary:
-      "A vitamin-A ester, much weaker than retinol, that skin must convert several steps before it acts like a retinoid. Often a trace antioxidant rather than a treatment. Not an FDA-regulated drug ingredient.",
+      "A vitamin-A ester, much weaker than retinol, that skin must convert several steps before it acts like a retinoid. Often a trace antioxidant rather than a treatment. No OTC monograph or approved topical OTC drug status; a product's claims decide whether it is sold as a drug.",
     typicalConcentrationText: "Concentration varies widely and is often very low; not standardized.",
   },
   {
@@ -1082,7 +1082,7 @@ export const ACTIVE_DEFINITIONS: ActiveDefinition[] = [
     canonicalName: "Retinyl Acetate",
     categories: ["brightening-texture"],
     synonyms: ["retinyl acetate", "vitamin a acetate"],
-    summary: "A vitamin-A ester, weaker than retinol. Not an FDA-regulated drug ingredient; no OTC monograph or FDA efficacy claim applies to it.",
+    summary: "A vitamin-A ester, weaker than retinol. No OTC monograph or approved topical OTC drug status; a product's claims decide whether it is sold as a drug.",
     typicalConcentrationText: "Concentration varies by product; not standardized.",
   },
   {
@@ -1090,7 +1090,7 @@ export const ACTIVE_DEFINITIONS: ActiveDefinition[] = [
     canonicalName: "Retinyl Propionate",
     categories: ["brightening-texture"],
     synonyms: ["retinyl propionate"],
-    summary: "A vitamin-A ester, weaker than retinol but more stable. Not an FDA-regulated drug ingredient; no OTC monograph or FDA efficacy claim applies to it.",
+    summary: "A vitamin-A ester, weaker than retinol but more stable. No OTC monograph or approved topical OTC drug status; a product's claims decide whether it is sold as a drug.",
     typicalConcentrationText: "Concentration varies by product; not standardized.",
   },
   {
@@ -1098,7 +1098,7 @@ export const ACTIVE_DEFINITIONS: ActiveDefinition[] = [
     canonicalName: "Retinyl Linoleate",
     categories: ["brightening-texture"],
     synonyms: ["retinyl linoleate"],
-    summary: "A vitamin-A ester, weaker than retinol. Not an FDA-regulated drug ingredient; no OTC monograph or FDA efficacy claim applies to it.",
+    summary: "A vitamin-A ester, weaker than retinol. No OTC monograph or approved topical OTC drug status; a product's claims decide whether it is sold as a drug.",
     typicalConcentrationText: "Concentration varies by product; not standardized.",
   },
   // Vitamin C derivatives: kept apart from vitamin-c (pure L-ascorbic acid)
@@ -1108,7 +1108,7 @@ export const ACTIVE_DEFINITIONS: ActiveDefinition[] = [
     canonicalName: "Ascorbyl Glucoside",
     categories: ["brightening-texture"],
     synonyms: ["ascorbyl glucoside"],
-    summary: "A stable, water-soluble vitamin C derivative that skin converts to ascorbic acid. Not an FDA-regulated drug ingredient; no OTC monograph or FDA efficacy claim applies to it.",
+    summary: "A stable, water-soluble vitamin C derivative that skin converts to ascorbic acid. No OTC monograph or approved topical OTC drug status; a product's claims decide whether it is sold as a drug.",
     typicalConcentrationText: "Commonly 2%–12% in cosmetic products; not standardized.",
   },
   {
@@ -1116,7 +1116,7 @@ export const ACTIVE_DEFINITIONS: ActiveDefinition[] = [
     canonicalName: "Ethyl Ascorbic Acid",
     categories: ["brightening-texture"],
     synonyms: ["3-o-ethyl ascorbic acid", "ethyl ascorbic acid", "ethylascorbic acid"],
-    summary: "A stable vitamin C derivative (3-O-ethyl ascorbic acid). Not an FDA-regulated drug ingredient; no OTC monograph or FDA efficacy claim applies to it.",
+    summary: "A stable vitamin C derivative (3-O-ethyl ascorbic acid). No OTC monograph or approved topical OTC drug status; a product's claims decide whether it is sold as a drug.",
     typicalConcentrationText: "Commonly 1%–5% in cosmetic products; not standardized.",
   },
   {
@@ -1124,7 +1124,7 @@ export const ACTIVE_DEFINITIONS: ActiveDefinition[] = [
     canonicalName: "Magnesium Ascorbyl Phosphate",
     categories: ["brightening-texture"],
     synonyms: ["magnesium ascorbyl phosphate"],
-    summary: "A stable, water-soluble vitamin C derivative, gentler than pure ascorbic acid. Not an FDA-regulated drug ingredient; no OTC monograph or FDA efficacy claim applies to it.",
+    summary: "A stable, water-soluble vitamin C derivative, gentler than pure ascorbic acid. No OTC monograph or approved topical OTC drug status; a product's claims decide whether it is sold as a drug.",
     typicalConcentrationText: "Commonly 1%–10% in cosmetic products; not standardized.",
   },
   {
@@ -1132,7 +1132,7 @@ export const ACTIVE_DEFINITIONS: ActiveDefinition[] = [
     canonicalName: "Sodium Ascorbyl Phosphate",
     categories: ["brightening-texture"],
     synonyms: ["sodium ascorbyl phosphate"],
-    summary: "A stable, water-soluble vitamin C derivative also used in acne-prone skin care. Not an FDA-regulated drug ingredient; no OTC monograph or FDA efficacy claim applies to it.",
+    summary: "A stable, water-soluble vitamin C derivative also used in acne-prone skin care. No OTC monograph or approved topical OTC drug status; a product's claims decide whether it is sold as a drug.",
     typicalConcentrationText: "Commonly 1%–5% in cosmetic products; not standardized.",
   },
   {
@@ -1140,7 +1140,7 @@ export const ACTIVE_DEFINITIONS: ActiveDefinition[] = [
     canonicalName: "Tetrahexyldecyl Ascorbate",
     categories: ["brightening-texture"],
     synonyms: ["tetrahexyldecyl ascorbate", "ascorbyl tetraisopalmitate"],
-    summary: "An oil-soluble vitamin C derivative (also listed as ascorbyl tetraisopalmitate). Not an FDA-regulated drug ingredient; no OTC monograph or FDA efficacy claim applies to it.",
+    summary: "An oil-soluble vitamin C derivative (also listed as ascorbyl tetraisopalmitate). No OTC monograph or approved topical OTC drug status; a product's claims decide whether it is sold as a drug.",
     typicalConcentrationText: "Commonly 1%–20% in cosmetic products; not standardized.",
   },
   {
@@ -1158,7 +1158,7 @@ export const ACTIVE_DEFINITIONS: ActiveDefinition[] = [
     categories: ["brightening-texture"],
     synonyms: ["adenosine"],
     summary:
-      "A nucleoside used in anti-wrinkle products; Korea recognizes it as a functional anti-wrinkle ingredient (usually 0.04%). Not an FDA-regulated drug ingredient in the US.",
+      "A nucleoside used in anti-wrinkle products; Korea recognizes it as a functional anti-wrinkle ingredient (usually 0.04%). In the US it has no OTC monograph or approved topical OTC drug status; a product's claims decide whether it is sold as a drug.",
     typicalConcentrationText: "Commonly 0.04% (the Korean functional-cosmetic level); not standardized.",
   },
   {
@@ -1167,7 +1167,7 @@ export const ACTIVE_DEFINITIONS: ActiveDefinition[] = [
     categories: ["brightening-texture"],
     synonyms: ["malic acid"],
     summary:
-      "An alpha-hydroxy acid (AHA) from fruit, used as a mild exfoliant and, at low levels, to adjust pH. Not an FDA-regulated drug ingredient; no OTC monograph or FDA efficacy claim applies to it.",
+      "An alpha-hydroxy acid (AHA) from fruit, used as a mild exfoliant and, at low levels, to adjust pH. No OTC monograph or approved topical OTC drug status; a product's claims decide whether it is sold as a drug.",
     typicalConcentrationText: "Concentration varies widely (often under 1% as a pH adjuster); not standardized.",
   },
   {
@@ -1184,7 +1184,7 @@ export const ACTIVE_DEFINITIONS: ActiveDefinition[] = [
     canonicalName: "Panax Ginseng Root",
     categories: ["brightening-texture"],
     synonyms: ["panax ginseng root extract", "panax ginseng root oil", "panax ginseng root", "panax ginseng", "ginseng root extract"],
-    summary: "A ginseng root extract used in Korean skin care for antioxidant and anti-aging claims. Not an FDA-regulated drug ingredient; no OTC monograph or FDA efficacy claim applies to it.",
+    summary: "A ginseng root extract used in Korean skin care for antioxidant and anti-aging claims. No OTC monograph or approved topical OTC drug status; a product's claims decide whether it is sold as a drug.",
     typicalConcentrationText: "Concentration varies by product; not standardized.",
   },
 ];

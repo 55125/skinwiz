@@ -37,7 +37,8 @@ import { avoidConflicts } from "@/lib/avoid-shared";
 import { AllergenFindings } from "@/components/allergen-findings";
 import { activeName, describeStrengths } from "@/lib/strength-display";
 import { formatPct } from "@/db/strength";
-import { monographStatus, formatRange } from "@/db/monograph-ranges";
+import { monographStatus, formatRangeWithUse } from "@/db/monograph-ranges";
+import { brandDirectStatus } from "@/db/labeled-actives";
 import { OutcomeForm } from "@/components/outcome-form";
 import { ProductGrid } from "@/components/product-grid";
 import { IngredientList } from "@/components/ingredient-list";
@@ -232,8 +233,10 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
   const strengthRows = product.strengths
     ? product.activeIds
         .filter((id) => product.strengths && id in product.strengths)
-        .map((id) => ({ id, pct: product.strengths![id], monograph: monographStatus(id, product.strengths![id]) }))
+        .map((id) => ({ id, pct: product.strengths![id], monograph: monographStatus(id, product.strengths![id], product) }))
     : [];
+
+  const brandStatus = product.dataSource === "brand_direct" ? brandDirectStatus(product) : null;
 
   return (
     <div className="mx-auto max-w-5xl space-y-10 px-4 py-8 sm:py-10">
@@ -437,7 +440,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
                     {row.monograph && (
                       <Badge
                         variant="outline"
-                        title={`${row.monograph.range.cfr}: ${formatRange(row.monograph.range)}`}
+                        title={`${row.monograph.range.cite}: ${formatRangeWithUse(row.monograph.range)}`}
                         className={
                           row.monograph.status === "within"
                             ? "border-emerald-300 text-emerald-700 dark:border-emerald-900 dark:text-emerald-400"
@@ -445,8 +448,8 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
                         }
                       >
                         {row.monograph.status === "within"
-                          ? `Within FDA OTC monograph range (${formatRange(row.monograph.range)})`
-                          : `${row.monograph.status === "above" ? "Above" : "Below"} FDA OTC monograph range (${formatRange(row.monograph.range)})`}
+                          ? `Within FDA OTC monograph range (${formatRangeWithUse(row.monograph.range)})`
+                          : `${row.monograph.status === "above" ? "Above" : "Below"} FDA OTC monograph range (${formatRangeWithUse(row.monograph.range)})`}
                       </Badge>
                     )}
                   </li>
@@ -463,9 +466,11 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
                 </p>
               )}
               <p className="mt-2 text-xs text-muted-foreground">
-                The monograph range is what the FDA permits for this active in an OTC product — a regulatory fact,
-                not a rating. A strength outside it may reflect how the label was filed rather than the product
-                itself; check the label on the package.
+                The monograph range is the strength the FDA&apos;s OTC monograph allows for this active in products sold
+                without their own FDA approval — a regulatory fact, not a rating. A strength outside it usually means
+                the label states the active a different way (for example, as a coal tar solution rather than coal tar,
+                or an antiperspirant salt weighed with its water), the product is sold under its own FDA approval
+                instead of the monograph, or the listing data are wrong. Check the label on the package.
               </p>
             </div>
           )}
@@ -631,8 +636,23 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
           <AlertTitle>Sourced directly from the manufacturer</AlertTitle>
           <AlertDescription className="text-[13px]">
             This ingredient list comes from {product.manufacturer ? displayManufacturer(product.manufacturer) : "the brand"}&apos;s own published
-            product page, not a crowd-edited database. It isn&apos;t an FDA drug filing (this active has
-            no OTC monograph status), but it is the manufacturer&apos;s own disclosed claim.
+            product page, not a crowd-edited database.{" "}
+            {brandStatus?.kind === "drug" ? (
+              <>
+                {brandStatus.drugActiveIds.length > 0
+                  ? `The page labels ${brandStatus.drugActiveIds.map((id) => activeName(id)).join(", ")} as the active ingredient${brandStatus.drugActiveIds.length > 1 ? "s" : ""}, so this is sold as an OTC drug.`
+                  : "The page shows a Drug Facts panel, so this is sold as an OTC drug."}
+                The list is the manufacturer&apos;s own disclosed claim, not the FDA drug label; check the Drug Facts
+                panel on the package.
+              </>
+            ) : brandStatus?.kind === "drug-ingredient" ? (
+              <>It isn&apos;t an FDA drug filing, but it is the manufacturer&apos;s own disclosed claim.</>
+            ) : (
+              <>
+                It isn&apos;t an FDA drug filing (none of its tracked actives has OTC monograph status), but it is the
+                manufacturer&apos;s own disclosed claim.
+              </>
+            )}
           </AlertDescription>
         </Alert>
       )}

@@ -10,6 +10,7 @@ import { ACTIVE_TEXT_OVERRIDES } from "./active-overrides";
 import { computeFreeFromFlags } from "./ingredient-flags";
 import { computeAllergenHits } from "./contact-allergens";
 import { parseStrengths, strengthKey } from "./strength";
+import { labeledDrugActives } from "./labeled-actives";
 import { aliasesFor, canonicalSlug, parseIngredients, pickDisplayName } from "./ingredient-parse";
 import { SITE_NAME } from "@/lib/brand";
 import { validateManualLinks, type ManualLinkRow } from "@/lib/manual-links";
@@ -365,8 +366,13 @@ function reseed() {
       const inactive = isPreMatched ? null : drugInactiveList(row.inactive_ingredient_text, splInactive.get(row.product_ndc));
       // Cosmetic sources: the single INCI list, in order.
       const cosmeticList = isPreMatched ? parseIngredients(row.active_ingredient_text) : null;
+      // Brand pages that print a Drug Facts-style active line ("Active
+      // ingredient: Benzoyl Peroxide 4%") are OTC drugs; the pipeline only
+      // matched cosmetic ids on them, so the drug active and its strength
+      // come from that line here (labeled-actives.ts).
+      const brandDrug = row.source === "brand_direct" ? labeledDrugActives(row.active_ingredient_text) : null;
       const labeledActiveIds = isPreMatched
-        ? (row.active_ingredients_structured ?? "").split(";").filter(Boolean)
+        ? [...new Set([...(brandDrug?.activeIds ?? []), ...(row.active_ingredients_structured ?? "").split(";").filter(Boolean)])]
         : matchActiveIds([row.active_ingredients_structured, row.substance_name, row.active_ingredient_text].join(" "));
       // UV filters count wherever they're listed (actives.ts
       // countsAnywhereListed): bemotrizinol in a label's "inactive" list or a
@@ -411,9 +417,10 @@ function reseed() {
             `${row.active_ingredients_structured || ""} ${row.active_ingredient_text || ""} ${inactive.text}`
           : null;
       // Cosmetic sources never disclose concentrations, so only the FDA
-      // label line is parsed -- see db/strength.ts.
+      // label line is parsed -- see db/strength.ts -- plus a brand page's
+      // own labeled drug-active line.
       const strengths = isPreMatched
-        ? null
+        ? (brandDrug?.strengths ?? null)
         : parseStrengths(row.active_ingredients_structured || row.active_ingredient_text);
       const activeIdSet = new Set(activeIds);
       // Drug labels: the tracked actives (position 0) plus the SPL's own

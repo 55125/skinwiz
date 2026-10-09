@@ -12,7 +12,7 @@
 //   201.327; antifungal 21 CFR 333.250; dandruff/seborrheic dermatitis/
 //   psoriasis 21 CFR 358.750; skin protectant 21 CFR 347.50; antiperspirant
 //   21 CFR 350.50; external analgesics incl. hydrocortisone, pramoxine and
-//   diphenhydramine under the 21 CFR part 348 tentative final monograph).
+//   diphenhydramine under OTC Monograph M017).
 //   Actives marketed under an approved application rather than a monograph
 //   (adapalene 0.1%, terbinafine, butenafine, vaginal tioconazole) defer to
 //   their Drug Facts label. Where exact wording was uncertain, the text says
@@ -70,7 +70,7 @@ const SRC_SUNSCREEN = "FDA OTC sunscreen labeling / 21 CFR 201.327 (directions a
 const SRC_ANTIFUNGAL = "21 CFR 333.250 (topical antifungal drug products: labeling, including directions)";
 const SRC_DANDRUFF = "21 CFR 358.750 (dandruff, seborrheic dermatitis and psoriasis drug products: labeling)";
 const SRC_PROTECTANT = "21 CFR 347.50 (skin protectant drug products: labeling)";
-const SRC_ANALGESIC = "21 CFR part 348 (external analgesic drug products; tentative final monograph): follow the product's label";
+const SRC_ANALGESIC = "OTC Monograph M017 (external analgesic drug products: labeling); follow the product's label";
 const SRC_ANTIPERSPIRANT = "21 CFR 350.50 (antiperspirant drug products: labeling)";
 const SRC_COSMETIC = "General dermatology practice; no FDA monograph applies (cosmetic ingredient)";
 const SRC_AHA_GUIDANCE =
@@ -90,13 +90,13 @@ function sunscreen(activeId: string, extraCautions: string[] = [], extraHowTo: s
       "Reapply at least every 2 hours.",
       "Reapply after 40 or 80 minutes of swimming or sweating, as stated on the label, and immediately after towel drying.",
       ...extraHowTo,
+      "Children under 6 months: ask a doctor.",
     ],
     frequency: "Every day you will be outdoors or near windows; reapply as the label directs.",
     cautions: [
       "For external use only. Keep out of eyes; rinse with water to remove.",
       "Do not use on damaged or broken skin.",
       "Stop use and ask a doctor if a rash occurs.",
-      "For children under 6 months, ask a doctor.",
       ...extraCautions,
     ],
     sources: [SRC_SUNSCREEN, SRC_AAD_SUNSCREEN],
@@ -133,11 +133,12 @@ function antiperspirant(activeId: string): ActiveGuidance {
   return {
     activeId,
     defaultSlot: "pm",
-    slotReason: "Many labels and dermatologists suggest applying to dry skin at bedtime, when sweat glands are less active.",
+    slotReason:
+      "Clinical-strength labels (such as Secret Clinical and Gillette Clinical) direct applying at bedtime, when sweat glands are less active; standard labels say only to apply to the underarms.",
     howToUse: [
       "Apply to underarms only, unless the label lists other areas.",
       "Apply to clean, completely dry skin.",
-      "Many people apply at bedtime and may reapply in the morning if the label allows.",
+      "If the label directs bedtime use (common on clinical-strength products), apply at night; some labels allow reapplying in the morning.",
     ],
     frequency: "Once daily, or as the label directs.",
     cautions: [
@@ -215,6 +216,7 @@ const ENTRIES: ActiveGuidance[] = [
     cautions: [
       "Using other topical acne products at the same time may increase dryness or irritation.",
       "Keep away from the eyes.",
+      "For acne products: do not use on broken skin or large areas of the skin, and apply only to areas with acne.",
       "Has a noticeable odor, which some people find bothersome.",
     ],
     sources: [SRC_ACNE, SRC_DANDRUFF],
@@ -226,7 +228,7 @@ const ENTRIES: ActiveGuidance[] = [
     slotReason: "Retinoids are commonly applied in the evening, since they can make skin more sensitive to the sun.",
     howToUse: [
       "Clean the skin and pat it dry.",
-      "Cover the entire affected area with a thin layer; a pea-sized amount covers the face.",
+      "Cover the entire affected area with a thin layer, as the label directs; for the face, many dermatologists suggest about a pea-sized amount.",
       "Follow with a moisturizer if dryness occurs.",
       "Use sunscreen during the day.",
     ],
@@ -236,7 +238,7 @@ const ENTRIES: ActiveGuidance[] = [
     cautions: [
       "Redness, dryness, itching or burning are more likely in the first few weeks.",
       "Avoid unnecessary sun exposure and use a sunscreen.",
-      "Avoid the eyes, lips and corners of the nose and mouth.",
+      "Avoid contact with the eyes, lips and mouth.",
       "Do not apply to cuts, abrasions, eczema or sunburned skin.",
       "If pregnant, planning pregnancy or breastfeeding, follow the label and ask a doctor before use.",
       "For children under 12, ask a doctor.",
@@ -365,9 +367,10 @@ const ENTRIES: ActiveGuidance[] = [
     ],
     frequency: "Typically a single dose; follow the label.",
     cautions: [
-      "If this is the first time you have had vaginal yeast symptoms, ask a doctor before use.",
-      "Ask a doctor if symptoms do not improve within the time stated on the label, or if you are pregnant.",
-      "May weaken latex condoms and diaphragms; follow the label.",
+      "Do not use if you have never had a vaginal yeast infection diagnosed by a doctor; if you have vaginal itching and discomfort for the first time, ask a doctor before use.",
+      "If pregnant or breast-feeding, ask a health professional before use.",
+      "Ask a doctor if symptoms do not improve within the time stated on the label.",
+      "Condoms and diaphragms may be damaged and fail to prevent pregnancy or sexually transmitted infections.",
     ],
     sources: ["Tioconazole 6.5% vaginal ointment Drug Facts label (FDA-approved OTC product)"],
     reviewed: false,
@@ -403,7 +406,7 @@ const ENTRIES: ActiveGuidance[] = [
     frequency: "For best results, use at least twice a week or as directed by a doctor.",
     cautions: [
       "For external use only. Avoid contact with the eyes; if contact occurs, rinse thoroughly with water.",
-      "May discolor bleached, tinted, gray or permed hair; rinse thoroughly and follow the label.",
+      "If used on bleached, tinted, gray or permed hair, rinse for at least 5 minutes, as the label directs.",
       "Stop use and ask a doctor if the condition worsens or does not improve with regular use.",
     ],
     sources: [SRC_DANDRUFF],
@@ -419,11 +422,13 @@ const ENTRIES: ActiveGuidance[] = [
     ],
     frequency: "Follow the product's label; shampoos are commonly used at least twice a week.",
     cautions: [
-      "Use caution with sun exposure after applying; it may increase the tendency to sunburn.",
+      "Use caution with sun exposure after applying; it may increase the tendency to sunburn for up to 24 hours.",
       "Do not use for prolonged periods without asking a doctor.",
       "Avoid contact with the eyes.",
+      "For leave-on products: do not use in or around the rectum or in the genital area or groin unless a doctor advises it.",
+      "For psoriasis: do not use with other psoriasis treatments, such as ultraviolet light or prescription drugs, unless a doctor directs it.",
+      "For seborrheic dermatitis or psoriasis that covers a large area of the body, ask a doctor before use.",
       "Can stain fabrics, light hair and some surfaces.",
-      "Ask a doctor before use if the condition covers a large area of the body.",
     ],
     sources: [SRC_DANDRUFF],
     reviewed: false,
@@ -470,10 +475,11 @@ const ENTRIES: ActiveGuidance[] = [
     frequency: "Adults and children 2 years and older: not more than 3 to 4 times daily, per the label.",
     cautions: [
       "For external use only. Avoid contact with the eyes.",
-      "Do not use on large areas of the body, or on chickenpox or measles, unless directed by a doctor.",
+      "Do not use on large areas of the body.",
+      "Ask a doctor before use on chickenpox or measles.",
       "Do not use with any other product containing diphenhydramine, even one taken by mouth.",
       "For children under 2 years, ask a doctor.",
-      "Stop use and ask a doctor if the condition worsens or symptoms last more than 7 days.",
+      "Stop use and ask a doctor if the condition worsens, or symptoms last more than 7 days or clear up and come back within a few days.",
     ],
     sources: [SRC_ANALGESIC],
     reviewed: false,
@@ -493,7 +499,7 @@ const ENTRIES: ActiveGuidance[] = [
     cautions: [
       "For external use only. Avoid contact with the eyes.",
       "Do not use on deep or puncture wounds, animal bites or serious burns.",
-      "Stop use and ask a doctor if the condition worsens or symptoms last more than 7 days.",
+      "Stop use and ask a doctor if the condition worsens, or symptoms last more than 7 days or clear up and come back within a few days.",
       "Can feel greasy and transfer to fabrics.",
     ],
     sources: [SRC_PROTECTANT],
@@ -512,7 +518,7 @@ const ENTRIES: ActiveGuidance[] = [
     cautions: [
       "For external use only. Avoid contact with the eyes.",
       "Oatmeal baths can make the tub slippery; take care getting in and out.",
-      "Stop use and ask a doctor if the condition worsens or symptoms last more than 7 days.",
+      "Stop use and ask a doctor if the condition worsens, or symptoms last more than 7 days or clear up and come back within a few days.",
     ],
     sources: [SRC_PROTECTANT],
     reviewed: false,
@@ -526,7 +532,7 @@ const ENTRIES: ActiveGuidance[] = [
     cautions: [
       "For external use only. Avoid contact with the eyes.",
       "Do not use on deep or puncture wounds, animal bites or serious burns.",
-      "Stop use and ask a doctor if the condition worsens or symptoms last more than 7 days.",
+      "Stop use and ask a doctor if the condition worsens, or symptoms last more than 7 days or clear up and come back within a few days.",
     ],
     sources: [SRC_PROTECTANT],
     reviewed: false,
@@ -540,7 +546,7 @@ const ENTRIES: ActiveGuidance[] = [
     cautions: [
       "For external use only. Avoid contact with the eyes.",
       "Do not use on deep or puncture wounds, animal bites or serious burns.",
-      "Stop use and ask a doctor if the condition worsens or symptoms last more than 7 days.",
+      "Stop use and ask a doctor if the condition worsens, or symptoms last more than 7 days or clear up and come back within a few days.",
     ],
     sources: [SRC_PROTECTANT],
     reviewed: false,
@@ -555,7 +561,7 @@ const ENTRIES: ActiveGuidance[] = [
       "For external use only. Avoid contact with the eyes.",
       "Some people are sensitive to wool-derived ingredients; stop use if a rash occurs.",
       "Do not use on deep or puncture wounds, animal bites or serious burns.",
-      "Stop use and ask a doctor if the condition worsens or symptoms last more than 7 days.",
+      "Stop use and ask a doctor if the condition worsens, or symptoms last more than 7 days or clear up and come back within a few days.",
     ],
     sources: [SRC_PROTECTANT],
     reviewed: false,
@@ -668,12 +674,12 @@ const ENTRIES: ActiveGuidance[] = [
     howToUse: [
       "Apply to clean, dry skin.",
       "Follow with moisturizer.",
-      "Use sunscreen during the day while using it and for a week afterward.",
+      "FDA recommends using sunscreen, wearing protective clothing and limiting sun exposure while using it and for a week afterward (FDA guidance, not a label requirement).",
     ],
     frequency: "Follow the label; many leave-on products are used a few times a week up to nightly.",
     startSlowly: "Consider starting two or three times a week and increasing only as the skin tolerates it.",
     cautions: [
-      "Can increase sensitivity to the sun and the chance of sunburn.",
+      "Can increase sensitivity to the sun and the chance of sunburn; FDA recommends AHA products carry this sunburn alert.",
       "Stinging, redness or peeling can occur; reduce use if they do.",
       "Consider not layering it with a retinoid or other exfoliants in the same routine.",
       "Keep away from the eyes.",
@@ -778,12 +784,12 @@ const ENTRIES: ActiveGuidance[] = [
     howToUse: [
       "Apply to clean, dry skin.",
       "Follow with moisturizer.",
-      "Use sunscreen during the day while using it and for a week afterward.",
+      "FDA recommends using sunscreen, wearing protective clothing and limiting sun exposure while using it and for a week afterward (FDA guidance, not a label requirement).",
     ],
     frequency: "Follow the label; many leave-on products are used a few times a week up to nightly.",
     startSlowly: "Consider starting two or three times a week and increasing only as the skin tolerates it.",
     cautions: [
-      "Can increase sensitivity to the sun and the chance of sunburn.",
+      "Can increase sensitivity to the sun and the chance of sunburn; FDA recommends AHA products carry this sunburn alert.",
       "Stinging, redness or peeling can occur; reduce use if they do.",
       "Consider not layering it with a retinoid or other exfoliants in the same routine.",
       "Keep away from the eyes.",
@@ -798,12 +804,12 @@ const ENTRIES: ActiveGuidance[] = [
     howToUse: [
       "Apply to clean, dry skin.",
       "Follow with moisturizer.",
-      "Use sunscreen during the day while using it and for a week afterward.",
+      "FDA recommends using sunscreen, wearing protective clothing and limiting sun exposure while using it and for a week afterward (FDA guidance, not a label requirement).",
     ],
     frequency: "Follow the label; many leave-on products are used a few times a week up to nightly.",
     startSlowly: "Consider starting two or three times a week and increasing only as the skin tolerates it.",
     cautions: [
-      "Can increase sensitivity to the sun and the chance of sunburn.",
+      "Can increase sensitivity to the sun and the chance of sunburn; FDA recommends AHA products carry this sunburn alert.",
       "Stinging, redness or peeling can occur; reduce use if they do.",
       "Consider not layering it with a retinoid or other exfoliants in the same routine.",
       "Keep away from the eyes.",
@@ -859,7 +865,7 @@ export const FORMULATION_GUIDANCE: Record<StepType, FormulationGuidance> = {
     order: 40,
     howToApply: [
       "Apply a thin layer to clean, dry skin.",
-      "A pea-sized amount usually covers the face for leave-on treatment gels.",
+      "Many dermatologists suggest about a pea-sized amount for the face with leave-on treatment gels; follow the label.",
       "Let it absorb before the next step.",
     ],
     layering: "After serums and before spot treatments and moisturizers.",
@@ -949,7 +955,7 @@ export const FORMULATION_GUIDANCE: Record<StepType, FormulationGuidance> = {
     order: 120,
     howToApply: [
       "Apply to clean, completely dry underarms.",
-      "Many labels suggest bedtime application.",
+      "Follow the label on timing; clinical-strength products direct bedtime application.",
     ],
     layering: "A body step outside the face sequence; it does not interact with the face routine.",
     reviewed: false,

@@ -25,7 +25,7 @@ import {
   bestProductImage,
   productImages,
 } from "@/lib/queries";
-import { getScoresForProducts } from "@/lib/scoring";
+import { DERM_PANEL_LAUNCHED, getScoresForProducts } from "@/lib/scoring";
 import { getVideoSearchLinks } from "@/lib/video-links";
 import { dataSourceBadge } from "@/lib/data-source";
 import { FREE_FROM_CHECKS, getFreeFromCheck, ingredientFailsCheck } from "@/db/ingredient-flags";
@@ -384,22 +384,32 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
             alternatives={concern ? { href: `/concern/${concern.id}`, label: `Find an alternative among ${concern.name} products` } : undefined}
           />
 
-          <DualScoreBadges dermScore={dermScore} audienceScore={audienceScore} />
+          {/* No score card until there is a score: "Not enough reports yet"
+              on nearly every product was a row of nothing. The outcome form
+              below says how the score is made. */}
+          {(audienceScore.status === "scored" || (DERM_PANEL_LAUNCHED && dermScore.status === "scored")) && (
+            <DualScoreBadges dermScore={dermScore} audienceScore={audienceScore} />
+          )}
 
-          <RegimenButton
-            productId={product.id}
-            initialSlot={regimenSlot}
-            suggestedSlot={slotSuggestion.slot}
-            suggestedReason={slotSuggestion.reason}
-          />
+          {/* Add to regimen and the shelf pills share a row (wrapping on
+              phones); once it's in the regimen, the regimen card takes the
+              full width above the pills. */}
+          <div className={regimenSlot === null ? "flex flex-wrap items-center gap-2" : "space-y-3"}>
+            <RegimenButton
+              productId={product.id}
+              initialSlot={regimenSlot}
+              suggestedSlot={slotSuggestion.slot}
+              suggestedReason={slotSuggestion.reason}
+            />
 
-          <ShelfButton
-            key={`${shelfEntry?.status ?? "none"}-${shelfEntry?.opened ?? false}-${regimenSlot ?? "out"}`}
-            productId={product.id}
-            initialStatus={shelfEntry?.status ?? null}
-            initialOpened={shelfEntry?.opened ?? false}
-            inRegimen={regimenSlot !== null}
-          />
+            <ShelfButton
+              key={`${shelfEntry?.status ?? "none"}-${shelfEntry?.opened ?? false}-${regimenSlot ?? "out"}`}
+              productId={product.id}
+              initialStatus={shelfEntry?.status ?? null}
+              initialOpened={shelfEntry?.opened ?? false}
+              inRegimen={regimenSlot !== null}
+            />
+          </div>
 
           {avoid?.status === "conflicts" && (
             <Alert className="border-red-300 bg-red-50 dark:border-red-900 dark:bg-red-950/40">
@@ -488,8 +498,8 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
             </div>
           ) : (
             !hasProfile(profile) && (
-              <Link href="/profile" className="block rounded-xl border border-dashed px-3.5 py-2.5 text-sm text-muted-foreground hover:bg-muted">
-                Tell us your skin type and concerns to see how well this product matches you →
+              <Link href="/profile" className="block w-fit text-sm font-medium text-brand hover:underline">
+                Add your skin type and concerns to see your match →
               </Link>
             )
           )}

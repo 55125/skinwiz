@@ -309,8 +309,8 @@ export function buildEquivalenceGroups(rows: EquivalenceRow[], minLabelers = 2):
 
 export type PackageSize = { amount: number; unit: "g" | "mL" | "count" };
 
-const OZ_TO_G = 28.3495;
-const FLOZ_TO_ML = 29.5735;
+export const OZ_TO_G = 28.3495;
+export const FLOZ_TO_ML = 29.5735;
 
 /** "45 g in 1 TUBE", "1.7 OZ in 1 BOTTLE", "118 mL in 1 BOTTLE, PLASTIC" -> size. */
 export function parsePackageDescription(description: string | null | undefined): PackageSize | null {

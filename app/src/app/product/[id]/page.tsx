@@ -195,6 +195,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
       : null,
     process.env,
     gpc,
+    product.packageDescription,
   );
   const brandLine = productBrand(product);
   const brandLink = product.sourceUrl ? outboundLink(product.sourceUrl, { placement: "product", rel: "noopener noreferrer", gpc }) : null;

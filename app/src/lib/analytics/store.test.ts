@@ -124,3 +124,25 @@ test("range parsing", () => {
   assert.equal(report.parseRange("13"), 30);
   assert.equal(report.parseRange(undefined), 30);
 });
+
+test("GPC visitors: only a daily count of page views and clicks, shown apart in the report", () => {
+  db.run(sql`DELETE FROM opt_out_tallies`);
+  assert.equal(core.sentGpc(new Headers({ "sec-gpc": "1" })), true);
+  assert.equal(core.sentGpc(new Headers({ dnt: "1" })), false, "Do Not Track alone is not tallied");
+  assert.equal(core.tallyKind({ kind: "search", term: "x" }), null);
+  assert.equal(core.tallyKind(null), null);
+  store.tallyOptOut("pageview", NOW);
+  store.tallyOptOut("pageview", NOW);
+  store.tallyOptOut("outbound", NOW);
+  store.tallyOptOut("outbound", new Date("2025-01-01T00:00:00Z"));
+  assert.deepEqual(db.all(sql`SELECT * FROM opt_out_tallies WHERE day = '2026-10-08' ORDER BY kind`), [
+    { day: "2026-10-08", kind: "outbound", count: 1 },
+    { day: "2026-10-08", kind: "pageview", count: 2 },
+  ]);
+  const t = report.trafficReport(NOW, 7);
+  assert.equal(t.optOut.pageviews, 2);
+  assert.equal(t.optOut.clicks, 1);
+  assert.equal(Object.fromEntries(t.kpis.map((k) => [k.label, k.value])).Pageviews, 0, "not mixed into tracked figures");
+  store.purgeAnalytics(NOW);
+  assert.equal(db.all(sql`SELECT * FROM opt_out_tallies WHERE day = '2025-01-01'`).length, 0, "purged with the statistics");
+});

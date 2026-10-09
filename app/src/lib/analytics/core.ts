@@ -27,6 +27,19 @@ export function optedOut(headers: Headers): boolean {
   return headers.get("sec-gpc") === "1" || headers.get("dnt") === "1";
 }
 
+/** GPC opt-outs are tallied (count only) so the admin page can show unearned clicks. */
+export function sentGpc(headers: Headers): boolean {
+  return headers.get("sec-gpc")?.trim() === "1";
+}
+
+export type TallyKind = "pageview" | "outbound";
+
+/** The only thing read from an opted-out beacon: which of the two tallies to bump. */
+export function tallyKind(body: unknown): TallyKind | null {
+  const kind = (body as { kind?: unknown } | null)?.kind;
+  return kind === "pageview" || kind === "outbound" ? kind : null;
+}
+
 // Anything that isn't a person in a browser. Search crawlers run JavaScript
 // too, so they're excluded by name; scripting clients by their library UAs.
 const BOT_UA =

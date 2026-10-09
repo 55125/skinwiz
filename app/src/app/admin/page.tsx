@@ -139,9 +139,22 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <Section title="Retailer clicks" note="Outbound clicks by destination. Sovrn-wrapped links are counted under the merchant.">
-          <Bars rows={traffic.outboundByRetailer} empty="No outbound clicks yet." />
-        </Section>
+        <div className="space-y-6">
+          <Section title="Retailer clicks" note="Outbound clicks by destination. Sovrn-wrapped links are counted under the merchant.">
+            <Bars rows={traffic.outboundByRetailer} empty="No outbound clicks yet." />
+          </Section>
+          <Section
+            title="Global Privacy Control"
+            note="Browsers that send GPC get plain retailer links, so their clicks earn no commission. They are only counted here, not in the figures above."
+          >
+            <StatGrid
+              items={[
+                ["GPC pageviews", traffic.optOut.pageviews, `${share(traffic.optOut.pageviews, traffic.optOut.trackedPageviews)} of all pageviews`],
+                ["GPC retailer clicks", traffic.optOut.clicks, `${share(traffic.optOut.clicks, traffic.optOut.trackedClicks)} of all clicks earn nothing`],
+              ]}
+            />
+          </Section>
+        </div>
         <Section title="Most-clicked products" note="Outbound clicks from product pages.">
           <Bars rows={traffic.outboundByProduct} empty="No product-page clicks yet." />
           {traffic.outboundByPage.length > 0 && (
@@ -446,6 +459,12 @@ function Section({ title, note, children }: { title: string; note?: string; chil
 
 function Empty({ children }: { children: React.ReactNode }) {
   return <p className="text-sm text-muted-foreground">{children}</p>;
+}
+
+/** gpc as a share of gpc + tracked, e.g. "4%". */
+function share(gpc: number, tracked: number): string {
+  const total = gpc + tracked;
+  return total ? `${Math.round((gpc / total) * 100)}%` : "0%";
 }
 
 function KpiTile({ kpi }: { kpi: Kpi }) {

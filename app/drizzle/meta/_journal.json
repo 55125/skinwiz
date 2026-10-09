@@ -162,6 +162,13 @@
       "when": 1791513257710,
       "tag": "0022_handout_version_purge",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "6",
+      "when": 1791515347308,
+      "tag": "0023_opt_out_tallies",
+      "breakpoints": true
     }
   ]
 }

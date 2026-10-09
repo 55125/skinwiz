@@ -1,63 +1,33 @@
 import { FlaskConical } from "lucide-react";
 import { IngredientLink } from "@/components/ingredient-link";
 import { activeUse } from "@/db/active-uses";
-import { pubchemLinkText } from "@/lib/pubchem";
 import { cn } from "@/lib/utils";
 
-type Note = {
-  activeId: string;
-  activeName: string;
-  summary: string;
-  typicalConcentrationText: string | null;
-  pubchemCid: number | null;
-  molecularFormula: string | null;
-};
+type Note = { activeId: string; activeName: string; summary: string };
 
-// "Why this active", shown right under the product's ingredient list so the
-// explanation sits next to the names it explains: what each tracked active is
-// used for, then its factual summary.
+// "Why this active", shown right under the product's ingredient list: one
+// line per tracked active saying what it's used for. The longer factual
+// summary, typical strengths and chemistry live on the ingredient page the
+// name links to, so a product with seven actives stays short.
 export function ActiveNotes({ notes, className }: { notes: Note[]; className?: string }) {
   if (notes.length === 0) return null;
   return (
-    <div className={cn("space-y-3", className)}>
+    <div className={cn("space-y-2", className)}>
       <h3 className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
         <FlaskConical className="h-3.5 w-3.5 text-brand" />
         {notes.length === 1 ? "Why this active" : "Why these actives"}
       </h3>
-      <ul className="space-y-2">
-        {notes.map((note) => {
-          const use = activeUse(note.activeId);
-          return (
-            <li key={note.activeId} className="space-y-1.5 rounded-lg bg-muted/40 p-3">
-              <p className="text-sm">
-                <IngredientLink id={note.activeId} className="font-semibold">
-                  {note.activeName}
-                </IngredientLink>
-              </p>
-              {use && (
-                <p className="text-sm leading-relaxed">
-                  <span className="font-medium">Used for:</span> {use}
-                </p>
-              )}
-              <p className="text-sm leading-relaxed text-muted-foreground">{note.summary}</p>
-              {note.typicalConcentrationText && <p className="text-xs text-muted-foreground">{note.typicalConcentrationText}</p>}
-              {note.pubchemCid && (
-                <p className="text-xs">
-                  <a
-                    href={`https://pubchem.ncbi.nlm.nih.gov/compound/${note.pubchemCid}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="font-medium text-brand hover:underline"
-                  >
-                    {pubchemLinkText(note.activeId, note.molecularFormula)}
-                    <span className="sr-only"> (opens in new tab)</span>
-                  </a>
-                </p>
-              )}
-            </li>
-          );
-        })}
+      <ul className="space-y-1.5 text-sm leading-relaxed">
+        {notes.map((note) => (
+          <li key={note.activeId}>
+            <IngredientLink id={note.activeId} className="font-semibold">
+              {note.activeName}
+            </IngredientLink>
+            : {activeUse(note.activeId) ?? note.summary}
+          </li>
+        ))}
       </ul>
+      <p className="text-xs text-muted-foreground">Tap an active for what it is, typical strengths and the science behind it.</p>
     </div>
   );
 }

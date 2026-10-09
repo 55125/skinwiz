@@ -136,12 +136,13 @@ accounts or passwords.
 
 `POST /api/cron/run` with `Authorization: Bearer $CRON_SECRET` runs the
 recall sync + alerts, sends due check-ins, purges expired sign-in
-tokens, refreshes live prices and downloads a capped batch of DailyMed
+tokens, refreshes live prices (once a day, see below) and downloads a capped batch of DailyMed
 package photos (see "Package photos from DailyMed"). Idempotent and safe to call every hour (rows are claimed before
 sending; a second overlapping call gets 409). The anti-scrape proxy lets
 `/api/cron/*` through only when the bearer secret is correct. Outside
 production, `?now=2026-12-01T00:00:00Z` fakes the clock; `?jobs=checkins`
-limits what runs.
+limits what runs; `?forcePrices=1` runs the price refresh even if it
+already ran today.
 
 Schedule it hourly — not set up yet. Either:
 
@@ -263,8 +264,8 @@ no request goes to Sovrn.
 | Variable | Turns on |
 |---|---|
 | `SOVRN_SITE_API_KEY` | Outbound retailer/brand links (the brand-direct "Visit page" link, and the "brand site" / store-search links in a clinician plan's "Get everything") go through Sovrn's Redirect API, `https://redirect.viglink.com?key=…&u=<encoded url>&cuid=<page type>` ([docs](https://developer.sovrn.com/reference/building-monetized-urls)), with `rel="sponsored nofollow"` and the disclosure text switched to "affiliate link". The CUID is only the page type (`product`, `plan`). Never wrapped: FDA/NIH/.gov, AAD, GoodRx, Cost Plus, EWG, YouTube, existing affiliate links, anything for an Rx product (`src/lib/prices/redirect.ts`). |
-| `SOVRN_SITE_API_KEY` + `SOVRN_SECRET_KEY` | The Price Comparison API ([docs](https://developer.sovrn.com/reference/product-affiliate-api)): the hourly job looks up live prices, product pages show a "Prices" block (merchants cheapest first, "checked X hours ago", each link `rel="sponsored nofollow"`), equivalence lists and `/same/…` pages show price per unit sorted cheapest first with a "store brand saves X%" line, and a clinician plan's "Get everything" gets per-item buy links. |
-| `SOVRN_MAX_REQUESTS_PER_RUN` | Optional request cap per job run (default 300). |
+| `SOVRN_SITE_API_KEY` + `SOVRN_SECRET_KEY` | The Price Comparison API ([docs](https://developer.sovrn.com/reference/product-affiliate-api)): the daily price run looks up live prices, product pages show a "Prices" block (merchants cheapest first, "checked X hours ago", each link `rel="sponsored nofollow"`), equivalence lists and `/same/…` pages show price per unit sorted cheapest first with a "store brand saves X%" line, and a clinician plan's "Get everything" gets per-item buy links. |
+| `SOVRN_MAX_REQUESTS_PER_RUN` | Optional request cap per daily run (default 1000). |
 
 Both keys are on the Sovrn Platform under Commerce Settings → the key icon
 next to the site ("generate secret key" for the secret,
@@ -274,6 +275,10 @@ next to the site ("generate secret key" for the secret,
 `/api/cron/run`; migration `0015` adds `product_barcodes`, `price_quotes`,
 `price_checks`, `product_views`):
 
+- It runs once a day: the first hourly call at or after 08:00 UTC (3-4am
+  US Eastern) does the lookups, and later calls that day skip the step
+  (`prices.lastRunDay` in `job_state`). A day with no source configured
+  doesn't count, so setting the keys starts prices on the next hourly call.
 - Each run picks products that are due, in order: on someone's shelf,
   regimen or a clinician plan; product pages viewed in the last 7 days
   (recorded at most once an hour per product, bots ignored, only while
@@ -287,7 +292,7 @@ next to the site ("generate secret key" for the secret,
 - At most 10 requests a second and `SOVRN_MAX_REQUESTS_PER_RUN` a run;
   429/5xx/network errors back off 1s, 2s, 4s (or Retry-After), then the run
   stops; a 401/403 stops it at once.
-- A match is checked again after 24h. A miss waits 7 days, doubling per
+- A match is checked again after 20h, so it's due by the next daily run. A miss waits 7 days, doubling per
   miss up to 90. A quote older than 72h is never displayed, whatever happens
   to the job. Demo `affiliate_links` rows are never treated as prices.
 - `price_quotes`, `price_checks` and `product_views` are not seeded and
@@ -311,14 +316,14 @@ API; the job asks for scope `product.compact`). It runs as part of the same
 | `KROGER_CLIENT_ID` + `KROGER_CLIENT_SECRET` | Client-credentials token, then shelf prices and stock at one Kroger store. Product pages show a Kroger row with "In stock / Low stock / Out of stock at Kroger in <city>" and a plain kroger.com link labeled "Not an affiliate link"; equivalence lists use the price like any other. Clinician plans' buy links stay affiliate-only. |
 | `KROGER_ZIP` | Optional. The store is the nearest Kroger-family store to this zip (default `45202`, downtown Cincinnati). This is a server setting; no visitor's location is ever sent. |
 | `KROGER_LOCATION_ID` | Optional. Pins an exact store (8 characters, from the Locations API) instead of the zip search. |
-| `KROGER_MAX_REQUESTS_PER_RUN` | Optional request cap per job run (default 200, at most 5 a second; Kroger allows 10,000 product calls a day). |
+| `KROGER_MAX_REQUESTS_PER_RUN` | Optional request cap per daily run (default 1000, at most 5 a second; Kroger allows 10,000 product calls a day). |
 
 Per product (`src/lib/prices/kroger.ts`): each barcode becomes a Kroger
 productId (the UPC without its check digit, padded to 13) and is looked up at
 the store; with no barcode hit, a keyword search checked by the same strict
 `match.ts` rules as Sovrn. The result doubles as the **catalog check**:
 `matched` (priced at the store), `listed` (Kroger carries it, no price at this
-store; rechecked in 24h like a match) or `miss`. The admin dashboard shows
+store; rechecked by the next daily run like a match) or `miss`. The admin dashboard shows
 "Kroger carries N of M checked" and lookups by source and result. Migration
 `0023` adds `price_quotes.availability` and `.location`.
 

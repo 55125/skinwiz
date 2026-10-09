@@ -1,15 +1,15 @@
-// The live-price refresh, run hourly by lib/jobs.ts (and by the backfill
+// The live-price refresh, run once a day by lib/jobs.ts (and by the backfill
 // script). Each configured source runs in turn with its own budget and its
 // own bookkeeping (price_checks is per product + source); with no source
 // configured it does nothing at all -- no queries, no writes.
-//   - Sovrn (both Sovrn keys): SOVRN_MAX_REQUESTS_PER_RUN (default 300, <= 10 req/s)
+//   - Sovrn (both Sovrn keys): SOVRN_MAX_REQUESTS_PER_RUN (default 1000, <= 10 req/s)
 //   - Kroger (KROGER_CLIENT_ID + KROGER_CLIENT_SECRET):
-//     KROGER_MAX_REQUESTS_PER_RUN (default 200, <= 5 req/s). Its lookups
+//     KROGER_MAX_REQUESTS_PER_RUN (default 1000, <= 5 req/s). Its lookups
 //     double as the Kroger catalog check: "listed" means Kroger carries the
 //     product but our store has no price for it.
 //
 // Each source looks at products that are due for it (never checked, matched
-// or listed more than 24h ago, or past a miss's back-off), in this order:
+// or listed more than 20h ago, or past a miss's back-off), in this order:
 //   1. products on someone's shelf, regimen or a clinician plan
 //   2. product pages viewed in the last 7 days, most recent first
 //   3. the rest of the OTC catalog, never-checked first and products with a

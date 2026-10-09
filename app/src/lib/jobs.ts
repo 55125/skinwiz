@@ -1,17 +1,19 @@
 // The hourly background job, run by POST /api/cron/run. Every step is
 // idempotent, so calling it twice in a row (or overlapping) is harmless:
 // check-ins and recall emails are claimed row-by-row before sending, and the
-// recall sync throttles itself to every 6 hours. The price refresh only
-// touches products that are due, and does nothing until a price source
-// (Sovrn or Kroger) is configured (lib/prices/refresh.ts). The image sync downloads a capped batch of
+// recall sync throttles itself to every 6 hours. The price refresh runs once
+// a day (the first call at or after PRICE_RUN_HOUR_UTC), only touches
+// products that are due, and does nothing until a price source (Sovrn or
+// Kroger) is configured (lib/prices/refresh.ts). The image sync downloads a capped batch of
 // DailyMed package photos per run (lib/product-images/sync.ts), so a fresh
 // volume fills itself over the first day or two after a deploy.
 import { purgeExpiredTokens } from "@/lib/identity";
 import { purgeOldRaterApplications, purgeStaleYoutubeData } from "@/lib/retention";
 import { sendDueCheckins, type CheckinRunResult } from "@/lib/checkins";
-import { notifyRecalls, setState, syncRecalls, type NotifyResult, type SyncResult } from "@/lib/recalls";
+import { getState, notifyRecalls, setState, syncRecalls, type NotifyResult, type SyncResult } from "@/lib/recalls";
 import { purgeAnalytics } from "@/lib/analytics/store";
 import { refreshPrices, type PriceRefreshReport } from "@/lib/prices/refresh";
+import { PRICE_RUN_HOUR_UTC, priceRunDay } from "@/lib/prices/config";
 import { syncDailymedImages, type ImageSyncReport } from "@/lib/product-images/sync";
 
 export type JobName = "checkins" | "recalls" | "cleanup" | "prices" | "images";
@@ -37,13 +39,13 @@ export type JobReport = {
   purgedRaterApplications?: number;
   purgedYoutubeRows?: number;
   purgedAnalytics?: number;
-  prices?: PriceRefreshReport | { error: string };
+  prices?: PriceRefreshReport | { error: string } | { skipped: string };
   images?: ImageSyncReport | { error: string } | { skipped: string };
 };
 
 let running = false;
 
-export async function runJobs(now: Date, jobs: JobName[] = ALL_JOBS, opts: { forceRecallSync?: boolean } = {}): Promise<JobReport | null> {
+export async function runJobs(now: Date, jobs: JobName[] = ALL_JOBS, opts: { forceRecallSync?: boolean; forcePrices?: boolean } = {}): Promise<JobReport | null> {
   // One run at a time per process (the app runs as a single instance).
   if (running) return null;
   running = true;
@@ -67,10 +69,18 @@ export async function runJobs(now: Date, jobs: JobName[] = ALL_JOBS, opts: { for
       report.purgedAnalytics = purgeAnalytics(now);
     }
     if (jobs.includes("prices")) {
-      try {
-        report.prices = await refreshPrices(now);
-      } catch (err) {
-        report.prices = { error: (err as Error).message };
+      const day = priceRunDay(now);
+      if (!opts.forcePrices && getState("prices.lastRunDay") === day) {
+        report.prices = { skipped: `runs once a day, next after ${String(PRICE_RUN_HOUR_UTC).padStart(2, "0")}:00 UTC` };
+      } else {
+        try {
+          report.prices = await refreshPrices(now);
+          // Only a run that reached a source counts, so setting the keys
+          // mid-day starts prices on the next hourly call, not tomorrow.
+          if (report.prices.enabled) setState("prices.lastRunDay", day);
+        } catch (err) {
+          report.prices = { error: (err as Error).message };
+        }
       }
     }
     if (jobs.includes("images")) {

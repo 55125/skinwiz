@@ -49,14 +49,30 @@ export function livePricesEnabled(env: NodeJS.ProcessEnv = process.env): boolean
 }
 
 const HOUR = 3_600_000;
-/** A matched product is looked up again after this long. */
-export const PRICE_STALE_MS = 24 * HOUR;
+
+/**
+ * The price refresh runs once a day: the first hourly cron call at or after
+ * this hour (UTC) does it, later calls that day skip it. 08:00 UTC is 3-4am
+ * US Eastern, when nobody is browsing.
+ */
+export const PRICE_RUN_HOUR_UTC = 8;
+
+/** The day a price run at `now` counts for (YYYY-MM-DD, days roll over at PRICE_RUN_HOUR_UTC). */
+export function priceRunDay(now: Date): string {
+  return new Date(now.getTime() - PRICE_RUN_HOUR_UTC * HOUR).toISOString().slice(0, 10);
+}
+
+/**
+ * A matched product is looked up again after this long. Under a day, so a
+ * product checked late in one daily run is due again by the next one.
+ */
+export const PRICE_STALE_MS = 20 * HOUR;
 /** A quote older than this is never displayed, whatever the job did. */
 export const PRICE_DISPLAY_MAX_AGE_MS = PRICE_MAX_AGE_MS;
 /** A product with no match waits this long, doubling per miss, up to the cap. */
 export const MISS_RETRY_MS = 7 * 24 * HOUR;
 export const MISS_RETRY_MAX_MS = 90 * 24 * HOUR;
-/** A product whose lookup failed for a transient reason is retried after this. */
+/** A product whose lookup failed for a transient reason is retried after this (in practice, the next daily run). */
 export const ERROR_RETRY_MS = HOUR;
 /** Product pages viewed within this window are refreshed before the sweep. */
 export const RECENT_VIEW_MS = 7 * 24 * HOUR;
@@ -66,13 +82,13 @@ export const SOVRN_MIN_INTERVAL_MS = 100;
 
 export function maxRequestsPerRun(env: NodeJS.ProcessEnv = process.env): number {
   const n = Number(env.SOVRN_MAX_REQUESTS_PER_RUN);
-  return Number.isFinite(n) && n > 0 ? Math.floor(n) : 300;
+  return Number.isFinite(n) && n > 0 ? Math.floor(n) : 1000;
 }
 
-/** Kroger allows 10,000 Products API calls a day; 24 hourly runs of 200 stay well under. */
+/** Kroger allows 10,000 Products API calls a day; one daily run of 1,000 stays well under. */
 export const KROGER_MIN_INTERVAL_MS = 200;
 
 export function krogerMaxRequestsPerRun(env: NodeJS.ProcessEnv = process.env): number {
   const n = Number(env.KROGER_MAX_REQUESTS_PER_RUN);
-  return Number.isFinite(n) && n > 0 ? Math.floor(n) : 200;
+  return Number.isFinite(n) && n > 0 ? Math.floor(n) : 1000;
 }

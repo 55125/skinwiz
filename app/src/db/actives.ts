@@ -158,7 +158,7 @@ export const ACTIVE_DEFINITIONS: ActiveDefinition[] = [
     categories: ["sunscreen"],
     synonyms: ["avobenzone", "butyl methoxydibenzoylmethane"],
     summary:
-      "The only FDA-approved chemical sunscreen active that absorbs across the full UVA1 range. Often paired with other actives for photostability.",
+      "The only chemical sunscreen active on the FDA's OTC sunscreen monograph list that absorbs across the full UVA1 range. Often paired with other actives for photostability.",
     typicalConcentrationText: "FDA monograph maximum is 3%.",
     countsAnywhereListed: true,
   },
@@ -204,7 +204,7 @@ export const ACTIVE_DEFINITIONS: ActiveDefinition[] = [
     categories: ["sunscreen"],
     synonyms: ["oxybenzone", "benzophenone-3", "benzophenone 3"],
     summary:
-      "An FDA-recognized chemical sunscreen active providing broad UVA/UVB protection. Has drawn environmental and some safety-signal scrutiny in recent years; a board-certified dermatologist should weigh in before any comparative claims are published here.",
+      "An FDA-recognized chemical sunscreen active providing broad UVA/UVB protection. Has drawn environmental and some safety-signal scrutiny in recent years.",
     typicalConcentrationText: "FDA monograph maximum is 6%.",
     countsAnywhereListed: true,
   },
@@ -474,7 +474,7 @@ export const ACTIVE_DEFINITIONS: ActiveDefinition[] = [
     canonicalName: "Terbinafine Hydrochloride",
     categories: ["antifungal"],
     synonyms: ["terbinafine"],
-    summary: "An FDA OTC monograph antifungal active for athlete's foot, jock itch, and ringworm.",
+    summary: "An OTC antifungal for athlete's foot, jock itch, and ringworm. It is sold OTC under an FDA-approved application (an Rx-to-OTC switch), not the OTC antifungal monograph.",
     typicalConcentrationText: "Typically formulated at 1%.",
   },
   {
@@ -482,7 +482,7 @@ export const ACTIVE_DEFINITIONS: ActiveDefinition[] = [
     canonicalName: "Butenafine Hydrochloride",
     categories: ["antifungal"],
     synonyms: ["butenafine"],
-    summary: "An FDA OTC monograph antifungal active for athlete's foot, jock itch, and ringworm.",
+    summary: "An OTC antifungal for athlete's foot, jock itch, and ringworm. It is sold OTC under an FDA-approved application (an Rx-to-OTC switch), not the OTC antifungal monograph.",
     typicalConcentrationText: "Typically formulated at 1%.",
   },
   {
@@ -663,7 +663,7 @@ export const ACTIVE_DEFINITIONS: ActiveDefinition[] = [
     categories: ["skin-protectant"],
     synonyms: ["allantoin"],
     summary: "An FDA OTC monograph skin protectant recognized for soothing dry or irritated skin.",
-    typicalConcentrationText: "Typically formulated at 0.5%–2%.",
+    typicalConcentrationText: "Typically formulated at up to 2%.",
   },
   {
     id: "lanolin",
@@ -806,7 +806,8 @@ export const ACTIVE_DEFINITIONS: ActiveDefinition[] = [
     canonicalName: "Aluminum Chlorohydrate",
     categories: ["antiperspirant"],
     synonyms: ["aluminum chlorohydrate", "aluminum chloride", "aluminum sesquichlorohydrate"],
-    summary: "An FDA OTC monograph antiperspirant active that works by temporarily blocking sweat ducts.",
+    summary:
+      "An FDA OTC monograph antiperspirant active that works by temporarily blocking sweat ducts. Aluminum chloride and aluminum sesquichlorohydrate are separate FDA-recognized antiperspirant actives, grouped under this entry for now.",
     typicalConcentrationText: "Concentration varies by product strength (regular vs. clinical-strength).",
   },
   {
@@ -824,7 +825,7 @@ export const ACTIVE_DEFINITIONS: ActiveDefinition[] = [
       "aluminum zirconium pentachlorohydrate",
     ],
     summary:
-      "A family of FDA OTC monograph antiperspirant actives (differing in aluminum:zirconium ratio), grouped here as one canonical entry since the ratio distinction isn't a consumer-meaningful difference without a dermatologist's input.",
+      "A family of FDA OTC monograph antiperspirant actives (differing in their aluminum, zirconium and chloride ratios), grouped here as one entry.",
     typicalConcentrationText: "Concentration varies by product strength (regular vs. clinical-strength).",
   },
   {
@@ -850,7 +851,7 @@ export const ACTIVE_DEFINITIONS: ActiveDefinition[] = [
     categories: ["brightening-texture"],
     synonyms: ["niacinamide"],
     summary:
-      "A form of vitamin B3 widely used in cosmetic serums and moisturizers for skin tone and texture. Not an FDA-regulated drug ingredient — no OTC monograph or FDA efficacy claim applies to it.",
+      "A form of vitamin B3 widely used in cosmetic serums and moisturizers for skin tone and texture. A cosmetic ingredient, not an OTC drug active — no OTC monograph or FDA efficacy claim applies to it.",
     typicalConcentrationText: "Commonly formulated at 2%–10% in cosmetic products; not a standardized concentration.",
   },
   {
@@ -859,7 +860,7 @@ export const ACTIVE_DEFINITIONS: ActiveDefinition[] = [
     categories: ["brightening-texture"],
     synonyms: ["ascorbic acid"],
     summary:
-      "An antioxidant used in cosmetic serums, often for brightening. Not an FDA-regulated drug ingredient — no OTC monograph or FDA efficacy claim applies to it. Formulation and stability vary widely by product.",
+      "An antioxidant used in cosmetic serums, often for brightening. A cosmetic ingredient, not an OTC drug active — no OTC monograph or FDA efficacy claim applies to it. Formulation and stability vary widely by product.",
     typicalConcentrationText: "Commonly formulated at 5%–20% in cosmetic products; not a standardized concentration.",
   },
   {
@@ -871,7 +872,7 @@ export const ACTIVE_DEFINITIONS: ActiveDefinition[] = [
     categories: ["brightening-texture", "skin-protectant"],
     synonyms: ["hyaluronic acid", "sodium hyaluronate"],
     summary:
-      "A humectant that draws moisture into skin, used broadly in cosmetic serums and moisturizers. Not an FDA-regulated drug ingredient — no OTC monograph or FDA efficacy claim applies to it.",
+      "A humectant that draws moisture into skin, used broadly in cosmetic serums and moisturizers. A cosmetic ingredient, not an OTC drug active — no OTC monograph or FDA efficacy claim applies to it.",
     typicalConcentrationText: "Concentration varies by molecular weight and formulation; not standardized.",
   },
   {
@@ -880,7 +881,7 @@ export const ACTIVE_DEFINITIONS: ActiveDefinition[] = [
     categories: ["brightening-texture"],
     synonyms: ["retinol"],
     summary:
-      "A cosmetic vitamin-A derivative, distinct from the FDA OTC monograph acne active adapalene and from prescription retinoids (tretinoin) — retinol itself has no OTC monograph or FDA drug status. Potency and stability vary widely by formulation.",
+      "A cosmetic vitamin-A derivative, distinct from adapalene (an OTC acne drug sold under an FDA-approved Rx-to-OTC switch, not the acne monograph) and from prescription retinoids (tretinoin) — retinol itself has no OTC monograph or FDA drug status. Potency and stability vary widely by formulation.",
     typicalConcentrationText: "Concentration varies widely by product; not standardized.",
   },
   {
@@ -889,7 +890,7 @@ export const ACTIVE_DEFINITIONS: ActiveDefinition[] = [
     categories: ["brightening-texture", "skin-protectant"],
     synonyms: ["ceramide"],
     summary:
-      "Lipids naturally found in skin's barrier, added to cosmetic moisturizers to support barrier function. Not an FDA-regulated drug ingredient — no OTC monograph or FDA efficacy claim applies to it.",
+      "Lipids naturally found in skin's barrier, added to cosmetic moisturizers to support barrier function. A cosmetic ingredient, not an OTC drug active — no OTC monograph or FDA efficacy claim applies to it.",
     typicalConcentrationText: "Concentration varies by formulation; not standardized.",
   },
   {
@@ -898,7 +899,7 @@ export const ACTIVE_DEFINITIONS: ActiveDefinition[] = [
     categories: ["brightening-texture"],
     synonyms: ["alpha arbutin", "alpha-arbutin"],
     summary:
-      "A cosmetic brightening ingredient, often paired with hyaluronic acid in serums. Not an FDA-regulated drug ingredient — no OTC monograph or FDA efficacy claim applies to it.",
+      "A cosmetic brightening ingredient, often paired with hyaluronic acid in serums. A cosmetic ingredient, not an OTC drug active — no OTC monograph or FDA efficacy claim applies to it.",
     typicalConcentrationText: "Commonly formulated at 1%–2% in cosmetic products; not a standardized concentration.",
   },
   {
@@ -907,7 +908,7 @@ export const ACTIVE_DEFINITIONS: ActiveDefinition[] = [
     categories: ["brightening-texture"],
     synonyms: ["glycolic acid"],
     summary:
-      "An alpha-hydroxy acid (AHA) exfoliant used in cosmetic peels and toners. Not an FDA-regulated drug ingredient — no OTC monograph or FDA efficacy claim applies to it, unlike the OTC monograph acne actives.",
+      "An alpha-hydroxy acid (AHA) exfoliant used in cosmetic peels and toners. A cosmetic ingredient, not an OTC drug active — no OTC monograph or FDA efficacy claim applies to it, unlike the OTC monograph acne actives.",
     typicalConcentrationText: "Commonly formulated at 5%–30% depending on product type (leave-on vs. peel); not standardized.",
   },
   {
@@ -916,7 +917,7 @@ export const ACTIVE_DEFINITIONS: ActiveDefinition[] = [
     categories: ["brightening-texture", "skin-protectant"],
     synonyms: ["squalane"],
     summary:
-      "A stable, plant- or lab-derived emollient oil used in cosmetic moisturizers and face oils. Not an FDA-regulated drug ingredient — no OTC monograph or FDA efficacy claim applies to it.",
+      "A stable, plant- or lab-derived emollient oil used in cosmetic moisturizers and face oils. A cosmetic ingredient, not an OTC drug active — no OTC monograph or FDA efficacy claim applies to it.",
     typicalConcentrationText: "Often used at or near 100% in single-ingredient face oils; varies in blended formulations.",
   },
   {
@@ -929,7 +930,7 @@ export const ACTIVE_DEFINITIONS: ActiveDefinition[] = [
     // constantly in searched cosmetic products.
     synonyms: ["palmitoyl pentapeptide", "palmitoyl tripeptide", "palmitoyl hexapeptide", "copper tripeptide", "copper peptide", "acetyl hexapeptide", "matrixyl"],
     summary:
-      "A broad family of short amino-acid chains added to cosmetic serums and moisturizers, often marketed for texture and firmness. Not an FDA-regulated drug ingredient — no OTC monograph or FDA efficacy claim applies to it.",
+      "A broad family of short amino-acid chains added to cosmetic serums and moisturizers, often marketed for texture and firmness. A cosmetic ingredient, not an OTC drug active — no OTC monograph or FDA efficacy claim applies to it.",
     typicalConcentrationText: "Concentration and specific peptide compound vary widely by formulation; not standardized.",
   },
   {
@@ -938,7 +939,7 @@ export const ACTIVE_DEFINITIONS: ActiveDefinition[] = [
     categories: ["brightening-texture"],
     synonyms: ["bakuchiol"],
     summary:
-      "A plant-derived cosmetic ingredient often marketed as a gentler alternative to retinol. Not an FDA-regulated drug ingredient — no OTC monograph or FDA efficacy claim applies to it, and it is chemically unrelated to retinol.",
+      "A plant-derived cosmetic ingredient often marketed as a gentler alternative to retinol. A cosmetic ingredient, not an OTC drug active — no OTC monograph or FDA efficacy claim applies to it, and it is chemically unrelated to retinol.",
     typicalConcentrationText: "Concentration varies widely by product; not standardized.",
   },
   {
@@ -956,7 +957,7 @@ export const ACTIVE_DEFINITIONS: ActiveDefinition[] = [
     categories: ["brightening-texture", "skin-protectant"],
     synonyms: ["centella asiatica"],
     summary:
-      "A plant extract widely used in cosmetic moisturizers and serums for soothing/barrier-support marketing claims (often labeled \"cica\"). Not an FDA-regulated drug ingredient — no OTC monograph or FDA efficacy claim applies to it.",
+      "A plant extract widely used in cosmetic moisturizers and serums for soothing/barrier-support marketing claims (often labeled \"cica\"). A cosmetic ingredient, not an OTC drug active — no OTC monograph or FDA efficacy claim applies to it.",
     typicalConcentrationText: "Concentration varies widely by formulation; not standardized.",
   },
   {
@@ -965,7 +966,7 @@ export const ACTIVE_DEFINITIONS: ActiveDefinition[] = [
     categories: ["brightening-texture", "skin-protectant"],
     synonyms: ["panthenol", "dexpanthenol", "provitamin b5"],
     summary:
-      "A provitamin-B5 derivative used broadly in cosmetic moisturizers for hydration and soothing marketing claims. Not an FDA-regulated drug ingredient — no OTC monograph or FDA efficacy claim applies to it.",
+      "A provitamin-B5 derivative used broadly in cosmetic moisturizers for hydration and soothing marketing claims. A cosmetic ingredient, not an OTC drug active — no OTC monograph or FDA efficacy claim applies to it.",
     typicalConcentrationText: "Commonly formulated at 1%–5% in cosmetic products; not a standardized concentration.",
   },
   {
@@ -974,7 +975,7 @@ export const ACTIVE_DEFINITIONS: ActiveDefinition[] = [
     categories: ["brightening-texture"],
     synonyms: ["kojic acid"],
     summary:
-      "A fungal-derived cosmetic brightening ingredient. Not an FDA-regulated drug ingredient — no OTC monograph or FDA efficacy claim applies to it; a known skin-irritation/sensitization risk in some users is worth a dermatologist note, not established here.",
+      "A fungal-derived cosmetic brightening ingredient. A cosmetic ingredient, not an OTC drug active — no OTC monograph or FDA efficacy claim applies to it.",
     typicalConcentrationText: "Commonly formulated at 1%–4% in cosmetic products; not a standardized concentration.",
   },
   {
@@ -983,7 +984,7 @@ export const ACTIVE_DEFINITIONS: ActiveDefinition[] = [
     categories: ["brightening-texture"],
     synonyms: ["mandelic acid"],
     summary:
-      "An alpha-hydroxy acid (AHA) exfoliant, often marketed as gentler than glycolic acid due to its larger molecule size. Not an FDA-regulated drug ingredient — no OTC monograph or FDA efficacy claim applies to it.",
+      "An alpha-hydroxy acid (AHA) exfoliant, often marketed as gentler than glycolic acid due to its larger molecule size. A cosmetic ingredient, not an OTC drug active — no OTC monograph or FDA efficacy claim applies to it.",
     typicalConcentrationText: "Commonly formulated at 5%–10% in cosmetic products; not a standardized concentration.",
   },
   {
@@ -992,7 +993,7 @@ export const ACTIVE_DEFINITIONS: ActiveDefinition[] = [
     categories: ["brightening-texture"],
     synonyms: ["lactic acid"],
     summary:
-      "An alpha-hydroxy acid (AHA) exfoliant with humectant properties, used in cosmetic peels, serums, and moisturizers. Not an FDA-regulated drug ingredient — no OTC monograph or FDA efficacy claim applies to it.",
+      "An alpha-hydroxy acid (AHA) exfoliant with humectant properties, used in cosmetic peels, serums, and moisturizers. A cosmetic ingredient, not an OTC drug active — no OTC monograph or FDA efficacy claim applies to it.",
     typicalConcentrationText: "Commonly formulated at 5%–12% in cosmetic products; not a standardized concentration.",
   },
   {

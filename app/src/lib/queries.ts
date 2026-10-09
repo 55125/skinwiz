@@ -23,6 +23,7 @@ import { displayablePrice, parsePackageDescription, unitPrice } from "@/lib/equi
 import { getDisplayQuotesFor } from "@/lib/prices/store";
 import { compareLivePrices, type LivePrice } from "@/lib/prices/unit";
 import { parseSearch, type SearchTerm } from "@/lib/search-terms";
+import { foldAccents } from "@/db/fold";
 import { ECZEMA_CONCERN, ECZEMA_EXCLUDED_ACTIVES } from "@/lib/listing-rules";
 import { concernExcludedIdsJson, concernTierJson, duplicateIdsJson, poorTitleIdsJson } from "@/lib/listing-rules-index";
 import { POTENT_RETINOIDS } from "@/lib/retinoids";
@@ -567,13 +568,30 @@ type SearchFilters = { concernId?: string; dataSources?: string[]; freeFromIds?:
 
 // One parsed word (lib/search-terms.ts) against one column: any alternative,
 // as a substring or, for short words, at the start of a word.
-function termMatches(col: SQLWrapper, term: SearchTerm): SQL {
-  const ors = term.alts.flatMap((alt) => {
-    const esc = alt.replace(/[\\%_]/g, (c) => `\\${c}`);
-    if (!term.wordStart) return [sql`${col} LIKE ${`%${esc}%`} ESCAPE '\\'`];
-    return [`${esc}%`, `% ${esc}%`, `%-${esc}%`, `%(${esc}%`, `%,${esc}%`, `%/${esc}%`].map((p) => sql`${col} LIKE ${p} ESCAPE '\\'`);
-  });
-  return sql`(${sql.join(ors, sql` OR `)})`;
+// Name and brand are matched accent-insensitively ("curel" finds Curél,
+// "loreal" L'Oréal); ingredient text is long, so it stays a plain LIKE.
+const ACCENT_FOLDED: SQLWrapper[] = [products.brandName, products.manufacturer];
+
+// Only rows that miss the plain LIKE and hold a non-ASCII character go
+// through the JS fold (client.ts's fold_accents). Folding every row, or
+// folding in SQL with nested replace(), made search 2x-50x slower.
+const NON_ASCII = "*[^ -~]*";
+
+function likeOrFolded(col: SQLWrapper, pattern: string): SQL {
+  return sql`(${col} LIKE ${pattern} ESCAPE '\\' OR (${col} GLOB ${NON_ASCII} AND fold_accents(${col}) LIKE ${foldAccents(pattern)} ESCAPE '\\'))`;
+}
+
+function termMatches(col: SQLWrapper, term: SearchTerm, foldAccentsToo = false): SQL {
+  const likes = (target: SQLWrapper, alts: string[]) =>
+    alts.flatMap((alt) => {
+      const esc = alt.replace(/[\\%_]/g, (c) => `\\${c}`);
+      if (!term.wordStart) return [sql`${target} LIKE ${`%${esc}%`} ESCAPE '\\'`];
+      return [`${esc}%`, `% ${esc}%`, `%-${esc}%`, `%(${esc}%`, `%,${esc}%`, `%/${esc}%`].map((p) => sql`${target} LIKE ${p} ESCAPE '\\'`);
+    });
+  const plain = sql`(${sql.join(likes(col, term.alts), sql` OR `)})`;
+  if (!foldAccentsToo || !ACCENT_FOLDED.includes(col)) return plain;
+  const foldedLikes = likes(sql`fold_accents(${col})`, term.alts.map((a) => foldAccents(a)!));
+  return sql`(${plain} OR (${col} GLOB ${NON_ASCII} AND (${sql.join(foldedLikes, sql` OR `)})))`;
 }
 
 const SEARCH_COLUMNS = [products.brandName, products.manufacturer, products.activeIngredientText];
@@ -584,7 +602,7 @@ function buildSearchWhere(terms: SearchTerm[], filters: SearchFilters) {
   const clauses = [
     LISTED_OTC,
     notDuplicate(),
-    ...(terms.length ? terms.map((t) => sql`(${sql.join(SEARCH_COLUMNS.map((c) => termMatches(c, t)), sql` OR `)})`) : [sql`0`]),
+    ...(terms.length ? terms.map((t) => sql`(${sql.join(SEARCH_COLUMNS.map((c) => termMatches(c, t, true)), sql` OR `)})`) : [sql`0`]),
     ...freeFromWhereClauses(filters.freeFromIds ?? []),
   ];
   if (filters.concernId) clauses.push(eq(products.concernId, filters.concernId));
@@ -700,9 +718,15 @@ export function suggestProducts(q: string, limit = 6) {
       dataSource: products.dataSource,
     })
     .from(products)
-    .where(and(LISTED_OTC, notDuplicate(), sql`(${products.brandName} LIKE ${needle} ESCAPE '\\' OR ${products.manufacturer} LIKE ${needle} ESCAPE '\\')`))
+    .where(
+      and(
+        LISTED_OTC,
+        notDuplicate(),
+        sql`(${likeOrFolded(products.brandName, needle)} OR ${likeOrFolded(products.manufacturer, needle)})`,
+      ),
+    )
     .orderBy(
-      sql`CASE WHEN ${products.brandName} LIKE ${prefix} ESCAPE '\\' THEN 0 WHEN ${products.manufacturer} LIKE ${prefix} ESCAPE '\\' THEN 1 ELSE 2 END`,
+      sql`CASE WHEN ${likeOrFolded(products.brandName, prefix)} THEN 0 WHEN ${likeOrFolded(products.manufacturer, prefix)} THEN 1 ELSE 2 END`,
       sql`CASE ${products.dataSource} WHEN 'brand_direct' THEN 0 WHEN 'openfda' THEN 1 WHEN 'dailymed' THEN 2 ELSE 3 END`,
       sql`LENGTH(${products.brandName})`,
     )

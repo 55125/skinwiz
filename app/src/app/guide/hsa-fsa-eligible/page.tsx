@@ -68,9 +68,13 @@ export default function HsaGuidePage() {
       </PageHeader>
 
       <div className="rounded-2xl border border-amber-300 bg-amber-50 p-5 text-sm leading-relaxed dark:border-amber-900 dark:bg-amber-950/40">
-        <strong>Check with your plan administrator.</strong> Your HSA, FSA or HRA administrator decides what it reimburses,
+        <strong>Check with your plan administrator.</strong> Your FSA or HRA administrator decides what it reimburses,
         and plans can be narrower than the tax rules. Some ask for a receipt that names the product, and some cards
-        decline items the store hasn&apos;t coded as eligible. This tag is general information, not tax advice.
+        decline items the store hasn&apos;t coded as eligible. With an HSA, you are the one responsible for showing
+        a purchase was a qualified medical expense: keep your receipts, because spending that doesn&apos;t qualify is
+        taxed and usually penalized. An expense has to be for medical care, so items with an everyday use too (a
+        dandruff shampoo or SPF lip balm, for example) may need a letter of medical necessity. This tag is general
+        information, not tax advice.
       </div>
 
       <section className="space-y-3 text-sm leading-relaxed">

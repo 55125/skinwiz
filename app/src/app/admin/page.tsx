@@ -147,9 +147,31 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <Section title="Retailer clicks" note="Outbound clicks by destination. Sovrn-wrapped links are counted under the merchant.">
-          <Bars rows={traffic.outboundByRetailer} empty="No outbound clicks yet." />
-        </Section>
+        <div className="space-y-6">
+          <Section title="Retailer clicks" note="Outbound clicks by destination. Sovrn-wrapped links are counted under the merchant.">
+            <Bars rows={traffic.outboundByRetailer} empty="No outbound clicks yet." />
+          </Section>
+          <Section
+            title="Privacy opt-outs"
+            note="Browsers sending Global Privacy Control or Do Not Track are only counted here, not in the figures above. GPC visitors get plain retailer links, so their clicks earn no commission; Do Not Track links are unchanged."
+          >
+            {(() => {
+              const o = traffic.optOut;
+              const allViews = o.gpcPageviews + o.dntPageviews + o.trackedPageviews;
+              const allClicks = o.gpcClicks + o.dntClicks + o.trackedClicks;
+              return (
+                <StatGrid
+                  items={[
+                    ["GPC pageviews", o.gpcPageviews, `${share(o.gpcPageviews, allViews)} of all pageviews`],
+                    ["GPC clicks (no commission)", o.gpcClicks, `${share(o.gpcClicks, allClicks)} of all clicks`],
+                    ["Do Not Track pageviews", o.dntPageviews, `${share(o.dntPageviews, allViews)} of all pageviews`],
+                    ["Do Not Track clicks", o.dntClicks, `${share(o.dntClicks, allClicks)} of all clicks`],
+                  ]}
+                />
+              );
+            })()}
+          </Section>
+        </div>
         <Section title="Most-clicked products" note="Outbound clicks from product pages.">
           <Bars rows={traffic.outboundByProduct} empty="No product-page clicks yet." />
           {traffic.outboundByPage.length > 0 && (
@@ -465,6 +487,11 @@ function Section({ title, note, children }: { title: string; note?: string; chil
 
 function Empty({ children }: { children: React.ReactNode }) {
   return <p className="text-sm text-muted-foreground">{children}</p>;
+}
+
+/** part as a share of total, e.g. "4%". */
+function share(part: number, total: number): string {
+  return total ? `${Math.round((part / total) * 100)}%` : "0%";
 }
 
 function KpiTile({ kpi }: { kpi: Kpi }) {

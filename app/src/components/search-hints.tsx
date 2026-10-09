@@ -1,30 +1,10 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
+import { SEARCH_HINTS as HINTS } from "@/lib/search-hint-copy";
 import type { SearchHint } from "@/lib/search-terms";
 
 // Pointers for searches that are about a topic rather than a product name
-// (lib/search-terms.ts decides which).
-const HINTS: Record<SearchHint, { title: string; body: string; href: string; cta: string }> = {
-  hsa: {
-    title: "HSA/FSA-eligible skincare",
-    body: "Which products your spending account usually covers, why, and a filter for every eligible product in the catalog.",
-    href: "/guide/hsa-fsa-eligible",
-    cta: "Read the HSA/FSA guide",
-  },
-  "rx-retinoid": {
-    title: "Using a prescription retinoid?",
-    body: "Prescription medicines like tretinoin aren't in our product catalog, and we don't give directions for them: your prescriber does. Our guide covers the everyday products that usually pair well with one, and what to space out.",
-    href: "/guide/prescription-retinoids",
-    cta: "Read the prescription retinoid guide",
-  },
-  kids: {
-    title: "Children's skin",
-    body: "Plain-language guides for parents on eczema, diaper rash, cradle cap, molluscum and more. Check each product's label for the ages it covers; many say to ask a doctor below a certain age.",
-    href: "/guide/kids",
-    cta: "Guides for parents",
-  },
-};
-
+// (lib/search-terms.ts decides which; the text is in lib/search-hint-copy.ts).
 export function SearchHints({ hints }: { hints: SearchHint[] }) {
   if (hints.length === 0) return null;
   return (

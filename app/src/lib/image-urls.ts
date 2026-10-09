@@ -39,6 +39,16 @@ export function productImageAlt(product: { brandName: string; imageUrl: string |
 
 export const DAILYMED_IMAGE_CAPTION = "Package image: FDA label via DailyMed";
 
+/** Open Beauty Facts photos are CC BY-SA, which requires a credit wherever one is shown. */
+export function isOpenBeautyFactsImageUrl(url: string | null | undefined): boolean {
+  if (!url) return false;
+  try {
+    return /(^|\.)openbeautyfacts\.org$/i.test(new URL(url).hostname);
+  } catch {
+    return false;
+  }
+}
+
 /** Parses the route's file segment ("full.webp" / "thumb.webp"). */
 export function parseImageFile(file: string): ImageSize | null {
   const m = /^(full|thumb)\.webp$/.exec(file);

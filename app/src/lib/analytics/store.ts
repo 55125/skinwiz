@@ -4,8 +4,8 @@
 import { randomBytes } from "node:crypto";
 import { and, eq, lt, sql } from "drizzle-orm";
 import { db } from "@/db/client";
-import { analyticsEvents, analyticsSalts, serverErrors } from "@/db/schema";
-import { deviceFromUa, utcDay, visitorHash, type CleanEvent } from "./core";
+import { analyticsEvents, analyticsSalts, optOutTallies, serverErrors } from "@/db/schema";
+import { deviceFromUa, utcDay, visitorHash, type CleanEvent, type OptOutSignal, type TallyKind } from "./core";
 
 export const ANALYTICS_RETENTION_DAYS = 395;
 const ERROR_RETENTION_DAYS = 90;
@@ -60,6 +60,14 @@ export function recordEvent(event: CleanEvent, client: { ip: string; ua: string 
     .run();
 }
 
+/** An opted-out (GPC / Do Not Track) page view or outbound click: +1 to the day's tally, nothing else. */
+export function tallyOptOut(signal: OptOutSignal, kind: TallyKind, now = new Date()): void {
+  db.insert(optOutTallies)
+    .values({ day: utcDay(now), signal, kind, count: 1 })
+    .onConflictDoUpdate({ target: [optOutTallies.day, optOutTallies.signal, optOutTallies.kind], set: { count: sql`${optOutTallies.count} + 1` } })
+    .run();
+}
+
 export function recordServerError(
   e: { method: string; path: string; route?: string | null; message: string; digest?: string | null },
   now = new Date(),
@@ -83,5 +91,6 @@ export function purgeAnalytics(now: Date): number {
   const a = db.delete(analyticsEvents).where(lt(analyticsEvents.day, eventsBefore)).run().changes;
   const b = db.delete(serverErrors).where(lt(serverErrors.at, errorsBefore)).run().changes;
   const c = db.delete(analyticsSalts).where(lt(analyticsSalts.day, utcDay(now))).run().changes;
-  return a + b + c;
+  const d = db.delete(optOutTallies).where(lt(optOutTallies.day, eventsBefore)).run().changes;
+  return a + b + c + d;
 }

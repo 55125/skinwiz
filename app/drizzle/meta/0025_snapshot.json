@@ -1,8 +1,8 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "89c8139b-bd11-4067-9b3b-4888d47384ae",
-  "prevId": "470542ce-0ac1-40ab-b93c-ed39399285d3",
+  "id": "8e643bcd-0549-44cd-af41-35caaed89f34",
+  "prevId": "c60d33f8-5157-4a2e-b408-8f96e4087f24",
   "tables": {
     "active_chem_data": {
       "name": "active_chem_data",
@@ -1918,6 +1918,54 @@
       "uniqueConstraints": {},
       "checkConstraints": {}
     },
+    "opt_out_tallies": {
+      "name": "opt_out_tallies",
+      "columns": {
+        "day": {
+          "name": "day",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "signal": {
+          "name": "signal",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "kind": {
+          "name": "kind",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "count": {
+          "name": "count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "opt_out_tallies_day_signal_kind_pk": {
+          "columns": [
+            "day",
+            "signal",
+            "kind"
+          ],
+          "name": "opt_out_tallies_day_signal_kind_pk"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
     "outcome_observations": {
       "name": "outcome_observations",
       "columns": {
@@ -2435,6 +2483,20 @@
           "type": "text",
           "primaryKey": false,
           "notNull": true,
+          "autoincrement": false
+        },
+        "availability": {
+          "name": "availability",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "location": {
+          "name": "location",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
           "autoincrement": false
         }
       },

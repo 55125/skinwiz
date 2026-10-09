@@ -60,3 +60,8 @@ test("never wraps anything for an Rx product", () => {
   const l = outboundLink("https://www.walmart.com/search?q=tretinoin", { placement: "plan", rel: "nofollow", isRx: true }, KEYED);
   assert.deepEqual(l, { href: "https://www.walmart.com/search?q=tretinoin", rel: "nofollow", wrapped: false });
 });
+
+test("never wraps for a visitor sending Global Privacy Control", () => {
+  const l = outboundLink("https://www.target.com/s?searchTerm=x", { placement: "product", rel: "noopener noreferrer", gpc: true }, KEYED);
+  assert.deepEqual(l, { href: "https://www.target.com/s?searchTerm=x", rel: "noopener noreferrer", wrapped: false });
+});

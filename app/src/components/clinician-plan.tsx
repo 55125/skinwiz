@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { SITE_NAME } from "@/lib/brand";
 import { AlertTriangle, ExternalLink, Moon, Phone, Pill, ShoppingBag, Sun, SunMoon } from "lucide-react";
 import { MdBadge } from "@/components/md-badge";
 import { PlanStepControls } from "@/components/plan-step-controls";
@@ -29,6 +30,7 @@ export function ClinicianPlan({
   regimenId,
   preview = false,
   rxLinks = false,
+  gpc = false,
 }: {
   version: HandoutVersion;
   products: Map<string, Product>;
@@ -37,6 +39,8 @@ export function ClinicianPlan({
   preview?: boolean;
   /** Link Rx steps to their /rx reference page: verified clinicians only. */
   rxLinks?: boolean;
+  /** The visitor sent a Global Privacy Control signal: don't wrap shopping links. */
+  gpc?: boolean;
 }) {
   const steps = version.content.steps;
   const visible = steps.filter((s) => !states.get(s.key)?.hidden);
@@ -102,7 +106,10 @@ export function ClinicianPlan({
               Buy at {RETAILER_NAME[live.retailer] ?? live.retailer}
               {live.price ? ` · $${live.price.toFixed(2)}` : ""}
             </a>{" "}
-            <span className="text-muted-foreground">(affiliate link: we may earn a commission)</span>
+            <span className="text-muted-foreground">
+              (affiliate link: {SITE_NAME}, the site, may earn a commission
+              {live.retailer === "amazon" ? ". As an Amazon Associate we earn from qualifying purchases" : ""})
+            </span>
           </p>
         ) : null}
         {!preview && regimenId !== null && (
@@ -205,7 +212,7 @@ export function ClinicianPlan({
         </section>
       )}
 
-      <OrderAll order={order} otcSteps={otcProducts} rxSteps={rxSteps} products={products} />
+      <OrderAll order={order} otcSteps={otcProducts} rxSteps={rxSteps} products={products} gpc={gpc} />
     </div>
   );
 }
@@ -215,13 +222,16 @@ function OrderAll({
   otcSteps,
   rxSteps,
   products,
+  gpc,
 }: {
   order: OrderPlan;
   otcSteps: HandoutStep[];
   rxSteps: HandoutStep[];
   products: Map<string, Product>;
+  gpc: boolean;
 }) {
   const hasLive = order.carts.length > 0 || order.singles.length > 0;
+  const hasAmazon = order.carts.some((c) => c.retailer === "amazon") || order.singles.some((s) => s.retailer === "amazon");
   return (
     <section className="space-y-4 rounded-2xl border bg-card p-5" aria-labelledby="order-all">
       <h3 id="order-all" className="flex items-center gap-2 text-lg font-semibold">
@@ -232,7 +242,9 @@ function OrderAll({
           <p className="text-sm font-medium">Over-the-counter products</p>
           {hasLive && (
             <p className="text-xs text-muted-foreground">
-              Buy links are affiliate links: we may earn a commission at no cost to you. It never changes what your clinician chose.
+              Buy links are affiliate links: {SITE_NAME}, the site, may earn a commission at no cost to you. It never
+              changes what your clinician chose.
+              {hasAmazon && " As an Amazon Associate we earn from qualifying purchases."}
             </p>
           )}
           {order.carts.map((c) => (
@@ -269,7 +281,7 @@ function OrderAll({
                 {order.unmatched.map((it) => {
                   const p = products.get(it.productId);
                   // Wrapped through Sovrn when SOVRN_SITE_API_KEY is set; never for an Rx row.
-                  const brand = p?.sourceUrl ? outboundLink(p.sourceUrl, { placement: "plan", rel: "nofollow noopener noreferrer", isRx: p.isRx }) : null;
+                  const brand = p?.sourceUrl ? outboundLink(p.sourceUrl, { placement: "plan", rel: "nofollow noopener noreferrer", isRx: p.isRx, gpc }) : null;
                   return (
                     <li key={it.productId} className="flex flex-wrap items-baseline gap-x-2">
                       <span className="font-medium">{it.name}</span>
@@ -279,7 +291,7 @@ function OrderAll({
                         </a>
                       )}
                       {findItAt(it.name).map((f) => {
-                        const link = outboundLink(f.url, { placement: "plan", rel: "nofollow noopener noreferrer", isRx: p?.isRx });
+                        const link = outboundLink(f.url, { placement: "plan", rel: "nofollow noopener noreferrer", isRx: p?.isRx, gpc });
                         return (
                           <a key={f.retailer} href={link.href} target="_blank" rel={link.rel} className="text-xs text-brand hover:underline">
                             {f.retailer}
@@ -292,7 +304,7 @@ function OrderAll({
               </ul>
               <p className="text-xs text-muted-foreground">
                 {sovrnSiteKey()
-                  ? "Store searches and brand pages; these may be affiliate links, so we may earn a commission. Any equivalent product your clinician named works."
+                  ? `Store searches and brand pages; these may be affiliate links, so ${SITE_NAME}, the site, may earn a commission. Any equivalent product your clinician named works.`
                   : "Plain store searches, not affiliate links. Any equivalent product your clinician named works."}
               </p>
             </div>

@@ -166,8 +166,22 @@
     {
       "idx": 23,
       "version": "6",
-      "when": 1791515750862,
-      "tag": "0023_price_quote_stock",
+      "when": 1791515830207,
+      "tag": "0023_handout_version_purge",
+      "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "6",
+      "when": 1791515831388,
+      "tag": "0024_opt_out_tallies",
+      "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "6",
+      "when": 1791516454972,
+      "tag": "0025_price_quote_stock",
       "breakpoints": true
     }
   ]

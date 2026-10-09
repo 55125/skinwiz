@@ -29,7 +29,8 @@ export default function PrivacyPage() {
             avoid list and skin profile (but not any pregnancy or breastfeeding answers) across devices and to send the check-ins and safety alerts you choose, and you can delete it at any
             time. We do not sell your information, share it for targeted advertising, or run advertising or
             third-party analytics trackers. We count visits with our own cookieless statistics, which store no IP
-            addresses and skip browsers that send Global Privacy Control or Do Not Track.
+            addresses. For browsers that send Global Privacy Control or Do Not Track we only count page views and
+            clicks.
           </p>
         </div>
       }
@@ -41,7 +42,7 @@ export default function PrivacyPage() {
           <strong>Skin profile</strong>: your skin type, skin concerns (for example acne or redness),
           ingredients you like or dislike, and, if you choose to tell us, whether you are pregnant, trying to
           conceive or breastfeeding. It is stored in a cookie in your browser. Your browser sends it to
-          our server with each page request so we can personalize match scores. If you add an email address, your skin type, concerns and liked and
+          our server with each page request so we can personalize match scores. If you add an email address, your skin type, whether your skin is sensitive, your concerns and liked and
           disliked ingredients are also saved with your email so they follow you to every device you sign in on.
           Your pregnancy and breastfeeding answers are never saved in our database: they stay only in your
           browser&apos;s cookie, and signing out removes them from that browser.
@@ -55,6 +56,13 @@ export default function PrivacyPage() {
           <strong>Shelf</strong>: products you mark as owned, wanted, or finished, and whether they are
           opened. It is stored in our database, linked to a random session identifier (see Cookies below)
           rather than to your name.
+        </li>
+        <li>
+          <strong>Regimens and saved clinic plans</strong>: the routine you build on the My regimen page, and any plan
+          you save from a handout link or QR code your clinic gave you. A saved clinic plan records which handout it is
+          and which clinic issued it, linked to your session identifier and, if you added an email, to your email. We
+          never tell the clinic who saved it: clinics see only counts of how often their handouts are printed, opened
+          and saved.
         </li>
         <li>
           <strong>Outcome reports</strong>: whether a product helped a concern and for how many weeks you used
@@ -87,7 +95,15 @@ export default function PrivacyPage() {
           email address, NPI number, name and clinic details (name, phone and website). We check the NPI
           against the public NPPES registry and keep what it lists (credential, specialty and state). We store
           the handouts and practice avoid lists they save, and anonymous counts of how often a handout is
-          printed, opened or saved. Patient names typed for printing stay in the browser and never reach us.
+          printed, opened or saved. Patient names typed for printing stay in the browser and never reach us. Clinicians must not type patient
+          names or other identifying details into handout text, notes or list names, which we do store. Because a printed
+          QR code has to keep working, a handout stays on our servers after the clinician who made it deletes their email;
+          email us to have a clinician profile and its handouts removed.
+        </li>
+        <li>
+          <strong>Patch-test links</strong>: a patch-test sheet&apos;s QR code carries the allergen codes, the test date
+          and any short note from the clinic in the link itself. When the patient opens it, those reach our server like
+          any page address. Nothing on the sheet names the patient.
         </li>
         <li>
           <strong>Messages</strong>: if you email us, we keep your email address and what you send.
@@ -115,8 +131,9 @@ export default function PrivacyPage() {
         and browser type with a random value that changes every day and keep only a scrambled (hashed) result. The
         daily value is deleted after one day, after which that result cannot be traced back to you or linked to
         your visits on other days. These statistics are not linked to your session cookie, your email or your
-        skin profile, and are used only in aggregate. If your browser sends a Global Privacy Control or Do Not
-        Track signal, we record none of them.
+        skin profile, and are used only in aggregate. If your browser sends a Global Privacy Control or Do Not Track
+        signal, we record none of this; we only add one to a daily count of page views or of clicks on links to
+        other sites, with nothing about you, the page or the link.
       </p>
 
       <h2 id="cookies">2. Cookies</h2>
@@ -135,7 +152,7 @@ export default function PrivacyPage() {
         <tbody>
           <tr>
             <td>sw_session</td>
-            <td>A random identifier, created when you first save a shelf item, outcome, routine or vote, that ties those to your browser without an account. If you confirm an email address, it also links this browser to that email</td>
+            <td>A random identifier, created when you first save a shelf item, outcome, regimen, clinic plan, routine, vote or report or ask for a sign-in link, that ties those to your browser without an account. If you confirm an email address, it also links this browser to that email, and it keeps clinicians signed in</td>
             <td>1 year</td>
           </tr>
           <tr>
@@ -155,6 +172,10 @@ export default function PrivacyPage() {
         reports stay in our database, but nothing links them to you any longer. If you have added an email, signing in
         again brings back your shelf, avoid list and skin profile (but not your pregnancy or breastfeeding answers), and
         signing out removes the profile and avoid-list cookies from that browser.
+      </p>
+      <p>
+        The clinic tools also use your browser&apos;s own storage: the patch-test reader keeps your tray layout and the
+        reading in progress on that device. That information is never sent to us.
       </p>
 
       <h3 id="email">Email</h3>
@@ -288,8 +309,12 @@ export default function PrivacyPage() {
           after the link expires. Copies held by our email provider are kept under its own retention limits.
         </li>
         <li>
-          Clinician applications are kept while we review them and for up to two years afterwards, unless you
-          ask us to delete yours sooner.
+          Clinician applications are deleted automatically two years after they are sent, or sooner if you ask.
+        </li>
+        <li>
+          Clinician profiles (the public NPPES details and clinic name, phone and website) and the handouts made with
+          them are kept so that copies already given to patients keep working, even after the clinician deletes their
+          email. We remove them on request.
         </li>
         <li>
           Site statistics are kept for up to 13 months, then deleted. The daily value used to count visitors is
@@ -321,8 +346,9 @@ export default function PrivacyPage() {
           make any request.
         </li>
         <li>
-          We treat a Global Privacy Control signal from your browser as a valid request to opt out, and we
-          record no <a href="#statistics">site statistics</a> for browsers that send it or Do Not Track.
+          We treat a Global Privacy Control signal from your browser as a valid request to opt out. While your browser
+          sends it, shopping links go straight to the retailer instead of through Sovrn, and our{" "}
+          <a href="#statistics">site statistics</a> keep only a daily count of page views and outbound clicks.
         </li>
       </ul>
       <p>

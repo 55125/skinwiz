@@ -1,6 +1,7 @@
 import Database from "better-sqlite3";
 import { drizzle } from "drizzle-orm/better-sqlite3";
 import * as schema from "./schema";
+import { foldAccents } from "./fold";
 import path from "node:path";
 import fs from "node:fs";
 
@@ -15,5 +16,7 @@ fs.mkdirSync(path.dirname(dbPath), { recursive: true });
 
 const sqlite = new Database(dbPath);
 sqlite.pragma("journal_mode = WAL");
+// Accent-insensitive search (see fold.ts).
+sqlite.function("fold_accents", { deterministic: true }, (s: unknown) => foldAccents(s as string | null));
 
 export const db = drizzle(sqlite, { schema });

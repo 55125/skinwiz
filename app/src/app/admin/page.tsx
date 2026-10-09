@@ -20,7 +20,7 @@ import { FEATURES } from "@/lib/feature-flags";
 import { openForReview } from "@/lib/review-mode";
 import { krogerConfig, livePricesEnabled, sovrnSiteKey } from "@/lib/prices/config";
 import { clientIpFromHeaders } from "@/lib/api-guard";
-import { clientIp as botLimitIp } from "@/lib/anti-scrape";
+import { clientIp as botLimitIp, recentHeavyVisitors } from "@/lib/anti-scrape";
 import { availabilitySummary } from "@/lib/availability";
 import { listAvailabilityOverrides } from "@/lib/availability-admin";
 import { LABEL_STALE_YEARS, RETAIL_GONE_DAYS } from "@/lib/availability-rules";
@@ -85,6 +85,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
   const requestHeaders = await headers();
   const ipForLimits = clientIpFromHeaders(requestHeaders);
   const ipForBots = botLimitIp(requestHeaders) ?? "unknown";
+  const heavyVisitors = recentHeavyVisitors();
 
   return (
     <div className="mx-auto max-w-6xl space-y-10 px-4 py-8">
@@ -122,7 +123,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
 
       {warning && <Notice tone="warn">{warning}</Notice>}
       {openForReview() && (
-        <Notice tone="warn">OPEN_FOR_REVIEW is on: bot limits are off and SEO crawlers are allowed. Turn it off once affiliate reviews are decided.</Notice>
+        <Notice tone="warn">OPEN_FOR_REVIEW is on: bot limits are relaxed to one high ceiling and SEO crawlers are allowed. Turn it off once affiliate reviews are decided.</Notice>
       )}
 
       <section className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6">
@@ -451,6 +452,28 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
         </div>
       </Section>
 
+      <Section
+        title="Heavy visitors"
+        note="IPs that viewed 1,000+ product or ingredient pages in an hour, or were banned for repeatedly hitting the bot limits. Kept in memory since the last deploy; Railway logs have each one under [anti-scrape]."
+      >
+        {heavyVisitors.length === 0 ? (
+          <Empty>None since the last deploy.</Empty>
+        ) : (
+          <ul className="divide-y text-xs">
+            {heavyVisitors.map((h, i) => (
+              <li key={i} className="py-2">
+                <p className="font-mono">
+                  {h.ip} · {fmt(h.detailPagesThisHour)} detail pages this hour
+                </p>
+                <p className="text-muted-foreground">
+                  {ago(new Date(h.at).toISOString(), now)} · {h.what} · {h.ua || "no user agent"}
+                </p>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Section>
+
       <Section title="Site health">
         <div className="grid gap-6 lg:grid-cols-2">
           <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 text-sm">
@@ -479,7 +502,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
             <HealthRow label="APP_SECRET" ok={(process.env.APP_SECRET?.length ?? 0) >= 32} value={(process.env.APP_SECRET?.length ?? 0) >= 32 ? "set" : "missing"} />
             <HealthRow label="CRON_SECRET" ok={(process.env.CRON_SECRET?.length ?? 0) >= 24} value={(process.env.CRON_SECRET?.length ?? 0) >= 24 ? "set" : "missing: the hourly job can't run"} />
             <HealthRow label="Email (Resend)" ok={Boolean(process.env.RESEND_API_KEY)} value={process.env.RESEND_API_KEY ? "configured" : "not configured: emails go to the log"} />
-            <HealthRow label="Anti-scrape" ok={process.env.ANTI_SCRAPE !== "off" && !openForReview()} value={process.env.ANTI_SCRAPE === "off" ? "off" : openForReview() ? "paused (OPEN_FOR_REVIEW)" : "on"} />
+            <HealthRow label="Anti-scrape" ok={process.env.ANTI_SCRAPE !== "off" && !openForReview()} value={process.env.ANTI_SCRAPE === "off" ? "off" : openForReview() ? "relaxed (OPEN_FOR_REVIEW)" : "on"} />
             <HealthRow
               label="Feature flags"
               value={Object.entries({

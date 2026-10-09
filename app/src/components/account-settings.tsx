@@ -70,8 +70,8 @@ export function AccountSettings({ email, initial }: { email: string; initial: Pr
       <section className="space-y-2">
         <h2 className="text-lg font-semibold">Email</h2>
         <p className="text-sm">
-          Your shelf is saved to <span className="font-medium">{email}</span>. To use a different address, sign out
-          and save your shelf again with the new one.
+          My products is saved to <span className="font-medium">{email}</span>. To use a different address, sign out
+          and save My products again with the new one.
         </p>
       </section>
 
@@ -82,14 +82,14 @@ export function AccountSettings({ email, initial }: { email: string; initial: Pr
           "Outcome check-ins",
           "A one-tap question at 2, 4, 8 and 12 weeks after you mark a product as opened. Your 8-week answer counts toward that product's User Score.",
         )}
-        {row("safetyAlertsEnabled", "Safety alerts", "An email when the FDA recalls a product on your shelf (owned or wanted). Once per recall.")}
+        {row("safetyAlertsEnabled", "Safety alerts", "An email when the FDA recalls a product in My products (owned or wanted). Once per recall.")}
         <p className="text-xs text-muted-foreground">The one-time sign-in link is the only other email we send.</p>
       </section>
 
       <section className="space-y-3">
         <h2 className="text-lg font-semibold">This device</h2>
         <p className="text-sm text-muted-foreground">
-          Signing out leaves your shelf saved to your email; this browser starts empty until you sign in again.
+          Signing out leaves My products saved to your email; this browser starts empty until you sign in again.
         </p>
         <Button variant="outline" disabled={busy} onClick={signOut}>
           Sign out on this device
@@ -99,7 +99,7 @@ export function AccountSettings({ email, initial }: { email: string; initial: Pr
       <section className="space-y-3 rounded-2xl border border-red-200 p-4 dark:border-red-900">
         <h2 className="text-lg font-semibold">Delete my email and data</h2>
         <p className="text-sm text-muted-foreground">
-          Permanently deletes your email address, your shelf, regimen, outcome answers and check-ins (they leave the
+          Permanently deletes your email address, My products (routine and list), outcome answers and check-ins (they leave the
           User Score), votes, reports and any routines you posted, on every device. This can&apos;t be undone.
         </p>
         {confirmDelete ? (

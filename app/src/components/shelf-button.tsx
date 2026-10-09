@@ -90,7 +90,7 @@ export function ShelfButton({
         )}
       </div>
       {inRegimen && (
-        <p className="text-xs text-muted-foreground">In your regimen, so it&apos;s on your shelf as in use. Remove it from the regimen to change this.</p>
+        <p className="text-xs text-muted-foreground">In your regimen, so it&apos;s in My products as in use. Remove it from the regimen to change this.</p>
       )}
       {error && <p className="text-xs text-red-600">{error}</p>}
     </div>

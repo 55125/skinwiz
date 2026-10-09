@@ -60,7 +60,7 @@ export function InstallAppCard() {
             <span className="font-medium text-foreground">Add to Home Screen</span>. It opens full screen, like an app.
           </p>
           <p className="text-xs text-muted-foreground">
-            On iPhone and iPad the home-screen version keeps its own storage, separate from Safari, so it starts empty. To bring your shelf over, save it to your email here first, then enter the same email in the home-screen version and type the 6-digit code we send.
+            On iPhone and iPad the home-screen version keeps its own storage, separate from Safari, so it starts empty. To bring your products over, save it to your email here first, then enter the same email in the home-screen version and type the 6-digit code we send.
           </p>
         </>
       )}

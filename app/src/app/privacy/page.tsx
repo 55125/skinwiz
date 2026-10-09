@@ -25,7 +25,7 @@ export default function PrivacyPage() {
           <p className="rounded-lg border bg-muted/40 p-4 text-sm">
             <strong className="text-foreground">The short version.</strong> You don&apos;t need an account, a password, your name
             or an email to use {SITE_NAME}&apos;s tools. Your skin profile and avoid list are stored in cookies
-            on your own device. Adding an email address is optional (it becomes a password-free sign-in by one-time link); if you do, we use it only to keep your shelf,
+            on your own device. Adding an email address is optional (it becomes a password-free sign-in by one-time link); if you do, we use it only to keep My products,
             avoid list and skin profile (but not any pregnancy or breastfeeding answers) across devices and to send the check-ins and safety alerts you choose, and you can delete it at any
             time. We do not sell your information, share it for targeted advertising, or run advertising or
             third-party analytics trackers. We count visits with our own cookieless statistics, which store no IP
@@ -53,7 +53,7 @@ export default function PrivacyPage() {
           add an email address, it is also saved with your email so it follows you to every device you sign in on.
         </li>
         <li>
-          <strong>Shelf</strong>: products you mark as owned, wanted, or finished, and whether they are
+          <strong>My products</strong>: products you mark as owned, wanted, or finished, and whether they are
           opened. It is stored in our database, linked to a random session identifier (see Cookies below)
           rather than to your name.
         </li>
@@ -152,7 +152,7 @@ export default function PrivacyPage() {
         <tbody>
           <tr>
             <td>sw_session</td>
-            <td>A random identifier, created when you first save a shelf item, outcome, regimen, clinic plan, routine, vote or report or ask for a sign-in link, that ties those to your browser without an account. If you confirm an email address, it also links this browser to that email, and it keeps clinicians signed in</td>
+            <td>A random identifier, created when you first save a product to My products, outcome, regimen, clinic plan, routine, vote or report or ask for a sign-in link, that ties those to your browser without an account. If you confirm an email address, it also links this browser to that email, and it keeps clinicians signed in</td>
             <td>1 year</td>
           </tr>
           <tr>
@@ -168,9 +168,9 @@ export default function PrivacyPage() {
         </tbody>
       </table>
       <p>
-        If you clear these cookies, the site forgets your profile and avoid list. Any shelf items and outcome
+        If you clear these cookies, the site forgets your profile and avoid list. Anything in My products and outcome
         reports stay in our database, but nothing links them to you any longer. If you have added an email, signing in
-        again brings back your shelf, avoid list and skin profile (but not your pregnancy or breastfeeding answers), and
+        again brings back My products, avoid list and skin profile (but not your pregnancy or breastfeeding answers), and
         signing out removes the profile and avoid-list cookies from that browser.
       </p>
       <p>
@@ -184,17 +184,17 @@ export default function PrivacyPage() {
         <li>
           <strong>Sign-in links.</strong> We email a one-time link to confirm the address. It works once and
           expires after 15 minutes. We store only a scrambled (hashed) form of it, and delete the record about a
-          day after it expires. Opening the link on another device links that browser to the same shelf, avoid list and skin profile.
+          day after it expires. Opening the link on another device links that browser to the same My products, avoid list and skin profile.
         </li>
         <li>
-          <strong>Check-in emails</strong> (on unless you turn them off): when you mark a product on your shelf
+          <strong>Check-in emails</strong> (on unless you turn them off): when you mark a product in My products
           as opened, we email you a short question 2, 4, 8 and 12 weeks later about how your concern is going.
           The links in them record your answer without signing in. Your 8-week answer (or the 12-week one, if you
           skipped week 8) counts toward that product&apos;s aggregate User Score.
         </li>
         <li>
           <strong>Safety-alert emails</strong> (on unless you turn them off): if the FDA announces a recall that
-          matches a product on your shelf (owned or wanted), we email you once about that recall. Recall
+          matches a product in My products (owned or wanted), we email you once about that recall. Recall
           information comes from the FDA&apos;s public openFDA database; we do not send any of your information to
           the FDA.
         </li>
@@ -208,9 +208,9 @@ export default function PrivacyPage() {
 
       <h2 id="use">3. How we use information</h2>
       <ul>
-        <li>To provide the features you use: match scores, your shelf, ingredient checks and routines.</li>
+        <li>To provide the features you use: match scores, My products, ingredient checks and routines.</li>
         <li>To calculate aggregate User Scores and rank community routines.</li>
-        <li>If you add an email: to sign you in by link, keep your shelf, avoid list and skin profile across devices, and send the check-ins and safety alerts you have turned on.</li>
+        <li>If you add an email: to sign you in by link, keep My products, avoid list and skin profile across devices, and send the check-ins and safety alerts you have turned on.</li>
         <li>To review clinician applications and reply to people who contact us.</li>
         <li>To keep the site secure and working, and to prevent abuse, fraud and scraping.</li>
         <li>To understand, in aggregate, which pages, searches and tools are used, so we can improve the site and its catalog.</li>
@@ -297,14 +297,14 @@ export default function PrivacyPage() {
       <ul>
         <li>Cookies expire one year after they are last set, or sooner if you clear them.</li>
         <li>
-          Shelf items, outcome reports, routines and votes are kept for as long as the site offers those
+          My products, outcome reports, routines and votes are kept for as long as the site offers those
           features, or until you ask us to delete them. Outcome reports may be kept in aggregate, de-identified
           form.
         </li>
         <li>
           Your email address, preferences, check-in schedule and answers, and the record of which safety alerts we
           sent you are kept until you delete them on the <Link href="/account">Email settings</Link> page or ask
-          us to. Deleting removes them, along with your avoid list, shelf, regimen, outcome reports, votes, reports and any
+          us to. Deleting removes them, along with your avoid list, My products, outcome reports, votes, reports and any
           routines saved with that email, on every linked device. Sign-in link records are deleted about a day
           after the link expires. Copies held by our email provider are kept under its own retention limits.
         </li>
@@ -335,7 +335,7 @@ export default function PrivacyPage() {
       <ul>
         <li>
           Edit or clear your data at any time on the <Link href="/profile">My skin</Link>,{" "}
-          <Link href="/shelf">My shelf</Link> and <Link href="/avoid">My avoid list</Link> pages, or by clearing
+          <Link href="/regimen">My products</Link> and <Link href="/avoid">My avoid list</Link> pages, or by clearing
           your cookies. If you added an email, the <Link href="/account">Email settings</Link> page lets you turn
           off check-ins or safety alerts and delete your email and all data saved with it.
         </li>

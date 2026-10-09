@@ -89,7 +89,7 @@ const FIXED_COPY: [string, string][] = [
   ["Chart note (education handouts)", "Patient handout given via Actively (ref REF), DATE: TITLE. Topics covered: HEADINGS. … Patient education: written handout + QR provided."],
   ["Patch-test reader: chart note", "Patch test reading: SERIES, DAY, read DATE. Grading: ICDRG (?+ doubtful, + weak, ++ strong, +++ extreme, IR irritant). Positive (n): - ALLERGEN (Panel, #): GRADE … Negative: n of N allergens. Negative control: negative. Clinical relevance to be determined by the clinician."],
   ["Patch-test reader: patient email (clinic's own email app)", "Subject: Your patch-test results. “Here are the ingredients to avoid from your patch test. Open the link to see every name they go by on product labels, add them to a free avoid list, and find products that are safe for you: LINK. No account is needed. You can save the list to your email so it follows you to any device.”"],
-  ["Avoid-list landing: sign-up prompt", "Keep this list on every device. Optional. Add your email and your avoid list is saved to your account, so it's there on any phone or computer you sign in on, along with your shelf and any plans from your clinic."],
+  ["Avoid-list landing: sign-up prompt", "Keep this list on every device. Optional. Add your email and your avoid list is saved to your account, so it's there on any phone or computer you sign in on, along with My products and any plans from your clinic."],
 ];
 
 const LEGAL_QUESTIONS = [

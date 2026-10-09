@@ -144,7 +144,7 @@ export default function Home() {
         <section className="space-y-6">
           <SectionHeader
             title="Browse by concern"
-            description="Start from what you're treating — every concern maps to evidence-recognized actives."
+            description="Start from what you're treating — every concern maps to FDA-recognized actives."
           />
           <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
             {concerns.map((c) => {

@@ -9,7 +9,7 @@ export default function manifest(): MetadataRoute.Manifest {
     id: "/",
     name: SITE_NAME,
     short_name: SITE_NAME,
-    description: "Your skincare shelf, regimen and avoid list, scored by real reported outcomes.",
+    description: "Your skincare shelf, regimen and avoid list, matched by active ingredient.",
     start_url: "/regimen?utm_source=homescreen",
     scope: "/",
     display: "standalone",

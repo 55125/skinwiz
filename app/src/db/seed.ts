@@ -10,7 +10,7 @@ import { ACTIVE_TEXT_OVERRIDES } from "./active-overrides";
 import { computeFreeFromFlags } from "./ingredient-flags";
 import { computeAllergenHits } from "./contact-allergens";
 import { parseStrengths, strengthKey } from "./strength";
-import { labeledDrugActives } from "./labeled-actives";
+import { brandDirectNiche, labeledDrugActives } from "./labeled-actives";
 import { aliasesFor, canonicalSlug, parseIngredients, pickDisplayName } from "./ingredient-parse";
 import { SITE_NAME } from "@/lib/brand";
 import { validateManualLinks, type ManualLinkRow } from "@/lib/manual-links";
@@ -371,6 +371,9 @@ function reseed() {
       // matched cosmetic ids on them, so the drug active and its strength
       // come from that line here (labeled-actives.ts).
       const brandDrug = row.source === "brand_direct" ? labeledDrugActives(row.active_ingredient_text) : null;
+      // A brand-category row with an acne drug active (a BPO wash filed under
+      // "cleansers") belongs under Acne.
+      if (brandDrug) row.niche = brandDirectNiche(row.niche, row.brand_name, brandDrug.activeIds);
       const labeledActiveIds = isPreMatched
         ? [...new Set([...(brandDrug?.activeIds ?? []), ...(row.active_ingredients_structured ?? "").split(";").filter(Boolean)])]
         : matchActiveIds([row.active_ingredients_structured, row.substance_name, row.active_ingredient_text].join(" "));

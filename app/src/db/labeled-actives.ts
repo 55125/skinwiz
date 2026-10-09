@@ -15,7 +15,7 @@
 // MONOGRAPH_RANGES): a cosmetic page's "Active ingredients: Niacinamide 10%"
 // doesn't make it a drug.
 
-import { matchActiveIds } from "./actives";
+import { matchActiveIds, type Concern } from "./actives";
 import { MONOGRAPH_RANGES } from "./monograph-ranges";
 import { parseStrengths, type Strengths } from "./strength";
 
@@ -104,4 +104,23 @@ export function brandDirectStatus(p: {
   )
     return { kind: "drug-ingredient", drugActiveIds: [] };
   return { kind: "cosmetic", drugActiveIds: [] };
+}
+
+// Acne drug actives with an FDA range (21 CFR 333.310, or adapalene's NDA).
+const ACNE_DRUG_ACTIVES = new Set(["benzoyl-peroxide", "salicylic-acid", "sulfur", "adapalene", "resorcinol"]);
+const SCALP_OR_PSORIASIS_RE = /\bpsoria|\bdandruff|\bseb(?:orrh|\s*derm)|\bscalp\b/i;
+
+/**
+ * The niche a brand-direct row is filed under. The pipeline files brand pages
+ * by the brand's own category ("cleansers", "treatments"), so a benzoyl
+ * peroxide or 2% salicylic acid wash landed under brightening/texture or
+ * skin protectant. One whose labeled drug active is an acne active is an
+ * acne drug and goes under Acne -- unless its name says it's for the scalp
+ * or psoriasis (salicylic acid and sulfur are dandruff actives too).
+ */
+export function brandDirectNiche(niche: Concern, brandName: string | null | undefined, drugActiveIds: string[]): Concern {
+  if (niche === "acne" || niche === "sunscreen") return niche;
+  if (!drugActiveIds.some((id) => ACNE_DRUG_ACTIVES.has(id))) return niche;
+  if (SCALP_OR_PSORIASIS_RE.test(brandName ?? "")) return niche;
+  return "acne";
 }

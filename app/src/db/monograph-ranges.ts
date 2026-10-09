@@ -21,7 +21,8 @@
 //  - External analgesic (hydrocortisone, pramoxine, diphenhydramine...):
 //    OTC Monograph M017 (order OTC000033), from the old 348 tentative final
 //    monograph. 21 CFR 348.10 now covers only male genital desensitizers.
-//  - Adapalene, terbinafine, butenafine: approved Rx-to-OTC switch NDAs.
+//  - Adapalene (alone, and with benzoyl peroxide), terbinafine, butenafine:
+//    approved Rx-to-OTC switch NDAs.
 // Section letters are given only where they were checked against the
 // primary source (review/regulatory-check/M-results.md, 2026-10-09).
 //
@@ -54,10 +55,16 @@ const M020 = (letter: string) => `OTC Monograph M020 § M020.10${letter}`;
 const SUNSCREEN = { cite: "OTC Monograph M020 § M020.10" };
 const M017 = (para: string) => `OTC Monograph M017 § M017.10${para}`;
 const DANDRUFF = ["dandruff-seb-derm"];
+const EPIDUO = "NDA 220736 (Differin Epiduo, Rx-to-OTC switch, 2026)";
 
 export const MONOGRAPH_RANGES: Record<string, MonographRange[]> = {
   // Acne -- 21 CFR 333.310; dandruff -- 21 CFR 358.710
-  "benzoyl-peroxide": [{ min: 2.5, max: 10, cite: "21 CFR 333.310(a)" }],
+  // The monograph doesn't allow benzoyl peroxide in combination (333.320);
+  // with adapalene it's Differin Epiduo's own switch NDA.
+  "benzoyl-peroxide": [
+    { min: 2.5, max: 10, cite: "21 CFR 333.310(a)", notWith: "adapalene" },
+    { min: 2.5, max: 2.5, cite: EPIDUO, use: "with adapalene", onlyWith: "adapalene" },
+  ],
   "salicylic-acid": [
     { min: 0.5, max: 2, cite: "21 CFR 333.310(d)", use: "acne", concerns: ["acne"] },
     { min: 1.8, max: 3, cite: "21 CFR 358.710(a)(4)", use: "dandruff, seb derm, psoriasis", concerns: DANDRUFF },
@@ -69,8 +76,13 @@ export const MONOGRAPH_RANGES: Record<string, MonographRange[]> = {
     { min: 2, max: 5, cite: "21 CFR 358.710(a)(7)", use: "dandruff", concerns: DANDRUFF },
   ],
   // Adapalene 0.1% is an approved NDA switch (2016), not a monograph entry;
-  // 0.1% is the only OTC strength. (NDA 021753 is the Rx 0.3% gel.)
-  adapalene: [{ min: 0.1, max: 0.1, cite: "NDA 020380 (Rx-to-OTC switch)" }],
+  // 0.1% is the only OTC strength, alone or (since May 2026) with 2.5%
+  // benzoyl peroxide in Differin Epiduo. (NDA 021753 is the Rx 0.3% gel;
+  // Epiduo Forte, 0.3% + 2.5%, is still Rx.)
+  adapalene: [
+    { min: 0.1, max: 0.1, cite: "NDA 020380 (Rx-to-OTC switch)", notWith: "benzoyl-peroxide" },
+    { min: 0.1, max: 0.1, cite: EPIDUO, use: "with benzoyl peroxide", onlyWith: "benzoyl-peroxide" },
+  ],
   // Only in combination with sulfur: resorcinol 2%, resorcinol monoacetate 3%.
   resorcinol: [{ min: 2, max: 3, cite: "21 CFR 333.310" }],
 

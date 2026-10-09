@@ -112,8 +112,8 @@ export const ACTIVE_DEFINITIONS: ActiveDefinition[] = [
     categories: ["acne"],
     synonyms: ["adapalene"],
     summary:
-      "A retinoid switched from prescription to OTC status at 0.1% in 2016. A higher 0.3% strength remains prescription-only.",
-    typicalConcentrationText: "OTC formulations are 0.1%.",
+      "A retinoid switched from prescription to OTC status at 0.1% in 2016. Since May 2026 it's also sold OTC combined with 2.5% benzoyl peroxide (Differin Epiduo). The 0.3% strength, alone or in Epiduo Forte, remains prescription-only.",
+    typicalConcentrationText: "OTC formulations are 0.1%, alone or with 2.5% benzoyl peroxide.",
   },
   {
     id: "azelaic-acid",

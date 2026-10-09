@@ -2,7 +2,7 @@
 // brand-direct banner may say about OTC monograph status (db/labeled-actives.ts).
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { brandDirectStatus, labeledActiveSegment, labeledDrugActives } from "./labeled-actives";
+import { brandDirectNiche, brandDirectStatus, labeledActiveSegment, labeledDrugActives } from "./labeled-actives";
 
 test("reads a Drug Facts-style active line and stops at the inactive list", () => {
   const text = "Active ingredients: Pramoxine Hydrochloride 1% Inactive ingredients: Water, Glycerin, Petrolatum , Cetyl Alcohol";
@@ -84,4 +84,12 @@ test("banner: says nothing about status for a sunscreen whose filters weren't sc
 test("banner: claims no monograph status only for all-cosmetic actives", () => {
   const p = { activeIds: ["niacinamide", "squalane"], strengths: null, activeIngredientText: "Water, Niacinamide, Squalane", brandName: "Serum" };
   assert.equal(brandDirectStatus(p).kind, "cosmetic");
+});
+
+test("files brand acne washes under Acne, but not scalp, psoriasis or sunscreen rows", () => {
+  assert.equal(brandDirectNiche("brightening-texture", "Acne Foaming Cream Wash", ["benzoyl-peroxide"]), "acne");
+  assert.equal(brandDirectNiche("skin-protectant", "Acne Control Cleanser", ["salicylic-acid"]), "acne");
+  assert.equal(brandDirectNiche("brightening-texture", "Psoriasis Cleanser", ["salicylic-acid"]), "brightening-texture");
+  assert.equal(brandDirectNiche("skin-protectant", "Healing Ointment", ["petrolatum"]), "skin-protectant");
+  assert.equal(brandDirectNiche("sunscreen", "SPF 30 Acne Lotion", ["salicylic-acid", "avobenzone"]), "sunscreen");
 });

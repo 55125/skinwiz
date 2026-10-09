@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ChevronDown, Menu, UserRound, X } from "lucide-react";
 import { SearchBar } from "@/components/search-bar";
 import { cn } from "@/lib/utils";
@@ -14,18 +14,15 @@ import { INGREDIENT_ITEMS, MY_SKIN_ITEMS, isActive, type NavItem } from "@/lib/n
 
 type Concern = { id: string; name: string };
 
-const HSA_GUIDE = "/guide/hsa-fsa-eligible";
-
 function concernItems(concerns: Concern[]): NavItem[] {
   return [
     ...concerns.map((c) => ({ href: `/concern/${c.id}`, label: c.name })),
     { href: "/browse", label: "All products", hint: "Filter the full catalog", divider: true },
     { href: "/same", label: "Store-brand equivalents", hint: "Same active, same strength, lower price" },
-    { href: HSA_GUIDE, label: "HSA/FSA-eligible skincare", hint: "What your spending account usually covers" },
   ];
 }
 
-const CONCERN_PREFIXES = ["/concern", "/browse", "/product", "/same", HSA_GUIDE];
+const CONCERN_PREFIXES = ["/concern", "/browse", "/product", "/same"];
 
 function useDismiss(open: boolean, close: () => void, ref: React.RefObject<HTMLElement | null>) {
   useEffect(() => {
@@ -43,10 +40,6 @@ function useDismiss(open: boolean, close: () => void, ref: React.RefObject<HTMLE
   }, [open, close, ref]);
 }
 
-// A disclosure (button + list of links), the pattern WAI recommends for site
-// navigation, rather than an ARIA menu, which promises application-style
-// keyboard handling. Arrow keys still move between the links, Escape closes
-// and returns focus to the button, and tabbing out closes it.
 function NavMenu({
   label,
   items,
@@ -66,54 +59,14 @@ function NavMenu({
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
-  const button = useRef<HTMLButtonElement>(null);
-  const panelId = useId();
   useDismiss(open, () => setOpen(false), ref);
-
-  const links = () => [...(ref.current?.querySelectorAll<HTMLAnchorElement>(`#${CSS.escape(panelId)} a`) ?? [])];
-  const focusLink = (index: number) => {
-    const all = links();
-    if (all.length) all[(index + all.length) % all.length].focus();
-  };
-
-  function onButtonKey(e: React.KeyboardEvent) {
-    if (e.key !== "ArrowDown") return;
-    e.preventDefault();
-    setOpen(true);
-    requestAnimationFrame(() => focusLink(0));
-  }
-
-  function onPanelKey(e: React.KeyboardEvent) {
-    const all = links();
-    const i = all.indexOf(document.activeElement as HTMLAnchorElement);
-    if (e.key === "ArrowDown" || e.key === "ArrowUp") {
-      e.preventDefault();
-      focusLink(i + (e.key === "ArrowDown" ? 1 : -1));
-    } else if (e.key === "Home" || e.key === "End") {
-      e.preventDefault();
-      focusLink(e.key === "Home" ? 0 : all.length - 1);
-    } else if (e.key === "Escape") {
-      e.preventDefault();
-      setOpen(false);
-      button.current?.focus();
-    }
-  }
-
   return (
-    <div
-      ref={ref}
-      className="relative"
-      onBlur={(e) => {
-        if (open && !e.currentTarget.contains(e.relatedTarget as Node | null)) setOpen(false);
-      }}
-    >
+    <div ref={ref} className="relative">
       <button
-        ref={button}
         type="button"
         aria-expanded={open}
-        aria-controls={panelId}
+        aria-haspopup="menu"
         onClick={() => setOpen((o) => !o)}
-        onKeyDown={onButtonKey}
         className={cn(
           "flex items-center gap-1.5 rounded-full px-3 py-1.5 transition-colors",
           active || open
@@ -123,44 +76,37 @@ function NavMenu({
       >
         {icon}
         {label}
-        <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", open && "rotate-180")} aria-hidden />
+        <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", open && "rotate-180")} />
       </button>
-      <div
-        id={panelId}
-        hidden={!open}
-        onKeyDown={onPanelKey}
-        className={cn(
-          "absolute top-full z-30 mt-2 rounded-2xl border bg-popover p-1.5 shadow-xl shadow-foreground/5",
-          align === "right" ? "right-0" : "left-0",
-          columns === 2 ? "w-[30rem]" : "w-72",
-        )}
-      >
-        <ul className={cn(columns === 2 && "grid grid-cols-2 gap-x-1")}>
+      {open && (
+        <div
+          role="menu"
+          className={cn(
+            "absolute top-full z-30 mt-2 rounded-2xl border bg-popover p-1.5 shadow-xl shadow-foreground/5",
+            align === "right" ? "right-0" : "left-0",
+            columns === 2 ? "grid w-[30rem] grid-cols-2 gap-x-1" : "w-72",
+          )}
+        >
           {items.map((item) => (
-            <li
+            <Link
               key={item.href}
+              href={item.href}
+              role="menuitem"
+              onClick={() => setOpen(false)}
+              aria-current={isActive(pathname, item.href) ? "page" : undefined}
               className={cn(
-                "list-none",
+                "block rounded-xl px-3 py-2 transition-colors hover:bg-muted aria-[current=page]:bg-brand-soft",
                 // Rows with a hint (All products...) span the full width under the grid.
                 columns === 2 && item.hint && "col-span-2",
+                item.divider && "mt-1 rounded-t-none border-t pt-2.5",
               )}
             >
-              <Link
-                href={item.href}
-                onClick={() => setOpen(false)}
-                aria-current={isActive(pathname, item.href) ? "page" : undefined}
-                className={cn(
-                  "block rounded-xl px-3 py-2 transition-colors hover:bg-muted focus-visible:bg-muted aria-[current=page]:bg-brand-soft",
-                  item.divider && "mt-1 rounded-t-none border-t pt-2.5",
-                )}
-              >
-                <span className="block text-sm font-medium">{item.label}</span>
-                {item.hint && <span className="block text-xs text-muted-foreground">{item.hint}</span>}
-              </Link>
-            </li>
+              <span className="block text-sm font-medium">{item.label}</span>
+              {item.hint && <span className="block text-xs text-muted-foreground">{item.hint}</span>}
+            </Link>
           ))}
-        </ul>
-      </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -216,7 +162,7 @@ function MobileMenu({ pathname, concerns, showSearch }: { pathname: string; conc
             <div className="grid grid-cols-2">{INGREDIENT_ITEMS.map(link)}</div>
             <div className="mt-4 border-t pt-3" />
             {link({ href: "/routines", label: "Community routines" })}
-            {link({ href: "/clinic-tools", label: "For clinicians" })}
+            {link({ href: "/for-clinicians", label: "For clinicians" })}
             {link({ href: "/about", label: "About" })}
           </nav>
         </div>
@@ -261,14 +207,11 @@ export function SiteNav({ concerns }: { concerns: Concern[] }) {
           label="Ingredients"
           items={INGREDIENT_ITEMS}
           pathname={pathname}
-          active={
-            !isActive(pathname, HSA_GUIDE) &&
-            [...INGREDIENT_ITEMS.map((i) => i.href), "/ingredient", "/guide"].some((h) => isActive(pathname, h))
-          }
+          active={[...INGREDIENT_ITEMS.map((i) => i.href), "/ingredient", "/guide"].some((h) => isActive(pathname, h))}
         />
         {pill("/routines", "Routines", isActive(pathname, "/routines"))}
         {pill(
-          "/clinic-tools",
+          "/for-clinicians",
           "For clinicians",
           ["/for-clinicians", "/clinic-tools", "/clinicians"].some((h) => isActive(pathname, h)),
           "text-xs",

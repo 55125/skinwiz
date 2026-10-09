@@ -14,10 +14,32 @@ import { describeStrengths, unparsedActivesLine } from "@/lib/strength-display";
 
 const FDA_SOURCES = new Set(["openfda", "dailymed"]);
 import { productBrand } from "@/lib/product-brand";
+import { getOrigin, productNameOrigin, type OriginId } from "@/lib/origin-shared";
 import { ECZEMA_CONCERN, isDiaperProduct } from "@/lib/listing-rules";
 import { HsaBadge } from "@/components/hsa-badge";
 import type { products } from "@/db/schema";
 import { productImageAlt, thumbnailUrl } from "@/lib/image-urls";
+
+// One solid color per region so a grid of tags reads at a glance; white
+// text holds on all of them in both themes.
+const ORIGIN_TAG_CLASS: Record<OriginId, string> = {
+  kr: "bg-rose-600",
+  jp: "bg-fuchsia-700",
+  eu: "bg-indigo-600",
+  au: "bg-amber-700",
+  ca: "bg-red-700",
+};
+
+function OriginTag({ origin, className }: { origin: OriginId; className?: string }) {
+  return (
+    <span
+      className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-white ${ORIGIN_TAG_CLASS[origin]} ${className ?? ""}`}
+      title={`${getOrigin(origin).label} brand`}
+    >
+      {getOrigin(origin).tag}
+    </span>
+  );
+}
 
 export function ProductCard({
   product,
@@ -36,6 +58,7 @@ export function ProductCard({
 }) {
   const sourceBadge = dataSourceBadge(product.dataSource);
   const { brand } = productBrand(product);
+  const origin = productNameOrigin(brand, product.brandName);
   const diaperArea = product.concernId === ECZEMA_CONCERN && isDiaperProduct(product.brandName);
   const avoid = avoidVerdict(product, avoidIds);
   const avoidConflicts = avoid?.status === "conflicts" ? avoid.conflicts : [];
@@ -77,6 +100,7 @@ export function ProductCard({
               {sourceBadge.label}
             </Badge>
           )}
+          {origin && <OriginTag origin={origin} className="absolute right-3 top-3 shadow-sm" />}
         </div>
       )}
 
@@ -96,7 +120,11 @@ export function ProductCard({
             </div>
           )}
           {brand && (
-            <p className="truncate text-[11px] font-medium uppercase tracking-wider text-muted-foreground">{brand}</p>
+            <p className="flex min-w-0 items-center gap-1.5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+              <span className="truncate">{brand}</span>
+              {/* No photo to carry the tag: it sits beside the brand instead. */}
+              {origin && !product.imageUrl && <OriginTag origin={origin} className="shrink-0" />}
+            </p>
           )}
           <h3 className="line-clamp-2 text-[15px] font-semibold leading-snug" title={product.brandName}>
             {product.brandName}

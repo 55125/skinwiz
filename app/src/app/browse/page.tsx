@@ -3,10 +3,11 @@ import type { Metadata } from "next";
 import { ChevronDown, SlidersHorizontal } from "lucide-react";
 import { ProductGrid } from "@/components/product-grid";
 import { FreeFromFilters } from "@/components/free-from-filters";
+import { ORIGINS, parseOrigin } from "@/lib/origin-shared";
 import { RedFlagBanner } from "@/components/red-flag-banner";
 import { PageHeader } from "@/components/page-header";
 import { Pagination } from "@/components/pagination";
-import { browseProducts, browseProductsByMatch, getConcerns, getAllActives } from "@/lib/queries";
+import { browseOriginCounts, browseProducts, browseProductsByMatch, getConcerns, getAllActives } from "@/lib/queries";
 import { hasProfile, readProfile, scoreProducts } from "@/lib/profile";
 import { readAvoidIds } from "@/lib/avoid";
 import { TRUST_TIERS } from "@/lib/trust-tiers";
@@ -21,7 +22,7 @@ import { PREGNANCY_FILTER_VALUE, pregnancyAvoidIngredientIds } from "@/lib/pregn
 import { PregnancyFilter } from "@/components/pregnancy-notice";
 import { MatchSortNote, SortChips, parseListSort } from "@/components/sort-chips";
 
-type BrowseParams = { concern?: string; tier?: string; active?: string; free?: string; hsa?: string; sort?: string; page?: string; pregnancy?: string };
+type BrowseParams = { concern?: string; tier?: string; active?: string; free?: string; hsa?: string; sort?: string; page?: string; pregnancy?: string; from?: string };
 
 export async function generateMetadata({ searchParams }: { searchParams: Promise<BrowseParams> }): Promise<Metadata> {
   return {
@@ -70,7 +71,7 @@ export default async function BrowsePage({
 }: {
   searchParams: Promise<BrowseParams>;
 }) {
-  const { concern, tier, active, free, hsa: hsaParam, sort: sortParam, page: pageParam, pregnancy: pregnancyParam } = await searchParams;
+  const { concern, tier, active, free, hsa: hsaParam, sort: sortParam, page: pageParam, pregnancy: pregnancyParam, from: fromParam } = await searchParams;
   const hsa = hsaParam === "1" ? "1" : undefined;
   const page = Math.max(1, parseInt(pageParam ?? "1", 10) || 1);
   const freeFromIds = parseFreeParam(free);
@@ -80,6 +81,7 @@ export default async function BrowsePage({
 
   const profile = await readProfile();
   const avoidIds = await readAvoidIds();
+  const origin = parseOrigin(fromParam);
   const canMatch = hasProfile(profile) || avoidIds.length > 0;
   const sort = parseListSort(sortParam, canMatch);
   // Gated pregnancy filter: offered once the profile says pregnant; a
@@ -93,6 +95,7 @@ export default async function BrowsePage({
     freeFromIds,
     hsaOnly: !!hsa,
     excludeIngredientIds: pregnancy ? pregnancyAvoidIngredientIds() : undefined,
+    origin,
   };
 
   const { rows, total, pageSize } =
@@ -100,11 +103,12 @@ export default async function BrowsePage({
       ? browseProductsByMatch(queryFilters, page, (all) => scoreProducts(all, profile, avoidIds), JSON.stringify([queryFilters, profile, avoidIds]))
       : browseProducts(queryFilters, page, sort);
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
-  const activeFilterCount = [concern, selectedTier, active, hsa, pregnancy].filter(Boolean).length + freeFromIds.length;
+  const originCounts = browseOriginCounts(queryFilters);
+  const activeFilterCount = [concern, selectedTier, active, hsa, pregnancy, origin].filter(Boolean).length + freeFromIds.length;
 
   function hrefWith(overrides: Record<string, string | undefined>) {
     const params = new URLSearchParams();
-    const merged = { concern, tier, active, free, hsa, sort, pregnancy, page: undefined as string | undefined, ...overrides };
+    const merged = { concern, tier, active, free, hsa, sort, pregnancy, from: origin, page: undefined as string | undefined, ...overrides };
     for (const [k, v] of Object.entries(merged)) if (v) params.set(k, v);
     const qs = params.toString();
     return `/browse${qs ? `?${qs}` : ""}`;
@@ -144,6 +148,26 @@ export default async function BrowsePage({
             <li key={t.label}>
               <SidebarLink href={hrefWith({ tier: t.label })} selected={tier === t.label}>
                 {t.label}
+              </SidebarLink>
+            </li>
+          ))}
+        </ul>
+      </SidebarGroup>
+
+      <SidebarGroup title="Brand from">
+        <ul className="space-y-0.5">
+          <li>
+            <SidebarLink href={hrefWith({ from: undefined })} selected={!origin}>
+              Anywhere
+            </SidebarLink>
+          </li>
+          {ORIGINS.filter((o) => o.id === origin || (originCounts.get(o.id) ?? 0) > 0).map((o) => (
+            <li key={o.id}>
+              <SidebarLink href={hrefWith({ from: o.id })} selected={origin === o.id}>
+                <span className="flex justify-between gap-2">
+                  {o.place}
+                  <span className="tabular-nums opacity-70">{(originCounts.get(o.id) ?? 0).toLocaleString()}</span>
+                </span>
               </SidebarLink>
             </li>
           ))}
@@ -206,7 +230,7 @@ export default async function BrowsePage({
 
       <FreeFromFilters
         basePath="/browse"
-        searchParams={{ concern, tier, active, free, hsa, sort, pregnancy }}
+        searchParams={{ concern, tier, active, free, hsa, sort, pregnancy, from: origin }}
         selected={freeFromIds}
         extra={
           showPregnancyFilter ? (
@@ -249,7 +273,7 @@ export default async function BrowsePage({
         <div className="min-w-0 space-y-5">
           <RedFlagBanner />
 
-          <AvoidSwitch basePath="/browse" searchParams={{ concern, tier, active, free, hsa, sort, pregnancy }} selected={freeFromIds} />
+          <AvoidSwitch basePath="/browse" searchParams={{ concern, tier, active, free, hsa, sort, pregnancy, from: origin }} selected={freeFromIds} />
 
           <div className="flex flex-wrap items-center justify-between gap-3">
             <p className="text-sm text-muted-foreground">

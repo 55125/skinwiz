@@ -22,6 +22,7 @@ import type { ImageSize } from "@/lib/image-urls";
 import { imageDir, imageKey, imagePath, setDir } from "./storage";
 import { linkSetImage, renditionsExist } from "./link";
 import { Rejected, renderRenditions } from "./render";
+import { decodeLabelBarcodes, recordLabelScan } from "@/lib/label-decode";
 
 export const CANDIDATES_CSV = path.join(path.resolve(process.cwd(), ".."), "tools/catalog_pipeline/output/spl_media_candidates.csv");
 const IMAGE_BASE = "https://dailymed.nlm.nih.gov/dailymed/image.cfm";
@@ -51,9 +52,10 @@ export function dailymedImageSource(setid: string, name: string): string {
  * setid -> usable candidates, best first. The pipeline's `usable` column
  * decides (score >= 0, plus every image of a label whose images are all
  * DISC(ontinued) packaging); older CSVs without it fall back to score >= 0
- * (negative = drug facts, inserts, structures).
+ * (negative = drug facts, inserts, structures). `all` keeps every image
+ * (the label barcode scan reads panels that make poor photos).
  */
-export function loadCandidates(csvPath = CANDIDATES_CSV): Map<string, Candidate[]> {
+export function loadCandidates(csvPath = CANDIDATES_CSV, opts: { all?: boolean } = {}): Map<string, Candidate[]> {
   const out = new Map<string, Candidate[]>();
   if (!fs.existsSync(csvPath)) return out;
   const rows = parse(fs.readFileSync(csvPath, "utf-8"), { columns: true, skip_empty_lines: true }) as {
@@ -67,7 +69,7 @@ export function loadCandidates(csvPath = CANDIDATES_CSV): Map<string, Candidate[
   for (const r of rows) {
     const score = Number(r.score);
     const usable = r.usable === undefined || r.usable === "" ? score >= 0 : r.usable === "1";
-    if (!r.image_name || !usable) continue;
+    if (!r.image_name || (!usable && !opts.all)) continue;
     const list = out.get(r.setid.toLowerCase()) ?? [];
     list.push({ name: r.image_name, score });
     out.set(r.setid.toLowerCase(), list);
@@ -75,7 +77,7 @@ export function loadCandidates(csvPath = CANDIDATES_CSV): Map<string, Candidate[
   return out;
 }
 
-class Limiter {
+export class Limiter {
   private nextAt = 0;
   constructor(private readonly perSecond: number) {}
   async wait() {
@@ -88,7 +90,7 @@ class Limiter {
 
 type Fetch = typeof fetch;
 
-async function download(url: string, fetchImpl: Fetch, limiter: Limiter): Promise<Buffer> {
+export async function download(url: string, fetchImpl: Fetch, limiter: Limiter): Promise<Buffer> {
   await limiter.wait();
   const res = await fetchImpl(url, { headers: { "User-Agent": USER_AGENT }, signal: AbortSignal.timeout(45_000) });
   if (res.status === 404 || res.status === 410) throw new Rejected(`HTTP ${res.status}`);
@@ -223,6 +225,13 @@ export async function syncDailymedImages(
         report.downloaded++;
         report.bytes += bytes;
         report.linkedProducts += linkSetImage(setid, key);
+        // Read the label's barcode while the full-size photo is in memory
+        // (lib/label-barcodes.ts); a decode failure never fails the sync.
+        try {
+          recordLabelScan(setid, c.name, await decodeLabelBarcodes(buf), now);
+        } catch {
+          // the labels job retries this image
+        }
         return;
       } catch (err) {
         if (err instanceof Rejected) {

@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { ingredientHref } from "@/components/ingredient-link";
+import { BarcodeScanButton } from "@/components/barcode-scanner";
 
 type Suggestion = { key: string; kind: "ingredient" | "product" | "all"; label: string; sub?: string | null; href: string };
 
@@ -161,11 +162,12 @@ export function SearchBar({
             large
               ? "h-11 flex-1 rounded-full border-0 bg-transparent pl-10 text-base shadow-none focus-visible:ring-0 dark:bg-transparent"
               : compact
-                ? "h-9 rounded-full bg-card pl-9 text-sm"
-                : "h-10 rounded-lg pl-10",
+                ? "h-9 rounded-full bg-card pl-9 pr-9 text-sm"
+                : "h-10 rounded-lg pl-10 pr-11",
           )}
           autoComplete="off"
         />
+        <BarcodeScanButton className={cn(large ? "mr-1.5" : "absolute right-1.5 top-1/2 -translate-y-1/2", compact && "h-7 w-7")} />
         {large && (
           <Button type="submit" size="lg" className="h-11 shrink-0 rounded-full px-6">
             Search

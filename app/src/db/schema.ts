@@ -995,6 +995,42 @@ export const dailymedImages = sqliteTable(
   (table) => [index("dailymed_images_status_idx").on(table.status)],
 );
 
+// Barcodes read off DailyMed label photos (lib/label-barcodes.ts), for FDA
+// products that have no retail barcode from openFDA. One row per label
+// image scanned, so no image is fetched or decoded twice; the image sync
+// scans every photo it downloads, and the hourly "labels" job works through
+// the other label images of products still missing a barcode. Not seeded:
+// survives reseeds and deploys. Per set id, not per product: one label can
+// cover several package sizes, so a barcode may stand for any of them.
+export const labelScans = sqliteTable(
+  "label_scans",
+  {
+    splSetId: text("spl_set_id").notNull(),
+    imageName: text("image_name").notNull(),
+    status: text("status").notNull(), // "ok" (read, maybe no barcode) | "rejected" (404, not an image) | "error" (retry later)
+    barcodes: text("barcodes", { mode: "json" }).$type<string[]>().notNull().default(sql`'[]'`),
+    attempts: integer("attempts").notNull().default(0),
+    lastError: text("last_error"),
+    scannedAt: text("scanned_at").notNull(),
+    retryAfter: text("retry_after"),
+  },
+  (table) => [primaryKey({ columns: [table.splSetId, table.imageName] })],
+);
+
+export const labelBarcodes = sqliteTable(
+  "label_barcodes",
+  {
+    splSetId: text("spl_set_id").notNull(),
+    barcode: text("barcode").notNull(), // as read: 12-digit UPC-A, 13-digit EAN, 8-digit EAN-8 or 14-digit GTIN
+    imageName: text("image_name").notNull(),
+    foundAt: text("found_at").notNull(),
+  },
+  (table) => [
+    uniqueIndex("label_barcodes_set_barcode_idx").on(table.splSetId, table.barcode),
+    index("label_barcodes_barcode_idx").on(table.barcode),
+  ],
+);
+
 // ---------------------------------------------------------------------------
 // First-party site statistics for the owner's /admin page (lib/analytics/).
 // No cookies and no raw IP addresses: `visitor` is a hash of IP + user agent

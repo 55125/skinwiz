@@ -14,6 +14,7 @@ import {
   manualAffiliateLinks,
   productBarcodes,
   priceQuotes,
+  labelBarcodes,
 } from "@/db/schema";
 import { isAllowedManualLinkUrl } from "@/lib/manual-links";
 import { concernIdToNiche } from "@/db/actives";
@@ -775,6 +776,19 @@ export function lookupProductsByCode(q: string, limit = SEARCH_LIMIT) {
       .all())
       ids.add(r.id);
   }
+  // Barcodes read off label photos (lib/label-barcodes.ts) belong to a label,
+  // which can cover several products (package sizes).
+  if (code.barcodes.length) {
+    const sets = db
+      .selectDistinct({ setId: labelBarcodes.splSetId })
+      .from(labelBarcodes)
+      .where(inArray(labelBarcodes.barcode, code.barcodes))
+      .all()
+      .map((r) => r.setId);
+    if (sets.length) {
+      for (const r of db.select({ id: products.id }).from(products).where(inArray(sql`lower(${products.splSetId})`, sets)).all()) ids.add(r.id);
+    }
+  }
   // Kroger products matched by keywords carry no stored barcode; their
   // kroger.com page ends in the productId.
   for (const kid of code.krogerIds) {
@@ -1145,16 +1159,27 @@ export function getMergedDuplicates(id: string) {
   return db.select().from(products).where(and(eq(products.canonicalId, id), OTC_ONLY)).orderBy(products.id).all();
 }
 
-/** Retail barcodes (not the NDC-derived guesses) recorded for any of these ids. */
+/**
+ * Retail barcodes (not the NDC-derived guesses) recorded for any of these
+ * ids: from the catalog first, then any read off their DailyMed label.
+ */
 export function getRetailBarcodes(ids: string[]): string[] {
   if (ids.length === 0) return [];
-  return db
+  const catalog = db
     .selectDistinct({ barcode: productBarcodes.barcode })
     .from(productBarcodes)
     .where(and(inArray(productBarcodes.productId, ids), sql`${productBarcodes.source} != 'ndc_derived'`))
     .orderBy(productBarcodes.barcode)
     .all()
     .map((r) => r.barcode);
+  const label = db
+    .selectDistinct({ barcode: labelBarcodes.barcode })
+    .from(labelBarcodes)
+    .where(sql`${labelBarcodes.splSetId} IN (SELECT lower(spl_set_id) FROM products WHERE id IN (SELECT value FROM json_each(${JSON.stringify(ids)})))`)
+    .orderBy(labelBarcodes.barcode)
+    .all()
+    .map((r) => r.barcode);
+  return [...new Set([...catalog, ...label])];
 }
 
 /**

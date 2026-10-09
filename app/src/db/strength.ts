@@ -40,6 +40,11 @@ function parseSegment(segment: string): { name: string; pct: number } | null {
   const m = SEGMENT_RE.exec(segment);
   if (!m) return null;
   const [, name, numStr, numUnit, denStr, denUnit] = m;
+  // "Octinoxate 7.5% Octisalate 5%" is two actives with no separator, not
+  // one named "Octinoxate 7.5% Octisalate"; leave it to the pair scan.
+  // (Structured mg/g lines can carry a % inside a substance name, e.g.
+  // "DIMETHICONE CROSSPOLYMER (450000 MPA.S AT 12% IN ...)", so only % lines.)
+  if (numUnit === "%" && name.includes("%")) return null;
   const num = parseFloat(numStr);
   if (!Number.isFinite(num)) return null;
 
@@ -58,6 +63,11 @@ function parseSegment(segment: string): { name: string; pct: number } | null {
   return { name, pct: Math.round(pct * 100) / 100 };
 }
 
+// Labels also separate actives with commas ("Avobenzone 3%, Homosalate 7%"),
+// which as one segment gave every active the last percent. A comma only
+// ends a segment right after a strength, so commas inside a name stay put.
+const STRENGTH_THEN_COMMA = /(?<=(?:%|[\d/]\s*(?:kg|g|mg|ug|mcg|L|mL|uL))\)?)\s*,\s*/i;
+
 export type Strengths = Record<string, number>;
 
 /**
@@ -73,18 +83,21 @@ export function parseStrengths(activeIngredientText: string | null | undefined):
       if (!(id in out)) out[id] = pct;
     }
   };
-  for (const segment of activeIngredientText.split(";")) {
+  for (const segment of activeIngredientText.split(";").flatMap((s) => s.split(STRENGTH_THEN_COMMA))) {
     const parsed = parseSegment(segment);
-    if (parsed) add(parsed.name, parsed.pct);
-  }
-  // Some labels carry the Drug Facts table flattened into one line
-  // ("Active ingredients Purpose Homosalate 10% Sunscreen Octisalate 5%
-  // Sunscreen ...") -- no separators, so the per-segment parse above finds
-  // nothing. Fall back to scanning for every "<name> <n>%" pair; the name
-  // capture runs back to the previous match and may include a stray word
-  // like "Sunscreen", which matchActiveIds' substring matching tolerates.
-  if (Object.keys(out).length === 0 && activeIngredientText.includes("%")) {
-    for (const m of activeIngredientText.matchAll(/([A-Za-z][A-Za-z\s'\-]*?)\s*\(?(\d*\.?\d+)\s*%\)?/g)) {
+    if (parsed) {
+      add(parsed.name, parsed.pct);
+      continue;
+    }
+    // Some labels carry the Drug Facts table flattened into one line
+    // ("Active ingredients Purpose Homosalate 10% Sunscreen Octisalate 5%
+    // Sunscreen ...") or a segment the strict parse rejects ("Zinc Oxide
+    // 10.0%.", "Homosalate14%"). Fall back to scanning the segment for every
+    // "<name> <n>%" pair (also "Name: 4%", "Name...7.5%"); the name capture
+    // runs back to the previous match and may include a stray word like
+    // "Sunscreen", which matchActiveIds' substring matching tolerates.
+    if (!segment.includes("%")) continue;
+    for (const m of segment.matchAll(/([A-Za-z][A-Za-z\s'\-]*?)(?:\s|:|…|\.{2,}|-)*\(?(\d*\.?\d+)\s*%\)?/g)) {
       const pct = parseFloat(m[2]);
       if (pct >= MIN_PLAUSIBLE_PCT && pct <= MAX_PLAUSIBLE_PCT) add(m[1], Math.round(pct * 100) / 100);
     }

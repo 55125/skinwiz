@@ -1,5 +1,5 @@
 // One-off live-price backfill: looks up the top N due products now instead
-// of waiting for the hourly sweep. Same order and rules as the job
+// of waiting for the daily sweep. Same order and rules as the job
 // (lib/prices/refresh.ts): users' products, recently viewed, then the
 // catalog with barcoded / brand-page products first. Rx is never touched.
 //   npm run prices:backfill -- --top 500 [--max-requests 2000]

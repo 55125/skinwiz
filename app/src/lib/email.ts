@@ -42,6 +42,12 @@ export async function sendEmail(msg: EmailMessage): Promise<SendResult> {
   const headers = headersFor(msg);
   const key = process.env.RESEND_API_KEY;
   if (!key) {
+    // The console fallback prints working sign-in links; in production that
+    // would put account access in the log store, so refuse instead.
+    if (process.env.NODE_ENV === "production") {
+      console.error("[email] RESEND_API_KEY is not set; email not sent.");
+      return { ok: false, error: "RESEND_API_KEY is not set", retryable: true };
+    }
     console.log(
       [
         "",

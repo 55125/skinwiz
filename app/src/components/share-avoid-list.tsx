@@ -17,14 +17,14 @@ const SHAREABLE = new Set(IMPORT_CODES);
 // them. Same link format as the clinician sheet (/for-clinicians/patch-test),
 // without date or note. Only allergens travel; free-from preferences
 // (fragrance-free, alcohol-free...) aren't part of the format.
-export function ShareAvoidList({ ids }: { ids: string[] }) {
+export function ShareAvoidList({ ids, notOnLabel = [] }: { ids: string[]; notOnLabel?: string[] }) {
   const origin = useOrigin();
   const [copied, setCopied] = useState(false);
   const shareable = ids.filter((id) => SHAREABLE.has(id));
   const left = ids.filter((id) => !SHAREABLE.has(id));
   if (shareable.length === 0) return null;
 
-  const url = `${origin}${buildImportPath(shareable)}`;
+  const url = `${origin}${buildImportPath([...shareable, ...notOnLabel])}`;
   const ready = origin !== "";
   const canShare = typeof navigator !== "undefined" && "share" in navigator;
 
@@ -83,7 +83,7 @@ export function ShareAvoidList({ ids }: { ids: string[] }) {
           </div>
         </div>
       )}
-      {ready && createPortal(<PrintSheet url={url} ids={shareable} offLabel={[]} patient="" eyebrow="Allergen list" />, document.body)}
+      {ready && createPortal(<PrintSheet url={url} ids={shareable} offLabel={notOnLabel} patient="" eyebrow="Allergen list" />, document.body)}
     </details>
   );
 }

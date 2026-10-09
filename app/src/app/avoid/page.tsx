@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { PageHeader } from "@/components/page-header";
+import { MySkinTabs } from "@/components/my-skin-tabs";
 import { AvoidListEditor } from "@/components/avoid-list-editor";
 import { ShareAvoidList } from "@/components/share-avoid-list";
-import { readAvoidIds } from "@/lib/avoid";
+import { readAvoidIds, readNotOnLabelIds } from "@/lib/avoid";
 import { SITE_NAME } from "@/lib/brand";
 
 export const metadata: Metadata = {
@@ -14,17 +15,18 @@ export const metadata: Metadata = {
 export default async function AvoidPage({ searchParams }: { searchParams: Promise<{ paste?: string; series?: string }> }) {
   const { paste, series } = await searchParams;
   const ids = await readAvoidIds();
+  const notOnLabel = await readNotOnLabelIds();
   return (
     <div className="mx-auto max-w-3xl space-y-8 px-4 py-10">
+      <MySkinTabs />
       <PageHeader
-        eyebrow="Your list"
         title="Ingredients I avoid"
-        description="Pick what you steer clear of. Every product card and page will then flag anything on your list, and listing pages get a one-click filter. Saved in this browser only — no account, nothing sent anywhere."
+        description="Pick what you steer clear of. Every product card and page will then flag anything on your list, and listing pages get a one-click filter. Each choice saves as you make it. No account needed."
       />
 
-      <ShareAvoidList ids={ids} />
+      <ShareAvoidList ids={ids} notOnLabel={notOnLabel} />
 
-      <AvoidListEditor initialIds={ids} pasteOpen={paste === "1"} seriesOpen={series === "1"} />
+      <AvoidListEditor initialIds={ids} initialNotOnLabel={notOnLabel} pasteOpen={paste === "1"} seriesOpen={series === "1"} />
 
       <div className="space-y-2 rounded-2xl border bg-muted/40 p-4 text-xs leading-relaxed text-muted-foreground">
         <p>

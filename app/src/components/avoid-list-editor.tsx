@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Check, Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -17,43 +17,116 @@ import {
   type ContactAllergen,
 } from "@/db/contact-allergens";
 import { PatchTestPaste } from "@/components/patch-test-paste";
+import { getNotOnLabel } from "@/db/patch-test-series";
 import { PatchTestSeriesPicker } from "@/components/patch-test-checklist";
 import { cn } from "@/lib/utils";
 
-export function AvoidListEditor({ initialIds, pasteOpen, seriesOpen }: { initialIds: string[]; pasteOpen?: boolean; seriesOpen?: boolean }) {
+// Every tick saves itself (debounced), so "saved in this browser" is true the
+// moment you pick something; there is no Save button to forget. While a save
+// is still in flight, leaving the page asks first.
+const SAVE_DELAY_MS = 500;
+
+// `addNotOnLabel`: patch-test positives that aren't on labels, kept on the
+// list for reference (the server merges them into those already saved).
+function post(ids: Set<string>, keepalive = false, addNotOnLabel: string[] = []) {
+  return fetch("/api/avoid", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ids: [...ids], addNotOnLabel }),
+    keepalive,
+  }).catch(() => null);
+}
+
+function postNotOnLabel(ids: string[]) {
+  return fetch("/api/avoid", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ notOnLabel: ids }),
+  }).catch(() => null);
+}
+
+export function AvoidListEditor({
+  initialIds,
+  initialNotOnLabel = [],
+  pasteOpen,
+  seriesOpen,
+}: {
+  initialIds: string[];
+  initialNotOnLabel?: string[];
+  pasteOpen?: boolean;
+  seriesOpen?: boolean;
+}) {
   const router = useRouter();
   const [ids, setIds] = useState<Set<string>>(new Set(initialIds));
-  const [saved, setSaved] = useState(true);
-  const [isPending, startTransition] = useTransition();
+  const [offLabel, setOffLabel] = useState<string[]>(initialNotOnLabel);
+  const pendingOff = useRef<string[]>([]);
+  const [status, setStatus] = useState<"saved" | "saving" | "error">("saved");
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const latest = useRef(0);
+  const pending = useRef<Set<string> | null>(null);
+
+  useEffect(() => {
+    if (status === "saved") return;
+    const warn = (e: BeforeUnloadEvent) => e.preventDefault();
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [status]);
+
+  // Leaving through an in-app link unmounts the editor: send a save that is
+  // still waiting on the debounce right away instead of dropping it.
+  useEffect(() => () => {
+    if (!timer.current || !pending.current) return;
+    clearTimeout(timer.current);
+    void post(pending.current, true, pendingOff.current);
+  }, []);
+
+  async function persist(next: Set<string>) {
+    timer.current = null;
+    pending.current = null;
+    const seq = ++latest.current;
+    const addOff = pendingOff.current;
+    pendingOff.current = [];
+    const res = await post(next, false, addOff);
+    if (seq !== latest.current) return; // a newer save is on its way
+    if (res?.ok) {
+      setStatus("saved");
+      router.refresh();
+    } else {
+      setStatus("error");
+    }
+  }
+
+  function save(next: Set<string>, delay = SAVE_DELAY_MS) {
+    setStatus("saving");
+    pending.current = next;
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = setTimeout(() => void persist(next), delay);
+  }
 
   function toggle(id: string) {
-    setIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-    setSaved(false);
-  }
-
-  function save(next: Set<string> = ids) {
-    startTransition(async () => {
-      const res = await fetch("/api/avoid", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ids: [...next] }),
-      });
-      if (res.ok) {
-        setSaved(true);
-        router.refresh();
-      }
-    });
-  }
-
-  function addAndSave(picked: string[]) {
-    const next = new Set([...ids, ...picked]);
+    const next = new Set(ids);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
     setIds(next);
     save(next);
+  }
+
+  function addAndSave(picked: string[], off: string[] = []) {
+    const next = new Set([...ids, ...picked]);
+    setIds(next);
+    if (off.length) {
+      pendingOff.current = [...new Set([...pendingOff.current, ...off])];
+      setOffLabel((prev) => [...new Set([...prev, ...off])]);
+    }
+    save(next, 0);
+  }
+
+  async function removeOffLabel(id: string) {
+    const next = offLabel.filter((x) => x !== id);
+    setOffLabel(next);
+    const res = await postNotOnLabel(next);
+    if (res?.ok) router.refresh();
+    else setStatus("error");
   }
 
   const groups = [
@@ -68,6 +141,33 @@ export function AvoidListEditor({ initialIds, pasteOpen, seriesOpen }: { initial
         <PatchTestSeriesPicker defaultOpen={seriesOpen} onAdd={addAndSave} />
       </div>
 
+      {offLabel.length > 0 && (
+        <section className="space-y-2" aria-labelledby="off-label-h">
+          <h2 id="off-label-h" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            Also positive, not on cosmetic labels
+          </h2>
+          <p className="text-xs text-muted-foreground">Kept here for reference; products can&apos;t be checked for these.</p>
+          <ul className="divide-y rounded-2xl border border-dashed">
+            {offLabel.map((id) => (
+              <li key={id} className="flex items-start justify-between gap-3 p-3 text-sm">
+                <span>
+                  <span className="font-medium">{getNotOnLabel(id)?.name ?? id}</span>
+                  <span className="block text-xs text-muted-foreground">{getNotOnLabel(id)?.foundIn}</span>
+                </span>
+                <button
+                  type="button"
+                  onClick={() => void removeOffLabel(id)}
+                  className="rounded-full p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+                  aria-label={`Remove ${getNotOnLabel(id)?.name ?? id}`}
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
       <AllergenPicker ids={ids} toggle={toggle} />
 
       {groups.map((group) => (
@@ -81,17 +181,22 @@ export function AvoidListEditor({ initialIds, pasteOpen, seriesOpen }: { initial
         </fieldset>
       ))}
 
-      <div className={cn("flex items-center gap-3", !saved && "sticky bottom-4 z-10")}>
-        <Button type="button" onClick={() => save()} disabled={saved || isPending} className="rounded-full px-5 shadow-md">
-          {saved ? (
+      <div className={cn("flex items-center gap-3", status !== "saved" && "sticky bottom-4 z-10")}>
+        <p role="status" className="flex items-center gap-2 rounded-full border bg-card px-4 py-2 text-sm shadow-sm">
+          {status === "saving" && "Saving…"}
+          {status === "saved" && (
             <>
-              <Check className="h-4 w-4" /> Saved
+              <Check className="h-4 w-4 text-brand" aria-hidden />
+              {ids.size === 0 ? "Your list is empty" : `Saved: ${ids.size} ${ids.size === 1 ? "item" : "items"}`}
             </>
-          ) : (
-            `Save ${ids.size} ${ids.size === 1 ? "item" : "items"}`
           )}
-        </Button>
-        {ids.size === 0 && !saved && <p className="text-sm text-muted-foreground">Saving with nothing selected clears your list.</p>}
+          {status === "error" && <span className="text-destructive">Couldn&apos;t save.</span>}
+        </p>
+        {status === "error" && (
+          <Button type="button" variant="outline" size="sm" onClick={() => save(ids, 0)} className="rounded-full">
+            Try again
+          </Button>
+        )}
       </div>
     </div>
   );

@@ -3,46 +3,42 @@ import { SiteLogo } from "@/components/site-header";
 import { FREE_FROM_CHECKS } from "@/db/ingredient-flags";
 import { ALLERGEN_GROUPS } from "@/db/contact-allergens";
 import { SITE_NAME } from "@/lib/brand";
+// Concern names are code constants (the seed copies them into the concerns
+// table), so the header and footer read them directly: no database query on
+// every page, and pages without data can still be prerendered at build time.
+import { CONCERN_DEFINITIONS } from "@/db/actives";
+import { INGREDIENT_ITEMS, MY_SKIN_ITEMS } from "@/lib/nav";
 
-const FOOTER_LINKS = [
-  {
-    heading: "Explore",
-    links: [
-      { href: "/", label: "Concerns" },
-      { href: "/browse", label: "All products" },
-      { href: "/routines", label: "Routines" },
-    ],
-  },
-  {
-    heading: "Tools",
-    links: [
-      { href: "/check", label: "Ingredient checker" },
-      { href: "/allergens", label: "Contact allergen guide" },
-      { href: "/ingredients", label: "Ingredient library" },
-      { href: "/compare", label: "Compare products" },
-    ],
-  },
-  {
-    heading: "You",
-    links: [
-      { href: "/profile", label: "My skin" },
-      { href: "/regimen", label: "My regimen" },
-      { href: "/shelf", label: "My shelf" },
-      { href: "/avoid", label: "My avoid list" },
-    ],
-  },
-  {
-    heading: SITE_NAME,
-    links: [
-      { href: "/about", label: "About & methodology" },
-      { href: "/for-clinicians", label: "For clinicians" },
-      { href: "/clinic-tools", label: "Clinic tools" },
-      { href: "/contact", label: "Contact" },
-      { href: "/privacy", label: "Privacy policy" },
-      { href: "/terms", label: "Terms of service" },
-    ],
-  },
-];
+// Same four groups as the header, plus the about/legal links.
+function footerLinks() {
+  return [
+    {
+      heading: "Concerns",
+      links: [
+        ...CONCERN_DEFINITIONS.map((c) => ({ href: `/concern/${c.id}`, label: c.name })),
+        { href: "/browse", label: "All products" },
+        { href: "/guide/hsa-fsa-eligible", label: "HSA/FSA-eligible skincare" },
+        { href: "/guide/kids", label: "Children's skin" },
+      ],
+    },
+    { heading: "Ingredients", links: INGREDIENT_ITEMS },
+    { heading: "My skin", links: [...MY_SKIN_ITEMS, { href: "/account", label: "Email settings" }] },
+    {
+      heading: SITE_NAME,
+      links: [
+        { href: "/routines", label: "Community routines" },
+        { href: "/clinic-tools", label: "For clinicians" },
+        { href: "/for-clinicians", label: "Dermatologist panel" },
+        { href: "/about", label: "About & methodology" },
+        { href: "/contact", label: "Contact" },
+        { href: "/privacy", label: "Privacy policy" },
+        { href: "/privacy#health-data", label: "Consumer health data privacy" },
+        { href: "/terms", label: "Terms of service" },
+        { href: "/accessibility", label: "Accessibility" },
+      ],
+    },
+  ];
+}
 
 export function SiteFooter() {
   return (
@@ -56,7 +52,7 @@ export function SiteFooter() {
               verified dermatologist panel in the works.
             </p>
           </div>
-          {FOOTER_LINKS.map((group) => (
+          {footerLinks().map((group) => (
             <div key={group.heading} className="space-y-3">
               <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 {group.heading}
@@ -104,8 +100,8 @@ export function SiteFooter() {
           <p>
             <strong className="text-foreground">Affiliate disclosure.</strong> Some product links on this site
             are affiliate links — we may earn a commission if you buy through them, at no extra cost to you.
-            This never affects Derm Score or User Score, which are independent of any commercial
-            relationship. As an Amazon Associate I earn from qualifying purchases.
+            This never affects the User Score or the planned Derm Score, which are independent of any
+            commercial relationship. As an Amazon Associate I earn from qualifying purchases.
           </p>
         </div>
       </div>

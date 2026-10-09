@@ -1,17 +1,18 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { ArrowLeft, Check, ClipboardCopy, Copy, Mail, Printer, RotateCcw, Smartphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { QrCode } from "@/components/qr-code";
 import { PrintSheet, useOrigin } from "@/components/patch-test-issuer";
-import { PATCH_TEST_SERIES, getNotOnLabel } from "@/db/patch-test-series";
+import { PATCH_TEST_SERIES, getNotOnLabel, positivesById, seriesItemKey } from "@/db/patch-test-series";
 import { resolveAllergenId } from "@/db/contact-allergens";
 import { buildImportPath } from "@/lib/avoid-import";
 import {
   GRADE_LABEL,
+  POSITIVE,
   READING_DAYS,
   TRAY_SERIES,
   backSpec,
@@ -58,6 +59,24 @@ function loadTrayLayouts(): TrayLayouts {
   }
 }
 
+// The reading in progress (series, day, date, grades; never the patient's
+// name), kept for this tab only so an accidental reload or swipe-back
+// doesn't wipe a half-graded panel. Cleared by "New reading".
+const READING_KEY = "actively.reader.reading";
+type SavedReading = { seriesId: string; day: ReadingDay; readDate: string; grades: Record<string, Grade> };
+
+function loadReading(): SavedReading | null {
+  try {
+    const raw = sessionStorage.getItem(READING_KEY);
+    const v = raw ? (JSON.parse(raw) as Partial<SavedReading>) : null;
+    if (!v || typeof v.seriesId !== "string" || !PATCH_TEST_SERIES.some((x) => x.id === v.seriesId)) return null;
+    if (!READING_DAYS.some((d) => d.id === v.day) || typeof v.readDate !== "string" || !v.grades || typeof v.grades !== "object") return null;
+    return v as SavedReading;
+  } catch {
+    return null;
+  }
+}
+
 const todayIso = () => {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -81,6 +100,27 @@ export function PatchTestReader() {
   const [patient, setPatient] = useState("");
   const [copied, setCopied] = useState<"note" | "link" | null>(null);
 
+  // Restore after mount (the server render can't see sessionStorage), then
+  // save on every change.
+  const restored = useRef(false);
+  useEffect(() => {
+    const saved = loadReading();
+    restored.current = true;
+    if (!saved) return;
+    /* eslint-disable react-hooks/set-state-in-effect -- one-time restore from tab storage */
+    setSeriesId(saved.seriesId);
+    setDay(saved.day);
+    setReadDate(saved.readDate);
+    setGrades(saved.grades);
+    /* eslint-enable react-hooks/set-state-in-effect */
+  }, []);
+  useEffect(() => {
+    if (!restored.current) return;
+    try {
+      sessionStorage.setItem(READING_KEY, JSON.stringify({ seriesId, day, readDate, grades } satisfies SavedReading));
+    } catch {}
+  }, [seriesId, day, readDate, grades]);
+
   const series = getSeries(seriesId);
   const acds = trayLayouts[series.id] ?? defaultTrayLayout(series);
   const spec = backSpec(series, acds);
@@ -101,6 +141,12 @@ export function PatchTestReader() {
   const offLabel = avoidAll.filter((id) => getNotOnLabel(id));
   const url = `${origin}${buildImportPath(avoidAll, { date: readDate || undefined })}`;
   const hasPositives = avoidAll.length > 0;
+  // The tested names behind each id, for the printed sheet.
+  const positives = positivesById(
+    chambers
+      .filter((c) => c.item && (POSITIVE.has(grades[c.key] ?? "neg") || (includeDoubtful && grades[c.key] === "?+")))
+      .map((c) => seriesItemKey(series.id, c.item!)),
+  );
 
   const [lastTapped, setLastTapped] = useState<string | null>(null);
   const tap = (key: string) => {
@@ -179,16 +225,17 @@ export function PatchTestReader() {
                     for it.
                   </p>
                   <div className="flex flex-wrap gap-2">
-                    <Button type="button" onClick={() => window.print()} className="rounded-full">
+                    <Button type="button" data-track="patch-reader:print" onClick={() => window.print()} className="rounded-full">
                       <Printer className="h-4 w-4" /> Print sheet
                     </Button>
-                    <a href={mail} className="inline-flex h-9 items-center gap-1.5 rounded-full border bg-background px-4 text-sm font-medium hover:bg-muted">
+                    <a href={mail} data-track="patch-reader:email" className="inline-flex h-9 items-center gap-1.5 rounded-full border bg-background px-4 text-sm font-medium hover:bg-muted">
                       <Mail className="h-4 w-4" /> Email
                     </a>
                     <Button
                       type="button"
                       variant="outline"
                       className="rounded-full"
+                      data-track="patch-reader:copy-link"
                       onClick={async () => {
                         await navigator.clipboard?.writeText(url).catch(() => {});
                         setCopied("link");
@@ -213,7 +260,7 @@ export function PatchTestReader() {
 
         {hasPositives &&
           origin &&
-          createPortal(<PrintSheet url={url} ids={avoidIds} offLabel={offLabel} patient={patient.trim()} date={readDate || undefined} />, document.body)}
+          createPortal(<PrintSheet url={url} ids={avoidIds} offLabel={offLabel} positives={positives} patient={patient.trim()} date={readDate || undefined} />, document.body)}
       </div>
     );
   }

@@ -28,11 +28,12 @@ import { getScoresForProducts } from "@/lib/scoring";
 import { getVideoSearchLinks } from "@/lib/video-links";
 import { dataSourceBadge } from "@/lib/data-source";
 import { FREE_FROM_CHECKS, getFreeFromCheck, ingredientFailsCheck } from "@/db/ingredient-flags";
-import { findSafeSwaps, findSimilarProducts } from "@/lib/similar";
+import { findSafeSwaps, findSimilarProductsCached } from "@/lib/similar";
 import { ewgHazardBadge } from "@/lib/ewg";
 import { readSessionId } from "@/lib/session";
 import { getSessionOutcome } from "@/lib/outcomes";
 import { readAvoidIds, avoidVerdict, avoidedIngredientName } from "@/lib/avoid";
+import { avoidConflicts } from "@/lib/avoid-shared";
 import { AllergenFindings } from "@/components/allergen-findings";
 import { activeName, describeStrengths } from "@/lib/strength-display";
 import { formatPct } from "@/db/strength";
@@ -50,6 +51,7 @@ import { MatchBadge } from "@/components/match-badge";
 import { avoidLabelsFor, hasProfile, matchProduct, readProfile } from "@/lib/profile";
 import { pubchemLinkText } from "@/lib/pubchem";
 import { displayManufacturer, tidyIngredientName } from "@/lib/format";
+import { productBrand } from "@/lib/product-brand";
 import { productTitle, breadcrumbLd } from "@/lib/seo";
 import { JsonLd } from "@/components/json-ld";
 import { siteUrl } from "@/lib/site-url";
@@ -57,6 +59,7 @@ import { SITE_NAME } from "@/lib/brand";
 import { getEquivalenceGroupForProduct, isHsaEligible } from "@/lib/otc-index";
 import { HSA_GUIDE_PATH, HSA_STORE_AFFILIATE, isSunscreen } from "@/lib/hsa";
 import { HsaBadge } from "@/components/hsa-badge";
+import { retailerSearchLinks } from "@/lib/retailer-search";
 import { EquivalenceExplainer, EquivalenceRows } from "@/components/equivalence-list";
 import { FEATURES } from "@/lib/feature-flags";
 import { productPregnancyFindings } from "@/lib/pregnancy";
@@ -97,10 +100,20 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   const description = product.activeIngredientText
     ? `${product.brandName} — ${product.activeIngredientText}. Ingredients, matches and User Score on ${SITE_NAME}.`
     : `${product.brandName} on ${SITE_NAME}.`;
+  const title = productTitle(product, describeStrengths, displayManufacturer);
+  const canonical = `/product/${encodeURIComponent(getCanonicalProductId(product))}`;
+  // The product's own photo in link previews, instead of the site-wide card.
+  const image = bestProductImage(product, getMergedDuplicates(product.id));
   return {
-    title: productTitle(product, describeStrengths, displayManufacturer),
+    title,
     description,
-    alternates: { canonical: `/product/${encodeURIComponent(getCanonicalProductId(product))}` },
+    alternates: { canonical },
+    ...(image
+      ? {
+          openGraph: { type: "website", siteName: SITE_NAME, locale: "en_US", title, description, url: canonical, images: [{ url: image, alt: productImageAlt(product) }] },
+          twitter: { card: "summary", images: [image] },
+        }
+      : {}),
   };
 }
 
@@ -165,6 +178,14 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
   const groupSavings = equivalenceGroup ? storeBrandSavings(equivalenceGroup.members, groupLive) : null;
   const groupRows = sortByUnitPrice(groupOthers, groupLive);
   const quotes = getDisplayQuotes(product.id);
+  const retailerSearches = retailerSearchLinks(
+    product.brandName,
+    // Only these sources carry the brand in `manufacturer`; FDA rows carry the labeler.
+    product.dataSource === "brand_direct" || product.dataSource === "open_beauty_facts" || product.dataSource === "third_party"
+      ? product.manufacturer
+      : null,
+  );
+  const brandLine = productBrand(product);
   const brandLink = product.sourceUrl ? outboundLink(product.sourceUrl, { placement: "product", rel: "noopener noreferrer" }) : null;
   if (livePricesEnabled() && !BOT_UA.test((await headers()).get("user-agent") ?? "")) recordProductView(product.id);
   const equivalents = equivalenceGroup ? { rows: [], total: 0 } : getEquivalentProducts(product);
@@ -174,9 +195,19 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
   const isDrugLabel = product.dataSource === "openfda" || product.dataSource === "dailymed";
   const labelActives = ingredientRows.filter((r) => r.position <= 0);
   const listedIngredients = ingredientRows.filter((r) => r.position > 0);
+  // With an avoid list, only formulas whose full ingredient list is clear of
+  // it, as on /check; otherwise a patch-tested patient is pointed at more of
+  // what they react to.
   const similar = isDrugLabel
     ? []
-    : findSimilarProducts(listedIngredients.map((r) => r.ingredientId), { excludeId: product.id, limit: 4 });
+    : avoidIds.length > 0
+      ? findSimilarProductsCached(listedIngredients.map((r) => r.ingredientId), { excludeId: product.id, limit: 40 })
+          .filter((s) => {
+            const c = avoidConflicts(s.product, avoidIds);
+            return !!c && c.conflicts.length === 0 && c.possible.length === 0;
+          })
+          .slice(0, 4)
+      : findSimilarProductsCached(listedIngredients.map((r) => r.ingredientId), { excludeId: product.id, limit: 4 });
   const safeSwaps = needsSwap
     ? findSafeSwaps(product, ingredientRows.filter((r) => r.position > 0).map((r) => r.ingredientId), avoidIds)
     : [];
@@ -241,10 +272,11 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
 
         <div className="space-y-6">
           <div className="space-y-3">
-            {product.manufacturer && (
-              <p className="text-xs font-semibold uppercase tracking-wider text-brand">{displayManufacturer(product.manufacturer)}</p>
+            {brandLine.brand && (
+              <p className="text-xs font-semibold uppercase tracking-wider text-brand">{brandLine.brand}</p>
             )}
             <h1 className="text-3xl font-semibold leading-tight sm:text-4xl">{product.brandName}</h1>
+            {brandLine.madeBy && <p className="text-xs text-muted-foreground">Made by {brandLine.madeBy} (as listed with the FDA)</p>}
             <div className="flex flex-wrap gap-2">
               {product.dosageForm && <Badge variant="secondary">{product.dosageForm}</Badge>}
               {sourceBadge && (
@@ -279,9 +311,12 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
           />
 
           <ShelfButton
-            key={`${shelfEntry?.status ?? "none"}-${shelfEntry?.opened ?? false}`}
+            key={`${shelfEntry?.status ?? "none"}-${shelfEntry?.opened ?? false}-${regimenSlot ?? "out"}`}
             productId={product.id}
-            initialStatus={shelfEntry?.status ?? null} initialOpened={shelfEntry?.opened ?? false} />
+            initialStatus={shelfEntry?.status ?? null}
+            initialOpened={shelfEntry?.opened ?? false}
+            inRegimen={regimenSlot !== null}
+          />
 
           {avoid?.status === "conflicts" && (
             <Alert className="border-red-300 bg-red-50 dark:border-red-900 dark:bg-red-950/40">
@@ -405,6 +440,16 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
                   </li>
                 ))}
               </ul>
+              {strengthRows.some((r) => r.monograph?.status === "above") && (
+                <p className="mt-2 rounded-lg border border-amber-300 bg-amber-50 p-2.5 text-xs text-amber-900 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
+                  {strengthRows
+                    .filter((r) => r.monograph?.status === "above")
+                    .map((r) => `${activeName(r.id)} is listed at ${formatPct(r.pct)}, above the ${formatPct(r.monograph!.range.max)} OTC limit.`)
+                    .join(" ")}{" "}
+                  That&apos;s usually a filing error, so check the strength on the package. Until it&apos;s clear, we leave this product
+                  off our concern lists.
+                </p>
+              )}
               <p className="mt-2 text-xs text-muted-foreground">
                 The monograph range is what the FDA permits for this active in an OTC product — a regulatory fact,
                 not a rating. A strength outside it may reflect how the label was filed rather than the product
@@ -437,7 +482,9 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
                   ? "Active ingredient (from FDA label)"
                   : product.dataSource === "brand_direct"
                     ? "Ingredients (from manufacturer)"
-                    : "Ingredients (community-sourced)"}
+                    : product.dataSource === "third_party"
+                      ? "Ingredients (third-party listing)"
+                      : "Ingredients (community-sourced)"}
               </h2>
               {isDrugLabel ? (
                 <>
@@ -483,24 +530,27 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
                 Ingredient-based filters this matches
               </h2>
               {/* First 6 inline, the rest behind a native disclosure -- 20+
-                  chips in a block buried the ingredient list above. */}
-              <details className="group/ff">
-                <summary className="flex cursor-pointer list-none flex-wrap gap-1.5 [&::-webkit-details-marker]:hidden">
-                  {product.freeFromFlags.slice(0, 6).map((id) => (
-                    <FreeFromLink key={id} id={id} />
-                  ))}
-                  {product.freeFromFlags.length > 6 && (
-                    <span className="text-xs font-medium text-brand group-open/ff:hidden">
-                      Show all {product.freeFromFlags.length} →
-                    </span>
-                  )}
-                </summary>
-                <div className="mt-1.5 flex flex-wrap gap-1.5">
-                  {product.freeFromFlags.slice(6).map((id) => (
-                    <FreeFromLink key={id} id={id} />
-                  ))}
-                </div>
-              </details>
+                  chips in a block buried the ingredient list above. The
+                  summary is only the toggle: links inside a summary are
+                  nested interactive controls (axe nested-interactive). */}
+              <div className="flex flex-wrap gap-1.5">
+                {product.freeFromFlags.slice(0, 6).map((id) => (
+                  <FreeFromLink key={id} id={id} />
+                ))}
+              </div>
+              {product.freeFromFlags.length > 6 && (
+                <details className="group/ff mt-1.5">
+                  <summary className="w-fit cursor-pointer list-none text-xs font-medium text-brand [&::-webkit-details-marker]:hidden">
+                    <span className="group-open/ff:hidden">Show all {product.freeFromFlags.length} →</span>
+                    <span className="hidden group-open/ff:inline">Show fewer</span>
+                  </summary>
+                  <div className="mt-1.5 flex flex-wrap gap-1.5">
+                    {product.freeFromFlags.slice(6).map((id) => (
+                      <FreeFromLink key={id} id={id} />
+                    ))}
+                  </div>
+                </details>
+              )}
               {flaggedSkin.some((f) => f.hits.length > 0) && (
                 <div className="mt-3 space-y-1.5 text-xs text-muted-foreground">
                   {flaggedSkin
@@ -525,7 +575,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
 
       <div
         className={
-          product.dataSource === "open_beauty_facts" || product.dataSource === "brand_direct"
+          product.dataSource === "open_beauty_facts" || product.dataSource === "brand_direct" || product.dataSource === "third_party"
             ? "grid gap-3 md:grid-cols-2 md:items-start"
             : undefined
         }
@@ -538,6 +588,19 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
             This product&apos;s data comes from Open Beauty Facts, a crowd-edited database — anyone can
             submit or edit an entry. Unlike the rest of the catalog, this listing hasn&apos;t been
             independently verified. Ingredient names and amounts may be incomplete or inaccurate.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {product.dataSource === "third_party" && (
+        <Alert className="border-dashed bg-transparent">
+          <Info className="h-4 w-4 text-amber-600" />
+          <AlertTitle>Third-party listing, not from the manufacturer</AlertTitle>
+          <AlertDescription className="text-[13px]">
+            {product.manufacturer ? displayManufacturer(product.manufacturer) : "The brand"} doesn&apos;t publish this
+            product&apos;s ingredient list, so it comes from independent ingredient databases that agree with each other.
+            It hasn&apos;t been checked against the package, and older stock may have a different formula. Check the
+            label if an ingredient matters to you.
           </AlertDescription>
         </Alert>
       )}
@@ -654,7 +717,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
             <p className="text-sm text-muted-foreground">
               Products whose ingredient lists overlap most with this one, weighting distinctive ingredients over
               common ones like water and glycerin. Similar lists are not identical formulas — concentrations,
-              texture and price differ.
+              texture and price differ.{avoidIds.length > 0 ? " Only formulas clear of everything on your avoid list are shown." : ""}
             </p>
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
@@ -718,11 +781,6 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
                   <p className="font-medium">
                     {link.price ? `$${link.price.toFixed(2)}` : "See retailer"}{" "}
                     <span className="text-xs text-muted-foreground">via {link.network}</span>
-                    {link.isDemo && (
-                      <Badge variant="outline" className="ml-2 border-dashed text-amber-700 dark:text-amber-400">
-                        Demo — not a live price
-                      </Badge>
-                    )}
                   </p>
                   <p className="text-xs text-muted-foreground">Affiliate link — we may earn a commission.</p>
                 </div>
@@ -764,14 +822,32 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
               Visit page <ExternalLink className="ml-1 h-3.5 w-3.5" />
             <span className="sr-only"> (opens in new tab)</span></a>
           </div>
-        ) : manualLinks.length > 0 || quotes.length > 0 ? null : (
-          <Alert>
-            <AlertTitle>Retailer links coming soon</AlertTitle>
-            <AlertDescription>
-              We&apos;re still setting up affiliate partnerships. In the meantime, check this product
-              directly with your preferred retailer or the manufacturer&apos;s site.
-            </AlertDescription>
-          </Alert>
+        ) : null}
+        {/* No price or store link yet: search the big drugstore retailers for it,
+            so the page is never a dead end (lib/retailer-search). */}
+        {quotes.length === 0 && manualLinks.length === 0 && affiliateLinks.length === 0 && (
+          <div className="space-y-2 rounded-xl border bg-card p-4">
+            <p className="font-medium">Check at a store</p>
+            <div className="flex flex-wrap gap-2">
+              {retailerSearches.map((r) => (
+                <a
+                  key={r.name}
+                  href={r.href}
+                  target="_blank"
+                  rel={r.rel}
+                  className={buttonVariants({ variant: "outline", size: "sm" })}
+                >
+                  {r.name} <ExternalLink className="ml-1 h-3.5 w-3.5" />
+                  <span className="sr-only"> (search, opens in new tab)</span>
+                </a>
+              ))}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {retailerSearches[0]?.wrapped
+                ? "These open a search on each store's site; we may earn a commission. Results can include other sizes or similar products, so check the label."
+                : "These open a search on each store's site. Not affiliate links: we don't earn a commission on them. Results can include other sizes or similar products, so check the label."}
+            </p>
+          </div>
         )}
       </section>
 

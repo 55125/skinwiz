@@ -1,0 +1,1 @@
+CREATE INDEX `product_ingredients_ingredient_product_idx` ON `product_ingredients` (`ingredient_id`,`product_id`,`position`);

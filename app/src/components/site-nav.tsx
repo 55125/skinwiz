@@ -4,34 +4,25 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { ChevronDown, Menu, UserRound, X } from "lucide-react";
+import { SearchBar } from "@/components/search-bar";
 import { cn } from "@/lib/utils";
+import { INGREDIENT_ITEMS, MY_SKIN_ITEMS, isActive, type NavItem } from "@/lib/nav";
 
-const PRIMARY_ITEMS = [
-  { href: "/browse", label: "Browse" },
-  { href: "/ingredients", label: "Ingredients" },
-  { href: "/check", label: "Checker" },
-  { href: "/allergens", label: "Allergens" },
-  { href: "/routines", label: "Routines" },
-];
+// The whole site is four places: what you're treating (Concerns), what's in
+// a product (Ingredients), what others use (Routines), and your own stuff
+// (My skin). Clinician pages sit apart as one small link.
 
-// Personal pages live under one menu so the bar stays short; "For
-// clinicians" and "About" are in the footer (and in the mobile menu).
-const YOU_ITEMS = [
-  { href: "/profile", label: "My skin", hint: "Skin type, concerns, likes" },
-  { href: "/regimen", label: "My regimen", hint: "Your morning and night steps" },
-  { href: "/shelf", label: "My shelf", hint: "What you own, want, finished" },
-  { href: "/avoid", label: "My avoid list", hint: "Ingredients to screen out" },
-];
+type Concern = { id: string; name: string };
 
-const SECONDARY_ITEMS = [
-  { href: "/for-clinicians", label: "For clinicians" },
-  { href: "/clinic-tools", label: "Clinic tools" },
-  { href: "/about", label: "About" },
-];
-
-function isActive(pathname: string, href: string) {
-  return pathname === href || pathname.startsWith(`${href}/`);
+function concernItems(concerns: Concern[]): NavItem[] {
+  return [
+    ...concerns.map((c) => ({ href: `/concern/${c.id}`, label: c.name })),
+    { href: "/browse", label: "All products", hint: "Filter the full catalog", divider: true },
+    { href: "/same", label: "Store-brand equivalents", hint: "Same active, same strength, lower price" },
+  ];
 }
+
+const CONCERN_PREFIXES = ["/concern", "/browse", "/product", "/same"];
 
 function useDismiss(open: boolean, close: () => void, ref: React.RefObject<HTMLElement | null>) {
   useEffect(() => {
@@ -49,11 +40,26 @@ function useDismiss(open: boolean, close: () => void, ref: React.RefObject<HTMLE
   }, [open, close, ref]);
 }
 
-function YouMenu({ pathname }: { pathname: string }) {
+function NavMenu({
+  label,
+  items,
+  active,
+  pathname,
+  columns,
+  icon,
+  align = "left",
+}: {
+  label: string;
+  items: NavItem[];
+  active: boolean;
+  pathname: string;
+  columns?: number;
+  icon?: React.ReactNode;
+  align?: "left" | "right";
+}) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   useDismiss(open, () => setOpen(false), ref);
-  const active = YOU_ITEMS.some((i) => isActive(pathname, i.href));
   return (
     <div ref={ref} className="relative">
       <button
@@ -62,30 +68,41 @@ function YouMenu({ pathname }: { pathname: string }) {
         aria-haspopup="menu"
         onClick={() => setOpen((o) => !o)}
         className={cn(
-          "flex items-center gap-1.5 rounded-full border px-3 py-1.5 transition-colors",
-          active || open ? "border-brand/30 bg-brand-soft text-brand-foreground" : "hover:bg-muted",
+          "flex items-center gap-1.5 rounded-full px-3 py-1.5 transition-colors",
+          active || open
+            ? "bg-brand-soft font-medium text-brand-foreground"
+            : "text-muted-foreground hover:bg-muted hover:text-foreground",
         )}
       >
-        <UserRound className="h-4 w-4" />
-        You
+        {icon}
+        {label}
         <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", open && "rotate-180")} />
       </button>
       {open && (
         <div
           role="menu"
-          className="absolute right-0 top-full z-30 mt-2 w-64 rounded-2xl border bg-popover p-1.5 shadow-xl shadow-foreground/5"
+          className={cn(
+            "absolute top-full z-30 mt-2 rounded-2xl border bg-popover p-1.5 shadow-xl shadow-foreground/5",
+            align === "right" ? "right-0" : "left-0",
+            columns === 2 ? "grid w-[30rem] grid-cols-2 gap-x-1" : "w-72",
+          )}
         >
-          {YOU_ITEMS.map((item) => (
+          {items.map((item) => (
             <Link
               key={item.href}
               href={item.href}
               role="menuitem"
               onClick={() => setOpen(false)}
               aria-current={isActive(pathname, item.href) ? "page" : undefined}
-              className="block rounded-xl px-3 py-2 transition-colors hover:bg-muted aria-[current=page]:bg-brand-soft"
+              className={cn(
+                "block rounded-xl px-3 py-2 transition-colors hover:bg-muted aria-[current=page]:bg-brand-soft",
+                // Rows with a hint (All products...) span the full width under the grid.
+                columns === 2 && item.hint && "col-span-2",
+                item.divider && "mt-1 rounded-t-none border-t pt-2.5",
+              )}
             >
               <span className="block text-sm font-medium">{item.label}</span>
-              <span className="block text-xs text-muted-foreground">{item.hint}</span>
+              {item.hint && <span className="block text-xs text-muted-foreground">{item.hint}</span>}
             </Link>
           ))}
         </div>
@@ -94,23 +111,32 @@ function YouMenu({ pathname }: { pathname: string }) {
   );
 }
 
-function MobileMenu({ pathname }: { pathname: string }) {
+function MobileMenu({ pathname, concerns, showSearch }: { pathname: string; concerns: Concern[]; showSearch: boolean }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   useDismiss(open, () => setOpen(false), ref);
-  const link = (item: { href: string; label: string }) => (
+  // Close on navigation (a search submit or suggestion doesn't pass through our links).
+  const [lastPath, setLastPath] = useState(pathname);
+  if (pathname !== lastPath) {
+    setLastPath(pathname);
+    setOpen(false);
+  }
+  const link = (item: NavItem) => (
     <Link
       key={item.href}
       href={item.href}
       onClick={() => setOpen(false)}
       aria-current={isActive(pathname, item.href) ? "page" : undefined}
-      className="rounded-xl px-3 py-2.5 text-[15px] transition-colors hover:bg-muted aria-[current=page]:bg-brand-soft aria-[current=page]:font-medium aria-[current=page]:text-brand-foreground"
+      className="rounded-xl px-3 py-2 text-[15px] transition-colors hover:bg-muted aria-[current=page]:bg-brand-soft aria-[current=page]:font-medium aria-[current=page]:text-brand-foreground"
     >
       {item.label}
     </Link>
   );
+  const heading = (text: string) => (
+    <p className="mt-4 px-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{text}</p>
+  );
   return (
-    <div ref={ref} className="md:hidden">
+    <div ref={ref} className="lg:hidden">
       <button
         type="button"
         aria-expanded={open}
@@ -121,13 +147,23 @@ function MobileMenu({ pathname }: { pathname: string }) {
         {open ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
       </button>
       {open && (
-        <div className="absolute inset-x-0 top-full z-30 border-b bg-background px-4 pb-5 pt-2 shadow-xl shadow-foreground/5">
+        <div className="absolute inset-x-0 top-full z-30 max-h-[calc(100dvh-4rem)] overflow-y-auto border-b bg-background px-4 pb-6 pt-3 shadow-xl shadow-foreground/5">
+          {showSearch && (
+            <div className="pb-1 md:hidden">
+              <SearchBar compact />
+            </div>
+          )}
           <nav className="flex flex-col">
-            {PRIMARY_ITEMS.map(link)}
-            <p className="mt-3 px-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">You</p>
-            {YOU_ITEMS.map(link)}
-            <div className="mt-3 border-t pt-3" />
-            {SECONDARY_ITEMS.map(link)}
+            {heading("My skin")}
+            <div className="grid grid-cols-2">{MY_SKIN_ITEMS.map(link)}</div>
+            {heading("Concerns")}
+            <div className="grid grid-cols-2">{concernItems(concerns).map(link)}</div>
+            {heading("Ingredients")}
+            <div className="grid grid-cols-2">{INGREDIENT_ITEMS.map(link)}</div>
+            <div className="mt-4 border-t pt-3" />
+            {link({ href: "/routines", label: "Community routines" })}
+            {link({ href: "/for-clinicians", label: "For clinicians" })}
+            {link({ href: "/about", label: "About" })}
           </nav>
         </div>
       )}
@@ -135,34 +171,63 @@ function MobileMenu({ pathname }: { pathname: string }) {
   );
 }
 
-export function SiteNav() {
+export function SiteNav({ concerns }: { concerns: Concern[] }) {
   const pathname = usePathname();
+  // Home and Search already have a big search box of their own.
+  const showSearch = pathname !== "/" && pathname !== "/search";
+  const pill = (href: string, label: string, active: boolean, extra?: string) => (
+    <Link
+      href={href}
+      aria-current={active ? "page" : undefined}
+      className={cn(
+        "shrink-0 rounded-full px-3 py-1.5 transition-colors",
+        active ? "bg-brand-soft font-medium text-brand-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground",
+        extra,
+      )}
+    >
+      {label}
+    </Link>
+  );
   return (
     <>
-      <nav className="hidden items-center gap-1 text-sm md:flex">
-        {PRIMARY_ITEMS.map((item) => {
-          const active = isActive(pathname, item.href);
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              aria-current={active ? "page" : undefined}
-              className={cn(
-                "shrink-0 rounded-full px-3 py-1.5 transition-colors",
-                active
-                  ? "bg-brand-soft font-medium text-brand-foreground"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground",
-              )}
-            >
-              {item.label}
-            </Link>
-          );
-        })}
-        <div className="ml-2">
-          <YouMenu pathname={pathname} />
+      {showSearch && (
+        <div className="hidden min-w-0 max-w-xs flex-1 md:block">
+          <SearchBar compact />
+        </div>
+      )}
+      <nav className="hidden shrink-0 items-center gap-1 text-sm lg:flex">
+        <NavMenu
+          label="Concerns"
+          items={concernItems(concerns)}
+          columns={2}
+          pathname={pathname}
+          active={CONCERN_PREFIXES.some((p) => isActive(pathname, p))}
+        />
+        <NavMenu
+          label="Ingredients"
+          items={INGREDIENT_ITEMS}
+          pathname={pathname}
+          active={[...INGREDIENT_ITEMS.map((i) => i.href), "/ingredient", "/guide"].some((h) => isActive(pathname, h))}
+        />
+        {pill("/routines", "Routines", isActive(pathname, "/routines"))}
+        {pill(
+          "/for-clinicians",
+          "For clinicians",
+          ["/for-clinicians", "/clinic-tools", "/clinicians"].some((h) => isActive(pathname, h)),
+          "text-xs",
+        )}
+        <div className="ml-1">
+          <NavMenu
+            label="My skin"
+            icon={<UserRound className="h-4 w-4" />}
+            items={MY_SKIN_ITEMS}
+            pathname={pathname}
+            align="right"
+            active={[...MY_SKIN_ITEMS.map((i) => i.href), "/account"].some((h) => isActive(pathname, h))}
+          />
         </div>
       </nav>
-      <MobileMenu pathname={pathname} />
+      <MobileMenu pathname={pathname} concerns={concerns} showSearch={showSearch} />
     </>
   );
 }

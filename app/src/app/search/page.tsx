@@ -2,13 +2,18 @@ import Link from "next/link";
 import { SearchBar } from "@/components/search-bar";
 import { ProductGrid } from "@/components/product-grid";
 import { FreeFromFilters } from "@/components/free-from-filters";
+import { OriginChips } from "@/components/origin-chips";
+import { parseOrigin } from "@/lib/origin-shared";
 import { FilterChip } from "@/components/filter-chip";
 import { PageHeader } from "@/components/page-header";
-import { searchProducts, searchProductsCount, searchActives, getConcerns } from "@/lib/queries";
+import { searchOriginCounts, searchProducts, searchProductsCount, searchActives, getConcerns } from "@/lib/queries";
 import { TRUST_TIERS } from "@/lib/trust-tiers";
 import type { Metadata } from "next";
 import { parseFreeParam } from "@/lib/avoid-shared";
 import { AvoidSwitch } from "@/components/avoid-switch";
+import { SearchHints } from "@/components/search-hints";
+import { parseSearch } from "@/lib/search-terms";
+import { SearchBeacon } from "@/components/analytics-beacon";
 
 export async function generateMetadata({
   searchParams,
@@ -25,28 +30,32 @@ export async function generateMetadata({
 export default async function SearchPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; concern?: string; tier?: string; free?: string }>;
+  searchParams: Promise<{ q?: string; concern?: string; tier?: string; free?: string; from?: string }>;
 }) {
-  const { q, concern, tier, free } = await searchParams;
+  const { q, concern, tier, free, from: fromParam } = await searchParams;
   const query = (q ?? "").trim();
   const freeFromIds = parseFreeParam(free);
   const selectedTier = TRUST_TIERS.find((t) => t.label === tier);
   const concerns = getConcerns();
 
-  const searchFilters = { concernId: concern, dataSources: selectedTier?.dataSources, freeFromIds };
+  const origin = parseOrigin(fromParam);
+  const searchFilters = { concernId: concern, dataSources: selectedTier?.dataSources, freeFromIds, origin };
   const activeResults = query ? searchActives(query) : [];
   const productResults = query ? searchProducts(query, searchFilters) : [];
   const productTotal = query ? searchProductsCount(query, searchFilters) : 0;
+  const originCounts = query ? searchOriginCounts(query, searchFilters) : new Map();
+  const hints = query ? parseSearch(query).hints : [];
 
   function hrefWith(overrides: Record<string, string | undefined>) {
     const params = new URLSearchParams();
-    const merged = { q, concern, tier, free, ...overrides };
+    const merged = { q, concern, tier, free, from: origin, ...overrides };
     for (const [k, v] of Object.entries(merged)) if (v) params.set(k, v);
     return `/search?${params.toString()}`;
   }
 
   return (
     <div className="mx-auto max-w-6xl space-y-8 px-4 py-10">
+      {query && <SearchBeacon term={query} results={activeResults.length + productTotal} />}
       <div className="space-y-5">
         <PageHeader
           eyebrow="Search"
@@ -86,12 +95,15 @@ export default async function SearchPage({
               </FilterChip>
             ))}
           </div>
-          <FreeFromFilters basePath="/search" searchParams={{ q, concern, tier, free }} selected={freeFromIds} />
-          <AvoidSwitch basePath="/search" searchParams={{ q, concern, tier }} selected={freeFromIds} />
+          <OriginChips selected={origin} counts={originCounts} hrefFor={(next) => hrefWith({ from: next })} label="From" labelClassName="w-16" />
+          <FreeFromFilters basePath="/search" searchParams={{ q, concern, tier, free, from: origin }} selected={freeFromIds} />
+          <AvoidSwitch basePath="/search" searchParams={{ q, concern, tier, from: origin }} selected={freeFromIds} />
         </div>
       )}
 
-      {query && activeResults.length === 0 && productResults.length === 0 && (
+      <SearchHints hints={hints} />
+
+      {query && activeResults.length === 0 && productResults.length === 0 && hints.length === 0 && (
         <div className="rounded-2xl border border-dashed p-10 text-center text-muted-foreground">
           No results for &quot;{query}&quot;.
         </div>

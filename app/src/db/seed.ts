@@ -1,10 +1,12 @@
 import fs from "node:fs";
+import { createHash } from "node:crypto";
 import path from "node:path";
 import { parse } from "csv-parse/sync";
 import { sql } from "drizzle-orm";
 import { db } from "./client";
 import * as schema from "./schema";
-import { ACTIVE_DEFINITIONS, CONCERN_DEFINITIONS, matchActiveIds, nicheToConcernId } from "./actives";
+import { ACTIVE_DEFINITIONS, ANYWHERE_LISTED_ACTIVE_IDS, CONCERN_DEFINITIONS, matchActiveIds, nicheToConcernId } from "./actives";
+import { ACTIVE_TEXT_OVERRIDES } from "./active-overrides";
 import { computeFreeFromFlags } from "./ingredient-flags";
 import { computeAllergenHits } from "./contact-allergens";
 import { parseStrengths, strengthKey } from "./strength";
@@ -24,8 +26,12 @@ const REPO_ROOT = path.resolve(process.cwd(), "..");
 // (crowd-sourced, unverified), and the brand-direct catalog (scraped from
 // a manufacturer's own product pages — a higher-trust middle tier between
 // the two). Any file may not exist yet if its generating script hasn't
-// been run — handled below.
+// been run — handled below. The hand-picked curated catalog
+// (build_curated_catalog.py) goes first: the first row per id wins, so a
+// curated row also replaces a bad bulk row with the same id.
+const CURATED_CSV = path.join(REPO_ROOT, "tools/catalog_pipeline/output/curated_catalog.csv");
 const CATALOG_CSVS = [
+  CURATED_CSV,
   path.join(REPO_ROOT, "tools/catalog_pipeline/output/acne_sun_catalog.csv"),
   path.join(REPO_ROOT, "tools/catalog_pipeline/output/dailymed_resolved_catalog.csv"),
   path.join(REPO_ROOT, "tools/catalog_pipeline/output/cosmetic_catalog.csv"),
@@ -80,7 +86,7 @@ type CatalogRow = {
   // active_ingredients_structured already holds canonical active ids (from
   // that script's own matching against the full ingredient list) — trust it
   // directly rather than re-deriving via matchActiveIds().
-  source?: "open_beauty_facts" | "brand_direct";
+  source?: "open_beauty_facts" | "brand_direct" | "third_party";
   verified?: "true" | "false";
   // Also only present in those two CSVs. FDA rows get their DailyMed
   // package image linked after insert instead (linkPackageImages below).
@@ -121,7 +127,16 @@ type RxCatalogRow = {
 
 const firstPackage = (descriptions: string | undefined) => descriptions?.split(" | ")[0]?.trim() || null;
 
-const PRE_MATCHED_SOURCES = new Set(["open_beauty_facts", "brand_direct"]);
+const PRE_MATCHED_SOURCES = new Set(["open_beauty_facts", "brand_direct", "third_party"]);
+
+const SUNSCREEN_ACTIVE_IDS = new Set(ACTIVE_DEFINITIONS.filter((a) => a.categories.includes("sunscreen")).map((a) => a.id));
+const ACNE_ACTIVE_IDS = new Set(ACTIVE_DEFINITIONS.filter((a) => a.categories.includes("acne")).map((a) => a.id));
+
+// Homeopathic "drugs" list dilutions (Calendula 1X HPUS, Thuja 6X) as
+// actives. They're kept out of the catalog entirely, whatever else they list.
+function isHomeopathic(marketingCategory: string | undefined, activeText: string): boolean {
+  return /homeopathic/i.test(marketingCategory ?? "") || /\bHPUS\b|\[HP_[XC]\]/i.test(activeText);
+}
 
 type AffiliateRow = {
   network: string;
@@ -172,7 +187,48 @@ function normalizeBrandName(raw: string): string {
     .join(" ");
 }
 
+// Everything the seed reads: the pipeline outputs, the catalog code under
+// src/db and src/lib, the product photos it checks for, and the migration
+// journal. Hashed so a restart or a deploy that changed none of it can skip
+// the ~50s, ~850MB reseed (the app doesn't listen until this finishes).
+const SEED_INPUTS = [
+  path.join(REPO_ROOT, "tools/catalog_pipeline/output"),
+  path.join(REPO_ROOT, "tools/affiliate_feeds"),
+  path.join(process.cwd(), "src/db"),
+  path.join(process.cwd(), "src/lib"),
+  path.join(process.cwd(), "public/product-images"),
+  path.join(process.cwd(), "drizzle/meta/_journal.json"),
+  RX_CATALOG_CSV,
+];
+const SEED_HASH_KEY = "seed_inputs_sha256";
+
+function seedInputsHash(): string {
+  const hash = createHash("sha256");
+  const walk = (p: string) => {
+    if (!fs.existsSync(p)) return;
+    const stat = fs.statSync(p);
+    if (stat.isDirectory()) {
+      for (const name of fs.readdirSync(p).sort()) walk(path.join(p, name));
+      return;
+    }
+    hash.update(path.relative(REPO_ROOT, p)).update("\0").update(fs.readFileSync(p)).update("\0");
+  };
+  for (const p of SEED_INPUTS) walk(p);
+  return hash.digest("hex");
+}
+
+function storedSeedHash(): string | null {
+  const row = db.select().from(schema.jobState).where(sql`${schema.jobState.key} = ${SEED_HASH_KEY}`).get();
+  return row?.value ?? null;
+}
+
 async function main() {
+  const inputsHash = seedInputsHash();
+  const hasCatalog = !!db.get<{ one: number }>(sql`SELECT 1 AS one FROM products LIMIT 1`);
+  if (process.env.FORCE_SEED !== "1" && hasCatalog && storedSeedHash() === inputsHash) {
+    console.log(`Seed inputs unchanged (${inputsHash.slice(0, 12)}); keeping the current catalog. FORCE_SEED=1 reseeds anyway.`);
+    return;
+  }
   console.log(`Seeding ${SITE_NAME} database...`);
 
   // Wipe and regenerate reference/catalog data only, in FK-safe order.
@@ -202,7 +258,14 @@ async function main() {
     // to the previous catalog instead of leaving the volume DB with no
     // products, and concurrent readers keep seeing the old catalog until
     // commit.
-    db.transaction(() => reseed());
+    db.transaction(() => {
+      reseed();
+      const now = new Date().toISOString();
+      db.insert(schema.jobState)
+        .values({ key: SEED_HASH_KEY, value: inputsHash, updatedAt: now })
+        .onConflictDoUpdate({ target: schema.jobState.key, set: { value: inputsHash, updatedAt: now } })
+        .run();
+    });
   } finally {
     db.run(sql`PRAGMA foreign_keys = ON`);
   }
@@ -253,6 +316,8 @@ function reseed() {
 
   let inserted = 0;
   let skippedNoActive = 0;
+  let skippedHomeopathic = 0;
+  let skippedSunscreenNoFilter = 0;
   const productBatch: (typeof schema.products.$inferInsert)[] = [];
   const seenNdc = new Set<string>();
   const memberships: { productId: string; position: number; slug: string; rawName: string; isActive: boolean }[] = [];
@@ -282,32 +347,68 @@ function reseed() {
     for (const row of catalogRows) {
       if (!row.product_ndc || seenNdc.has(row.product_ndc)) continue;
 
-      const activeIds = row.source && PRE_MATCHED_SOURCES.has(row.source)
+      const isPreMatched = row.source && PRE_MATCHED_SOURCES.has(row.source);
+      const override = ACTIVE_TEXT_OVERRIDES[row.product_ndc];
+      if (override && !isPreMatched) {
+        row.active_ingredients_structured = override;
+        row.active_ingredient_text = override;
+      }
+      if (
+        !isPreMatched &&
+        isHomeopathic(packageInfo.get(row.product_ndc)?.marketing_category || row.marketing_category, `${row.substance_name} ${row.active_ingredient_text}`)
+      ) {
+        skippedHomeopathic++;
+        continue;
+      }
+      // Drug rows: the label's own inactive text, else the SPL XML's list
+      // (spl-inactive.ts). Neither = unknown, not "clean".
+      const inactive = isPreMatched ? null : drugInactiveList(row.inactive_ingredient_text, splInactive.get(row.product_ndc));
+      // Cosmetic sources: the single INCI list, in order.
+      const cosmeticList = isPreMatched ? parseIngredients(row.active_ingredient_text) : null;
+      const labeledActiveIds = isPreMatched
         ? (row.active_ingredients_structured ?? "").split(";").filter(Boolean)
         : matchActiveIds([row.active_ingredients_structured, row.substance_name, row.active_ingredient_text].join(" "));
+      // UV filters count wherever they're listed (actives.ts
+      // countsAnywhereListed): bemotrizinol in a label's "inactive" list or a
+      // cosmetic INCI list is still doing a sunscreen active's job.
+      const listedFilters = (cosmeticList ?? inactive?.parsed ?? [])
+        .map((ing) => canonicalSlug(ing.slug))
+        .filter((slug) => ANYWHERE_LISTED_ACTIVE_IDS.has(slug) && !labeledActiveIds.includes(slug));
+      const activeIds = [...labeledActiveIds, ...new Set(listedFilters)];
 
-      if (activeIds.length === 0) {
+      // Curated rows were each reviewed by hand, so one with no tracked
+      // active (a hydrocolloid patch, a plain lotion) still lists.
+      if (activeIds.length === 0 && csvPath !== CURATED_CSV) {
         skippedNoActive++;
         continue;
       }
+      // A "sunscreen" label with no UV filter among its actives doesn't
+      // protect from UV. One with an acne active (a salicylic acid pad the
+      // openFDA sunscreen query also returned) is an acne product; anything
+      // else (only plant extracts, oils, centella) is left out.
+      if (!isPreMatched && row.niche === "sunscreen" && !activeIds.some((id) => SUNSCREEN_ACTIVE_IDS.has(id))) {
+        if (activeIds.some((id) => ACNE_ACTIVE_IDS.has(id))) {
+          row.niche = "acne";
+        } else {
+          skippedSunscreenNoFilter++;
+          continue;
+        }
+      }
       seenNdc.add(row.product_ndc);
       const trimmedBrandName = row.brand_name?.trim() || "(unnamed product)";
-      // Only openfda/dailymed rows get normalized -- brand_direct/OBF brand
-      // names are already human-written product names, not SPL label text.
-      const isPreMatched = row.source && PRE_MATCHED_SOURCES.has(row.source);
       // The full ingredient list for free-from-flag purposes -- NOT the
       // same text as activeIngredientText above, which for openfda/dailymed
       // is deliberately just the active-ingredient line for display. Using
       // that alone here would wrongly mark almost everything "paraben-free"
       // etc. just because an active-ingredient line never mentions parabens.
-      // Drug rows: the label's own inactive text, else the SPL XML's list
-      // (spl-inactive.ts). Neither = unknown, not "clean".
-      const inactive = isPreMatched ? null : drugInactiveList(row.inactive_ingredient_text, splInactive.get(row.product_ndc));
       if (inactive) inactiveSources[inactive.source ?? "none"] = (inactiveSources[inactive.source ?? "none"] ?? 0) + 1;
       const fullIngredientText = isPreMatched
         ? row.active_ingredient_text || null
         : inactive?.text
-          ? `${row.active_ingredient_text || ""} ${inactive.text}`
+          ? // Both active columns: the label-text one is sometimes garbled
+            // ("Active i ngredient") or empty, and a hydrocortisone cream
+            // must never read as clear of hydrocortisone.
+            `${row.active_ingredients_structured || ""} ${row.active_ingredient_text || ""} ${inactive.text}`
           : null;
       // Cosmetic sources never disclose concentrations, so only the FDA
       // label line is parsed -- see db/strength.ts.
@@ -318,8 +419,8 @@ function reseed() {
       // Drug labels: the tracked actives (position 0) plus the SPL's own
       // inactive list. Cosmetic sources: the single INCI list, in order.
       if (isPreMatched) {
-        parseIngredients(row.active_ingredient_text).forEach((ing, i) =>
-          memberships.push({ productId: row.product_ndc, position: i + 1, slug: ing.slug, rawName: ing.raw, isActive: activeIdSet.has(ing.slug) }),
+        cosmeticList!.forEach((ing, i) =>
+          memberships.push({ productId: row.product_ndc, position: i + 1, slug: ing.slug, rawName: ing.raw, isActive: activeIdSet.has(canonicalSlug(ing.slug)) }),
         );
       } else {
         const listed = new Set<string>();
@@ -330,12 +431,14 @@ function reseed() {
           memberships.push({ productId: row.product_ndc, position: -i, slug: id, rawName: id, isActive: true });
         });
         inactive!.parsed.forEach((ing, i) => {
-          if (!listed.has(ing.slug)) memberships.push({ productId: row.product_ndc, position: i + 1, slug: ing.slug, rawName: ing.raw, isActive: false });
+          if (!listed.has(canonicalSlug(ing.slug))) memberships.push({ productId: row.product_ndc, position: i + 1, slug: ing.slug, rawName: ing.raw, isActive: false });
         });
       }
       productBatch.push({
         id: row.product_ndc,
         concernId: nicheToConcernId(row.niche),
+        // Only openfda/dailymed rows get normalized -- brand_direct/OBF brand
+        // names are already human-written product names, not SPL label text.
         brandName: isPreMatched ? trimmedBrandName : normalizeBrandName(trimmedBrandName),
         manufacturer: row.manufacturer_name || null,
         dosageForm: row.dosage_form || null,
@@ -378,6 +481,7 @@ function reseed() {
     inserted += Math.min(BATCH_SIZE, productBatch.length - i);
   }
   console.log(`  inserted ${inserted} products, skipped ${skippedNoActive} with no recognized active ingredient`);
+  console.log(`  skipped ${skippedHomeopathic} homeopathic and ${skippedSunscreenNoFilter} "sunscreens" with no UV filter`);
   console.log(`  drug inactive lists by source: ${JSON.stringify(inactiveSources)}`);
 
   insertIngredients(memberships, duplicateIds);

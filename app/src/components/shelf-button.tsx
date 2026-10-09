@@ -7,7 +7,22 @@ import { cn } from "@/lib/utils";
 
 type Status = "own" | "want" | "empty" | null;
 
-export function ShelfButton({ productId, initialStatus, initialOpened }: { productId: string; initialStatus: Status; initialOpened: boolean }) {
+// While a product is in the visitor's regimen it is, by definition, owned
+// and in use (the regimen API puts it on the shelf that way), so the shelf
+// status is shown but can't be changed until it leaves the regimen. Before,
+// un-ticking "I own this" took it off the shelf while it stayed in the
+// regimen.
+export function ShelfButton({
+  productId,
+  initialStatus,
+  initialOpened,
+  inRegimen = false,
+}: {
+  productId: string;
+  initialStatus: Status;
+  initialOpened: boolean;
+  inRegimen?: boolean;
+}) {
   const router = useRouter();
   const [status, setStatus] = useState<Status>(initialStatus);
   const [opened, setOpened] = useState(initialOpened);
@@ -47,7 +62,7 @@ export function ShelfButton({ productId, initialStatus, initialOpened }: { produ
             <button
               key={o.id}
               type="button"
-              disabled={pending}
+              disabled={pending || inRegimen}
               aria-pressed={on}
               onClick={() => save(on ? null : o.id, o.id === "own" ? opened : false)}
               className={cn(
@@ -62,7 +77,7 @@ export function ShelfButton({ productId, initialStatus, initialOpened }: { produ
         {status === "own" && (
           <button
             type="button"
-            disabled={pending}
+            disabled={pending || inRegimen}
             aria-pressed={opened}
             onClick={() => save("own", !opened)}
             className={cn(
@@ -74,6 +89,9 @@ export function ShelfButton({ productId, initialStatus, initialOpened }: { produ
           </button>
         )}
       </div>
+      {inRegimen && (
+        <p className="text-xs text-muted-foreground">In your regimen, so it&apos;s on your shelf as in use. Remove it from the regimen to change this.</p>
+      )}
       {error && <p className="text-xs text-red-600">{error}</p>}
     </div>
   );

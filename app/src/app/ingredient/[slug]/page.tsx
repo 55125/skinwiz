@@ -20,9 +20,19 @@ import {
   getIngredientTopBrands,
   getProductsForIngredient,
 } from "@/lib/queries";
+import { ttlCache } from "@/lib/ttl-cache";
+
+// Catalog-wide aggregates over every product that lists the ingredient: ~150ms
+// together for common ones (water, glycerin), unchanged until the next reseed.
+const statsCached = ttlCache(getIngredientStats);
+const concernCountsCached = ttlCache(getIngredientConcernCounts);
+const productsCached = ttlCache(getProductsForIngredient);
+const topBrandsCached = ttlCache(getIngredientTopBrands);
+const ewgCached = ttlCache(getIngredientEwgSummary);
 import { checksFailedByIngredient } from "@/db/ingredient-flags";
 import { allergenMembers, allergensInIngredient, getAllergen, groupsContaining, type ContactAllergen } from "@/db/contact-allergens";
 import { MONOGRAPH_RANGES, formatRange } from "@/db/monograph-ranges";
+import { RETINOIDS } from "@/lib/retinoids";
 import { formatPct } from "@/db/strength";
 import { readAvoidIds } from "@/lib/avoid";
 import { readProfile } from "@/lib/profile";
@@ -90,13 +100,13 @@ export default async function IngredientPage({
   const monograph = MONOGRAPH_RANGES[id];
   const strength = active ? getActiveStrengthStats(id) : null;
 
-  const stats = getIngredientStats(id);
-  const concernCounts = getIngredientConcernCounts(id);
+  const stats = statsCached(id);
+  const concernCounts = concernCountsCached(id);
   const selectedConcern = concernCounts.find((c) => c.concernId === concern);
-  const { rows, total, pageSize } = getProductsForIngredient(id, page, selectedConcern?.concernId);
+  const { rows, total, pageSize } = productsCached(id, page, selectedConcern?.concernId);
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
-  const brands = getIngredientTopBrands(id);
-  const ewg = getIngredientEwgSummary(id);
+  const brands = topBrandsCached(id);
+  const ewg = ewgCached(id);
 
   const failedChecks = checksFailedByIngredient([ingredient.name, ...ingredient.aliases]);
   const avoidIds = await readAvoidIds();
@@ -197,6 +207,14 @@ export default async function IngredientPage({
           {active ? (
             <section className="space-y-4 rounded-2xl border bg-card p-5 sm:p-6">
               <h2 className="text-lg font-semibold">What we know about {active.canonicalName}</h2>
+              {RETINOIDS.includes(active.id) && (
+                <p className="rounded-xl border bg-muted/40 p-3 text-sm">
+                  Also using a prescription retinoid such as tretinoin?{" "}
+                  <Link href="/guide/prescription-retinoids" className="font-medium text-brand hover:underline">
+                    What usually pairs well with one, and what to space out
+                  </Link>
+                </p>
+              )}
               <div className="flex flex-wrap gap-2">
                 {active.categories.map((cat) => {
                   const match = notes.find((n) => n.concernId.includes(cat) || n.concernName.toLowerCase().includes(cat.split("-")[0]));

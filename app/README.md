@@ -160,6 +160,7 @@ Schedule it hourly — not set up yet. Either:
 | --- | --- | --- |
 | `APP_SECRET` | production | 32+ random chars; signs check-in and unsubscribe links (`openssl rand -base64 48`). Rotating it invalidates links in emails already sent. |
 | `CRON_SECRET` | for the job | 24+ random chars; bearer token for `/api/cron/run`. |
+| `ADMIN_PASSWORD` | for /admin | Password for the unlinked owner dashboard at `/admin` (8+ chars; a long passphrase is better). Unset in production = `/admin` is a 404. Changing it, or `APP_SECRET`, signs the admin out. Locally it falls back to `dev-admin`. |
 | `RESEND_API_KEY` | to send real email | Without it, email is logged to the console. |
 | `EMAIL_FROM` | with Resend | e.g. `Actively <hello@mail.activelyskin.com>`; must be on a domain verified in Resend. |
 | `EMAIL_REPLY_TO` | no | Where replies go (e.g. the legal inbox). |

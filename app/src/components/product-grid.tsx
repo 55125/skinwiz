@@ -21,7 +21,7 @@ export async function ProductGrid({
   const avoidIds = await readAvoidIds();
   const profile = await readProfile();
   const avoidLabels = avoidLabelsFor(avoidIds);
-  const personalized = avoidLabels.length > 0 || profile.skin || profile.concerns.length + profile.likes.length + profile.dislikes.length > 0;
+  const personalized = avoidLabels.length > 0 || profile.skin || profile.sensitive || profile.concerns.length + profile.likes.length + profile.dislikes.length > 0;
   const membership = personalized ? getIngredientMembership(rows.map((p) => p.id)) : null;
   return (
     <div className={cn("grid gap-5", columns ?? "sm:grid-cols-2 lg:grid-cols-3")}>

@@ -22,9 +22,15 @@ import { hsaEligibleIdsJson } from "@/lib/otc-index";
 import { displayablePrice, parsePackageDescription, unitPrice } from "@/lib/equivalence";
 import { getDisplayQuotesFor } from "@/lib/prices/store";
 import { compareLivePrices, type LivePrice } from "@/lib/prices/unit";
+import { parseSearch, type SearchTerm } from "@/lib/search-terms";
+import { ECZEMA_CONCERN, ECZEMA_EXCLUDED_ACTIVES } from "@/lib/listing-rules";
+import { concernExcludedIdsJson, concernTierJson, duplicateIdsJson, poorTitleIdsJson } from "@/lib/listing-rules-index";
+import { POTENT_RETINOIDS } from "@/lib/retinoids";
 import { RX_CONCERN_ID } from "@/db/rx";
 import { isDailymedImageUrl } from "@/lib/image-urls";
 import { LISTED, inProductGroup } from "@/lib/canonical";
+import { originIdsJson } from "@/lib/origin";
+import { ORIGINS, type OriginId } from "@/lib/origin-shared";
 
 // Prescription rows (products.isRx) are reference/handout data and must never
 // reach a consumer listing, search, count, score, equivalence list or the
@@ -137,11 +143,53 @@ export function getConcern(id: string) {
 
 export function getActivesForConcern(concernId: string) {
   const niche = concernIdToNiche(concernId);
-  return db
+  const rows = db
     .select()
     .from(actives)
     .where(jsonArrayContains(actives.categories, niche))
     .all();
+  // Actives the concern page doesn't list products for (lib/listing-rules.ts)
+  // get no filter chip either.
+  return concernId === ECZEMA_CONCERN ? rows.filter((a) => !ECZEMA_EXCLUDED_ACTIVES.includes(a.id)) : rows;
+}
+
+// Concern pages only: products lib/listing-rules.ts keeps off them, and its
+// tier order (dedicated SPF 30+ sunscreens first, diaper products after
+// general eczema care), then catalog order.
+function concernListingClause(): SQL {
+  return sql`${products.id} NOT IN (SELECT value FROM json_each(${concernExcludedIdsJson()}))`;
+}
+// Every listing and search: one row per product (lib/listing-rules.ts
+// duplicateKey), and junk or non-English community titles last.
+// The header's region pick (lib/origin.ts): only that region's brands.
+function originClause(origin: OriginId): SQL {
+  return sql`${products.id} IN (SELECT value FROM json_each(${originIdsJson(origin)}))`;
+}
+
+// How many rows under `where` come from each region: one scan, for the
+// counts on the "Brand from" chips.
+function countByOrigin(where: SQL | undefined): Map<OriginId, number> {
+  const row = db
+    .select(
+      Object.fromEntries(
+        ORIGINS.map((o) => [o.id, sql<number>`coalesce(sum(CASE WHEN ${originClause(o.id)} THEN 1 ELSE 0 END), 0)`]),
+      ) as Record<OriginId, SQL<number>>,
+    )
+    .from(products)
+    .where(where)
+    .get();
+  return new Map(ORIGINS.map((o) => [o.id, Number(row?.[o.id] ?? 0)]));
+}
+
+function notDuplicate(): SQL {
+  return sql`${products.id} NOT IN (SELECT value FROM json_each(${duplicateIdsJson()}))`;
+}
+function poorTitleLast(): SQL {
+  return sql`CASE WHEN ${products.id} IN (SELECT value FROM json_each(${poorTitleIdsJson()})) THEN 1 ELSE 0 END`;
+}
+function concernTierOrder(): SQL {
+  const [tier1, tier2] = concernTierJson();
+  return sql`CASE WHEN ${products.id} IN (SELECT value FROM json_each(${tier2})) THEN 2 WHEN ${products.id} IN (SELECT value FROM json_each(${tier1})) THEN 1 ELSE 0 END`;
 }
 
 const PAGE_SIZE = 24;
@@ -159,17 +207,27 @@ export function getProductsForConcern(
   freeFromIds: string[] = [],
   strengthPct?: number,
   excludeIngredientIds?: string[],
+  origin?: OriginId,
 ) {
   const offset = (page - 1) * PAGE_SIZE;
-  const clauses = [LISTED_OTC, eq(products.concernId, concernId), ...freeFromWhereClauses(freeFromIds)];
+  const clauses = [LISTED_OTC, eq(products.concernId, concernId), concernListingClause(), notDuplicate(), ...freeFromWhereClauses(freeFromIds)];
   if (excludeIngredientIds) clauses.push(excludesIngredientsClause(excludeIngredientIds));
+  if (origin) clauses.push(originClause(origin));
   if (activeId) {
     clauses.push(jsonArrayContains(products.activeIds, activeId));
     if (strengthPct !== undefined) clauses.push(sql`${strengthExpr(activeId)} = ${strengthPct}`);
   }
   const whereClause = and(...clauses);
 
-  const rows = db.select().from(products).where(whereClause).limit(PAGE_SIZE).offset(offset).all();
+  const rows = db.select().from(products).where(whereClause).orderBy(
+        concernTierOrder(),
+        poorTitleLast(),
+        // FDA-listed OTC drugs (the actives a concern page is built on) before
+        // cosmetics matched on an ingredient, then listings with a photo.
+        sql`CASE WHEN ${products.dataSource} IN ('openfda', 'dailymed') THEN 0 ELSE 1 END`,
+        sql`${products.imageUrl} IS NULL`,
+        sql`${products}.rowid`,
+      ).limit(PAGE_SIZE).offset(offset).all();
   const [{ count }] = db.select({ count: sql<number>`count(*)` }).from(products).where(whereClause).all();
 
   return { rows, total: count, pageSize: PAGE_SIZE, page };
@@ -185,18 +243,32 @@ export type BrowseFilters = {
   freeFromIds?: string[];
   hsaOnly?: boolean;
   excludeIngredientIds?: string[];
+  /** With activeId: only this label strength (concern pages). */
+  strengthPct?: number;
+  /** A concern page's listing: applies lib/listing-rules.ts exclusions. */
+  concernListing?: boolean;
+  /** The header's region pick: only brands from there. */
+  origin?: OriginId;
 };
 
 export function browseWhere(filters: BrowseFilters): SQL | undefined {
-  const clauses = [LISTED_OTC, ...freeFromWhereClauses(filters.freeFromIds ?? [])];
+  const clauses = [LISTED_OTC, notDuplicate(), ...freeFromWhereClauses(filters.freeFromIds ?? [])];
   if (filters.excludeIngredientIds) clauses.push(excludesIngredientsClause(filters.excludeIngredientIds));
   if (filters.concernId) clauses.push(eq(products.concernId, filters.concernId));
   if (filters.dataSources && filters.dataSources.length > 0) clauses.push(inArray(products.dataSource, filters.dataSources));
   if (filters.activeId) clauses.push(jsonArrayContains(products.activeIds, filters.activeId));
+  if (filters.concernListing) clauses.push(concernListingClause());
+  if (filters.origin) clauses.push(originClause(filters.origin));
+  if (filters.activeId && filters.strengthPct !== undefined) clauses.push(sql`${strengthExpr(filters.activeId)} = ${filters.strengthPct}`);
   // The eligible set is computed in lib/otc-index.ts (label-text rules for
   // sunscreens), bound here as one JSON array parameter.
   if (filters.hsaOnly) clauses.push(sql`${products.id} IN (SELECT value FROM json_each(${hsaEligibleIdsJson()}))`);
   return clauses.length > 0 ? and(...clauses) : undefined;
+}
+
+/** Each region's count under every other filter, for the "Brand from" chips. */
+export function browseOriginCounts(filters: BrowseFilters): Map<OriginId, number> {
+  return countByOrigin(browseWhere({ ...filters, origin: undefined }));
 }
 
 export function browseProducts(filters: BrowseFilters, page: number, sort?: "name") {
@@ -204,7 +276,7 @@ export function browseProducts(filters: BrowseFilters, page: number, sort?: "nam
   const whereClause = browseWhere(filters);
 
   const q = db.select().from(products).where(whereClause);
-  const rows = (sort === "name" ? q.orderBy(products.brandName) : q).limit(PAGE_SIZE).offset(offset).all();
+  const rows = (sort === "name" ? q.orderBy(products.brandName) : q.orderBy(poorTitleLast(), sql`${products}.rowid`)).limit(PAGE_SIZE).offset(offset).all();
   const [{ count }] = db.select({ count: sql<number>`count(*)` }).from(products).where(whereClause).all();
 
   return { rows, total: count, pageSize: PAGE_SIZE, page };
@@ -214,11 +286,28 @@ export function browseProducts(filters: BrowseFilters, page: number, sort?: "nam
 // assessed (full-ingredient-list) product in the filtered set, then pages
 // the sorted result. Unassessed products have no score and are left out --
 // the caller says so rather than ranking them as if they were middling.
+// Scoring the whole set takes ~0.5-1s of blocking CPU on the full catalog, so
+// with a cacheKey (everything the score depends on) the ranked ids are kept
+// for 10 minutes: the next pages and repeat visits only fetch their 24 rows.
+const rankedIdsCache = new Map<string, { at: number; ids: string[] }>();
+const RANKED_TTL_MS = 10 * 60_000;
+const RANKED_MAX = 100;
+
 export function browseProductsByMatch(
   filters: BrowseFilters,
   page: number,
   score: (rows: (typeof products.$inferSelect)[]) => Map<string, number>,
+  cacheKey?: string,
 ) {
+  const hit = cacheKey ? rankedIdsCache.get(cacheKey) : undefined;
+  if (hit && Date.now() - hit.at < RANKED_TTL_MS) {
+    const pageIds = hit.ids.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+    const byId = new Map(
+      (pageIds.length ? db.select().from(products).where(inArray(products.id, pageIds)).all() : []).map((r) => [r.id, r]),
+    );
+    const rows = pageIds.flatMap((id) => byId.get(id) ?? []);
+    return { rows, total: hit.ids.length, pageSize: PAGE_SIZE, page };
+  }
   const base = browseWhere(filters);
   const whereClause = base ? and(base, sql`${products.freeFromFlags} IS NOT NULL`) : sql`${products.freeFromFlags} IS NOT NULL`;
   const all = db.select().from(products).where(whereClause).limit(20000).all();
@@ -226,6 +315,10 @@ export function browseProductsByMatch(
   const ranked = all
     .filter((p) => scores.has(p.id))
     .sort((a, b) => scores.get(b.id)! - scores.get(a.id)! || a.brandName.localeCompare(b.brandName));
+  if (cacheKey) {
+    if (rankedIdsCache.size >= RANKED_MAX) rankedIdsCache.clear();
+    rankedIdsCache.set(cacheKey, { at: Date.now(), ids: ranked.map((p) => p.id) });
+  }
   return { rows: ranked.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE), total: ranked.length, pageSize: PAGE_SIZE, page };
 }
 
@@ -395,12 +488,20 @@ export function getPackageDescriptions(ids: string[]): Map<string, string> {
 // (business-plan.md §3). The seed never inserts one; this is the second lock.
 // Covers the product's merged duplicates too (lib/canonical.ts): a buy link
 // recorded against any listing of the product belongs on its one page.
+// Live rows only. Demo rows (schema.ts affiliateLinks) carry made-up prices
+// and placeholder URLs that 404 at the network, so they never reach a page.
 export function getAffiliateLinksForProduct(productId: string) {
   return dedupeBy(
     db
       .select()
       .from(affiliateLinks)
-      .where(and(inProductGroup(affiliateLinks.productId, productId), sql`${affiliateLinks.productId} IN (SELECT id FROM products WHERE is_rx = 0)`))
+      .where(
+        and(
+          inProductGroup(affiliateLinks.productId, productId),
+          eq(affiliateLinks.isDemo, false),
+          sql`${affiliateLinks.productId} IN (SELECT id FROM products WHERE is_rx = 0)`,
+        ),
+      )
       .orderBy(affiliateLinks.id)
       .all(),
     (l) => l.buyUrl,
@@ -423,7 +524,13 @@ export function getAffiliateLinksForProducts(productIds: string[]) {
   return db
     .select()
     .from(affiliateLinks)
-    .where(and(inArray(affiliateLinks.productId, productIds), sql`${affiliateLinks.productId} IN (SELECT id FROM products WHERE is_rx = 0)`))
+    .where(
+      and(
+        inArray(affiliateLinks.productId, productIds),
+        eq(affiliateLinks.isDemo, false),
+        sql`${affiliateLinks.productId} IN (SELECT id FROM products WHERE is_rx = 0)`,
+      ),
+    )
     .all();
 }
 
@@ -456,31 +563,92 @@ export function getVideoLinksForProduct(productId: string) {
 // order of magnitude or search feels slow in practice.
 const SEARCH_LIMIT = 40;
 
-function buildSearchWhere(q: string, filters: { concernId?: string; dataSources?: string[]; freeFromIds?: string[] }) {
-  const needle = likeContains(q);
-  // Also matches activeIngredientText (the raw FDA/manufacturer ingredient
-  // list) -- without this, searching "niacinamide" found the active-
-  // ingredient badge but zero products, since most product names don't
-  // literally contain the ingredient name. Caught by testing the search
-  // page with a real ingredient query before considering this done.
+type SearchFilters = { concernId?: string; dataSources?: string[]; freeFromIds?: string[]; origin?: OriginId };
+
+// One parsed word (lib/search-terms.ts) against one column: any alternative,
+// as a substring or, for short words, at the start of a word.
+function termMatches(col: SQLWrapper, term: SearchTerm): SQL {
+  const ors = term.alts.flatMap((alt) => {
+    const esc = alt.replace(/[\\%_]/g, (c) => `\\${c}`);
+    if (!term.wordStart) return [sql`${col} LIKE ${`%${esc}%`} ESCAPE '\\'`];
+    return [`${esc}%`, `% ${esc}%`, `%-${esc}%`, `%(${esc}%`, `%,${esc}%`, `%/${esc}%`].map((p) => sql`${col} LIKE ${p} ESCAPE '\\'`);
+  });
+  return sql`(${sql.join(ors, sql` OR `)})`;
+}
+
+const SEARCH_COLUMNS = [products.brandName, products.manufacturer, products.activeIngredientText];
+
+function buildSearchWhere(terms: SearchTerm[], filters: SearchFilters) {
+  // Every word has to match somewhere: the product name, the brand, or the
+  // raw ingredient text (so "niacinamide" finds products that contain it).
   const clauses = [
     LISTED_OTC,
-    sql`(${products.brandName} LIKE ${needle} ESCAPE '\\' OR ${products.manufacturer} LIKE ${needle} ESCAPE '\\' OR ${products.activeIngredientText} LIKE ${needle} ESCAPE '\\')`,
+    notDuplicate(),
+    ...(terms.length ? terms.map((t) => sql`(${sql.join(SEARCH_COLUMNS.map((c) => termMatches(c, t)), sql` OR `)})`) : [sql`0`]),
     ...freeFromWhereClauses(filters.freeFromIds ?? []),
   ];
   if (filters.concernId) clauses.push(eq(products.concernId, filters.concernId));
   if (filters.dataSources && filters.dataSources.length > 0) clauses.push(inArray(products.dataSource, filters.dataSources));
+  if (filters.origin) clauses.push(originClause(filters.origin));
   return and(...clauses);
 }
 
-export function searchProducts(
-  q: string,
-  filters: { concernId?: string; dataSources?: string[]; freeFromIds?: string[] } = {},
-) {
+// Ingredient ids a word names ("retinol" -> retinol-cosmetic), so results
+// that really contain it rank above ones that only mention it in their name
+// (retinol-branded acne patches whose active is salicylic acid).
+function ingredientIdsFor(term: SearchTerm): string[] {
+  if (term.wordStart) return [];
+  return db
+    .select({ id: ingredients.id })
+    .from(ingredients)
+    .where(and(termMatches(ingredients.name, term), sql`${ingredients.productCount} >= ${MIN_PUBLIC_PRODUCTS}`))
+    .limit(40)
+    .all()
+    .map((r) => r.id);
+}
+
+function searchOrder(terms: SearchTerm[]): SQL[] {
+  // A whole-word hit in the name or brand beats a substring ("the ordinary"
+  // is The Ordinary, not "Extraordinary Oils").
+  const inName = terms.flatMap((t) => {
+    const word = { ...t, wordStart: true };
+    return [
+      sql`CASE WHEN ${termMatches(products.brandName, word)} THEN 2 WHEN ${termMatches(products.brandName, t)} THEN 1 ELSE 0 END`,
+      sql`CASE WHEN ${termMatches(products.manufacturer, word)} THEN 2 ELSE 0 END`,
+    ];
+  });
+  const contains = terms.flatMap((t) => {
+    const ids = ingredientIdsFor(t);
+    if (!ids.length) return [];
+    return [
+      sql`CASE WHEN EXISTS (SELECT 1 FROM product_ingredients pi WHERE pi.product_id = ${products.id} AND (pi.position <= 15 OR pi.is_active = 1 OR pi.ingredient_id IN ${RETINOID_IDS_SQL}) AND pi.ingredient_id IN (${sql.join(
+        ids.map((id) => sql`${id}`),
+        sql`, `,
+      )})) THEN 3 ELSE 0 END`,
+    ];
+  });
+  const relevance = [...inName, ...contains];
+  return [
+    poorTitleLast(),
+    ...(relevance.length ? [sql`(${sql.join(relevance, sql` + `)}) DESC`] : []),
+    sql`CASE ${products.dataSource} WHEN 'brand_direct' THEN 0 WHEN 'openfda' THEN 1 WHEN 'dailymed' THEN 2 ELSE 3 END`,
+    sql`LENGTH(${products.brandName})`,
+  ];
+}
+
+const RETINOID_IDS_SQL = sql`(${sql.join(
+  POTENT_RETINOIDS.map((id) => sql`${id}`),
+  sql`, `,
+)})`;
+
+export function searchProducts(q: string, filters: SearchFilters = {}) {
+  const { terms } = parseSearch(q);
+  if (!terms.length) return [];
   return db
     .select()
     .from(products)
-    .where(buildSearchWhere(q, filters))
+    .where(buildSearchWhere(terms, filters))
+    .orderBy(...searchOrder(terms))
     .limit(SEARCH_LIMIT)
     .all();
 }
@@ -491,16 +659,21 @@ export function searchProducts(
 // "40" whether 40 or 4,000 products match). Real bug: the search page
 // never had this, so a filter chip visibly doing nothing to the count made
 // filtering look broken even when the underlying query was correct.
-export function searchProductsCount(
-  q: string,
-  filters: { concernId?: string; dataSources?: string[]; freeFromIds?: string[] } = {},
-) {
+export function searchProductsCount(q: string, filters: SearchFilters = {}) {
+  const { terms } = parseSearch(q);
+  if (!terms.length) return 0;
   const [{ count }] = db
     .select({ count: sql<number>`count(*)` })
     .from(products)
-    .where(buildSearchWhere(q, filters))
+    .where(buildSearchWhere(terms, filters))
     .all();
   return count;
+}
+
+export function searchOriginCounts(q: string, filters: SearchFilters = {}): Map<OriginId, number> {
+  const { terms } = parseSearch(q);
+  if (!terms.length) return new Map();
+  return countByOrigin(buildSearchWhere(terms, { ...filters, origin: undefined }));
 }
 
 export function searchActives(q: string) {
@@ -527,7 +700,7 @@ export function suggestProducts(q: string, limit = 6) {
       dataSource: products.dataSource,
     })
     .from(products)
-    .where(and(LISTED_OTC, sql`(${products.brandName} LIKE ${needle} ESCAPE '\\' OR ${products.manufacturer} LIKE ${needle} ESCAPE '\\')`))
+    .where(and(LISTED_OTC, notDuplicate(), sql`(${products.brandName} LIKE ${needle} ESCAPE '\\' OR ${products.manufacturer} LIKE ${needle} ESCAPE '\\')`))
     .orderBy(
       sql`CASE WHEN ${products.brandName} LIKE ${prefix} ESCAPE '\\' THEN 0 WHEN ${products.manufacturer} LIKE ${prefix} ESCAPE '\\' THEN 1 ELSE 2 END`,
       sql`CASE ${products.dataSource} WHEN 'brand_direct' THEN 0 WHEN 'openfda' THEN 1 WHEN 'dailymed' THEN 2 ELSE 3 END`,
@@ -570,11 +743,30 @@ export function suggestIngredients(q: string, limit = 4) {
 // does NOT claim to be a quality ranking. The UI must caption it honestly.
 // RANDOM() within each tier gives a rotating showcase rather than the same
 // 8 products forever, cheap enough at this catalog size.
+// A showcase is a first impression, so it sticks to face and body skincare
+// with a full ingredient list, a picture and a clean title: no shampoos,
+// lip balms, "[Subscription]" listings, kits or overlong retail titles.
+const SHOWCASE_SKIP = [
+  "[", "_", "subscription", "shampoo", "conditioner", "lip ", "lip balm", "lipstick", "kit", "bundle", "sample", "travel size", "set of",
+  "refill", "essentials", "gift", " duo", " trio", "mini ",
+];
+
 export function getTopProducts(limit = 8) {
   return db
     .select()
     .from(products)
-    .where(LISTED_OTC)
+    .where(
+      and(
+        LISTED_OTC,
+        notDuplicate(),
+        sql`${products.id} NOT IN (SELECT value FROM json_each(${poorTitleIdsJson()}))`,
+        sql`${products.freeFromFlags} IS NOT NULL`,
+        sql`${products.imageUrl} IS NOT NULL`,
+        sql`LENGTH(${products.brandName}) <= 60`,
+        sql`${products.concernId} NOT IN ('dandruff-seb-derm', 'excessive-sweating', 'antifungal')`,
+        ...SHOWCASE_SKIP.map((w) => sql`LOWER(${products.brandName}) NOT LIKE ${`%${w.replace(/[\\%_]/g, (c) => `\\${c}`)}%`} ESCAPE '\\'`),
+      ),
+    )
     .orderBy(
       sql`CASE ${products.dataSource} WHEN 'brand_direct' THEN 0 WHEN 'openfda' THEN 1 WHEN 'dailymed' THEN 2 ELSE 3 END`,
       sql`RANDOM()`,
@@ -685,9 +877,9 @@ export function getIngredientStats(id: string) {
       COUNT(*) AS products,
       COUNT(DISTINCT LOWER(COALESCE(p.manufacturer, ''))) AS brands,
       SUM(pi.is_active) AS asActive,
-      SUM(CASE WHEN p.data_source IN ('open_beauty_facts','brand_direct') THEN 1 ELSE 0 END) AS inciLists,
-      SUM(CASE WHEN p.data_source IN ('open_beauty_facts','brand_direct') AND pi.position BETWEEN 1 AND 5 THEN 1 ELSE 0 END) AS topFive,
-      AVG(CASE WHEN p.data_source IN ('open_beauty_facts','brand_direct') THEN pi.position END) AS avgPosition,
+      SUM(CASE WHEN p.data_source IN ('open_beauty_facts','brand_direct','third_party') THEN 1 ELSE 0 END) AS inciLists,
+      SUM(CASE WHEN p.data_source IN ('open_beauty_facts','brand_direct','third_party') AND pi.position BETWEEN 1 AND 5 THEN 1 ELSE 0 END) AS topFive,
+      AVG(CASE WHEN p.data_source IN ('open_beauty_facts','brand_direct','third_party') THEN pi.position END) AS avgPosition,
       '' AS bySource
     FROM product_ingredients pi
     JOIN products p ON p.id = pi.product_id

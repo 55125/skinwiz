@@ -54,6 +54,25 @@ test("sign-in tokens are single use and expire after 15 minutes", () => {
   assert.equal(m.identity.recentTokenCount("a@example.com", mins(1)), 2);
 });
 
+test("typed sign-in codes: any live code works once, wrong guesses are capped per address", async () => {
+  const { createSignInToken, consumeSignInCode, consumeSignInToken, MAX_CODE_ATTEMPTS } = m.identity;
+  const { hashSignInCode } = await import("./tokens");
+  const h = (email: string, code: string) => hashSignInCode("test-secret", email, code);
+  const t1 = createSignInToken("c@example.com", "dev-c", T0, h("c@example.com", "111111"));
+  createSignInToken("c@example.com", "dev-c", T0, h("c@example.com", "222222"));
+  assert.equal(consumeSignInCode("c@example.com", h("c@example.com", "111111"), mins(1))?.email, "c@example.com", "older code still works");
+  assert.equal(consumeSignInToken(t1, mins(1)), null, "its link is used up with it");
+  assert.equal(consumeSignInCode("c@example.com", h("c@example.com", "111111"), mins(1)), null, "single use");
+  assert.equal(consumeSignInCode("d@example.com", h("d@example.com", "222222"), mins(1)), null, "bound to the address");
+  assert.equal(consumeSignInCode("c@example.com", h("c@example.com", "222222"), mins(15)), null, "expired at 15 minutes");
+
+  createSignInToken("e@example.com", "dev-e", T0, h("e@example.com", "333333"));
+  const t4 = createSignInToken("e@example.com", "dev-e", T0, h("e@example.com", "444444"));
+  for (let i = 0; i < MAX_CODE_ATTEMPTS; i++) assert.equal(consumeSignInCode("e@example.com", h("e@example.com", "000000"), mins(1)), null);
+  assert.equal(consumeSignInCode("e@example.com", h("e@example.com", "333333"), mins(1)), null, "locked after too many wrong codes");
+  assert.equal(consumeSignInToken(t4, mins(1))?.email, "e@example.com", "the link in that email still works");
+});
+
 test("signing in creates a person and moves the requesting browser's shelf under them", () => {
   shelf("dev-a", "p1", "own", true, "2026-01-01 10:00:00");
   shelf("dev-a", "p2", "want", false, "2026-01-01 10:00:00");
@@ -91,6 +110,20 @@ test("a browser signed in as someone else switches over without merging their da
   assert.equal(count(m.sql`SELECT count(*) AS n FROM shelf_items WHERE session_id = ${b.homeSessionId}`), 1, "b's shelf untouched");
   m.identity.unlinkSession("dev-c");
   assert.equal(m.identity.resolveSessionId("dev-c"), "dev-c");
+});
+
+test("a link requested from another browser never signs that browser in", () => {
+  // An attacker requests a link for someone else's address; the owner opens it.
+  shelf("attacker", "p1", "own", false, "2026-01-01 00:00:00");
+  const owner = m.identity.personForSession("dev-a")!;
+  const { person } = m.identity.completeSignIn({ email: "a@example.com", requestSessionId: "attacker", deviceSessionId: "dev-a", now: mins(20) });
+  assert.equal(person.id, owner.id);
+  assert.equal(m.identity.personForSession("attacker"), null, "requesting browser stays anonymous");
+  assert.equal(count(m.sql`SELECT count(*) AS n FROM shelf_items WHERE session_id = 'attacker'`), 1, "its data is not merged");
+  // Nor can a signed-in requester take over a new address through it.
+  const { person: c } = m.identity.completeSignIn({ email: "c@example.com", requestSessionId: "dev-a", deviceSessionId: "victim-phone", now: mins(21) });
+  assert.notEqual(c.id, owner.id, "a new person, not an email change for the requester");
+  assert.equal(m.identity.personForSession("dev-a")?.email, "a@example.com");
 });
 
 test("opening a product schedules 2/4/8/12-week check-ins; the job sends the due one; the 8-week answer feeds the User Score", async () => {

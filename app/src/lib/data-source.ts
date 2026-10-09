@@ -1,4 +1,4 @@
-// Three distinct trust tiers, never blended without a visible label —
+// Distinct trust tiers, never blended without a visible label —
 // see products.dataSource/verified comment in db/schema.ts.
 export function dataSourceBadge(dataSource: string): { label: string; className: string } | null {
   switch (dataSource) {
@@ -10,6 +10,11 @@ export function dataSourceBadge(dataSource: string): { label: string; className:
     case "open_beauty_facts":
       return {
         label: "Community-sourced",
+        className: "border-dashed text-amber-700 dark:text-amber-400",
+      };
+    case "third_party":
+      return {
+        label: "Third-party listing",
         className: "border-dashed text-amber-700 dark:text-amber-400",
       };
     default:

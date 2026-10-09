@@ -39,7 +39,7 @@ function savedProfile(personId: string): Profile | null {
 
 function saveProfile(personId: string, profile: Profile, now = new Date()) {
   const stored = accountPart(profile);
-  const value = { skin: stored.skin, concerns: stored.concerns, likes: stored.likes, dislikes: stored.dislikes };
+  const value = { skin: stored.skin, sensitive: stored.sensitive, concerns: stored.concerns, likes: stored.likes, dislikes: stored.dislikes };
   db.insert(personProfiles)
     .values({ personId, profile: value, updatedAt: now.toISOString() })
     .onConflictDoUpdate({ target: personProfiles.personId, set: { profile: value, updatedAt: now.toISOString() } })
@@ -49,7 +49,8 @@ function saveProfile(personId: string, profile: Profile, now = new Date()) {
 async function setCookieProfile(profile: Profile) {
   const store = await cookies();
   if (!hasProfileData(profile)) store.delete(PROFILE_COOKIE);
-  else store.set(PROFILE_COOKIE, serializeProfile(profile), { httpOnly: true, sameSite: "lax", maxAge: PROFILE_COOKIE_MAX_AGE });
+  else store.set(PROFILE_COOKIE, serializeProfile(profile), { httpOnly: true, sameSite: "lax",
+    secure: process.env.NODE_ENV === "production", maxAge: PROFILE_COOKIE_MAX_AGE });
 }
 
 /**

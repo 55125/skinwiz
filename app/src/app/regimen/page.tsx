@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { AlertTriangle, ArrowRight, CheckCircle2, Moon, Sun } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
+import { MySkinTabs } from "@/components/my-skin-tabs";
 import { RedFlagBanner } from "@/components/red-flag-banner";
 import { RegimenButton } from "@/components/regimen-button";
 import { HowToUse } from "@/components/how-to-use";
@@ -9,10 +10,12 @@ import { MdBadge } from "@/components/md-badge";
 import { RegimenActions } from "@/components/regimen-actions";
 import { ClinicianPlan } from "@/components/clinician-plan";
 import { EmailSignupCard } from "@/components/email-signup-card";
+import { InstallAppCard } from "@/components/install-app-card";
 import { readDeviceSessionId, readSessionId } from "@/lib/session";
 import { personForSession } from "@/lib/identity";
 import { EMPTY_REGIMEN, getRegimen, guidanceForActives, guidanceForStep, STEP_LABEL, suggestSlot, type RegimenStep } from "@/lib/regimen";
-import { getClinicianPlan, listRegimens, type RegimenSummary } from "@/lib/regimens";
+import { getClinicianPlan, getOwnedRegimen, listRegimens, type RegimenSummary } from "@/lib/regimens";
+import { RxRetinoidCard } from "@/components/rx-retinoid-card";
 import { describeStrengths } from "@/lib/strength-display";
 import { displayManufacturer } from "@/lib/format";
 import { FEATURES } from "@/lib/feature-flags";
@@ -144,7 +147,8 @@ export default async function RegimenPage({ searchParams }: { searchParams: Prom
     const person = device ? personForSession(device) : null;
     return (
       <div className="mx-auto max-w-6xl space-y-8 px-4 py-10">
-        <PageHeader eyebrow="Your plans" title="My regimen" />
+        <MySkinTabs />
+        <PageHeader title="My regimen" />
         {saved && (
           <p role="status" className="rounded-xl border border-emerald-300 bg-emerald-50 p-4 text-sm text-emerald-900 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-200">
             Saved. This plan is now in your regimens, private to this browser
@@ -175,7 +179,8 @@ export default async function RegimenPage({ searchParams }: { searchParams: Prom
   }
 
   const regimenId = selected?.kind === "own" ? selected.id : null;
-  const regimen = regimenId !== null ? getRegimen(regimenId) : EMPTY_REGIMEN;
+  const own = regimenId !== null && sessionId ? getOwnedRegimen(sessionId, regimenId) : null;
+  const regimen = regimenId !== null ? getRegimen(regimenId, own?.rxRetinoidSlot ?? null) : EMPTY_REGIMEN;
   const sameTime = regimen.conflicts.filter((c) => c.status === "same-time");
   const split = regimen.conflicts.filter((c) => c.status === "split");
   // Gated "When OTC isn't enough" guidance for the concerns this regimen covers.
@@ -189,13 +194,14 @@ export default async function RegimenPage({ searchParams }: { searchParams: Prom
 
   return (
     <div className="mx-auto max-w-6xl space-y-8 px-4 py-10">
+      <MySkinTabs />
       <PageHeader
-        eyebrow="Your products"
         title={selected && list.length > 1 ? selected.name : "My regimen"}
         description="What you use morning and night, in the order to apply it: thinnest to thickest, with sunscreen last in the morning. Saved in this browser with no account. Add an email in Email settings if you want it on other devices too."
       />
 
       <RedFlagBanner />
+      <InstallAppCard />
       {selected && <RegimenTabs list={list} selectedId={selected.id} />}
       {skipped && (
         <p role="status" className="rounded-xl border bg-muted/40 p-3 text-sm">
@@ -216,7 +222,9 @@ export default async function RegimenPage({ searchParams }: { searchParams: Prom
           </Link>
           {selected && list.length > 1 && <RegimenActions regimenId={selected.id} kind="own" active={selected.active} name={selected.name} />}
         </div>
-      ) : (
+      ) : null}
+      {regimenId !== null && <RxRetinoidCard key={regimenId} regimenId={regimenId} initialSlot={regimen.rxRetinoid} />}
+      {regimenId === null || regimen.count === 0 ? null : (
         <>
           {sameTime.length > 0 && (
             <div className="space-y-2 rounded-2xl border border-amber-200 bg-amber-50/60 p-4 dark:border-amber-900/60 dark:bg-amber-950/20">

@@ -3,6 +3,7 @@ import { db } from "@/db/client";
 import { products } from "@/db/schema";
 import { avoidConflicts } from "@/lib/avoid-shared";
 import { LISTED_OTC, browseProducts } from "@/lib/queries";
+import { ttlCache } from "@/lib/ttl-cache";
 
 // Formula similarity by ingredient overlap. Every ingredient is weighted by
 // how rare it is across the catalog (ln(N / products-with-it)), so sharing
@@ -45,10 +46,14 @@ export function findSimilarProducts(
   const wOf = new Map(weighted.map((x) => [x.id, x.w]));
 
   const seeds = [...weighted].sort((a, b) => b.w - a.w).slice(0, 15).map((x) => x.id);
+  // A join rather than `product_id IN (subquery)`: with the subquery SQLite
+  // walks every listed product first (~150ms); this way it starts from the
+  // seed ingredients on product_ingredients_ingredient_product_idx.
   const hits = db.all<{ pid: string; iid: string }>(sql`
-    SELECT product_id AS pid, ingredient_id AS iid FROM product_ingredients
-    WHERE position > 0 AND ingredient_id IN (${sql.join(seeds.map((i) => sql`${i}`), sql`, `)})
-      AND product_id IN (SELECT id FROM products WHERE is_rx = 0 AND canonical_id IS NULL)
+    SELECT pi.product_id AS pid, pi.ingredient_id AS iid
+    FROM product_ingredients pi JOIN products p ON p.id = pi.product_id
+    WHERE pi.position > 0 AND pi.ingredient_id IN (${sql.join(seeds.map((i) => sql`${i}`), sql`, `)})
+      AND p.is_rx = 0 AND p.canonical_id IS NULL
   `);
   const cand = new Map<string, number>();
   for (const h of hits) if (h.pid !== excludeId) cand.set(h.pid, (cand.get(h.pid) ?? 0) + (wOf.get(h.iid) ?? 0));
@@ -148,3 +153,9 @@ export function findSafeSwaps(
   }
   return [...out.values()];
 }
+
+/**
+ * findSimilarProducts for page renders: the overlap query costs 50-250ms on
+ * the full catalog and its answer only changes when the catalog is reseeded.
+ */
+export const findSimilarProductsCached = ttlCache(findSimilarProducts);

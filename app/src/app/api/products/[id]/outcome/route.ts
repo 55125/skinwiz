@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { rateLimit, readJsonBody } from "@/lib/api-guard";
 import { getOrCreateSessionId } from "@/lib/session";
 import { getProduct } from "@/lib/queries";
 import { logOutcome } from "@/lib/outcomes";
@@ -7,13 +8,19 @@ import { getScoresForProducts } from "@/lib/scoring";
 const MAX_WEEKS = 104;
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  // Each report moves a public User Score, and a cookieless POST is a fresh
+  // session, so per-session de-duplication alone doesn't stop stuffing.
+  const limited = rateLimit(request, "outcome", 20, 60 * 60_000);
+  if (limited) return limited;
   const { id } = await params;
   const product = getProduct(decodeURIComponent(id));
   if (!product) {
     return NextResponse.json({ error: "Product not found." }, { status: 404 });
   }
 
-  const body = await request.json().catch(() => null);
+  const parsed = await readJsonBody(request);
+  if (!parsed.ok) return parsed.response;
+  const body = parsed.body as { improved?: unknown; weeksUsed?: unknown } | null;
   if (typeof body?.improved !== "boolean") {
     return NextResponse.json({ error: "improved must be true or false." }, { status: 400 });
   }

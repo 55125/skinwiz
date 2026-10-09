@@ -7,11 +7,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { ProductGrid } from "@/components/product-grid";
 import { FREE_FROM_CHECKS, computeFreeFromFlags, ingredientFailsCheck, type FreeFromCheck } from "@/db/ingredient-flags";
-import { CONTACT_ALLERGENS, allergensInIngredient, computeAllergenHits, getAllergen } from "@/db/contact-allergens";
-import { avoidConflicts } from "@/lib/avoid-shared";
+import { CONTACT_ALLERGENS, allergensInIngredient, allergensInList, getAllergen, groupsContaining } from "@/db/contact-allergens";
+import { avoidConflicts, type AvoidableProduct } from "@/lib/avoid-shared";
 import { canonicalSlug, ingredientKey, slugFor, splitIngredientList } from "@/db/ingredient-parse";
 import { getIngredient, MIN_PUBLIC_PRODUCTS } from "@/lib/queries";
-import { findSimilarProducts } from "@/lib/similar";
+import { findSimilarProductsCached } from "@/lib/similar";
 import { readAvoidIds, avoidedIngredientName } from "@/lib/avoid";
 import { cn } from "@/lib/utils";
 
@@ -54,14 +54,37 @@ export default async function CheckPage({ searchParams }: { searchParams: Promis
   }));
   // Allergens: matched per name for the "listed as" mapping, and on the
   // whole text for presence (chemical names with commas survive that way).
-  const allergenHits = enough ? (computeAllergenHits(text) ?? []) : [];
+  const allergenHits = enough ? allergensInList(text) : [];
   const allergenRows = allergenHits.flatMap((id) => {
     const a = getAllergen(id);
     return a ? [{ allergen: a, names: items.filter((i) => allergensInIngredient(i.raw).includes(id)).map((i) => i.raw) }] : [];
   });
   const flaggedNames = new Set([...results.flatMap((r) => r.hits), ...allergenRows.flatMap((r) => r.names)]);
   const found = enough ? avoidConflicts({ freeFromFlags: computeFreeFromFlags(text) ?? [], allergenHits }, avoidIds) : null;
-  const similar = enough ? findSimilarProducts(items.map((i) => i.slug), { limit: 6, minScore: 0.3 }) : [];
+  // Patch-test results name the mix ("Fragrance mix I"), labels name the
+  // chemicals: say which mixes the allergens found here belong to.
+  const mixes = new Map<string, { id: string; name: string; members: string[] }>();
+  for (const { allergen } of allergenRows) {
+    for (const g of groupsContaining(allergen.id)) {
+      const m = mixes.get(g.id) ?? mixes.set(g.id, { id: g.id, name: g.name, members: [] }).get(g.id)!;
+      m.members.push(allergen.name);
+    }
+  }
+  // Similar formulas: only suggest products whose full ingredient list is
+  // clear of the visitor's avoid list, or, with no list saved, of fragrance
+  // when this list has any (the usual reason to paste a label here). A
+  // fragrance-allergic person pasting a fragranced lotion was being shown
+  // more fragranced lotions. Not every allergen found: phenoxyethanol or
+  // tocopherol are in most formulas, so screening them leaves nothing.
+  const hasFragrance = allergenHits.some((id) => getAllergen(id)?.section === "fragrance");
+  const screenFor = avoidIds.length > 0 ? avoidIds : hasFragrance ? ["named-fragrance-allergens"] : [];
+  const screenLabel = avoidIds.length > 0 ? "without anything on your avoid list" : "without fragrance";
+  const clear = (p: AvoidableProduct) => {
+    const c = avoidConflicts(p, screenFor);
+    return !!c && c.conflicts.length === 0 && c.possible.length === 0;
+  };
+  const similarPool = enough ? findSimilarProductsCached(items.map((i) => i.slug), { limit: screenFor.length ? 60 : 6, minScore: screenFor.length ? 0.2 : 0.3 }) : [];
+  const similar = screenFor.length ? similarPool.filter((s) => clear(s.product)).slice(0, 6) : similarPool;
 
   return (
     <div className="mx-auto max-w-4xl space-y-8 px-4 py-10">
@@ -258,6 +281,22 @@ export default async function CheckPage({ searchParams }: { searchParams: Promis
                 ))}
               </div>
             )}
+            {mixes.size > 0 && (
+              <div className="rounded-xl border bg-card p-3.5 text-sm">
+                <p className="font-medium">Patch-test mixes and allergen groups on this list</p>
+                <ul className="mt-1.5 space-y-1 text-muted-foreground">
+                  {[...mixes.values()].map((m) => (
+                    <li key={m.id}>
+                      <Link href={`/allergens/${m.id}`} className="font-medium text-foreground hover:underline">
+                        {m.name}
+                      </Link>
+                      : {m.members.join(", ")}
+                    </li>
+                  ))}
+                </ul>
+                <p className="mt-1.5 text-xs text-muted-foreground">Your patch-test results may use these names rather than the chemical names.</p>
+              </div>
+            )}
             <p className="text-xs text-muted-foreground">
               Matched on every label name and synonym in our{" "}
               <Link href="/allergens" className="font-medium text-brand hover:underline">
@@ -267,11 +306,29 @@ export default async function CheckPage({ searchParams }: { searchParams: Promis
             </p>
           </section>
 
-          {similar.length > 0 && (
+          {similar.length > 0 ? (
             <section className="space-y-3">
-              <h2 className="text-xl font-semibold">Products with a similar formula</h2>
+              <h2 className="text-xl font-semibold">Products with a similar formula{screenFor.length > 0 ? `, ${screenLabel}` : ""}</h2>
+              {screenFor.length > 0 && (
+                <p className="text-sm text-muted-foreground">
+                  Only products whose full ingredient list is clear of{" "}
+                  {avoidIds.length > 0 ? "your avoid list" : "fragrance allergens"}, including ones that could hide in an undisclosed
+                  &ldquo;fragrance.&rdquo;
+                </p>
+              )}
               <ProductGrid products={similar.map((s) => s.product)} />
             </section>
+          ) : (
+            screenFor.length > 0 &&
+            similarPool.length > 0 && (
+              <p className="text-sm text-muted-foreground">
+                We didn&apos;t find a similar formula {screenLabel}.{" "}
+                <Link href="/avoid" className="font-medium text-brand hover:underline">
+                  Set up your avoid list
+                </Link>{" "}
+                to filter every product page and listing.
+              </p>
+            )
           )}
 
           <p className="text-xs leading-relaxed text-muted-foreground">

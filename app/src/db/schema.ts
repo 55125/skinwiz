@@ -131,7 +131,9 @@ export const products = sqliteTable("products", {
   // (store-brand equivalents) is a plain indexed equality match.
   strengths: text("strengths", { mode: "json" }).$type<Record<string, number> | null>(),
   strengthKey: text("strength_key"),
-  // "openfda" | "dailymed" | "open_beauty_facts" -- which pipeline produced
+  // "openfda" | "dailymed" | "open_beauty_facts" | "brand_direct" |
+  // "third_party" (a curated cosmetic whose brand publishes no ingredient
+  // list, taken from independent ingredient databases; unverified) -- which pipeline produced
   // this row. verified=true only for openfda/dailymed (derived from what a
   // manufacturer legally filed with the FDA); false for open_beauty_facts
   // (crowd-sourced, unverified -- confirmed real junk entries exist in it
@@ -213,15 +215,18 @@ export const productIngredients = sqliteTable(
   (table) => [
     uniqueIndex("product_ingredients_pk").on(table.productId, table.position),
     index("product_ingredients_ingredient_idx").on(table.ingredientId),
+    // Covers the "which products share these ingredients" lookup in
+    // lib/similar.ts without touching the table rows.
+    index("product_ingredients_ingredient_product_idx").on(table.ingredientId, table.productId, table.position),
   ],
 );
 
 // Real affiliate integration exists (tools/affiliate_feeds/) but no network
 // account is approved yet (project.md §11 open decision), so this table is
 // seeded from SYNTHETIC mock-feed data for a small demo subset only.
-// isDemo must stay true for all rows until a real feed is wired in —
-// the UI enforces a visible "demo" label whenever isDemo is true so this
-// never gets presented as a live price to a real user.
+// isDemo must stay true for all rows until a real feed is wired in. Queries
+// (lib/queries.ts) drop demo rows, so they never reach a page: their prices
+// are invented and their buy URLs are placeholders.
 export const affiliateLinks = sqliteTable("affiliate_links", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   productId: text("product_id").notNull().references(() => products.id),
@@ -453,6 +458,10 @@ export const regimens = sqliteTable(
     instanceId: integer("instance_id").references(() => handoutInstances.id),
     active: integer("active", { mode: "boolean" }).notNull().default(false),
     createdAt: text("created_at").notNull(),
+    // "I also use a prescription retinoid from my doctor": am/pm/both, or
+    // null. No product and no dosing; it only lets the retinoid cautions
+    // (lib/routine-conflicts.ts) account for it. Own regimens only.
+    rxRetinoidSlot: text("rx_retinoid_slot"),
   },
   (table) => [index("regimens_session_idx").on(table.sessionId), uniqueIndex("regimens_instance_idx").on(table.instanceId)],
 );
@@ -540,14 +549,14 @@ export const personAvoidLists = sqliteTable("person_avoid_lists", {
 });
 
 // A signed-in person's skin profile (lib/profile.ts), so it follows them to
-// any device. Holds skin type, concerns and liked/disliked ingredients only:
+// any device. Holds skin type, sensitivity, concerns and liked/disliked ingredients only:
 // the pregnancy and breastfeeding answers are never stored here, they stay in
 // the sw_profile cookie of the browser they were entered in.
 export const personProfiles = sqliteTable("person_profiles", {
   personId: text("person_id")
     .primaryKey()
     .references(() => people.id, { onDelete: "cascade" }),
-  profile: text("profile", { mode: "json" }).$type<{ skin: string | null; concerns: string[]; likes: string[]; dislikes: string[] }>().notNull(),
+  profile: text("profile", { mode: "json" }).$type<{ skin: string | null; sensitive?: boolean; concerns: string[]; likes: string[]; dislikes: string[] }>().notNull(),
   updatedAt: text("updated_at").notNull(),
 });
 
@@ -578,6 +587,11 @@ export const emailTokens = sqliteTable(
     expiresAt: text("expires_at").notNull(),
     usedAt: text("used_at"),
     createdAt: text("created_at").notNull(),
+    // The 6-digit code in the same email, for typing in where the link can't
+    // open (an installed home-screen app on iPhone opens links in Safari).
+    // Keyed hash (lib/tokens.ts hashSignInCode), never the code itself.
+    codeHash: text("code_hash"),
+    codeAttempts: integer("code_attempts").notNull().default(0),
   },
   (table) => [index("email_tokens_email_idx").on(table.email, table.createdAt)],
 );
@@ -940,4 +954,63 @@ export const dailymedImages = sqliteTable(
     retryAfter: text("retry_after"),
   },
   (table) => [index("dailymed_images_status_idx").on(table.status)],
+);
+
+// ---------------------------------------------------------------------------
+// First-party site statistics for the owner's /admin page (lib/analytics/).
+// No cookies and no raw IP addresses: `visitor` is a hash of IP + user agent
+// + a random salt that exists for one UTC day only (analytics_salts), so a
+// visitor can be counted once per day but never followed across days or
+// traced back to an address once the salt is deleted. Nothing is recorded
+// for browsers sending Global Privacy Control or Do Not Track, for bots, or
+// for the admin's own visits. Paths are stored without query strings and
+// with link tokens (/h/, /checkin/) redacted. Purged after ANALYTICS_RETENTION_DAYS.
+export const analyticsEvents = sqliteTable(
+  "analytics_events",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    at: text("at").notNull(), // ISO 8601 UTC
+    day: text("day").notNull(), // YYYY-MM-DD (UTC)
+    kind: text("kind").notNull(), // "pageview" | "outbound" | "search" | "tool" | "client_error"
+    path: text("path").notNull(), // page the event happened on
+    visitor: text("visitor").notNull(), // daily-salted hash, see above
+    referrer: text("referrer"), // external referring host only (pageviews)
+    utmSource: text("utm_source"),
+    utmMedium: text("utm_medium"),
+    utmCampaign: text("utm_campaign"),
+    device: text("device"), // "mobile" | "tablet" | "desktop"
+    detail: text("detail"), // outbound: retailer host; search: the term; tool: tool name
+    value: integer("value"), // search: result count
+    productId: text("product_id"), // outbound clicks from a product page
+  },
+  (table) => [
+    index("analytics_events_kind_day_idx").on(table.kind, table.day),
+    index("analytics_events_day_idx").on(table.day),
+    // The once-a-minute pageview de-duplication in recordEvent(); without it
+    // every beacon scanned all of today's events.
+    index("analytics_events_visitor_path_at_idx").on(table.visitor, table.path, table.at),
+  ],
+);
+
+// One random salt per UTC day for analytics_events.visitor; rows older than
+// yesterday are deleted, which makes older hashes unlinkable.
+export const analyticsSalts = sqliteTable("analytics_salts", {
+  day: text("day").primaryKey(),
+  salt: text("salt").notNull(),
+});
+
+// Server errors (instrumentation.ts onRequestError), for the admin page's
+// error counts. Same redaction as the log line: no query strings, no tokens.
+export const serverErrors = sqliteTable(
+  "server_errors",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    at: text("at").notNull(),
+    method: text("method").notNull(),
+    path: text("path").notNull(),
+    route: text("route"),
+    message: text("message").notNull(),
+    digest: text("digest"),
+  },
+  (table) => [index("server_errors_at_idx").on(table.at)],
 );

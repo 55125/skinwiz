@@ -6,6 +6,7 @@ import { personAvoidLists } from "@/db/schema";
 import { personForSession } from "@/lib/identity";
 import { readDeviceSessionId } from "@/lib/session";
 import { avoidConflicts, normalizeAvoidId, type AvoidableProduct } from "@/lib/avoid-shared";
+import { getNotOnLabel } from "@/db/patch-test-series";
 
 export { avoidedIngredientName } from "@/lib/avoid-shared";
 
@@ -29,9 +30,22 @@ export function sanitizeAvoidIds(ids: unknown): string[] {
   return [...new Set(out)];
 }
 
+// Stored next to the avoid ids: patch-test positives that never appear on a
+// label (rubber accelerators, epoxy, textile dyes; db/patch-test-series.ts).
+// Kept so the patient's list remembers them, but never used to check
+// products, so readAvoidIds leaves them out.
+function sanitizeStoredIds(ids: unknown): string[] {
+  if (!Array.isArray(ids)) return [];
+  const avoid = sanitizeAvoidIds(ids);
+  const off = ids.filter((id): id is string => typeof id === "string" && !!getNotOnLabel(id));
+  return [...new Set([...avoid, ...off])];
+}
+
+const isOffLabel = (id: string) => !!getNotOnLabel(id);
+
 async function readCookieIds(): Promise<string[]> {
   const raw = (await cookies()).get(AVOID_COOKIE)?.value;
-  return raw ? sanitizeAvoidIds(raw.split(",")) : [];
+  return raw ? sanitizeStoredIds(raw.split(",")) : [];
 }
 
 async function signedInPersonId(): Promise<string | null> {
@@ -41,7 +55,7 @@ async function signedInPersonId(): Promise<string | null> {
 
 function savedIds(personId: string): string[] | null {
   const row = db.select().from(personAvoidLists).where(eq(personAvoidLists.personId, personId)).get();
-  return row ? sanitizeAvoidIds(row.ids) : null;
+  return row ? sanitizeStoredIds(row.ids) : null;
 }
 
 function saveIds(personId: string, ids: string[], now = new Date()) {
@@ -54,7 +68,8 @@ function saveIds(personId: string, ids: string[], now = new Date()) {
 async function setCookieIds(ids: string[]) {
   const store = await cookies();
   if (ids.length === 0) store.delete(AVOID_COOKIE);
-  else store.set(AVOID_COOKIE, ids.join(","), { httpOnly: true, sameSite: "lax", maxAge: AVOID_COOKIE_MAX_AGE });
+  else store.set(AVOID_COOKIE, ids.join(","), { httpOnly: true, sameSite: "lax",
+    secure: process.env.NODE_ENV === "production", maxAge: AVOID_COOKIE_MAX_AGE });
 }
 
 /**
@@ -62,17 +77,28 @@ async function setCookieIds(ids: string[]) {
  * every device), otherwise this browser's cookie. Cached per request, since
  * every product card asks.
  */
-export const readAvoidIds = cache(async (): Promise<string[]> => {
+const readStoredIds = cache(async (): Promise<string[]> => {
   const personId = await signedInPersonId();
   const saved = personId ? savedIds(personId) : null;
   return saved ?? (await readCookieIds());
 });
 
-/** Replaces the list: in the cookie, and on the account when signed in. Route handlers only. */
-export async function writeAvoidIds(ids: string[]): Promise<void> {
-  await setCookieIds(ids);
+export const readAvoidIds = cache(async (): Promise<string[]> => (await readStoredIds()).filter((id) => !isOffLabel(id)));
+
+/** Patch-test positives kept on the list for reference only (not on labels). */
+export const readNotOnLabelIds = cache(async (): Promise<string[]> => (await readStoredIds()).filter(isOffLabel));
+
+/**
+ * Replaces the list: in the cookie, and on the account when signed in. The
+ * not-on-label entries are kept as they are unless `notOnLabel` is given.
+ * Route handlers only.
+ */
+export async function writeAvoidIds(ids: string[], notOnLabel?: string[]): Promise<void> {
+  const off = notOnLabel ?? (await readNotOnLabelIds());
+  const stored = sanitizeStoredIds([...ids.filter((id) => !isOffLabel(id)), ...off.filter(isOffLabel)]);
+  await setCookieIds(stored);
   const personId = await signedInPersonId();
-  if (personId) saveIds(personId, ids);
+  if (personId) saveIds(personId, stored);
 }
 
 /** At sign-in: this browser's list and the account's list become one, in both places. */

@@ -16,7 +16,16 @@ type SuggestResponse = {
 
 const MIN_CHARS = 2;
 
-export function SearchBar({ defaultValue, large }: { defaultValue?: string; large?: boolean }) {
+export function SearchBar({
+  defaultValue,
+  large,
+  compact,
+}: {
+  defaultValue?: string;
+  large?: boolean;
+  // Header-sized: a short pill with a short placeholder.
+  compact?: boolean;
+}) {
   const router = useRouter();
   const listId = useId();
   const [query, setQuery] = useState(defaultValue ?? "");
@@ -144,11 +153,15 @@ export function SearchBar({ defaultValue, large }: { defaultValue?: string; larg
           aria-autocomplete="list"
           aria-activedescendant={expanded && activeIndex >= 0 ? `${listId}-${activeIndex}` : undefined}
           aria-label="Search products or ingredients"
-          placeholder="Search products or ingredients — e.g. niacinamide, CeraVe, sunscreen"
+          placeholder={
+            compact ? "Search products or ingredients" : "Search products or ingredients — e.g. niacinamide, CeraVe, sunscreen"
+          }
           className={cn(
             large
               ? "h-11 flex-1 rounded-full border-0 bg-transparent pl-10 text-base shadow-none focus-visible:ring-0 dark:bg-transparent"
-              : "h-10 rounded-lg pl-10",
+              : compact
+                ? "h-9 rounded-full bg-card pl-9 text-sm"
+                : "h-10 rounded-lg pl-10",
           )}
           autoComplete="off"
         />

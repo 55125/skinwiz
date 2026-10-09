@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { AlertTriangle, ChevronLeft } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { HandoutSections } from "@/components/handout-sections";
 import { HANDOUT_CATEGORIES, UNIVERSAL_STOP_RULES, getTemplate } from "@/db/handout-templates";
@@ -33,16 +33,12 @@ export default async function HandoutPreviewPage({ params }: { params: Promise<{
           >
             Use and customize
           </Link>
+          <Link href={`/clinic-tools/handouts/${t.id}/patient-view`} className="text-sm font-medium text-brand hover:underline">
+            See the patient view
+          </Link>
           <span className="text-xs text-muted-foreground">Free clinician account; your name and clinic go on the copy.</span>
         </div>
       </PageHeader>
-
-      {!t.reviewed && (
-        <p className="flex gap-2 rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
-          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-          Draft: AI-written and still in dermatologist review. Read it before handing it out; every word is editable.
-        </p>
-      )}
 
       <article className="space-y-6 rounded-2xl border bg-card p-6">
         <HandoutSections sections={t.sections} />
@@ -77,6 +73,11 @@ export default async function HandoutPreviewPage({ params }: { params: Promise<{
             <li key={s}>{s}</li>
           ))}
         </ul>
+        <p className="pt-2">
+          {t.reviewed
+            ? "Drafted with AI assistance and reviewed by the site's dermatologist before clinical use."
+            : "Drafted with AI assistance; physician review in progress. Read it before you hand it out; every word is editable."}
+        </p>
       </section>
     </div>
   );

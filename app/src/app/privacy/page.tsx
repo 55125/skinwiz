@@ -23,12 +23,13 @@ export default function PrivacyPage() {
             &ldquo;us&rdquo;) collects when you use this website, how we use it, and the choices you have.
           </p>
           <p className="rounded-lg border bg-muted/40 p-4 text-sm">
-            <strong className="text-foreground">The short version.</strong> {SITE_NAME} has no accounts or passwords
-            and asks for no name or email to use its tools. Your skin profile and avoid list are stored in cookies
-            on your own device. Adding an email address is optional; if you do, we use it only to keep your shelf,
+            <strong className="text-foreground">The short version.</strong> You don&apos;t need an account, a password, your name
+            or an email to use {SITE_NAME}&apos;s tools. Your skin profile and avoid list are stored in cookies
+            on your own device. Adding an email address is optional (it becomes a password-free sign-in by one-time link); if you do, we use it only to keep your shelf,
             avoid list and skin profile (but not any pregnancy or breastfeeding answers) across devices and to send the check-ins and safety alerts you choose, and you can delete it at any
             time. We do not sell your information, share it for targeted advertising, or run advertising or
-            analytics trackers.
+            third-party analytics trackers. We count visits with our own cookieless statistics, which store no IP
+            addresses and skip browsers that send Global Privacy Control or Do Not Track.
           </p>
         </div>
       }
@@ -82,6 +83,13 @@ export default function PrivacyPage() {
           credentials (such as board certification and NPI number) and your message.
         </li>
         <li>
+          <strong>Clinician accounts</strong>: clinicians who sign in to make patient handouts give us their
+          email address, NPI number, name and clinic details (name, phone and website). We check the NPI
+          against the public NPPES registry and keep what it lists (credential, specialty and state). We store
+          the handouts and practice avoid lists they save, and anonymous counts of how often a handout is
+          printed, opened or saved. Patient names typed for printing stay in the browser and never reach us.
+        </li>
+        <li>
           <strong>Messages</strong>: if you email us, we keep your email address and what you send.
         </li>
       </ul>
@@ -91,6 +99,24 @@ export default function PrivacyPage() {
         request: IP address, browser user agent, the page requested, the referring page, and the time. We use
         it to operate and secure the site, including rate limiting and blocking automated scraping. Counters
         used for rate limiting are held only in server memory.
+      </p>
+      <h3 id="statistics">Site statistics</h3>
+      <p>
+        To see how the site is used, we keep our own first-party statistics. We do not use Google Analytics or
+        any other outside analytics service, and they set no cookies. For each page you view, we record the page
+        address (without its query string, and with private link codes removed), the website that referred you,
+        any campaign tags in the link (such as utm_source), whether you are on a phone, tablet or computer, and
+        the time. We also count clicks on links to retailers and other sites (the destination site only), searches
+        typed into our search box with how many results they found (terms that look like an email address or phone
+        number are discarded), and clicks on clinician tool buttons such as Print.
+      </p>
+      <p>
+        We never store your IP address for this. To count each visitor once per day, we combine the IP address
+        and browser type with a random value that changes every day and keep only a scrambled (hashed) result. The
+        daily value is deleted after one day, after which that result cannot be traced back to you or linked to
+        your visits on other days. These statistics are not linked to your session cookie, your email or your
+        skin profile, and are used only in aggregate. If your browser sends a Global Privacy Control or Do Not
+        Track signal, we record none of them.
       </p>
 
       <h2 id="cookies">2. Cookies</h2>
@@ -166,6 +192,7 @@ export default function PrivacyPage() {
         <li>If you add an email: to sign you in by link, keep your shelf, avoid list and skin profile across devices, and send the check-ins and safety alerts you have turned on.</li>
         <li>To review clinician applications and reply to people who contact us.</li>
         <li>To keep the site secure and working, and to prevent abuse, fraud and scraping.</li>
+        <li>To understand, in aggregate, which pages, searches and tools are used, so we can improve the site and its catalog.</li>
         <li>To comply with the law and enforce our <Link href="/terms">Terms of Service</Link>.</li>
       </ul>
       <p>We do not use your information for advertising, and we do not build profiles of you for marketing.</p>
@@ -229,7 +256,7 @@ export default function PrivacyPage() {
       <h3>Affiliate links and third-party content</h3>
       <p>
         Some product links are affiliate links. When you click one, you leave {SITE_NAME}. The retailer or
-        affiliate network (for example, Amazon, Sovrn or CJ) may set its own cookies to record that you came from
+        affiliate network (for example, Amazon, Sovrn or CJ) may set its own cookies to record that you came from{" "}
         {SITE_NAME} and whether you bought something. That tracking is governed by their privacy policies. The
         commission reports we receive do not identify you to us. Outbound shopping links, including links to
         retailers and brand sites, may go through Sovrn, an affiliate service, which may set its own cookies.
@@ -259,6 +286,10 @@ export default function PrivacyPage() {
           Clinician applications are kept while we review them and for up to two years afterwards, unless you
           ask us to delete yours sooner.
         </li>
+        <li>
+          Site statistics are kept for up to 13 months, then deleted. The daily value used to count visitors is
+          deleted after one day.
+        </li>
         <li>Server logs are kept for a limited period set by our hosting provider, then deleted.</li>
       </ul>
 
@@ -285,7 +316,8 @@ export default function PrivacyPage() {
           make any request.
         </li>
         <li>
-          We treat a Global Privacy Control signal from your browser as a valid request to opt out.
+          We treat a Global Privacy Control signal from your browser as a valid request to opt out, and we
+          record no <a href="#statistics">site statistics</a> for browsers that send it or Do Not Track.
         </li>
       </ul>
       <p>

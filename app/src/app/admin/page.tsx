@@ -18,7 +18,7 @@ import {
 } from "@/lib/analytics/report";
 import { FEATURES } from "@/lib/feature-flags";
 import { openForReview } from "@/lib/review-mode";
-import { livePricesEnabled, sovrnSiteKey } from "@/lib/prices/config";
+import { krogerConfig, livePricesEnabled, sovrnSiteKey } from "@/lib/prices/config";
 import { clientIpFromHeaders } from "@/lib/api-guard";
 import { clientIp as botLimitIp } from "@/lib/anti-scrape";
 
@@ -308,13 +308,19 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
               ["Manual affiliate links", catalog.manualLinks, `${fmt(catalog.manualLinkProducts)} products`],
               ["Products with a fresh price", catalog.pricedProducts, "checked in the last 72 h"],
               ["Price quotes fresh / stale", catalog.quotesFresh, `${fmt(catalog.quotesStale)} stale`],
+              [
+                "Kroger carries",
+                catalog.krogerCarried,
+                `of ${fmt(catalog.krogerChecked)} checked · ${fmt(catalog.krogerPriced)} priced${catalog.krogerStore ? ` in ${catalog.krogerStore}` : ""}`,
+              ],
               ["FDA recalls stored", catalog.recalls, `${fmt(catalog.recallMatches)} catalog matches`],
             ]}
           />
           <div className="space-y-4 text-sm">
             <p>
               Live prices: <strong>{livePricesEnabled() ? "on" : "off"}</strong>
-              {sovrnSiteKey() ? " · Sovrn link wrapping on" : " · Sovrn link wrapping off"} · last price fetched{" "}
+              {sovrnSiteKey() ? " · Sovrn link wrapping on" : " · Sovrn link wrapping off"}
+              {krogerConfig() ? " · Kroger on" : " · Kroger off"} · last price fetched{" "}
               {ago(catalog.lastPriceFetch, now)}
             </p>
             <div>

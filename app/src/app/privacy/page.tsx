@@ -283,6 +283,11 @@ export default function PrivacyPage() {
         retailers and brand sites, may go through Sovrn, an affiliate service, which may set its own cookies.
       </p>
       <p>
+        Kroger prices and stock come from Kroger&apos;s product service, which our server asks about products in our
+        catalog at one store we choose. Nothing about you, including your location, is sent to Kroger. Kroger
+        links are plain links to kroger.com, not affiliate links.
+      </p>
+      <p>
         Some product images and video thumbnails load directly from outside sources such as Open Beauty
         Facts, retailers and YouTube. Those servers receive your IP address and browser information when the
         image loads.

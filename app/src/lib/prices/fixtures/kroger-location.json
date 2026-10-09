@@ -1,0 +1,16 @@
+{
+  "data": [
+    {
+      "locationId": "01400943",
+      "storeNumber": "00943",
+      "divisionNumber": "014",
+      "chain": "KROGER",
+      "name": "Kroger - Vine St",
+      "address": { "addressLine1": "1014 Vine St", "city": "Cincinnati", "state": "OH", "zipCode": "45202", "county": "HAMILTON" },
+      "geolocation": { "latitude": 39.1066, "longitude": -84.5155 },
+      "phone": "5135551234",
+      "departments": [{ "departmentId": "09", "name": "Pharmacy" }]
+    }
+  ],
+  "meta": { "pagination": { "start": 0, "limit": 1, "total": 12 } }
+}

@@ -1,8 +1,9 @@
 // Reads and writes for live price quotes. Every read returns nothing while
 // live prices are disabled (config.ts), skips quotes older than 72h, and
 // only ever returns OTC products (is_rx = 0) -- so a stored row can't reach
-// a page by accident.
-import { and, eq, inArray, sql } from "drizzle-orm";
+// a page by accident. Non-affiliate quotes are shown only from direct
+// retailer sources (Kroger), whose links are plain product pages.
+import { and, eq, inArray, or, sql } from "drizzle-orm";
 import { db } from "@/db/client";
 import { priceChecks, priceQuotes, productBarcodes, products, productViews } from "@/db/schema";
 import { inProductGroup, productGroupsFor } from "@/lib/canonical";
@@ -39,13 +40,18 @@ function fromRow(r: Row): PriceQuote {
     offerName: r.offerName,
     pack,
     fetchedAt: r.fetchedAt,
+    availability: r.availability === "in_stock" || r.availability === "low" || r.availability === "out_of_stock" ? r.availability : null,
+    location: r.location,
   };
 }
+
+/** Sources whose quotes are plain retailer links, shown without an affiliate program. */
+export const DIRECT_SOURCES: PriceSourceId[] = ["kroger"];
 
 const displayable = (cutoff: string) =>
   and(
     sql`${priceQuotes.fetchedAt} >= ${cutoff}`,
-    eq(priceQuotes.affiliatable, true),
+    or(eq(priceQuotes.affiliatable, true), inArray(priceQuotes.source, DIRECT_SOURCES)),
     eq(priceQuotes.currency, "USD"),
     sql`${priceQuotes.price} > 0`,
     sql`${priceQuotes.productId} IN (SELECT id FROM products WHERE is_rx = 0)`,
@@ -103,7 +109,7 @@ export function saveLookup(productId: string, source: PriceSourceId, result: Loo
     .where(and(eq(priceChecks.productId, productId), eq(priceChecks.source, source)))
     .get();
   const misses = result.status === "miss" ? (prev?.misses ?? 0) + 1 : 0;
-  const wait = result.status === "matched" ? PRICE_STALE_MS : Math.min(MISS_RETRY_MAX_MS, MISS_RETRY_MS * 2 ** (misses - 1));
+  const wait = result.status !== "miss" ? PRICE_STALE_MS : Math.min(MISS_RETRY_MAX_MS, MISS_RETRY_MS * 2 ** (misses - 1));
   db.transaction((tx) => {
     tx.delete(priceQuotes).where(and(eq(priceQuotes.productId, productId), eq(priceQuotes.source, source))).run();
     for (const q of result.quotes) {
@@ -124,6 +130,8 @@ export function saveLookup(productId: string, source: PriceSourceId, result: Loo
           packAmount: q.pack?.amount ?? null,
           packUnit: q.pack?.unit ?? null,
           fetchedAt: q.fetchedAt,
+          availability: q.availability ?? null,
+          location: q.location ?? null,
         })
         .onConflictDoNothing()
         .run();

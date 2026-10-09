@@ -3,10 +3,10 @@
 // (lib/prices/refresh.ts): users' products, recently viewed, then the
 // catalog with barcoded / brand-page products first. Rx is never touched.
 //   npm run prices:backfill -- --top 500 [--max-requests 2000]
-// Needs SOVRN_SITE_API_KEY and SOVRN_SECRET_KEY; exits without a request
-// otherwise.
+// Runs every configured source (Sovrn keys, Kroger client id + secret);
+// exits without a request when neither is set. --max-requests is per source.
 import { refreshPrices } from "@/lib/prices/refresh";
-import { sovrnConfig } from "@/lib/prices/config";
+import { livePricesEnabled } from "@/lib/prices/config";
 
 function arg(name: string): number | undefined {
   const i = process.argv.indexOf(`--${name}`);
@@ -15,13 +15,13 @@ function arg(name: string): number | undefined {
 }
 
 async function main() {
-  if (!sovrnConfig()) {
-    console.log("SOVRN_SITE_API_KEY and SOVRN_SECRET_KEY are not both set; nothing to do.");
+  if (!livePricesEnabled()) {
+    console.log("No price source is configured (Sovrn or Kroger keys); nothing to do.");
     return;
   }
   const top = arg("top") ?? 200;
   const maxRequests = arg("max-requests") ?? top * 4;
-  console.log(`Backfilling live prices for up to ${top} products (max ${maxRequests} requests, <= 10/s)...`);
+  console.log(`Backfilling live prices for up to ${top} products (max ${maxRequests} requests per source)...`);
   const report = await refreshPrices(new Date(), { maxProducts: top, maxRequests, log: (s) => console.log(`  ${s}`) });
   console.log(JSON.stringify(report, null, 2));
 }

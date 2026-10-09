@@ -1,0 +1,26 @@
+{
+  "data": [
+    {
+      "productId": "0004110000123",
+      "brand": "Kroger",
+      "description": "Kroger® Adapalene Gel 0.1% Acne Treatment",
+      "productPageURI": "/p/kroger-adapalene-gel/0004110000123?cid=x",
+      "items": [{ "itemId": "0004110000123", "inventory": { "stockLevel": "HIGH" }, "price": { "regular": 9.99, "promo": 0 }, "size": "1.6 oz" }]
+    },
+    {
+      "productId": "0030299491045",
+      "brand": "Differin",
+      "description": "Differin Adapalene Gel 0.1% Acne Treatment",
+      "productPageURI": "/p/differin-adapalene-gel-0-1-acne-treatment/0030299491045",
+      "items": [{ "itemId": "0030299491045", "inventory": { "stockLevel": "TEMPORARILY_OUT_OF_STOCK" }, "price": { "regular": 15.99, "promo": 0 }, "size": "1.6 oz" }]
+    },
+    {
+      "productId": "0030299491099",
+      "brand": "Differin",
+      "description": "Differin Adapalene Gel 0.1% Acne Treatment Twin Pack",
+      "items": [{ "itemId": "0030299491099", "price": { "regular": 24.99, "promo": 0 }, "size": "2 ct / 1.6 oz" }]
+    },
+    { "brand": "Broken", "description": "no product id" }
+  ],
+  "meta": { "pagination": { "start": 0, "limit": 20, "total": 3 } }
+}

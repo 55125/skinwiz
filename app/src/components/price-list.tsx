@@ -1,6 +1,6 @@
 import { ExternalLink } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
-import type { PriceQuote } from "@/lib/prices/types";
+import type { Availability, PriceQuote } from "@/lib/prices/types";
 import { formatPerUnit, type LivePrice, type StoreBrandSavings } from "@/lib/prices/unit";
 import { unitPrice } from "@/lib/equivalence";
 
@@ -11,6 +11,8 @@ export function checkedAgo(fetchedAt: string, now = new Date()): string {
   if (hours < 48) return `${Math.floor(hours)} hour${Math.floor(hours) === 1 ? "" : "s"} ago`;
   return `${Math.floor(hours / 24)} days ago`;
 }
+
+const STOCK: Record<Availability, string> = { in_stock: "In stock", low: "Low stock", out_of_stock: "Out of stock" };
 
 // The product page's live prices: one row per merchant, cheapest first, from
 // lib/prices/store.ts getDisplayQuotes (fresh, OTC-only, only while enabled).
@@ -33,12 +35,19 @@ export function PriceList({ quotes }: { quotes: PriceQuote[] }) {
                 ${q.price.toFixed(2)} <span className="text-sm font-normal">at {q.merchantName}</span>
                 {per && <span className="ml-1 text-xs text-muted-foreground">· {per}</span>}
               </p>
-              <p className="text-xs text-muted-foreground">Affiliate link — we may earn a commission.</p>
+              {q.location && (
+                <p className="text-xs text-muted-foreground">
+                  {q.availability ? `${STOCK[q.availability]} at` : "Price at"} {q.merchantName} in {q.location}; prices vary by store.
+                </p>
+              )}
+              <p className="text-xs text-muted-foreground">
+                {q.affiliatable ? "Affiliate link — we may earn a commission." : "Not an affiliate link — we don't earn a commission on this one."}
+              </p>
             </div>
             <a
               href={q.url}
               target="_blank"
-              rel="sponsored nofollow noopener noreferrer"
+              rel={q.affiliatable ? "sponsored nofollow noopener noreferrer" : "nofollow noopener noreferrer"}
               className={buttonVariants({ variant: "outline", size: "sm" })}
             >
               Buy <ExternalLink className="ml-1 h-3.5 w-3.5" />

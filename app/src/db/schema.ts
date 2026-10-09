@@ -883,7 +883,7 @@ export const productBarcodes = sqliteTable(
   {
     productId: text("product_id").notNull(),
     barcode: text("barcode").notNull(),
-    source: text("source").notNull(), // "openfda_upc" | "obf_id" | "ndc_derived"
+    source: text("source").notNull(), // "openfda_upc" | "package" | "brand_site" | "obf_id" | "ndc_derived"
     rank: integer("rank").notNull(),
   },
   (table) => [uniqueIndex("product_barcodes_product_barcode_idx").on(table.productId, table.barcode)],

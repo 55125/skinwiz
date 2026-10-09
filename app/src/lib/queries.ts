@@ -618,11 +618,13 @@ function termMatches(col: SQLWrapper, term: SearchTerm, foldAccentsToo = false):
   return sql`(${plain} OR (${col} GLOB ${NON_ASCII} AND (${sql.join(foldedLikes, sql` OR `)})))`;
 }
 
-const SEARCH_COLUMNS = [products.brandName, products.manufacturer, products.activeIngredientText];
+const SEARCH_COLUMNS = [products.brandName, products.manufacturer, products.activeIngredientText, products.dosageForm];
 
 function buildSearchWhere(terms: SearchTerm[], filters: SearchFilters) {
-  // Every word has to match somewhere: the product name, the brand, or the
-  // raw ingredient text (so "niacinamide" finds products that contain it).
+  // Every word has to match somewhere: the product name, the brand, the
+  // raw ingredient text (so "niacinamide" finds products that contain it),
+  // or the dosage form: FDA listings mostly leave the form out of the name
+  // ("Aquaphor Healing" is the ointment), so "aquaphor ointment" needs it.
   const clauses = [
     LISTED_OTC,
     notDuplicate(),
@@ -658,6 +660,7 @@ function searchOrder(terms: SearchTerm[]): SQL[] {
     return [
       sql`CASE WHEN ${termMatches(products.brandName, word)} THEN 2 WHEN ${termMatches(products.brandName, t)} THEN 1 ELSE 0 END`,
       sql`CASE WHEN ${termMatches(products.manufacturer, word)} THEN 2 ELSE 0 END`,
+      sql`CASE WHEN ${termMatches(products.dosageForm, word)} AND NOT ${termMatches(products.brandName, word)} THEN 2 ELSE 0 END`,
     ];
   });
   const contains = terms.flatMap((t) => {

@@ -6,7 +6,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { gtinSpellings, parseProductCode, validGtin } from "./product-codes";
+import { brandSiteBarcode, gtinSpellings, parseProductCode, validGtin } from "./product-codes";
 
 test("check digits", () => {
   assert.ok(validGtin("302994910458")); // Differin UPC-A
@@ -62,6 +62,13 @@ test("ordinary searches are not codes", () => {
   }
 });
 
+test("brand-direct ids that carry the brand's own UPC", () => {
+  assert.equal(brandSiteBarcode("aquaphor-072140633776"), "0072140633776");
+  assert.equal(brandSiteBarcode("aquaphor-072140633777"), null); // bad check digit
+  assert.equal(brandSiteBarcode("NATR-123"), null);
+  assert.equal(brandSiteBarcode("0072140633776"), null); // OBF ids are barcodes already
+});
+
 type Q = typeof import("./queries");
 let q: Q;
 
@@ -89,10 +96,13 @@ before(async () => {
   product("shared-a", "Shared Code A");
   product("shared-b", "Shared Code B");
   product("0168-0099", "Rx Cream", { rx: true });
+  product("10356-101", "Aquaphor Healing");
+  db.run(sql`UPDATE products SET dosage_form = 'OINTMENT' WHERE id = '10356-101'`);
   db.run(sql`INSERT INTO product_barcodes (product_id, barcode, source, rank) VALUES
     ('0299-3823', '0302993917564', 'openfda_upc', 0),
     ('shared-a', '0070501111116', 'openfda_upc', 0),
-    ('shared-b', '0070501111116', 'openfda_upc', 0)`);
+    ('shared-b', '0070501111116', 'openfda_upc', 0),
+    ('10356-101', '0072140014193', 'package', 0)`);
   db.run(sql`INSERT INTO price_quotes (product_id, source, merchant_id, merchant_name, price, currency, url, affiliatable, match_type, match_confidence, fetched_at)
     VALUES ('brand-serum', 'kroger', 'kroger-1', 'Kroger', 9.99, 'USD', 'https://www.kroger.com/p/brand-serum/0081234500001', 0, 'keywords', 0.9, '2026-10-09')`);
 });
@@ -117,4 +127,13 @@ test("lookup: a shared code lists every product; unknown codes and Rx find nothi
   assert.deepEqual(ids("0168-0099"), []);
   assert.deepEqual(ids("036000291452"), []);
   assert.equal(q.lookupProductsByCode("differin"), null);
+});
+
+test("lookup: a barcode typed off the package finds an FDA listing openFDA gives no UPC for", () => {
+  assert.deepEqual(ids("0 72140 01419 3"), ["10356-101"]);
+});
+
+test("search: the dosage form counts as a word of the name", () => {
+  assert.deepEqual(q.searchProducts("aquaphor healing ointment").map((p) => p.id), ["10356-101"]);
+  assert.deepEqual(q.searchProducts("aquaphor cream").map((p) => p.id), []);
 });

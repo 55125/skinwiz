@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { ProductGrid } from "@/components/product-grid";
 import { FREE_FROM_CHECKS, computeFreeFromFlags, ingredientFailsCheck, type FreeFromCheck } from "@/db/ingredient-flags";
-import { CONTACT_ALLERGENS, allergensInIngredient, computeAllergenHits, getAllergen, groupsContaining } from "@/db/contact-allergens";
+import { CONTACT_ALLERGENS, allergensInIngredient, allergensInList, getAllergen, groupsContaining } from "@/db/contact-allergens";
 import { avoidConflicts, type AvoidableProduct } from "@/lib/avoid-shared";
 import { canonicalSlug, ingredientKey, slugFor, splitIngredientList } from "@/db/ingredient-parse";
 import { getIngredient, MIN_PUBLIC_PRODUCTS } from "@/lib/queries";
@@ -54,7 +54,7 @@ export default async function CheckPage({ searchParams }: { searchParams: Promis
   }));
   // Allergens: matched per name for the "listed as" mapping, and on the
   // whole text for presence (chemical names with commas survive that way).
-  const allergenHits = enough ? (computeAllergenHits(text) ?? []) : [];
+  const allergenHits = enough ? allergensInList(text) : [];
   const allergenRows = allergenHits.flatMap((id) => {
     const a = getAllergen(id);
     return a ? [{ allergen: a, names: items.filter((i) => allergensInIngredient(i.raw).includes(id)).map((i) => i.raw) }] : [];

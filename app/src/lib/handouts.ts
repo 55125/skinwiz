@@ -131,7 +131,8 @@ export function validateHandoutInput(raw: unknown, opts: { allowRx: boolean }): 
   let avoidCode: string | null = null;
   if (typeof body.avoidCode === "string" && body.avoidCode.trim()) {
     const code = body.avoidCode.trim().slice(0, MAX_CODE_LENGTH);
-    if (decodeImportCode(code).ok) avoidCode = code;
+    const decoded = decodeImportCode(code);
+    if (decoded.ok && decoded.avoidIds.length + decoded.notOnLabel.length > 0) avoidCode = code;
     else return { ok: false, error: "That patch-test code doesn't decode. Copy it from the patch-test sheet link (the a= part)." };
   }
   return { ok: true, title, content: { sections, steps, stopRules, notes, avoidCode } };

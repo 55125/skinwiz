@@ -247,7 +247,7 @@ export const CONTACT_ALLERGENS: ContactAllergen[] = [
     id: "formaldehyde",
     name: "Formaldehyde",
     section: "formaldehyde",
-    terms: ["formaldehyde", "formalin", "methanal", "methylene oxide", "methylene glycol", "formic aldehyde", "oxomethane"],
+    terms: ["formaldehyde", "paraformaldehyde", "formalin", "methanal", "methylene oxide", "methylene glycol", "formic aldehyde", "oxomethane"],
     unless: ["melamine formaldehyde", "tosylamide formaldehyde", "toluene sulfonamide formaldehyde", "toluenesulfonamide formaldehyde"],
     note: "“Methylene glycol” is formaldehyde dissolved in water, the form used in keratin hair-smoothing treatments.",
   },
@@ -307,7 +307,7 @@ export const CONTACT_ALLERGENS: ContactAllergen[] = [
     id: "mci-mi",
     name: "Methylchloroisothiazolinone/methylisothiazolinone (MCI/MI)",
     section: "preservative",
-    terms: ["methylchloroisothiazolinone", "kathon"],
+    terms: ["methylchloroisothiazolinone", "methylchloroisothiazolone", "chloromethylisothiazolinone", "5-chloro-2-methyl-4-isothiazolin-3-one", "kathon"],
     aka: ["MCI/MI", "Kathon CG"],
     note: "Always contains MI as well, so it is flagged under both.",
   },
@@ -315,7 +315,9 @@ export const CONTACT_ALLERGENS: ContactAllergen[] = [
     id: "methylisothiazolinone",
     name: "Methylisothiazolinone (MI)",
     section: "preservative",
-    terms: ["methylisothiazolinone", "kathon"],
+    // Misspellings seen on real labels ("methyisothiazolinone") and the bare
+    // class name some labels use.
+    terms: ["methylisothiazolinone", "methyisothiazolinone", "methyl isothiazolinone", "2-methyl-4-isothiazolin-3-one", "neolone", "isothiazolinones", "kathon"],
     aka: ["MI", "MIT"],
     note: "Rising prevalence, especially from rinse-off products and wet wipes.",
   },
@@ -398,7 +400,7 @@ export const CONTACT_ALLERGENS: ContactAllergen[] = [
     id: "cocamidopropyl-betaine",
     name: "Cocamidopropyl betaine (CAPB)",
     section: "surfactant",
-    terms: ["cocamidopropyl betaine", "capb", "coco betaine", "coco-betaine"],
+    terms: ["cocamidopropyl betaine", "cocoamidopropyl betaine", "cocamidopropylbetaine", "capb", "coco betaine", "coco-betaine"],
     note: "The real sensitizers are often manufacturing residues, amidoamine and dimethylaminopropylamine, which aren't listed.",
   },
   { id: "decyl-glucoside", name: "Decyl glucoside", section: "surfactant", terms: ["decyl glucoside"] },
@@ -510,6 +512,16 @@ export const CONTACT_ALLERGENS: ContactAllergen[] = [
     rare: true,
   },
   { id: "drometrizole-trisiloxane", name: "Drometrizole trisiloxane (Mexoryl XL)", section: "uv-filter", terms: ["drometrizole trisiloxane", "mexoryl xl"], rare: true },
+  {
+    id: "other-uv-filters",
+    name: "Other chemical UV filters",
+    section: "uv-filter",
+    terms: [
+      "ensulizole", "phenylbenzimidazole sulfonic acid", "meradimate", "menthyl anthranilate", "cinoxate", "dioxybenzone", "benzophenone-8",
+      "diethylamino hydroxybenzoyl hexyl benzoate", "ethylhexyl triazone", "isoamyl p-methoxycinnamate", "amiloxate", "polysilicone-15",
+    ],
+    note: "Less common filters, listed so the all-chemical-filters group leaves only mineral sunscreens.",
+  },
   { id: "oleoyl-tyrosine", name: "Oleoyl tyrosine", section: "uv-filter", terms: ["oleoyl tyrosine"], note: "In tan-enhancing products." },
   {
     id: "mineral-uv-filters",
@@ -638,7 +650,7 @@ export const CONTACT_ALLERGENS: ContactAllergen[] = [
     terms: ["hydrocortisone", "tixocortol", "prednisolone", "methylprednisolone", "prednisone", "cortisone"],
     unless: [
       "hydrocortisone 17-butyrate", "hydrocortisone butyrate", "hydrocortisone valerate", "hydrocortisone probutate", "hydrocortisone buteprate",
-      "methylprednisolone aceponate", "prednicarbate",
+      "methylprednisolone aceponate", "prednicarbate", "hydrocortisone 17-valerate",
     ],
     aka: ["tixocortol-21-pivalate (patch-test marker)"],
     note: "Includes OTC hydrocortisone and hydrocortisone acetate. Corticosteroid allergy is class-based; cross-reactions between classes occur, so ask your dermatologist which classes to avoid.",
@@ -665,6 +677,8 @@ export const CONTACT_ALLERGENS: ContactAllergen[] = [
     terms: [
       "hydrocortisone 17-butyrate", "hydrocortisone butyrate", "hydrocortisone valerate", "hydrocortisone probutate", "clobetasol", "clobetasone",
       "betamethasone valerate", "betamethasone dipropionate", "mometasone", "fluticasone", "methylprednisolone aceponate", "prednicarbate",
+      // Esters the class A and C lists exclude, so they must land here.
+      "hydrocortisone 17-valerate", "hydrocortisone buteprate", "betamethasone 17-valerate", "dexamethasone valerate",
     ],
     aka: ["hydrocortisone-17-butyrate (patch-test marker)", "clobetasol-17-propionate (patch-test marker)"],
   },
@@ -946,8 +960,14 @@ const MATCHERS = CONTACT_ALLERGENS.map((a) => ({
   unless: a.unless?.length ? new RegExp(a.unless.map(termPattern).join("|"), "g") : null,
 }));
 
+// Marketing claims inside ingredient text ("Paraben-free.", "nickel free,
+// hypoallergenic") name what's absent: one word before "free" at the end of a
+// phrase, so a name that merely continues ("... free fatty acids") is kept.
+const FREE_CLAIM = /(?<![a-z0-9])[a-z0-9]+ free(?=\s*(?:[,.;!]|$| and | & ))/g;
+
 function matchNormalized(text: string): string[] {
-  return MATCHERS.filter((m) => m.re.test(m.unless ? text.replace(m.unless, " ") : text)).map((m) => m.id);
+  const t = text.replace(FREE_CLAIM, " ");
+  return MATCHERS.filter((m) => m.re.test(m.unless ? t.replace(m.unless, " ") : t)).map((m) => m.id);
 }
 
 /** Allergen ids named by one ingredient ("Parfum (Fragrance)" -> ["fragrance"]). */
@@ -967,9 +987,22 @@ const MIN_FULL_INGREDIENT_TEXT_LENGTH = 60;
  */
 export function computeAllergenHits(fullIngredientText: string | null | undefined): string[] | null {
   if (!fullIngredientText || fullIngredientText.trim().length < MIN_FULL_INGREDIENT_TEXT_LENGTH) return null;
+  return allergensInList(fullIngredientText);
+}
+
+/**
+ * Allergen ids in an ingredient list with no length floor, for a list the
+ * visitor pasted as complete (/check): "Water, Glycerin, Parfum,
+ * Methylisothiazolinone" is short but whole.
+ */
+export function allergensInList(ingredientText: string): string[] {
   // Commas survive normalization, so a term can't run across two ingredients.
-  const text = normalizeForAllergens(fullIngredientText.replace(/[;\n]/g, ","));
-  return matchNormalized(text);
+  const text = ingredientText.replace(/[;\n]/g, ",");
+  // Normalizing joins "1,2-hexanediol" into one name, but a label without
+  // spaces ("Benzophenone-3,4-Methylbenzylidene Camphor") looks the same, so
+  // the list is also read with every digit comma kept as a separator.
+  const split = text.replace(/(\d),(?=\d)/g, "$1, ");
+  return [...new Set([...matchNormalized(normalizeForAllergens(text)), ...matchNormalized(normalizeForAllergens(split))])];
 }
 
 export type AllergenFinding = { level: "contains" | "may-contain"; allergenIds: string[] };
@@ -1026,8 +1059,7 @@ const PATCH_TEST_NAMES: [string, string][] = [
   ["fragrance mix 1", "fragrance-mix-1"],
   ["fragrance mix", "fragrance-mix-1"],
   ["paraben mix", "parabens"],
-  ["caine mix", "benzocaine"],
-  ["compositae mix", "compositae"],
+    ["compositae mix", "compositae"],
   ["formaldehyde releaser", "formaldehyde-releasers"],
   ["amidoamine", "cocamidopropyl-betaine"],
   ["dimethylaminopropylamine", "cocamidopropyl-betaine"],
@@ -1048,29 +1080,40 @@ const RESULT_NOISE =
   /\b(\d+([.,]\d+)?\s*%|\d+([.,]\d+)?\s*(mg|µg|ug)(\s*\/\s*cm2?)?|pet|petrolatum|aq|water|eth|ethanol|acetone|ac|day\s*\d|d\s*\d|reading|positive|pos|relevant|relevance|current|past|possible|probable|definite|doubtful|irritant|ir|allergic|reaction|result|weak|strong|extreme)\b|[+?()[\]:#*]+|\b\d+\.(?=\s)/gi;
 const NEGATIVE = /\b(neg|negative|nr|not reactive|no reaction)\b|(^|\s)[-–]\s*$|(^|\s)0\s*$/i;
 
-export type PatchTestLine = { line: string; ids: string[]; negative: boolean };
+// Doubtful and irritant readings: not an allergy on their own, so these
+// lines are recognized but left for the patient to tick.
+const UNCERTAIN = /(^|\s)(\?\+?|\+\s*\/\s*-|\+-|±|ir|irritant|doubtful)(?=\s|$)/i;
+
+export type PatchTestLine = { line: string; ids: string[]; negative: boolean; uncertain: boolean; notOnLabel?: string };
+
+// A series name the caller knows ("Caine mix III", "Carba mix"), looked up
+// before label matching. Returns allergen ids, or a not-on-label id.
+export type SeriesNameLookup = (cleaned: string) => { ids: string[]; notOnLabel?: string } | undefined;
 
 /**
  * Reads a pasted patch-test results sheet, one allergen per line (or comma-
- * separated), into allergen/group ids. Lines read as negative are flagged so
- * the caller can leave them unticked.
+ * separated), into allergen/group ids. Lines read as negative, doubtful or
+ * irritant are flagged so the caller can leave them unticked.
  */
-export function parsePatchTestResults(text: string): PatchTestLine[] {
+export function parsePatchTestResults(text: string, seriesName?: SeriesNameLookup): PatchTestLine[] {
   const lines = text
     .split(/\r?\n|;|,(?!\d)/)
     .map((l) => l.trim())
     .filter((l) => /[a-z]{2}/i.test(l));
   return lines.slice(0, 120).map((line) => {
     const negative = NEGATIVE.test(line);
-    const cleaned = normalizeForAllergens(line.replace(NEGATIVE, " ").replace(RESULT_NOISE, " "));
+    const uncertain = !negative && UNCERTAIN.test(line);
+    const cleaned = normalizeForAllergens(line.replace(NEGATIVE, " ").replace(UNCERTAIN, " ").replace(RESULT_NOISE, " "));
+    const series = cleaned ? seriesName?.(cleaned) : undefined;
+    if (series) return { line, ...series, negative, uncertain };
     const exact = PATCH_TEST_NAMES.find(([name]) => cleaned === name);
     const named = exact ?? PATCH_TEST_NAMES.find(([name]) => name.length > 3 && new RegExp(`(^| )${escapeRe(name)}( |$)`).test(cleaned));
-    if (named) return { line, ids: [named[1]], negative };
+    if (named) return { line, ids: [named[1]], negative, uncertain };
     const group = ALLERGEN_GROUPS.find((g) => normalizeForAllergens(g.name) === cleaned);
-    if (group) return { line, ids: [group.id], negative };
+    if (group) return { line, ids: [group.id], negative, uncertain };
     // An exact aka ("Kathon CG", "Amerchol L-101") before word matching.
     const aka = CONTACT_ALLERGENS.find((a) => [a.name, ...(a.aka ?? [])].some((n) => normalizeForAllergens(n) === cleaned));
-    if (aka) return { line, ids: [aka.id], negative };
-    return { line, ids: cleaned ? allergensInIngredient(cleaned) : [], negative };
+    if (aka) return { line, ids: [aka.id], negative, uncertain };
+    return { line, ids: cleaned ? allergensInIngredient(cleaned) : [], negative, uncertain };
   });
 }

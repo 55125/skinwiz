@@ -33,6 +33,7 @@ import { ewgHazardBadge } from "@/lib/ewg";
 import { readSessionId } from "@/lib/session";
 import { getSessionOutcome } from "@/lib/outcomes";
 import { readAvoidIds, avoidVerdict, avoidedIngredientName } from "@/lib/avoid";
+import { avoidConflicts } from "@/lib/avoid-shared";
 import { AllergenFindings } from "@/components/allergen-findings";
 import { activeName, describeStrengths } from "@/lib/strength-display";
 import { formatPct } from "@/db/strength";
@@ -194,9 +195,19 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
   const isDrugLabel = product.dataSource === "openfda" || product.dataSource === "dailymed";
   const labelActives = ingredientRows.filter((r) => r.position <= 0);
   const listedIngredients = ingredientRows.filter((r) => r.position > 0);
+  // With an avoid list, only formulas whose full ingredient list is clear of
+  // it, as on /check; otherwise a patch-tested patient is pointed at more of
+  // what they react to.
   const similar = isDrugLabel
     ? []
-    : findSimilarProductsCached(listedIngredients.map((r) => r.ingredientId), { excludeId: product.id, limit: 4 });
+    : avoidIds.length > 0
+      ? findSimilarProductsCached(listedIngredients.map((r) => r.ingredientId), { excludeId: product.id, limit: 40 })
+          .filter((s) => {
+            const c = avoidConflicts(s.product, avoidIds);
+            return !!c && c.conflicts.length === 0 && c.possible.length === 0;
+          })
+          .slice(0, 4)
+      : findSimilarProductsCached(listedIngredients.map((r) => r.ingredientId), { excludeId: product.id, limit: 4 });
   const safeSwaps = needsSwap
     ? findSafeSwaps(product, ingredientRows.filter((r) => r.position > 0).map((r) => r.ingredientId), avoidIds)
     : [];
@@ -706,7 +717,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
             <p className="text-sm text-muted-foreground">
               Products whose ingredient lists overlap most with this one, weighting distinctive ingredients over
               common ones like water and glycerin. Similar lists are not identical formulas — concentrations,
-              texture and price differ.
+              texture and price differ.{avoidIds.length > 0 ? " Only formulas clear of everything on your avoid list are shown." : ""}
             </p>
           </div>
           <div className="grid gap-3 sm:grid-cols-2">

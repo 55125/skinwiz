@@ -4,7 +4,8 @@ import { useMemo, useState } from "react";
 import { Check, ClipboardList } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { PATCH_TEST_FAMILY as FAMILY_FOR, allergenLabel, parsePatchTestResults } from "@/db/contact-allergens";
+import { PATCH_TEST_FAMILY as FAMILY_FOR, allergenLabel } from "@/db/contact-allergens";
+import { getNotOnLabel, readResultsSheet } from "@/db/patch-test-series";
 import { cn } from "@/lib/utils";
 
 const EXAMPLE = "Methylisothiazolinone 0.2% aq ++\nFragrance mix I 8% pet +\nAmerchol L-101 50% pet +\nQuaternium-15 2% pet negative";
@@ -12,19 +13,21 @@ const EXAMPLE = "Methylisothiazolinone 0.2% aq ++\nFragrance mix I 8% pet +\nAme
 // Turns a pasted patch-test results sheet into avoid-list picks: every line
 // is matched against allergen names, label synonyms and series names, and
 // shown for the visitor to confirm before anything is added.
-export function PatchTestPaste({ onAdd, defaultOpen }: { onAdd: (ids: string[]) => void; defaultOpen?: boolean }) {
+export function PatchTestPaste({ onAdd, defaultOpen }: { onAdd: (ids: string[], notOnLabel: string[]) => void; defaultOpen?: boolean }) {
   const [text, setText] = useState("");
   const [unticked, setUnticked] = useState<Set<string>>(new Set());
   const [ticked, setTicked] = useState<Set<string>>(new Set());
   const [added, setAdded] = useState<number | null>(null);
 
-  const lines = useMemo(() => parsePatchTestResults(text), [text]);
+  const lines = useMemo(() => readResultsSheet(text), [text]);
   const rows = lines.map((l, i) => {
     const families = l.ids.flatMap((id) => (FAMILY_FOR[id] ? [FAMILY_FOR[id]] : []));
-    return { ...l, key: `${i}:${l.line}`, family: families[0] };
+    // Negative, doubtful and irritant lines are shown but start unticked.
+    return { ...l, key: `${i}:${l.line}`, family: families[0], byDefault: !l.negative && !l.uncertain };
   });
   const recognized = rows.filter((r) => r.ids.length > 0);
-  const unknown = rows.filter((r) => r.ids.length === 0);
+  const offLabel = rows.filter((r) => r.ids.length === 0 && r.notOnLabel && !r.negative && !r.uncertain);
+  const unknown = rows.filter((r) => r.ids.length === 0 && !r.notOnLabel);
 
   const isOn = (key: string, byDefault: boolean) => (byDefault ? !unticked.has(key) : ticked.has(key));
   function flip(key: string, byDefault: boolean) {
@@ -40,8 +43,8 @@ export function PatchTestPaste({ onAdd, defaultOpen }: { onAdd: (ids: string[]) 
   const picked = [
     ...new Set(
       recognized.flatMap((r) => [
-        ...(isOn(r.key, !r.negative) ? r.ids : []),
-        ...(r.family && isOn(`${r.key}#family`, r.family.byDefault && !r.negative) ? [r.family.id] : []),
+        ...(isOn(r.key, r.byDefault) ? r.ids : []),
+        ...(r.family && isOn(`${r.key}#family`, r.family.byDefault && r.byDefault) ? [r.family.id] : []),
       ]),
     ),
   ];
@@ -75,14 +78,15 @@ export function PatchTestPaste({ onAdd, defaultOpen }: { onAdd: (ids: string[]) 
           <ul className="space-y-1.5" aria-label="Recognized allergens">
             {recognized.map((r) => (
               <li key={r.key} className="space-y-1">
-                <Tick on={isOn(r.key, !r.negative)} onToggle={() => flip(r.key, !r.negative)}>
+                <Tick on={isOn(r.key, r.byDefault)} onToggle={() => flip(r.key, r.byDefault)}>
                   <span className="font-medium">{r.ids.map(allergenLabel).join(" + ")}</span>
                   <span className="text-xs text-muted-foreground"> — from &ldquo;{r.line}&rdquo;</span>
                   {r.negative && <span className="text-xs text-muted-foreground"> (reads as negative)</span>}
+                  {r.uncertain && <span className="text-xs text-muted-foreground"> (reads as doubtful or irritant; tick it if your dermatologist said to avoid it)</span>}
                 </Tick>
                 {r.family && (
                   <div className="pl-7">
-                    <Tick on={isOn(`${r.key}#family`, r.family.byDefault && !r.negative)} onToggle={() => flip(`${r.key}#family`, r.family!.byDefault && !r.negative)} small>
+                    <Tick on={isOn(`${r.key}#family`, r.family.byDefault && r.byDefault)} onToggle={() => flip(`${r.key}#family`, r.family!.byDefault && r.byDefault)} small>
                       Also avoid {allergenLabel(r.family.id)}
                     </Tick>
                   </div>
@@ -91,23 +95,30 @@ export function PatchTestPaste({ onAdd, defaultOpen }: { onAdd: (ids: string[]) 
             ))}
           </ul>
         )}
+        {offLabel.length > 0 && (
+          <p className="text-xs leading-relaxed text-muted-foreground">
+            Saved to your list for reference, but not on cosmetic labels, so we can&apos;t check products for:{" "}
+            {offLabel.map((r) => `${getNotOnLabel(r.notOnLabel!)!.name} (${getNotOnLabel(r.notOnLabel!)!.foundIn.replace(/\.$/, "").toLowerCase()})`).join("; ")}.
+          </p>
+        )}
         {unknown.length > 0 && (
           <p className="text-xs leading-relaxed text-muted-foreground">
-            Not on our list: {unknown.map((u) => u.line).join("; ")}. Some are allergens we don&apos;t track (rubber
-            accelerators, textile dyes), so check labels for these yourself.
+            Not recognized: {unknown.map((u) => u.line).join("; ")}. Check labels for these yourself, or pick them from a
+            patch-test series below.
           </p>
         )}
         <div className="flex flex-wrap items-center gap-3">
           <Button
             type="button"
-            disabled={picked.length === 0}
+            disabled={picked.length + offLabel.length === 0}
             onClick={() => {
-              onAdd(picked);
-              setAdded(picked.length);
+              const off = [...new Set(offLabel.map((r) => r.notOnLabel!))];
+              onAdd(picked, off);
+              setAdded(picked.length + off.length);
             }}
             className="rounded-full"
           >
-            Add {picked.length || ""} to my list
+            Add {picked.length + offLabel.length || ""} to my list
           </Button>
           {added !== null && (
             <span className="flex items-center gap-1 text-sm text-emerald-700 dark:text-emerald-400">

@@ -110,6 +110,16 @@ function FreeFromLink({ id }: { id: string }) {
   );
 }
 
+// The product page's notes stay one line each; the method behind them
+// (sources, matching, what a check can't see) is on the About page.
+function HowWeCheck() {
+  return (
+    <Link href="/about#how-we-check" className="font-medium text-brand hover:underline">
+      How we check
+    </Link>
+  );
+}
+
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
   const product = getProduct(decodeURIComponent(id));
@@ -471,8 +481,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
           )}
           {avoid?.status === "unassessed" && (
             <p className="rounded-xl border border-dashed px-3.5 py-2.5 text-sm text-muted-foreground">
-              Couldn&apos;t check this product against your avoid list — no full ingredient list is available for
-              it, so it&apos;s unknown, not clear.
+              Couldn&apos;t check against your avoid list: there&apos;s no full ingredient list, so it&apos;s unknown, not clear.
             </p>
           )}
 
@@ -503,11 +512,11 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
                 <p className="text-sm text-muted-foreground">Nothing in this ingredient list stands out for or against your profile.</p>
               )}
               <p className="text-xs text-muted-foreground">
-                A rule-based estimate from the published ingredient list and your{" "}
+                A rule-based estimate from the ingredient list and your{" "}
                 <Link href="/profile" className="underline">
                   profile
                 </Link>
-                , not a prediction of how your skin will react.
+                , not a prediction. <HowWeCheck />
               </p>
             </div>
           ) : (
@@ -640,8 +649,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
               )}
               {!isDrugLabel && ingredientRows.length > 0 && (
                 <p className="mt-2 text-xs text-muted-foreground">
-                  Tap any ingredient to see what it is and every product that contains it. Bold items are actives
-                  we track.
+                  Tap an ingredient for what it is and where else it&apos;s used. Bold ones are actives we track.
                 </p>
               )}
               <ActiveNotes notes={evidenceNotes.filter((n) => !strengthRows.some((r) => r.id === n.activeId))} className="mt-4 border-t pt-4" />
@@ -718,8 +726,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
                 </div>
               )}
               <p className="mt-2 text-xs text-muted-foreground">
-                Computed from the published ingredient list above, not a certification — not exhaustive, and not a
-                substitute for checking your own known allergens.
+                From the ingredient list, not a certification; check your own allergens too. <HowWeCheck />
               </p>
             </div>
           )}
@@ -738,9 +745,8 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
           <Info className="h-4 w-4 text-amber-600" />
           <AlertTitle>Community-sourced listing, not FDA-verified</AlertTitle>
           <AlertDescription className="text-[13px]">
-            This product&apos;s data comes from Open Beauty Facts, a crowd-edited database — anyone can
-            submit or edit an entry. Unlike the rest of the catalog, this listing hasn&apos;t been
-            independently verified. Ingredient names and amounts may be incomplete or inaccurate. Data from{" "}
+            Anyone can edit this entry and it hasn&apos;t been verified, so names and amounts may be incomplete or
+            wrong. Data from{" "}
             <a href="https://world.openbeautyfacts.org" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2">
               Open Beauty Facts
             </a>
@@ -748,7 +754,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
             <a href="https://opendatacommons.org/licenses/odbl/1-0/" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2">
               Open Database License
             </a>
-            .
+            . <HowWeCheck />
           </AlertDescription>
         </Alert>
       )}
@@ -759,9 +765,8 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
           <AlertTitle>Third-party listing, not from the manufacturer</AlertTitle>
           <AlertDescription className="text-[13px]">
             {product.manufacturer ? displayManufacturer(product.manufacturer) : "The brand"} doesn&apos;t publish this
-            product&apos;s ingredient list, so it comes from independent ingredient databases that agree with each other.
-            It hasn&apos;t been checked against the package, and older stock may have a different formula. Check the
-            label if an ingredient matters to you.
+            list; it&apos;s from independent databases that agree, not checked against the package, and older stock may
+            differ. <HowWeCheck />
           </AlertDescription>
         </Alert>
       )}
@@ -771,24 +776,16 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
           <Info className="h-4 w-4 text-sky-600" />
           <AlertTitle>Sourced directly from the manufacturer</AlertTitle>
           <AlertDescription className="text-[13px]">
-            This ingredient list comes from {product.manufacturer ? displayManufacturer(product.manufacturer) : "the brand"}&apos;s own published
-            product page, not a crowd-edited database.{" "}
-            {brandStatus?.kind === "drug" ? (
-              <>
-                {brandStatus.drugActiveIds.length > 0
-                  ? `The page labels ${brandStatus.drugActiveIds.map((id) => activeName(id)).join(", ")} as the active ingredient${brandStatus.drugActiveIds.length > 1 ? "s" : ""}, so this is sold as an OTC drug.`
-                  : "The page shows a Drug Facts panel, so this is sold as an OTC drug."}
-                The list is the manufacturer&apos;s own disclosed claim, not the FDA drug label; check the Drug Facts
-                panel on the package.
-              </>
-            ) : brandStatus?.kind === "drug-ingredient" ? (
-              <>It isn&apos;t an FDA drug filing, but it is the manufacturer&apos;s own disclosed claim.</>
-            ) : (
-              <>
-                It isn&apos;t an FDA drug filing (none of its tracked actives has OTC monograph status), but it is the
-                manufacturer&apos;s own disclosed claim.
-              </>
-            )}
+            From {product.manufacturer ? displayManufacturer(product.manufacturer) : "the brand"}&apos;s own product page, not a
+            crowd-edited database.{" "}
+            {brandStatus?.kind === "drug"
+              ? brandStatus.drugActiveIds.length > 0
+                ? `It labels ${brandStatus.drugActiveIds.map((id) => activeName(id)).join(", ")} as the active${brandStatus.drugActiveIds.length > 1 ? "s" : ""}, so it's an OTC drug, but this isn't the FDA label: check the Drug Facts panel on the package.`
+                : "It shows a Drug Facts panel, so it's an OTC drug, but this isn't the FDA label: check the Drug Facts panel on the package."
+              : brandStatus?.kind === "drug-ingredient"
+                ? "Not an FDA drug filing."
+                : "Not an FDA drug filing (no tracked active has OTC monograph status)."}{" "}
+            <HowWeCheck />
           </AlertDescription>
         </Alert>
       )}
@@ -842,7 +839,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
               {equivalents.total.toLocaleString()} other {equivalents.total === 1 ? "product lists" : "products list"} the
               identical active ingredient{product.activeIds.length > 1 ? "s" : ""} at the identical strength
               {product.dosageForm ? ` in the same form (${product.dosageForm.toLowerCase()})` : ""} on the FDA label — often a
-              store brand or generic. Inactive ingredients, texture, and price can still differ.
+              store brand or generic. Inactive ingredients, texture and price can differ.
               {isSunscreen(product) &&
                 " For sunscreens, SPF and broad-spectrum protection are tested on each finished product, so the same filters don't guarantee the same SPF — check each label."}
             </p>
@@ -856,9 +853,8 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
           <div className="space-y-1">
             <h2 className="text-xl font-semibold">Similar formulas</h2>
             <p className="text-sm text-muted-foreground">
-              Products whose ingredient lists overlap most with this one, weighting distinctive ingredients over
-              common ones like water and glycerin. Similar lists are not identical formulas — concentrations,
-              texture and price differ.{avoidIds.length > 0 ? " Only formulas clear of everything on your avoid list are shown." : ""}
+              Ingredient lists that overlap most with this one. Similar isn&apos;t identical: amounts, texture and price
+              differ.{avoidIds.length > 0 ? " Only formulas clear of your avoid list are shown." : ""}
             </p>
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
@@ -1036,7 +1032,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
           </div>
           <p className="text-xs italic text-muted-foreground">
             These are search links, not vetted reviews — {SITE_NAME} doesn&apos;t screen or endorse social
-            content. Only the scores above come from feedback collected on {SITE_NAME}.
+            content.
           </p>
         </section>
       ) : (

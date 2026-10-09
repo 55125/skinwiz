@@ -83,9 +83,13 @@ export function AllergenFindings({
         </ul>
       )}
       <p className="mt-2 text-xs text-muted-foreground">
-        Matched on label names and synonyms from the published list.{" "}
+        Matched on label names and synonyms.{" "}
         <Link href="/allergens" className="font-medium text-brand hover:underline">
-          About the allergen list →
+          About the allergen list
+        </Link>
+        {" · "}
+        <Link href="/about#how-we-check" className="font-medium text-brand hover:underline">
+          How we check
         </Link>
       </p>
     </div>

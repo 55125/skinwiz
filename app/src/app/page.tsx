@@ -27,6 +27,7 @@ import { SITE_NAME } from "@/lib/brand";
 import { DERM_PANEL_LAUNCHED } from "@/lib/scoring";
 import { CONTACT_ALLERGENS } from "@/db/contact-allergens";
 import { ttlCache } from "@/lib/ttl-cache";
+import { ingredientHref } from "@/components/ingredient-link";
 
 // Force dynamic: without this, Next.js statically prerenders "/" once at
 // build time -- against whatever the database contains at that moment.
@@ -227,7 +228,7 @@ export default function Home() {
               {topActives.map((a) => (
                 <Link
                   key={a.activeId}
-                  href={`/ingredient/${encodeURIComponent(a.activeId)}`}
+                  href={ingredientHref(a.activeId)}
                   className="inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm transition-colors hover:border-brand/40 hover:bg-brand-soft"
                 >
                   {a.canonicalName}

@@ -33,6 +33,7 @@ import { checksFailedByIngredient } from "@/db/ingredient-flags";
 import { allergenMembers, allergensInIngredient, getAllergen, groupsContaining, type ContactAllergen } from "@/db/contact-allergens";
 import { MONOGRAPH_RANGES, formatRange } from "@/db/monograph-ranges";
 import { RETINOIDS } from "@/lib/retinoids";
+import { activeUse } from "@/db/active-uses";
 import { formatPct } from "@/db/strength";
 import { readAvoidIds } from "@/lib/avoid";
 import { readProfile } from "@/lib/profile";
@@ -207,6 +208,11 @@ export default async function IngredientPage({
           {active ? (
             <section className="space-y-4 rounded-2xl border bg-card p-5 sm:p-6">
               <h2 className="text-lg font-semibold">What we know about {active.canonicalName}</h2>
+              {activeUse(active.id) && (
+                <p className="text-sm leading-relaxed">
+                  <span className="font-medium">Used for:</span> {activeUse(active.id)}
+                </p>
+              )}
               {RETINOIDS.includes(active.id) && (
                 <p className="rounded-xl border bg-muted/40 p-3 text-sm">
                   Also using a prescription retinoid such as tretinoin?{" "}

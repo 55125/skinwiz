@@ -33,9 +33,16 @@ test("sunscreens: dedicated broad-spectrum SPF 30+ first, makeup and under SPF 3
 });
 
 test("a strength above the monograph maximum keeps a product off concern lists", () => {
-  assert.equal(aboveMonograph({ "salicylic-acid": 2.88 }), true);
-  assert.equal(aboveMonograph({ "salicylic-acid": 2 }), false);
+  assert.equal(aboveMonograph({ "salicylic-acid": 2.88 }, { concernId: "acne" }), true);
+  assert.equal(aboveMonograph({ "salicylic-acid": 2 }, { concernId: "acne" }), false);
   assert.equal(excludedFromConcern(p({ concernId: "acne", strengths: { "salicylic-acid": 2.88 } })), true);
+  // 3% is within the dandruff range, so a dandruff shampoo stays listed.
+  assert.equal(aboveMonograph({ "salicylic-acid": 3 }), false);
+  assert.equal(excludedFromConcern(p({ concernId: "dandruff-seb-derm", brandName: "Scalp Shampoo", strengths: { "salicylic-acid": 3 } })), false);
+  // A 40% zinc oxide diaper ointment is within the skin protectant monograph.
+  assert.equal(excludedFromConcern(p({ brandName: "Diaper Rash Ointment", activeIds: ["zinc-oxide"], strengths: { "zinc-oxide": 40 } })), false);
+  // A leave-on pyrithione zinc product at 1% is over the 0.25% leave-on limit.
+  assert.equal(excludedFromConcern(p({ concernId: "dandruff-seb-derm", brandName: "Scalp Cream", activeIds: ["pyrithione-zinc"], strengths: { "pyrithione-zinc": 1 } })), true);
 });
 
 test("junk and non-English community titles are flagged; brand names in French aren't", () => {

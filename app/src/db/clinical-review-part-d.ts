@@ -65,7 +65,7 @@ function counts(dbPath: string): Counts {
       strengths: r.strengths ? (JSON.parse(r.strengths) as Record<string, number>) : null,
       label: r.hasLabel ? { broadSpectrum15: !!r.bs15, sunburnOnly: !!r.sunburnOnly } : null,
     };
-    if (aboveMonograph(p.strengths)) {
+    if (aboveMonograph(p.strengths, p)) {
       c.aboveMonograph++;
       if (c.aboveExamples.length < 6) c.aboveExamples.push(`${r.brandName} (${Object.entries(p.strengths!).map(([k, v]) => `${k} ${v}%`).join(", ")})`);
       continue;

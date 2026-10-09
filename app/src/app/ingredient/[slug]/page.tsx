@@ -248,8 +248,14 @@ export default async function IngredientPage({
               )}
               {monograph && (
                 <p className="rounded-xl bg-muted/60 px-3.5 py-2.5 text-sm">
-                  <span className="font-medium">FDA OTC monograph range:</span> {formatRange(monograph)}{" "}
-                  <span className="text-muted-foreground">({monograph.cfr}) — what the FDA permits, not a rating.</span>
+                  <span className="font-medium">FDA OTC monograph {monograph.length > 1 ? "ranges" : "range"}:</span>{" "}
+                  {monograph.map((r, i) => (
+                    <span key={i}>
+                      {i > 0 && "; "}
+                      {formatRange(r)} <span className="text-muted-foreground">({r.use ? `${r.use}, ` : ""}{r.cite})</span>
+                    </span>
+                  ))}{" "}
+                  <span className="text-muted-foreground">— what the FDA permits, not a rating.</span>
                 </p>
               )}
               {strength && strength.n > 0 && strength.min !== null && strength.max !== null && (
@@ -367,8 +373,9 @@ export default async function IngredientPage({
                 </span>
               </div>
               <p className="mt-2 text-xs text-muted-foreground">
-                EWG scores whole formulas, not single ingredients — this is an average of theirs, not a score for
-                {" "}{ingredient.name}.
+                This is the average of EWG&apos;s scores for the products here that contain {ingredient.name}, not
+                EWG&apos;s own score for the ingredient. EWG scores ingredients and whole products separately, and a
+                product&apos;s score is not an average of its ingredients&apos; scores.
               </p>
             </div>
           )}
@@ -389,8 +396,10 @@ export default async function IngredientPage({
           )}
           {avgPos !== null && (
             <p className="px-1 text-xs text-muted-foreground">
-              Where listed in full cosmetic ingredient lists it averages position {avgPos}. Lists run roughly from
-              highest to lowest concentration, so earlier usually means more.
+              Where listed in full cosmetic ingredient lists it averages position {avgPos}. Cosmetic lists run from
+              highest to lowest concentration, though ingredients at 1% or less can follow in any order, so earlier
+              usually means more. OTC drug labels list inactive ingredients alphabetically, so their order says
+              nothing about amount; this average leaves out FDA drug listings.
             </p>
           )}
         </aside>

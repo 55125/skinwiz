@@ -16,7 +16,7 @@
 //    2.88% for acne) is kept off concern listings: it's usually a labeling
 //    error, and the product page says so.
 import { ANYWHERE_LISTED_ACTIVE_IDS } from "@/db/actives";
-import { MONOGRAPH_RANGES } from "@/db/monograph-ranges";
+import { monographStatus, type MonographContext } from "@/db/monograph-ranges";
 
 export const ECZEMA_CONCERN = "dry-skin-eczema";
 export const SUN_CONCERN = "sun-protection";
@@ -60,18 +60,20 @@ export function spfInName(name: string): number | null {
   return values.length ? Math.max(...values) : null;
 }
 
-/** An active stated above what its OTC monograph permits. */
-export function aboveMonograph(strengths: Record<string, number> | null | undefined): boolean {
+/**
+ * An active stated above every OTC monograph range that fits the product
+ * (by concern, form and other actives -- e.g. 3% salicylic acid is fine in
+ * a dandruff shampoo but above the 2% acne maximum). Without product
+ * details, above all of the active's ranges.
+ */
+export function aboveMonograph(strengths: Record<string, number> | null | undefined, product: MonographContext = {}): boolean {
   if (!strengths) return false;
-  return Object.entries(strengths).some(([id, pct]) => {
-    const range = MONOGRAPH_RANGES[id];
-    return !!range && typeof pct === "number" && pct > range.max + 1e-9;
-  });
+  return Object.entries(strengths).some(([id, pct]) => typeof pct === "number" && monographStatus(id, pct, product)?.status === "above");
 }
 
 /** Left off this concern's listing altogether. */
 export function excludedFromConcern(p: RankInput): boolean {
-  if (aboveMonograph(p.strengths)) return true;
+  if (aboveMonograph(p.strengths, p)) return true;
   if (p.concernId === ECZEMA_CONCERN) {
     if (p.activeIds.some((id) => ECZEMA_EXCLUDED_ACTIVES.includes(id))) return true;
     if (p.activeIngredientText && ECZEMA_EXCLUDED_TEXT.test(p.activeIngredientText.slice(0, 300))) return true;

@@ -924,8 +924,9 @@ export function getIngredientTopBrands(id: string, limit = 8) {
   `);
 }
 
-// Parsed label strengths for a tracked active (FDA rows only -- cosmetic
-// sources never disclose concentrations).
+// Parsed label strengths for a tracked active (FDA rows, plus brand pages
+// that print a labeled drug-active line -- cosmetic INCI lists never
+// disclose concentrations).
 export function getActiveStrengthStats(activeId: string) {
   const expr = strengthExpr(activeId);
   return db.get<{ n: number; min: number | null; max: number | null }>(sql`
@@ -959,7 +960,8 @@ export function getActiveChemData(activeId: string) {
 
 // Mean of EWG's own per-product scores over the products we carry that
 // contain this ingredient. A product-level figure, not an ingredient score:
-// EWG rates whole formulas, and most catalog products have no EWG row.
+// EWG scores products and ingredients separately (a product score is not an
+// average of ingredient scores), and most catalog products have no EWG row.
 export function getIngredientEwgSummary(id: string) {
   return db.get<{ n: number; avg: number | null; min: number | null; max: number | null }>(sql`
     SELECT COUNT(*) AS n, AVG(e.ewg_score) AS avg, MIN(e.ewg_score) AS min, MAX(e.ewg_score) AS max

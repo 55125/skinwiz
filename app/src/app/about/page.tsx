@@ -66,7 +66,7 @@ export default function AboutPage() {
           a verified dermatologist rater, never inferred automatically.
         </p>
         <p className="text-sm text-muted-foreground">
-          Products for cosmetic ingredients with no FDA drug status (niacinamide, vitamin C, and similar)
+          Products for cosmetic ingredients with no OTC drug status (niacinamide, vitamin C, and similar)
           come from{" "}
           <a href="https://world.openbeautyfacts.org" target="_blank" rel="noopener noreferrer" className="underline">
             Open Beauty Facts

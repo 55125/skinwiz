@@ -1,7 +1,7 @@
 // Pure logic for the MA patch-test reader (components/patch-test-reader.tsx):
 // grades, chamber numbering per series, and the chart write-up. Runs in the
 // browser; nothing here is sent to the server.
-import { PATCH_TEST_SERIES, type PatchTestSeries, type SeriesItem } from "@/db/patch-test-series";
+import { PATCH_TEST_SERIES, itemFamily, type PatchTestSeries, type SeriesItem } from "@/db/patch-test-series";
 
 // ICDRG grading, as on the T.R.U.E. Test label: negative, doubtful, weak,
 // strong, extreme, irritant. A tap steps forward and wraps back to negative.
@@ -57,13 +57,19 @@ export function getSeries(id: string): PatchTestSeries {
   return PATCH_TEST_SERIES.find((s) => s.id === id) ?? PATCH_TEST_SERIES[0];
 }
 
-/** Allergen and off-label ids for the avoid list: positives, plus doubtfuls if asked. */
+/**
+ * Allergen and off-label ids for the avoid list: positives, plus doubtfuls if
+ * asked, with the same default families the clinician sheet ticks
+ * (formaldehyde -> releasers, PPD/PTD -> PPD-type dyes).
+ */
 export function avoidIdsFrom(chambers: Chamber[], grades: Record<string, Grade>, includeDoubtful: boolean): string[] {
   const ids: string[] = [];
   for (const c of chambers) {
     const g = grades[c.key] ?? "neg";
     if (!c.item || !(POSITIVE.has(g) || (includeDoubtful && g === "?+"))) continue;
     ids.push(...c.item.ids);
+    const family = itemFamily(c.item);
+    if (family?.byDefault) ids.push(family.id);
     if (c.item.notOnLabel) ids.push(c.item.notOnLabel);
   }
   return [...new Set(ids)];

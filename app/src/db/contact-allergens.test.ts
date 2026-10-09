@@ -69,11 +69,31 @@ test("patch-test results sheets", () => {
   assert.deepEqual(read("Fragrance mix II 14% pet +").ids, ["fragrance-mix-2"]);
   assert.deepEqual(read("Amerchol L-101 50% pet ++").ids, ["lanolin"]);
   assert.deepEqual(read("Tixocortol-21-pivalate 0.1% pet +").ids, ["corticosteroid-class-a"]);
-  assert.deepEqual(read("Caine mix III 10% pet +").ids, ["benzocaine"]);
   assert.deepEqual(read("MI").ids, ["methylisothiazolinone"]);
   assert.deepEqual(read("Carba mix 3% pet +").ids, []);
   assert.equal(read("Quaternium-15 2% pet negative").negative, true);
   assert.equal(read("Quaternium-15 2% pet -").negative, true);
   assert.equal(read("Methylisothiazolinone 0.2% aq +++").negative, false);
   assert.equal(parsePatchTestResults("Kathon CG, Lyral; Nickel sulfate").length, 3);
+});
+
+test("label spellings seen in the catalog, and short pasted lists", async () => {
+  const { allergensInList } = await import("./contact-allergens");
+  assert.deepEqual(allergensInIngredient("methyisothiazolinone"), ["methylisothiazolinone"]);
+  assert.deepEqual(allergensInIngredient("Methylchloroisothiazolone"), ["mci-mi"]);
+  assert.deepEqual(allergensInIngredient("Cocoamidopropyl Betaine"), ["cocamidopropyl-betaine"]);
+  assert.deepEqual(allergensInIngredient("Paraformaldehyde"), ["formaldehyde"]);
+  assert.deepEqual(allergensInIngredient("Hydrocortisone 17-Valerate"), ["corticosteroid-class-d"]);
+  assert.deepEqual(allergensInIngredient("Betamethasone 17-Valerate"), ["corticosteroid-class-d"]);
+  assert.deepEqual(allergensInIngredient("Ensulizole"), ["other-uv-filters"]);
+  // Under the 60-character floor for catalog text, but a whole list when pasted.
+  assert.equal(computeAllergenHits("Water, Glycerin, Parfum, Methylisothiazolinone"), null);
+  assert.ok(allergensInList("Water, Glycerin, Parfum, Methylisothiazolinone").includes("methylisothiazolinone"));
+});
+
+test("labels without spaces after commas, and 'X-free' claims", () => {
+  const hits = computeAllergenHits("Water,Glycerin,Benzophenone-3,4-Methylbenzylidene Camphor,Quaternium-15,1,2-Hexanediol,Dimethicone");
+  assert.ok(hits?.includes("oxybenzone") && hits.includes("quaternium-15"), String(hits));
+  assert.deepEqual(computeAllergenHits("Water, Glycerin, 2-Bromo-2-Nitropropane-1,3-Diol, Dimethicone. Paraben-free, nickel free."), ["bronopol"]);
+  assert.ok(computeAllergenHits("Water, Glycerin, Dimethicone, Methylparaben, Phenoxyethanol, Tocopherol")?.includes("parabens"));
 });

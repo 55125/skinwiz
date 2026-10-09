@@ -7,11 +7,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { QrCode } from "@/components/qr-code";
 import { PrintSheet, useOrigin } from "@/components/patch-test-issuer";
-import { PATCH_TEST_SERIES, getNotOnLabel } from "@/db/patch-test-series";
+import { PATCH_TEST_SERIES, getNotOnLabel, positivesById, seriesItemKey } from "@/db/patch-test-series";
 import { resolveAllergenId } from "@/db/contact-allergens";
 import { buildImportPath } from "@/lib/avoid-import";
 import {
   GRADE_LABEL,
+  POSITIVE,
   READING_DAYS,
   TRAY_SERIES,
   backSpec,
@@ -140,6 +141,12 @@ export function PatchTestReader() {
   const offLabel = avoidAll.filter((id) => getNotOnLabel(id));
   const url = `${origin}${buildImportPath(avoidAll, { date: readDate || undefined })}`;
   const hasPositives = avoidAll.length > 0;
+  // The tested names behind each id, for the printed sheet.
+  const positives = positivesById(
+    chambers
+      .filter((c) => c.item && (POSITIVE.has(grades[c.key] ?? "neg") || (includeDoubtful && grades[c.key] === "?+")))
+      .map((c) => seriesItemKey(series.id, c.item!)),
+  );
 
   const [lastTapped, setLastTapped] = useState<string | null>(null);
   const tap = (key: string) => {
@@ -218,16 +225,17 @@ export function PatchTestReader() {
                     for it.
                   </p>
                   <div className="flex flex-wrap gap-2">
-                    <Button type="button" onClick={() => window.print()} className="rounded-full">
+                    <Button type="button" data-track="patch-reader:print" onClick={() => window.print()} className="rounded-full">
                       <Printer className="h-4 w-4" /> Print sheet
                     </Button>
-                    <a href={mail} className="inline-flex h-9 items-center gap-1.5 rounded-full border bg-background px-4 text-sm font-medium hover:bg-muted">
+                    <a href={mail} data-track="patch-reader:email" className="inline-flex h-9 items-center gap-1.5 rounded-full border bg-background px-4 text-sm font-medium hover:bg-muted">
                       <Mail className="h-4 w-4" /> Email
                     </a>
                     <Button
                       type="button"
                       variant="outline"
                       className="rounded-full"
+                      data-track="patch-reader:copy-link"
                       onClick={async () => {
                         await navigator.clipboard?.writeText(url).catch(() => {});
                         setCopied("link");
@@ -252,7 +260,7 @@ export function PatchTestReader() {
 
         {hasPositives &&
           origin &&
-          createPortal(<PrintSheet url={url} ids={avoidIds} offLabel={offLabel} patient={patient.trim()} date={readDate || undefined} />, document.body)}
+          createPortal(<PrintSheet url={url} ids={avoidIds} offLabel={offLabel} positives={positives} patient={patient.trim()} date={readDate || undefined} />, document.body)}
       </div>
     );
   }

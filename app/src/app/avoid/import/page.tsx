@@ -3,7 +3,7 @@ import Link from "next/link";
 import { PageHeader } from "@/components/page-header";
 import { AvoidImportButton } from "@/components/avoid-import-button";
 import { getNotOnLabel, importItemName, mainlyOffLabel, watchForNames } from "@/db/patch-test-series";
-import { avoidedIngredientName, readAvoidIds } from "@/lib/avoid";
+import { avoidedIngredientName, readAvoidIds, readNotOnLabelIds } from "@/lib/avoid";
 import { cleanDetails, decodeImportCode, mergeAvoidIds } from "@/lib/avoid-import";
 import { getSafeProductsByConcern } from "@/lib/queries";
 import { EmailSignupCard } from "@/components/email-signup-card";
@@ -57,6 +57,8 @@ export default async function AvoidImportPage({ searchParams }: { searchParams: 
   }
 
   const existing = await readAvoidIds();
+  const savedOff = await readNotOnLabelIds();
+  const offAllSaved = decoded.notOnLabel.every((id) => savedOff.includes(id));
   const device = await readDeviceSessionId();
   const signedInAs = device ? (personForSession(device)?.email ?? null) : null;
   const { already, coveredBy } = mergeAvoidIds(existing, decoded.avoidIds);
@@ -89,7 +91,7 @@ export default async function AvoidImportPage({ searchParams }: { searchParams: 
           </h2>
           <ul className="divide-y rounded-2xl border bg-card">
             {decoded.avoidIds.map((id) => {
-              const names = watchForNames(id);
+              const names = watchForNames(id, Infinity);
               return (
                 <li key={id} className="space-y-1 p-4">
                   <div className="flex flex-wrap items-baseline justify-between gap-2">
@@ -113,7 +115,11 @@ export default async function AvoidImportPage({ searchParams }: { searchParams: 
               );
             })}
           </ul>
-          <AvoidImportButton ids={decoded.avoidIds} allPresent={decoded.avoidIds.every((id) => alreadySet.has(id))} />
+          <AvoidImportButton
+            ids={decoded.avoidIds}
+            notOnLabel={decoded.notOnLabel}
+            allPresent={decoded.avoidIds.every((id) => alreadySet.has(id)) && offAllSaved}
+          />
           {otherOnList.length > 0 && (
             <p className="text-xs text-muted-foreground">
               Also on your list already, and kept: {otherOnList.map(avoidedIngredientName).join(", ")}.
@@ -146,15 +152,6 @@ export default async function AvoidImportPage({ searchParams }: { searchParams: 
         </section>
       )}
 
-      {!signedInAs && (
-        <EmailSignupCard
-          signedInAs={null}
-          next="/avoid"
-          title="Keep this list on every device"
-          blurb="Optional. Add your email and your avoid list is saved to your account, so it's there on any phone or computer you sign in on, along with your shelf and any plans from your clinic. No password; we send a one-time link."
-        />
-      )}
-
       {decoded.notOnLabel.length > 0 && (
         <section className="space-y-3" aria-labelledby="import-off-label">
           <h2 id="import-off-label" className="text-base font-semibold">
@@ -162,7 +159,7 @@ export default async function AvoidImportPage({ searchParams }: { searchParams: 
           </h2>
           <p className="text-sm text-muted-foreground">
             We can&apos;t check products for these, since they aren&apos;t listed as ingredients. Here&apos;s where they
-            usually turn up:
+            usually turn up. Adding the list keeps them on it for reference.
           </p>
           <ul className="divide-y rounded-2xl border border-dashed">
             {decoded.notOnLabel.map((id) => (
@@ -172,7 +169,18 @@ export default async function AvoidImportPage({ searchParams }: { searchParams: 
               </li>
             ))}
           </ul>
+          {decoded.avoidIds.length === 0 && <AvoidImportButton ids={[]} notOnLabel={decoded.notOnLabel} allPresent={offAllSaved} />}
         </section>
+      )}
+
+      {!signedInAs && decoded.avoidIds.length > 0 && (
+        <EmailSignupCard
+          signedInAs={null}
+          // Back here after the emailed sign-in link, so a list not yet added isn't lost.
+          next={`/avoid/import?a=${encodeURIComponent(one(params.a) ?? "")}${date ? `&d=${date}` : ""}`}
+          title="Keep this list on every device"
+          blurb="Optional. Add your email and your avoid list is saved to your account, so it's there on any phone or computer you sign in on, along with your shelf and any plans from your clinic. No password; we send a one-time link."
+        />
       )}
 
       {decoded.unknown > 0 && (

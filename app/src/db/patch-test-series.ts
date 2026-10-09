@@ -8,7 +8,18 @@
 // entries: a patient still sees them on their sheet and import page, as
 // information, but they can't go on an avoid list that only checks labels.
 
-import { ALLERGEN_SECTIONS, PATCH_TEST_FAMILY, allergenMembers, getAllergen, getAllergenGroup, labelNames, type AllergenSectionId } from "./contact-allergens";
+import {
+  ALLERGEN_SECTIONS,
+  PATCH_TEST_FAMILY,
+  allergenMembers,
+  getAllergen,
+  getAllergenGroup,
+  labelNames,
+  normalizeForAllergens,
+  parsePatchTestResults,
+  type AllergenSectionId,
+  type PatchTestLine,
+} from "./contact-allergens";
 
 export type NotOnLabel = { id: string; name: string; foundIn: string };
 
@@ -593,6 +604,52 @@ export function seriesItems(series: PatchTestSeries): SeriesItem[] {
   return series.groups.flatMap((g) => g.items);
 }
 
+/** A series item's stable key ("acds-2020:18"), for ticking items one by one. */
+export function seriesItemKey(seriesId: string, it: SeriesItem): string {
+  return `${seriesId}:${it.pos ?? it.name}`;
+}
+
+const ITEM_BY_KEY = new Map(PATCH_TEST_SERIES.flatMap((s) => seriesItems(s).map((it) => [seriesItemKey(s.id, it), it] as const)));
+
+export function seriesItemByKey(key: string): SeriesItem | undefined {
+  return ITEM_BY_KEY.get(key);
+}
+
+/** The avoid ids an item stands for (its allergen ids, or its not-on-label id). */
+export function itemIds(it: SeriesItem): string[] {
+  return it.ids.length > 0 ? it.ids : [it.notOnLabel!];
+}
+
+// Items whose ids another item in the same series fully covers: budesonide
+// and triamcinolone are both "class B", benzocaine is inside caine mix. A
+// tick on one mustn't show the other as positive too.
+const SHARED_ITEMS = new Set(
+  PATCH_TEST_SERIES.flatMap((s) => {
+    const items = seriesItems(s);
+    return items
+      .filter((it) => items.some((other) => other !== it && itemIds(it).every((id) => itemIds(other).includes(id))))
+      .map((it) => seriesItemKey(s.id, it));
+  }),
+);
+
+export function sharesIdsInSeries(key: string): boolean {
+  return SHARED_ITEMS.has(key);
+}
+
+/**
+ * The series item names behind each avoid id, from ticked item keys, so the
+ * printed sheet can say "Budesonide" next to "Corticosteroids, class B".
+ */
+export function positivesById(keys: Iterable<string>): Record<string, string[]> {
+  const out: Record<string, string[]> = {};
+  for (const key of keys) {
+    const it = ITEM_BY_KEY.get(key);
+    if (!it) continue;
+    for (const id of itemIds(it)) if (!(out[id] ??= []).includes(it.name)) out[id].push(it.name);
+  }
+  return out;
+}
+
 /** The family a positive to this item is usually extended to, if any. */
 export function itemFamily(it: SeriesItem): { id: string; byDefault: boolean } | undefined {
   for (const id of it.ids) if (PATCH_TEST_FAMILY[id]) return PATCH_TEST_FAMILY[id];
@@ -630,4 +687,52 @@ const MAINLY_OFF_LABEL: Record<string, string> = {
 
 export function mainlyOffLabel(id: string): string | undefined {
   return MAINLY_OFF_LABEL[id];
+}
+
+// --- Pasted results sheets ------------------------------------------------------
+
+// Every series item and not-on-label name, so a pasted sheet reads "Caine mix
+// III" as all three caines and "p-tert-Butylphenol formaldehyde resin" as the
+// resin rather than formaldehyde. Keys: the full name, the name without its
+// parenthetical, and a one-word parenthetical ("IPPD", "MBT"). A key that
+// would mean two different things is dropped.
+type SeriesMatch = { ids: string[]; notOnLabel?: string };
+const SERIES_NAMES: Map<string, SeriesMatch> = (() => {
+  const index = new Map<string, SeriesMatch>();
+  const clash = new Set<string>();
+  const add = (name: string, match: SeriesMatch) => {
+    const bare = normalizeForAllergens(name.replace(/\([^)]*\)/g, " "));
+    // Also without a leading locant: "1,3-Diphenylguanidine" is often just "Diphenylguanidine".
+    const keys = new Set([normalizeForAllergens(name), bare, bare.replace(/^[\d ]+(?=[a-z]{4})/, "")]);
+    for (const m of name.matchAll(/\(([^)\s]+)\)/g)) keys.add(normalizeForAllergens(m[1]));
+    const sig = (x: SeriesMatch) => `${x.notOnLabel ?? ""}|${[...x.ids].sort().join("+")}`;
+    for (const key of keys) {
+      if (key.length < 2) continue;
+      const had = index.get(key);
+      if (had && sig(had) !== sig(match)) clash.add(key);
+      else index.set(key, match);
+    }
+  };
+  for (const s of PATCH_TEST_SERIES) for (const it of seriesItems(s)) add(it.name, it.notOnLabel ? { ids: [], notOnLabel: it.notOnLabel } : { ids: it.ids });
+  for (const n of NOT_ON_LABELS) add(n.name, { ids: [], notOnLabel: n.id });
+  for (const key of clash) index.delete(key);
+  return index;
+})();
+
+// Exact name first, then the longest series name inside the line ("Epoxy
+// resin, bisphenol A 1% pet"), whole words only and never a short acronym.
+function seriesName(cleaned: string): SeriesMatch | undefined {
+  const exact = SERIES_NAMES.get(cleaned);
+  if (exact) return exact;
+  let best: [string, SeriesMatch] | undefined;
+  for (const [key, match] of SERIES_NAMES) {
+    if (key.length < 4 || (best && key.length <= best[0].length)) continue;
+    if (` ${cleaned} `.includes(` ${key} `)) best = [key, match];
+  }
+  return best?.[1];
+}
+
+/** A pasted results sheet, read against the series names before label names. */
+export function readResultsSheet(text: string): PatchTestLine[] {
+  return parsePatchTestResults(text, seriesName);
 }

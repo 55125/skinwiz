@@ -8,7 +8,7 @@
 //
 // Pure functions only (secret and clock are parameters), so they're unit
 // tested in tokens.test.ts.
-import { createHash, createHmac, randomBytes, timingSafeEqual } from "node:crypto";
+import { createHash, createHmac, randomBytes, randomInt, timingSafeEqual } from "node:crypto";
 
 export const SIGN_IN_TTL_MS = 15 * 60_000;
 
@@ -18,6 +18,19 @@ export function generateToken(bytes = 32): string {
 
 export function hashToken(token: string): string {
   return createHash("sha256").update(token, "utf8").digest("hex");
+}
+
+/** Six digits, leading zeros kept: the typed alternative to a sign-in link. */
+export function generateSignInCode(): string {
+  return String(randomInt(0, 1_000_000)).padStart(6, "0");
+}
+
+/**
+ * Keyed, and bound to the address: a plain hash of six digits would fall to
+ * a million guesses if the database ever leaked.
+ */
+export function hashSignInCode(secret: string, email: string, code: string): string {
+  return hmac(secret, `sign-in-code|${email}|${code}`);
 }
 
 export function isExpired(expiresAtIso: string, now: Date): boolean {

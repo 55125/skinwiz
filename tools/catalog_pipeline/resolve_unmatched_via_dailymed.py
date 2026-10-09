@@ -48,12 +48,21 @@ REQUEST_PAUSE = 0.25
 # app/src/db/actives.ts — kept as an independent copy per this repo's
 # existing pattern (each tool owns its own copy rather than importing
 # across the Python/TypeScript boundary).
-ACNE_ACTIVES = ["salicylic acid", "benzoyl peroxide", "sulfur", "sulphur", "adapalene", "azelaic acid"]
+ACNE_ACTIVES = ["salicylic acid", "benzoyl peroxide", "sulfur", "sulphur", "adapalene", "azelaic acid", "resorcinol"]
 SUNSCREEN_ACTIVES = [
     "zinc oxide", "titanium dioxide", "avobenzone", "butyl methoxydibenzoylmethane",
     "octisalate", "ethylhexyl salicylate", "octocrylene", "homosalate",
     "octinoxate", "ethylhexyl methoxycinnamate", "octyl methoxycinnamate",
     "oxybenzone", "ensulizole", "phenylbenzimidazole sulfonic acid", "meradimate",
+    "menthyl anthranilate", "sulisobenzone", "dioxybenzone", "cinoxate", "padimate o", "aminobenzoic acid",
+    "trolamine salicylate",
+    # bemotrizinol (US monograph since June 2026) and filters approved abroad
+    "bemotrizinol", "bis-ethylhexyloxyphenol methoxyphenyl triazine", "tinosorb s",
+    "bisoctrizole", "methylene bis-benzotriazolyl tetramethylbutylphenol", "tinosorb m",
+    "ecamsule", "terephthalylidene dicamphor sulfonic acid", "drometrizole trisiloxane",
+    "diethylamino hydroxybenzoyl hexyl benzoate", "ethylhexyl triazone", "iscotrizinol",
+    "diethylhexyl butamido triazone", "amiloxate", "isoamyl p-methoxycinnamate", "enzacamene",
+    "4-methylbenzylidene camphor", "polysilicone-15", "bisdisulizole disodium",
 ]
 
 

@@ -8,6 +8,8 @@ import { Input } from "@/components/ui/input";
 import { QrCode } from "@/components/qr-code";
 import { sectionsOf, type HandoutContent, type HandoutStep } from "@/lib/handout-types";
 import { SITE_NAME } from "@/lib/brand";
+import { decodeImportCode } from "@/lib/avoid-import";
+import { importItemName } from "@/db/patch-test-series";
 import { HandoutSections } from "@/components/handout-sections";
 
 export type PrintableVersion = {
@@ -48,6 +50,13 @@ export function handoutEmail(v: Pick<PrintableVersion, "title" | "clinicName" | 
 // patients never share a link. The patient's name is typed here for the
 // paper only, and their email address is typed into the clinic's own email
 // app: neither is ever sent to us or put in the link.
+// The allergen names behind a handout's patch-test code, so whoever prints it
+// can see whose list it is (a handout version can be printed many times).
+function avoidNames(code: string | null): string[] {
+  const d = decodeImportCode(code);
+  return d.ok ? [...d.avoidIds, ...d.notOnLabel].map((id) => importItemName(id) ?? id) : [];
+}
+
 export function HandoutPrint({ v }: { v: PrintableVersion }) {
   const [patient, setPatient] = useState("");
   const [link, setLink] = useState<Link | null>(null);
@@ -104,6 +113,11 @@ export function HandoutPrint({ v }: { v: PrintableVersion }) {
           Stays in this browser tab. It is never sent to us and is not part of the link or QR code.
         </span>
       </label>
+      {v.content.avoidCode && (
+        <p className="rounded-xl border border-amber-300 bg-amber-50 p-3 text-xs text-amber-950 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-100">
+          Includes a patch-test avoid list: {avoidNames(v.content.avoidCode).join(", ")}. Only give it to the patient these results belong to.
+        </p>
+      )}
       <div className="grid grid-cols-2 gap-2">
         <Button type="button" onClick={() => give("print")} disabled={busy} className="rounded-full">
           <Printer className="h-4 w-4" /> Print
@@ -226,7 +240,11 @@ function PrintSheet({ v, patient, link, date }: { v: PrintableVersion; patient: 
         </section>
       )}
       {v.content.notes && <p style={{ marginTop: "3mm", whiteSpace: "pre-line" }}>{v.content.notes}</p>}
-      {v.content.avoidCode && <p style={{ marginTop: "2mm" }}>Your patch-test avoid list is included: scan the QR code to add it.</p>}
+      {v.content.avoidCode && (
+        <p style={{ marginTop: "2mm" }}>
+          Your patch-test avoid list is included ({avoidNames(v.content.avoidCode).join(", ")}): scan the QR code to add it.
+        </p>
+      )}
 
       <div style={{ marginTop: "5mm", paddingTop: "2mm", borderTop: "0.5px solid #999", fontSize: "7.5pt" }}>
         <p style={{ margin: 0, wordBreak: "break-all", fontFamily: "ui-monospace, monospace" }}>{link.shortUrl}</p>

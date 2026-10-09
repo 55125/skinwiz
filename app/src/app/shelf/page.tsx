@@ -14,6 +14,7 @@ import { FEATURES } from "@/lib/feature-flags";
 import { escalationFor } from "@/db/escalation-guidance";
 import { EscalationList } from "@/components/escalation-guidance";
 import { EmailSignupCard } from "@/components/email-signup-card";
+import { InstallAppCard } from "@/components/install-app-card";
 import { personForSession } from "@/lib/identity";
 import { shelfRecallAlerts } from "@/lib/recalls";
 import { EMAIL_CONFIDENCE, fdaRecallUrl } from "@/lib/recall-match";
@@ -89,6 +90,7 @@ export default async function ShelfPage() {
       </Link>
 
       <EmailSignupCard signedInAs={person?.email ?? null} />
+      <InstallAppCard />
 
       {alerts.length > 0 && (
         <section aria-labelledby="safety-alerts" className="space-y-3 rounded-2xl border border-amber-300 bg-amber-50/70 p-4 dark:border-amber-900 dark:bg-amber-950/30">

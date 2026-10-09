@@ -33,6 +33,7 @@ import { ewgHazardBadge } from "@/lib/ewg";
 import { readSessionId } from "@/lib/session";
 import { getSessionOutcome } from "@/lib/outcomes";
 import { readAvoidIds, avoidVerdict, avoidedIngredientName } from "@/lib/avoid";
+import { avoidConflicts } from "@/lib/avoid-shared";
 import { AllergenFindings } from "@/components/allergen-findings";
 import { activeName, describeStrengths } from "@/lib/strength-display";
 import { formatPct } from "@/db/strength";
@@ -180,7 +181,9 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
   const retailerSearches = retailerSearchLinks(
     product.brandName,
     // Only these sources carry the brand in `manufacturer`; FDA rows carry the labeler.
-    product.dataSource === "brand_direct" || product.dataSource === "open_beauty_facts" ? product.manufacturer : null,
+    product.dataSource === "brand_direct" || product.dataSource === "open_beauty_facts" || product.dataSource === "third_party"
+      ? product.manufacturer
+      : null,
   );
   const brandLine = productBrand(product);
   const brandLink = product.sourceUrl ? outboundLink(product.sourceUrl, { placement: "product", rel: "noopener noreferrer" }) : null;
@@ -192,9 +195,19 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
   const isDrugLabel = product.dataSource === "openfda" || product.dataSource === "dailymed";
   const labelActives = ingredientRows.filter((r) => r.position <= 0);
   const listedIngredients = ingredientRows.filter((r) => r.position > 0);
+  // With an avoid list, only formulas whose full ingredient list is clear of
+  // it, as on /check; otherwise a patch-tested patient is pointed at more of
+  // what they react to.
   const similar = isDrugLabel
     ? []
-    : findSimilarProductsCached(listedIngredients.map((r) => r.ingredientId), { excludeId: product.id, limit: 4 });
+    : avoidIds.length > 0
+      ? findSimilarProductsCached(listedIngredients.map((r) => r.ingredientId), { excludeId: product.id, limit: 40 })
+          .filter((s) => {
+            const c = avoidConflicts(s.product, avoidIds);
+            return !!c && c.conflicts.length === 0 && c.possible.length === 0;
+          })
+          .slice(0, 4)
+      : findSimilarProductsCached(listedIngredients.map((r) => r.ingredientId), { excludeId: product.id, limit: 4 });
   const safeSwaps = needsSwap
     ? findSafeSwaps(product, ingredientRows.filter((r) => r.position > 0).map((r) => r.ingredientId), avoidIds)
     : [];
@@ -469,7 +482,9 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
                   ? "Active ingredient (from FDA label)"
                   : product.dataSource === "brand_direct"
                     ? "Ingredients (from manufacturer)"
-                    : "Ingredients (community-sourced)"}
+                    : product.dataSource === "third_party"
+                      ? "Ingredients (third-party listing)"
+                      : "Ingredients (community-sourced)"}
               </h2>
               {isDrugLabel ? (
                 <>
@@ -560,7 +575,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
 
       <div
         className={
-          product.dataSource === "open_beauty_facts" || product.dataSource === "brand_direct"
+          product.dataSource === "open_beauty_facts" || product.dataSource === "brand_direct" || product.dataSource === "third_party"
             ? "grid gap-3 md:grid-cols-2 md:items-start"
             : undefined
         }
@@ -573,6 +588,19 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
             This product&apos;s data comes from Open Beauty Facts, a crowd-edited database — anyone can
             submit or edit an entry. Unlike the rest of the catalog, this listing hasn&apos;t been
             independently verified. Ingredient names and amounts may be incomplete or inaccurate.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {product.dataSource === "third_party" && (
+        <Alert className="border-dashed bg-transparent">
+          <Info className="h-4 w-4 text-amber-600" />
+          <AlertTitle>Third-party listing, not from the manufacturer</AlertTitle>
+          <AlertDescription className="text-[13px]">
+            {product.manufacturer ? displayManufacturer(product.manufacturer) : "The brand"} doesn&apos;t publish this
+            product&apos;s ingredient list, so it comes from independent ingredient databases that agree with each other.
+            It hasn&apos;t been checked against the package, and older stock may have a different formula. Check the
+            label if an ingredient matters to you.
           </AlertDescription>
         </Alert>
       )}
@@ -689,7 +717,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
             <p className="text-sm text-muted-foreground">
               Products whose ingredient lists overlap most with this one, weighting distinctive ingredients over
               common ones like water and glycerin. Similar lists are not identical formulas — concentrations,
-              texture and price differ.
+              texture and price differ.{avoidIds.length > 0 ? " Only formulas clear of everything on your avoid list are shown." : ""}
             </p>
           </div>
           <div className="grid gap-3 sm:grid-cols-2">

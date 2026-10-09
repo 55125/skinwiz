@@ -105,7 +105,7 @@ export function partD(dbPath: string): { html: string; questions: string[]; rule
     [
       "D4",
       "Dry skin &amp; eczema: ranked lower",
-      `Diaper-area products (${re(DIAPER_RE)}, labeled “For the diaper area” on the card), lip balms, and anything with a sunscreen filter (${list(SUNSCREEN_ACTIVES)}) rank after general eczema care.${cnt(`${n?.eczemaLower} products today`)}`,
+      `Diaper-area products (${re(DIAPER_RE)}, labeled “For the diaper area” on the card), lip balms, and anything with a sunscreen filter (${list([...SUNSCREEN_ACTIVES])}) rank after general eczema care.${cnt(`${n?.eczemaLower} products today`)}`,
     ],
     [
       "D5",

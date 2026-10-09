@@ -31,6 +31,7 @@ export function ChartNoteButton({ version, compact = false }: { version: ChartNo
       <div className="flex flex-wrap items-center gap-3">
         <button
           type="button"
+          data-track="chart-note:copy"
           onClick={copy}
           className="inline-flex items-center gap-1.5 rounded-full border bg-card px-3 py-1.5 text-sm font-medium hover:bg-muted"
         >

@@ -71,3 +71,11 @@ test("80-allergen trays read on the back with half the panels on the left by def
     assert.equal(spec.rows, 5);
   }
 });
+
+test("the reader extends formaldehyde to its releasers by default, as the clinician sheet does", () => {
+  const series = getSeries("true-test");
+  const ch = chambersFor(series);
+  const formaldehyde = ch.find((c) => c.item?.ids.includes("formaldehyde"))!;
+  const ids = avoidIdsFrom(ch, { [formaldehyde.key]: "+" }, false);
+  assert.ok(ids.includes("formaldehyde") && ids.includes("formaldehyde-and-releasers"), ids.join());
+});

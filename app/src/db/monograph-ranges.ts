@@ -23,6 +23,8 @@ export const MONOGRAPH_RANGES: Record<string, MonographRange> = {
   // Adapalene 0.1% is an approved NDA switch (2016), not a monograph entry;
   // 0.1% is the only OTC strength.
   adapalene: { min: 0.1, max: 0.1, cfr: "NDA 021753 (Rx-to-OTC switch)" },
+  // Only in combination with sulfur: resorcinol 2%, resorcinol monoacetate 3%.
+  resorcinol: { min: 2, max: 3, cfr: "21 CFR 333.310" },
 
   // Sunscreen -- 21 CFR 352.10 maxima
   avobenzone: { min: 2, max: 3, cfr: "21 CFR 352.10" },
@@ -33,6 +35,14 @@ export const MONOGRAPH_RANGES: Record<string, MonographRange> = {
   oxybenzone: { min: 0, max: 6, cfr: "21 CFR 352.10" },
   ensulizole: { min: 0, max: 4, cfr: "21 CFR 352.10" },
   meradimate: { min: 0, max: 5, cfr: "21 CFR 352.10" },
+  sulisobenzone: { min: 0, max: 10, cfr: "21 CFR 352.10" },
+  dioxybenzone: { min: 0, max: 3, cfr: "21 CFR 352.10" },
+  cinoxate: { min: 0, max: 3, cfr: "21 CFR 352.10" },
+  "padimate-o": { min: 0, max: 8, cfr: "21 CFR 352.10" },
+  "aminobenzoic-acid": { min: 0, max: 15, cfr: "21 CFR 352.10" },
+  "trolamine-salicylate": { min: 0, max: 12, cfr: "21 CFR 352.10" },
+  // Added to OTC Monograph M020 by final order OTC000039 (June 10, 2026).
+  bemotrizinol: { min: 0, max: 6, cfr: "OTC Monograph M020 (final order OTC000039, 2026)" },
   "titanium-dioxide": { min: 0, max: 25, cfr: "21 CFR 352.10" },
   // Zinc oxide: up to 25% as a sunscreen; 1-25% as a skin protectant.
   "zinc-oxide": { min: 0, max: 25, cfr: "21 CFR 352.10 / 347.10" },
@@ -54,6 +64,13 @@ export const MONOGRAPH_RANGES: Record<string, MonographRange> = {
   hydrocortisone: { min: 0.25, max: 1, cfr: "21 CFR 348.10" },
   pramoxine: { min: 0.5, max: 1, cfr: "21 CFR 348.10" },
   diphenhydramine: { min: 1, max: 2, cfr: "21 CFR 348.10" },
+  lidocaine: { min: 0.5, max: 4, cfr: "21 CFR 348.10" },
+  benzocaine: { min: 5, max: 20, cfr: "21 CFR 348.10" },
+  phenol: { min: 0.5, max: 1.5, cfr: "21 CFR 348.10" },
+  capsaicin: { min: 0.025, max: 0.25, cfr: "21 CFR 348.10" },
+  // Menthol and camphor have no entry: their higher counterirritant
+  // (pain-relief) strengths are also monograph-permitted, and an itch-only
+  // maximum would wrongly flag those products as above range.
 
   // Skin protectant -- 21 CFR 347.10
   petrolatum: { min: 30, max: 100, cfr: "21 CFR 347.10" },
@@ -61,6 +78,15 @@ export const MONOGRAPH_RANGES: Record<string, MonographRange> = {
   dimethicone: { min: 1, max: 30, cfr: "21 CFR 347.10" },
   allantoin: { min: 0.5, max: 2, cfr: "21 CFR 347.10" },
   lanolin: { min: 12.5, max: 50, cfr: "21 CFR 347.10" },
+  "zinc-acetate": { min: 0.1, max: 2, cfr: "21 CFR 347.10" },
+  calamine: { min: 1, max: 25, cfr: "21 CFR 347.10" },
+  kaolin: { min: 4, max: 20, cfr: "21 CFR 347.10" },
+  glycerin: { min: 20, max: 45, cfr: "21 CFR 347.10" },
+  // 50-100% alone; 30-35% when combined with colloidal oatmeal.
+  "mineral-oil": { min: 30, max: 100, cfr: "21 CFR 347.10" },
+  "aluminum-hydroxide": { min: 0.15, max: 5, cfr: "21 CFR 347.10" },
+  // Topical starch (10-98%) has no entry: pure cornstarch powders label
+  // 99-100%, and an above-range badge or listing exclusion would be noise.
 
   // Antiperspirant -- 21 CFR 350.10
   "aluminum-chlorohydrate": { min: 0, max: 25, cfr: "21 CFR 350.10" },

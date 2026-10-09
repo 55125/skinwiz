@@ -2,16 +2,17 @@
 
 import { useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
-import { Check, Copy, ExternalLink, Printer } from "lucide-react";
+import { AlertTriangle, Check, Copy, ExternalLink, Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { PatchTestChecklist } from "@/components/patch-test-checklist";
 import { QrCode } from "@/components/qr-code";
 import { resolveAllergenId } from "@/db/contact-allergens";
-import { getNotOnLabel, importItemName, mainlyOffLabel, watchForNames } from "@/db/patch-test-series";
+import { getNotOnLabel, importItemName, mainlyOffLabel, positivesById, watchForNames } from "@/db/patch-test-series";
 import { MAX_NOTE_LENGTH, buildImportPath, cleanDetails } from "@/lib/avoid-import";
 import { SITE_NAME } from "@/lib/brand";
+import { PRIVACY_HIT_TEXT, findPrivacyHits } from "@/lib/note-privacy";
 
 const noop = () => () => {};
 export const useOrigin = () =>
@@ -37,6 +38,7 @@ function formatDate(iso: string): string {
 export function PatchTestIssuer({ lists = [], initialIds = [] }: { lists?: { id: string; name: string; ids: string[] }[]; initialIds?: string[] }) {
   const origin = useOrigin();
   const [selected, setSelected] = useState<Set<string>>(() => new Set(initialIds));
+  const [ticked, setTicked] = useState<Set<string>>(() => new Set());
   const [date, setDate] = useState("");
   const [note, setNote] = useState("");
   const [patient, setPatient] = useState("");
@@ -45,6 +47,7 @@ export function PatchTestIssuer({ lists = [], initialIds = [] }: { lists?: { id:
   const avoidIds = [...selected].filter((id) => resolveAllergenId(id));
   const offLabel = [...selected].filter((id) => getNotOnLabel(id));
   const details = cleanDetails({ date, note });
+  const privacyHits = findPrivacyHits(note);
   const path = buildImportPath(selected, details);
   const url = `${origin}${path}`;
   const ready = selected.size > 0 && origin !== "";
@@ -78,6 +81,8 @@ export function PatchTestIssuer({ lists = [], initialIds = [] }: { lists?: { id:
         )}
         <PatchTestChecklist
           selected={selected}
+          ticked={ticked}
+          onTickedChange={setTicked}
           onChange={(next) => {
             setSelected(next);
             setCopied(false);
@@ -101,6 +106,15 @@ export function PatchTestIssuer({ lists = [], initialIds = [] }: { lists?: { id:
           <Field label="Note to the patient" hint={`Shown on the sheet and in the link. ${note.length}/${MAX_NOTE_LENGTH}`}>
             <Textarea value={note} maxLength={MAX_NOTE_LENGTH} rows={2} onChange={(e) => setNote(e.target.value)} placeholder="e.g. Avoid fragrance entirely for 3 months." />
           </Field>
+          {privacyHits.length > 0 && (
+            <p role="alert" className="flex gap-2 rounded-xl border border-amber-300 bg-amber-50 p-3 text-xs text-amber-950 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-100">
+              <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+              <span>
+                The note may include {privacyHits.map((h) => PRIVACY_HIT_TEXT[h.kind]).join(" and ")} (&ldquo;{privacyHits[0].match}&rdquo;). The note
+                travels in the link, so please remove it; the patient&apos;s name goes in the box below, which stays on this device.
+              </span>
+            </p>
+          )}
           <Field
             label="Patient name (printed only)"
             hint="Stays in this browser tab. It is never sent to us and is not part of the link or QR code."
@@ -120,13 +134,14 @@ export function PatchTestIssuer({ lists = [], initialIds = [] }: { lists?: { id:
                 {avoidIds.length} to avoid{offLabel.length > 0 ? ` · ${offLabel.length} not on labels` : ""}
               </p>
               <div className="flex flex-wrap gap-2">
-                <Button type="button" onClick={() => window.print()} className="flex-1 rounded-full">
+                <Button type="button" data-track="patch-test:print" onClick={() => window.print()} className="flex-1 rounded-full">
                   <Printer className="h-4 w-4" /> Print sheet
                 </Button>
                 <Button
                   type="button"
                   variant="outline"
                   className="rounded-full"
+                  data-track="patch-test:copy-link"
                   onClick={async () => {
                     await navigator.clipboard?.writeText(url).catch(() => {});
                     setCopied(true);
@@ -152,7 +167,7 @@ export function PatchTestIssuer({ lists = [], initialIds = [] }: { lists?: { id:
 
       {ready &&
         createPortal(
-          <PrintSheet url={url} ids={avoidIds} offLabel={offLabel} patient={patient.trim()} {...details} />,
+          <PrintSheet url={url} ids={avoidIds} offLabel={offLabel} positives={positivesById(ticked)} patient={patient.trim()} {...details} />,
           document.body,
         )}
     </div>
@@ -175,6 +190,7 @@ export function PrintSheet({
   url,
   ids,
   offLabel,
+  positives = {},
   patient,
   eyebrow = "Patch-test results",
   date,
@@ -183,12 +199,19 @@ export function PrintSheet({
   url: string;
   ids: string[];
   offLabel: string[];
+  // Series item names behind each id ("Budesonide" for class B), printed with it.
+  positives?: Record<string, string[]>;
   patient: string;
   eyebrow?: string;
   date?: string;
   note?: string;
 }) {
   const shortUrl = url.replace(/^https?:\/\//, "");
+  // The tested names, when they differ from the allergen's own name.
+  const tested = (id: string) => {
+    const names = (positives[id] ?? []).filter((n) => n.toLowerCase() !== importItemName(id)?.toLowerCase());
+    return names.length ? names.join(", ") : null;
+  };
   return (
     <div className="pt-print-sheet" aria-hidden>
       <style>{`
@@ -236,9 +259,12 @@ export function PrintSheet({
             <tbody>
               {ids.map((id) => (
                 <tr key={id} style={{ borderBottom: "0.5px solid #999", verticalAlign: "top" }}>
-                  <td style={{ padding: "1.2mm 2mm 1.2mm 0", fontWeight: 600 }}>{importItemName(id)}</td>
+                  <td style={{ padding: "1.2mm 2mm 1.2mm 0", fontWeight: 600 }}>
+                    {importItemName(id)}
+                    {tested(id) && <span style={{ display: "block", fontWeight: 400, fontSize: "8.5pt" }}>Positive: {tested(id)}</span>}
+                  </td>
                   <td style={{ padding: "1.2mm 0" }}>
-                    {watchForNames(id).join(", ") || (mainlyOffLabel(id) ? null : "—")}
+                    {watchForNames(id, Infinity).join(", ") || (mainlyOffLabel(id) ? null : "—")}
                     {mainlyOffLabel(id) && <span style={{ display: "block" }}>{mainlyOffLabel(id)}</span>}
                   </td>
                 </tr>
@@ -254,7 +280,8 @@ export function PrintSheet({
           <ul style={{ margin: 0, paddingLeft: "5mm", fontSize: "9.5pt" }}>
             {offLabel.map((id) => (
               <li key={id} style={{ marginBottom: "0.8mm" }}>
-                <strong>{getNotOnLabel(id)!.name}:</strong> {getNotOnLabel(id)!.foundIn}
+                <strong>{getNotOnLabel(id)!.name}</strong>
+                {tested(id) ? ` (positive: ${tested(id)})` : ""}: {getNotOnLabel(id)!.foundIn}
               </li>
             ))}
           </ul>

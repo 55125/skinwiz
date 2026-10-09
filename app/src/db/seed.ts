@@ -10,7 +10,7 @@ import { ACTIVE_TEXT_OVERRIDES } from "./active-overrides";
 import { computeFreeFromFlags } from "./ingredient-flags";
 import { computeAllergenHits } from "./contact-allergens";
 import { parseStrengths, strengthKey } from "./strength";
-import { brandDirectNiche, labeledDrugActives } from "./labeled-actives";
+import { brandDirectNiche, labeledDrugActives, sunscreenNiche } from "./labeled-actives";
 import { aliasesFor, canonicalSlug, parseIngredients, pickDisplayName } from "./ingredient-parse";
 import { SITE_NAME } from "@/lib/brand";
 import { validateManualLinks, type ManualLinkRow } from "@/lib/manual-links";
@@ -319,6 +319,7 @@ function reseed() {
   let skippedNoActive = 0;
   let skippedHomeopathic = 0;
   let skippedSunscreenNoFilter = 0;
+  let movedToSunscreen = 0;
   const productBatch: (typeof schema.products.$inferInsert)[] = [];
   const seenNdc = new Set<string>();
   const memberships: { productId: string; position: number; slug: string; rawName: string; isActive: boolean }[] = [];
@@ -403,6 +404,12 @@ function reseed() {
           continue;
         }
       }
+      // An SPF lotion or lip balm filed under another category (a brand's
+      // "moisturizers") belongs under Sun Protection. Only labeled drug
+      // actives count, not a UV filter in a cosmetic INCI list.
+      const niche = sunscreenNiche(row.niche, row.brand_name, isPreMatched ? (brandDrug?.activeIds ?? []) : labeledActiveIds);
+      if (niche !== row.niche) movedToSunscreen++;
+      row.niche = niche;
       seenNdc.add(row.product_ndc);
       const trimmedBrandName = row.brand_name?.trim() || "(unnamed product)";
       // The full ingredient list for free-from-flag purposes -- NOT the
@@ -492,6 +499,7 @@ function reseed() {
   }
   console.log(`  inserted ${inserted} products, skipped ${skippedNoActive} with no recognized active ingredient`);
   console.log(`  skipped ${skippedHomeopathic} homeopathic and ${skippedSunscreenNoFilter} "sunscreens" with no UV filter`);
+  console.log(`  filed ${movedToSunscreen} SPF products from other categories under Sun Protection`);
   console.log(`  drug inactive lists by source: ${JSON.stringify(inactiveSources)}`);
 
   insertIngredients(memberships, duplicateIds);

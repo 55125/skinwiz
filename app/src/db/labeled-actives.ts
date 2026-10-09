@@ -15,7 +15,7 @@
 // MONOGRAPH_RANGES): a cosmetic page's "Active ingredients: Niacinamide 10%"
 // doesn't make it a drug.
 
-import { matchActiveIds, type Concern } from "./actives";
+import { ACTIVE_DEFINITIONS, matchActiveIds, type Concern } from "./actives";
 import { MONOGRAPH_RANGES } from "./monograph-ranges";
 import { parseStrengths, type Strengths } from "./strength";
 
@@ -26,8 +26,16 @@ const isDrugActive = (id: string) => id in MONOGRAPH_RANGES;
 const LABELED_RE =
   /(?<![\w-])(?:active|medicinal)\s+ingredients?\s*:?\s*([\s\S]*?)(?=(?<![\w])(?:inactive|non-medicinal|other)\s+ingredients?\b|(?<![\w-])ingredients?\s*:|$)/i;
 const DRUG_FACTS_RE = /\bdrug facts\b/i;
+// "SPF 30", "SPF50+", "50+SPF", "LSF 30" (German), "FPS 50" (French/Spanish),
+// but not "0SPF" (a tanning oil). After-sun lotions aren't sunscreens.
 const SUNSCREEN_NAME_RE =
-  /\bspf\s*\d|\bsunscreen|\bsun\s+(?:serum|stick|cushion|cream|fluid|milk|essence|gel|lotion|spray)|\bbroad spectrum\b/i;
+  /\b(?:spf|lsf|fps)\s*[1-9]|\b[1-9]\d*\s*\+?\s*spf\b|\bsunscreen|\bsun[\s-]*(?:serum|stick|cushion|cream|fluid|milk|essence|gel|lotion|spray|toner|shield|block)|\bbroad spectrum\b/i;
+const AFTER_SUN_RE = /\b(?:after|apr[eè]s)[\s-]*sun/i;
+
+/** Whether a product's name claims sun protection ("SPF 30", "Sunscreen Stick"). */
+export function namesSunscreen(name: string | null | undefined): boolean {
+  return SUNSCREEN_NAME_RE.test(name ?? "") && !AFTER_SUN_RE.test(name ?? "");
+}
 
 /** The text of the product's labeled active-ingredient line, or null when it has none. */
 export function labeledActiveSegment(
@@ -100,7 +108,7 @@ export function brandDirectStatus(p: {
     return { kind: "drug", drugActiveIds };
   if (
     p.activeIds.some(isDrugActive) ||
-    SUNSCREEN_NAME_RE.test(p.brandName ?? "")
+    namesSunscreen(p.brandName)
   )
     return { kind: "drug-ingredient", drugActiveIds: [] };
   return { kind: "cosmetic", drugActiveIds: [] };
@@ -123,4 +131,27 @@ export function brandDirectNiche(niche: Concern, brandName: string | null | unde
   if (!drugActiveIds.some((id) => ACNE_DRUG_ACTIVES.has(id))) return niche;
   if (SCALP_OR_PSORIASIS_RE.test(brandName ?? "")) return niche;
   return "acne";
+}
+
+// UV filters that are only sunscreen actives. Zinc oxide is left out: it's
+// also the skin protectant in diaper and barrier creams (actives.ts).
+const SUNSCREEN_ONLY_ACTIVES = new Set(
+  ACTIVE_DEFINITIONS.filter((a) => a.categories.includes("sunscreen") && a.categories.length === 1).map((a) => a.id),
+);
+
+/**
+ * The niche for a row whose name claims SPF or whose labeled drug actives
+ * include a UV filter. Brand pages are filed by the brand's own category
+ * ("moisturizers"), so CeraVe's AM lotion SPF 30 and Naturium's Dew-Glow SPF
+ * 50 landed under dry skin or brightening; openFDA lip balms with avobenzone
+ * landed under skin protectant. In the US a product with an SPF claim or a
+ * UV-filter drug active is a sunscreen drug, so it goes under Sun Protection.
+ * Acne rows stay put (a regimen kit that includes a sunscreen is still an
+ * acne kit). `labeledActiveIds` is only the labeled drug actives: a UV
+ * filter in a cosmetic INCI list (octisalate in a toner) isn't an SPF claim.
+ */
+export function sunscreenNiche(niche: Concern, brandName: string | null | undefined, labeledActiveIds: string[]): Concern {
+  if (niche === "sunscreen" || niche === "acne") return niche;
+  if (namesSunscreen(brandName) || labeledActiveIds.some((id) => SUNSCREEN_ONLY_ACTIVES.has(id))) return "sunscreen";
+  return niche;
 }

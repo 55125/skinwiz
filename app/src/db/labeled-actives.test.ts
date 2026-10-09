@@ -2,7 +2,7 @@
 // brand-direct banner may say about OTC monograph status (db/labeled-actives.ts).
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { brandDirectNiche, brandDirectStatus, labeledActiveSegment, labeledDrugActives } from "./labeled-actives";
+import { brandDirectNiche, brandDirectStatus, labeledActiveSegment, labeledDrugActives, namesSunscreen, sunscreenNiche } from "./labeled-actives";
 
 test("reads a Drug Facts-style active line and stops at the inactive list", () => {
   const text = "Active ingredients: Pramoxine Hydrochloride 1% Inactive ingredients: Water, Glycerin, Petrolatum , Cetyl Alcohol";
@@ -92,4 +92,36 @@ test("files brand acne washes under Acne, but not scalp, psoriasis or sunscreen 
   assert.equal(brandDirectNiche("brightening-texture", "Psoriasis Cleanser", ["salicylic-acid"]), "brightening-texture");
   assert.equal(brandDirectNiche("skin-protectant", "Healing Ointment", ["petrolatum"]), "skin-protectant");
   assert.equal(brandDirectNiche("sunscreen", "SPF 30 Acne Lotion", ["salicylic-acid", "avobenzone"]), "sunscreen");
+});
+
+test("files SPF products from other categories under Sun Protection", () => {
+  // Brand pages filed by the brand's own category (CeraVe "moisturizers").
+  assert.equal(sunscreenNiche("skin-protectant", "AM Facial Moisturizing Lotion SPF 30", []), "sunscreen");
+  assert.equal(sunscreenNiche("brightening-texture", "Dew-Glow Tinted Moisturizer SPF 50+", []), "sunscreen");
+  assert.equal(sunscreenNiche("brightening-texture", "Birch Moisturizing Sun Stick", []), "sunscreen");
+  assert.equal(sunscreenNiche("skin-protectant", "Gesichtscreme LSF 30", []), "sunscreen");
+  assert.equal(sunscreenNiche("skin-protectant", "Ziaja 50+SPF Güneş Losyonu", []), "sunscreen");
+  // No SPF in the name, but a UV filter on the Drug Facts line.
+  assert.equal(sunscreenNiche("skin-protectant", "Ultra-Light Moisturizing Lotion", ["avobenzone", "homosalate"]), "sunscreen");
+  assert.equal(sunscreenNiche("skin-protectant", "Chapstick Moisturizer Original", ["avobenzone", "octinoxate"]), "sunscreen");
+});
+
+test("leaves zinc barrier creams, INCI-only filters, after-sun and acne kits alone", () => {
+  // Zinc oxide is a skin protectant too (diaper cream).
+  assert.equal(sunscreenNiche("skin-protectant", "Diaper Rash Cream", ["zinc-oxide"]), "skin-protectant");
+  // Callers pass only labeled drug actives, so a toner with octisalate in
+  // its INCI list and no SPF claim stays put.
+  assert.equal(sunscreenNiche("skin-protectant", "Hydrating Toner with Squalane + Oats", []), "skin-protectant");
+  assert.equal(sunscreenNiche("skin-protectant", "Kids after sun lotion", []), "skin-protectant");
+  assert.equal(sunscreenNiche("skin-protectant", "APRÈS SUN LOTION", []), "skin-protectant");
+  assert.equal(sunscreenNiche("brightening-texture", "Bronzlaştırıcı 0SPF Güneş Kremi", []), "brightening-texture");
+  assert.equal(sunscreenNiche("brightening-texture", "Sunflower Oil Serum", []), "brightening-texture");
+  assert.equal(sunscreenNiche("acne", "UNBLEMISH 30-Day Regimen", ["benzoyl-peroxide", "avobenzone"]), "acne");
+});
+
+test("namesSunscreen", () => {
+  assert.ok(namesSunscreen("Beaute de Cell Perfect Sun-Shield SPF 50 PA"));
+  assert.ok(namesSunscreen("Complexion Rescue Broad Spectrum SPF 30"));
+  assert.ok(!namesSunscreen("Healing Ointment"));
+  assert.ok(!namesSunscreen(null));
 });

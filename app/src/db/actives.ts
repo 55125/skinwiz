@@ -505,7 +505,7 @@ export const ACTIVE_DEFINITIONS: ActiveDefinition[] = [
     id: "tea-tree-oil",
     canonicalName: "Tea Tree Oil",
     categories: ["acne", "antifungal"],
-    synonyms: ["tea tree oil", "melaleuca alternifolia leaf oil", "melaleuca alternifolia oil", "tea tree leaf oil"],
+    synonyms: ["melaleuca alternifolia (tea tree) leaf oil", "tea tree oil", "melaleuca alternifolia leaf oil", "melaleuca alternifolia oil", "tea tree leaf oil"],
     summary:
       "An essential oil from Melaleuca alternifolia used in acne and antifungal products. Not an FDA OTC monograph active; a known fragrance-type contact allergen, especially once oxidized.",
     typicalConcentrationText: "Commonly 1%–5% in leave-on products; not standardized.",
@@ -747,6 +747,57 @@ export const ACTIVE_DEFINITIONS: ActiveDefinition[] = [
     synonyms: ["sodium bicarbonate"],
     summary: "An FDA OTC monograph skin protectant used in soaks and baths for itch from poison ivy, insect bites and minor irritation.",
     typicalConcentrationText: "Concentration depends on the soak or bath directions on the label.",
+  },
+  // First-aid antiseptics (21 CFR part 333 subpart A, tentative final
+  // monograph); grouped under skin protectant, the nearest concern.
+  {
+    id: "benzalkonium-chloride",
+    canonicalName: "Benzalkonium Chloride",
+    categories: ["skin-protectant"],
+    synonyms: ["benzalkonium chloride"],
+    summary:
+      "A quaternary-ammonium antiseptic used in first-aid wipes and sprays to help prevent infection in minor cuts and scrapes. Also a common preservative, and an occasional contact irritant.",
+    typicalConcentrationText: "0.1%–0.13% as a first-aid antiseptic; lower as a preservative.",
+  },
+  {
+    id: "benzethonium-chloride",
+    canonicalName: "Benzethonium Chloride",
+    categories: ["skin-protectant"],
+    synonyms: ["benzethonium chloride"],
+    summary: "A quaternary-ammonium antiseptic used in first-aid products and antiseptic wipes.",
+    typicalConcentrationText: "0.1%–0.2% as a first-aid antiseptic.",
+  },
+  {
+    id: "povidone-iodine",
+    canonicalName: "Povidone-Iodine",
+    categories: ["skin-protectant"],
+    synonyms: ["povidone-iodine", "povidone iodine", "povidone-lodine"],
+    summary: "An iodine-releasing antiseptic used on minor cuts, scrapes and wounds. Can stain skin and irritate with repeated use.",
+    typicalConcentrationText: "Commonly 5%–10% as a first-aid antiseptic; wound gels can be far lower.",
+  },
+  {
+    id: "betaine",
+    canonicalName: "Betaine",
+    categories: ["skin-protectant"],
+    synonyms: ["betaine"],
+    summary: "A humectant from sugar beets used in moisturizers and toners. Not an FDA-regulated drug ingredient; no OTC monograph or FDA efficacy claim applies to it.",
+    typicalConcentrationText: "Concentration varies by product; not standardized.",
+  },
+  {
+    id: "sturgeon-extract",
+    canonicalName: "Sturgeon Extract",
+    categories: ["skin-protectant"],
+    synonyms: ["sturgeon extract", "sturgeon"],
+    summary: "A fish-derived (caviar/sturgeon) extract marketed for nourishing and firming. Not an FDA-regulated drug ingredient; no OTC monograph or FDA efficacy claim applies to it.",
+    typicalConcentrationText: "Concentration varies by product; not standardized.",
+  },
+  {
+    id: "asiatic-acid",
+    canonicalName: "Asiatic Acid",
+    categories: ["skin-protectant"],
+    synonyms: ["asiatic acid"],
+    summary: "One of the active triterpenes in centella asiatica (cica), used for soothing and barrier support. Not an FDA-regulated drug ingredient.",
+    typicalConcentrationText: "Commonly well under 1%; not standardized.",
   },
 
   // --- Antiperspirant (excessive sweating) ---
@@ -1117,6 +1168,23 @@ export const ACTIVE_DEFINITIONS: ActiveDefinition[] = [
     summary:
       "An alpha-hydroxy acid (AHA) from fruit, used as a mild exfoliant and, at low levels, to adjust pH. Not an FDA-regulated drug ingredient; no OTC monograph or FDA efficacy claim applies to it.",
     typicalConcentrationText: "Concentration varies widely (often under 1% as a pH adjuster); not standardized.",
+  },
+  {
+    id: "estriol",
+    canonicalName: "Estriol",
+    categories: ["brightening-texture"],
+    synonyms: ["estriol"],
+    summary:
+      "An estrogen used in compounded and imported creams for skin aging, especially after menopause. A hormone: not an FDA-approved OTC drug in the US, and worth discussing with a doctor before use.",
+    typicalConcentrationText: "Commonly 0.2%–0.3% in facial creams; not standardized.",
+  },
+  {
+    id: "panax-ginseng",
+    canonicalName: "Panax Ginseng Root",
+    categories: ["brightening-texture"],
+    synonyms: ["panax ginseng root extract", "panax ginseng root oil", "panax ginseng root", "panax ginseng", "ginseng root extract"],
+    summary: "A ginseng root extract used in Korean skin care for antioxidant and anti-aging claims. Not an FDA-regulated drug ingredient; no OTC monograph or FDA efficacy claim applies to it.",
+    typicalConcentrationText: "Concentration varies by product; not standardized.",
   },
 ];
 

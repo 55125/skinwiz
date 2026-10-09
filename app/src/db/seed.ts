@@ -6,6 +6,7 @@ import { sql } from "drizzle-orm";
 import { db } from "./client";
 import * as schema from "./schema";
 import { ACTIVE_DEFINITIONS, ANYWHERE_LISTED_ACTIVE_IDS, CONCERN_DEFINITIONS, matchActiveIds, nicheToConcernId } from "./actives";
+import { ACTIVE_TEXT_OVERRIDES } from "./active-overrides";
 import { computeFreeFromFlags } from "./ingredient-flags";
 import { computeAllergenHits } from "./contact-allergens";
 import { parseStrengths, strengthKey } from "./strength";
@@ -123,6 +124,15 @@ type RxCatalogRow = {
 const firstPackage = (descriptions: string | undefined) => descriptions?.split(" | ")[0]?.trim() || null;
 
 const PRE_MATCHED_SOURCES = new Set(["open_beauty_facts", "brand_direct"]);
+
+const SUNSCREEN_ACTIVE_IDS = new Set(ACTIVE_DEFINITIONS.filter((a) => a.categories.includes("sunscreen")).map((a) => a.id));
+const ACNE_ACTIVE_IDS = new Set(ACTIVE_DEFINITIONS.filter((a) => a.categories.includes("acne")).map((a) => a.id));
+
+// Homeopathic "drugs" list dilutions (Calendula 1X HPUS, Thuja 6X) as
+// actives. They're kept out of the catalog entirely, whatever else they list.
+function isHomeopathic(marketingCategory: string | undefined, activeText: string): boolean {
+  return /homeopathic/i.test(marketingCategory ?? "") || /\bHPUS\b|\[HP_[XC]\]/i.test(activeText);
+}
 
 type AffiliateRow = {
   network: string;
@@ -302,6 +312,8 @@ function reseed() {
 
   let inserted = 0;
   let skippedNoActive = 0;
+  let skippedHomeopathic = 0;
+  let skippedSunscreenNoFilter = 0;
   const productBatch: (typeof schema.products.$inferInsert)[] = [];
   const seenNdc = new Set<string>();
   const memberships: { productId: string; position: number; slug: string; rawName: string; isActive: boolean }[] = [];
@@ -332,6 +344,18 @@ function reseed() {
       if (!row.product_ndc || seenNdc.has(row.product_ndc)) continue;
 
       const isPreMatched = row.source && PRE_MATCHED_SOURCES.has(row.source);
+      const override = ACTIVE_TEXT_OVERRIDES[row.product_ndc];
+      if (override && !isPreMatched) {
+        row.active_ingredients_structured = override;
+        row.active_ingredient_text = override;
+      }
+      if (
+        !isPreMatched &&
+        isHomeopathic(packageInfo.get(row.product_ndc)?.marketing_category || row.marketing_category, `${row.substance_name} ${row.active_ingredient_text}`)
+      ) {
+        skippedHomeopathic++;
+        continue;
+      }
       // Drug rows: the label's own inactive text, else the SPL XML's list
       // (spl-inactive.ts). Neither = unknown, not "clean".
       const inactive = isPreMatched ? null : drugInactiveList(row.inactive_ingredient_text, splInactive.get(row.product_ndc));
@@ -351,6 +375,18 @@ function reseed() {
       if (activeIds.length === 0) {
         skippedNoActive++;
         continue;
+      }
+      // A "sunscreen" label with no UV filter among its actives doesn't
+      // protect from UV. One with an acne active (a salicylic acid pad the
+      // openFDA sunscreen query also returned) is an acne product; anything
+      // else (only plant extracts, oils, centella) is left out.
+      if (!isPreMatched && row.niche === "sunscreen" && !activeIds.some((id) => SUNSCREEN_ACTIVE_IDS.has(id))) {
+        if (activeIds.some((id) => ACNE_ACTIVE_IDS.has(id))) {
+          row.niche = "acne";
+        } else {
+          skippedSunscreenNoFilter++;
+          continue;
+        }
       }
       seenNdc.add(row.product_ndc);
       const trimmedBrandName = row.brand_name?.trim() || "(unnamed product)";
@@ -436,6 +472,7 @@ function reseed() {
     inserted += Math.min(BATCH_SIZE, productBatch.length - i);
   }
   console.log(`  inserted ${inserted} products, skipped ${skippedNoActive} with no recognized active ingredient`);
+  console.log(`  skipped ${skippedHomeopathic} homeopathic and ${skippedSunscreenNoFilter} "sunscreens" with no UV filter`);
   console.log(`  drug inactive lists by source: ${JSON.stringify(inactiveSources)}`);
 
   insertIngredients(memberships, duplicateIds);

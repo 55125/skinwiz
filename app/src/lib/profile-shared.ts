@@ -1,6 +1,8 @@
 // Pure profile logic shared by server and client components (no DB / cookies).
 import { avoidConflicts, type AvoidableProduct } from "@/lib/avoid-shared";
-import { RETINOIDS, countsAtAnyPosition } from "@/lib/retinoids";
+import { countsAtAnyPosition } from "@/lib/retinoids";
+import { ACTIVE_DEFINITIONS, CONCERN_DEFINITIONS } from "@/db/actives";
+import { ECZEMA_CONCERN, ECZEMA_EXCLUDED_ACTIVES } from "@/lib/listing-rules";
 
 export const PROFILE_COOKIE = "sw_profile";
 export const PROFILE_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
@@ -17,15 +19,57 @@ export const SKIN_TYPES = [
 
 // Booster patterns: exact slug, "prefix*", or "*contains*" (ingredient slugs
 // come in many salt/ester variants, e.g. ceramide-np/-ap/-eop).
-export const PROFILE_CONCERNS: { id: string; label: string; boosters: string[] }[] = [
-  { id: "acne", label: "Acne & breakouts", boosters: ["benzoyl-peroxide", "salicylic-acid", "adapalene", "azelaic-acid", "niacinamide", "sulfur"] },
-  { id: "fungal-acne", label: "Fungal acne", boosters: [] },
-  { id: "dark-spots", label: "Dark spots & tone", boosters: ["vitamin-c", "alpha-arbutin", "tranexamic-acid", "niacinamide", "azelaic-acid", "*ascorb*"] },
-  { id: "aging", label: "Fine lines & aging", boosters: [...RETINOIDS, "bakuchiol", "*peptide*", "*tripeptide*", "vitamin-c"] },
-  { id: "dryness", label: "Dryness & barrier", boosters: ["*hyaluron*", "ceramide*", "squalane", "panthenol", "glycerin", "colloidal-oatmeal"] },
-  { id: "redness", label: "Redness & irritation", boosters: ["centella-asiatica", "azelaic-acid", "panthenol", "allantoin", "colloidal-oatmeal"] },
-  { id: "sun", label: "Sun protection", boosters: ["zinc-oxide", "titanium-dioxide", "avobenzone", "octocrylene", "homosalate"] },
-];
+// Ingredient lists name one active several ways; these patterns credit the
+// variants of an active the concern pages list as one.
+const ACTIVE_VARIANTS: Record<string, string[]> = {
+  "hyaluronic-acid": ["*hyaluron*"],
+  ceramides: ["ceramide*"],
+  peptides: ["*peptide*"],
+  "vitamin-c": ["*ascorb*"],
+};
+
+// Count only when they're the product's listed active ingredient: lower on an
+// ingredient list they're usually a colorant, filler, preservative or scent
+// (titanium dioxide in makeup, aluminum hydroxide coating a pigment, menthol
+// for a cooling feel), not doing the concern's job.
+const ONLY_AS_ACTIVE = new Set([
+  "zinc-oxide",
+  "titanium-dioxide",
+  "aluminum-hydroxide",
+  "kaolin",
+  "topical-starch",
+  "sodium-bicarbonate",
+  "benzalkonium-chloride",
+  "benzethonium-chloride",
+  "menthol",
+  "camphor",
+  "phenol",
+  "tea-tree-oil",
+  "magnesium-hydroxide",
+]);
+
+// The site's eight concerns, by the same names as the concern pages. Each
+// rewards the actives its concern page lists (db/actives.ts categories, less
+// the ones the eczema page leaves out).
+export const PROFILE_CONCERNS: { id: string; label: string; boosters: string[] }[] = CONCERN_DEFINITIONS.map((c) => ({
+  id: c.id,
+  label: c.name,
+  boosters: ACTIVE_DEFINITIONS.filter((a) => a.categories.includes(c.niche))
+    .filter((a) => c.id !== ECZEMA_CONCERN || !ECZEMA_EXCLUDED_ACTIVES.includes(a.id))
+    .flatMap((a) => [a.id, ...(ACTIVE_VARIANTS[a.id] ?? [])]),
+}));
+
+// Concerns the profile used to offer, before it used the site's eight.
+// Redness & irritation became "My skin is sensitive" (the box says "reddens
+// easily", and it only screens out more irritants); Fungal acne became its
+// own yes/no, since it isn't the Antifungal concern (athlete's foot,
+// ringworm).
+const OLD_CONCERNS: Record<string, string> = {
+  "dark-spots": "brightening-texture",
+  aging: "brightening-texture",
+  dryness: "dry-skin-eczema",
+  sun: "sun-protection",
+};
 
 export function boosterHit(pattern: string, id: string): boolean {
   if (pattern.startsWith("*") && pattern.endsWith("*")) return id.includes(pattern.slice(1, -1));
@@ -42,8 +86,18 @@ function hitsFor(patterns: string[], ids: Iterable<string>): string[] {
 
 // pregnant / breastfeeding only drive the pregnancy & lactation notices
 // (db/pregnancy-lactation.ts); they never change the match score.
-export type Profile = { skin: string | null; sensitive: boolean; concerns: string[]; likes: string[]; dislikes: string[]; pregnant: boolean; breastfeeding: boolean };
-export const EMPTY_PROFILE: Profile = { skin: null, sensitive: false, concerns: [], likes: [], dislikes: [], pregnant: false, breastfeeding: false };
+// fungalAcne: "Prone to fungal acne", scored by the fungal-acne-safe check.
+export type Profile = {
+  skin: string | null;
+  sensitive: boolean;
+  fungalAcne: boolean;
+  concerns: string[];
+  likes: string[];
+  dislikes: string[];
+  pregnant: boolean;
+  breastfeeding: boolean;
+};
+export const EMPTY_PROFILE: Profile = { skin: null, sensitive: false, fungalAcne: false, concerns: [], likes: [], dislikes: [], pregnant: false, breastfeeding: false };
 
 const SKIN_IDS = new Set<string>(SKIN_TYPES.map((s) => s.id));
 const CONCERN_IDS = new Set(PROFILE_CONCERNS.map((c) => c.id));
@@ -57,11 +111,13 @@ function slugList(v: unknown): string[] {
 export function sanitizeProfile(input: unknown): Profile {
   const o = (input && typeof input === "object" ? input : {}) as Record<string, unknown>;
   const dislikes = slugList(o.dislikes);
+  const raw = Array.isArray(o.concerns) ? o.concerns.filter((c): c is string => typeof c === "string") : [];
   return {
     skin: typeof o.skin === "string" && SKIN_IDS.has(o.skin) ? o.skin : null,
     // "sensitive" used to be a skin type; profiles saved that way carry over.
-    sensitive: o.sensitive === true || o.skin === "sensitive",
-    concerns: Array.isArray(o.concerns) ? [...new Set(o.concerns.filter((c): c is string => typeof c === "string" && CONCERN_IDS.has(c)))] : [],
+    sensitive: o.sensitive === true || o.skin === "sensitive" || raw.includes("redness"),
+    fungalAcne: o.fungalAcne === true || raw.includes("fungal-acne"),
+    concerns: [...new Set(raw.map((c) => OLD_CONCERNS[c] ?? c).filter((c) => CONCERN_IDS.has(c)))],
     dislikes,
     likes: slugList(o.likes).filter((l) => !dislikes.includes(l)),
     pregnant: o.pregnant === true,
@@ -70,9 +126,9 @@ export function sanitizeProfile(input: unknown): Profile {
 }
 
 // s=oily|c=acne,aging|l=a,b|d=x -- only [a-z0-9,-=|] so no cookie escaping.
-// |v=1 / |p=1 / |b=1 are appended only when set, so existing cookies parse as-is.
+// |v=1 / |f=1 / |p=1 / |b=1 are appended only when set, so existing cookies parse as-is.
 export function serializeProfile(p: Profile): string {
-  return `s=${p.skin ?? ""}|c=${p.concerns.join(",")}|l=${p.likes.join(",")}|d=${p.dislikes.join(",")}${p.sensitive ? "|v=1" : ""}${p.pregnant ? "|p=1" : ""}${p.breastfeeding ? "|b=1" : ""}`;
+  return `s=${p.skin ?? ""}|c=${p.concerns.join(",")}|l=${p.likes.join(",")}|d=${p.dislikes.join(",")}${p.sensitive ? "|v=1" : ""}${p.fungalAcne ? "|f=1" : ""}${p.pregnant ? "|p=1" : ""}${p.breastfeeding ? "|b=1" : ""}`;
 }
 
 export function parseProfile(raw: string | undefined): Profile {
@@ -83,12 +139,12 @@ export function parseProfile(raw: string | undefined): Profile {
     if (i > 0) f[part.slice(0, i)] = part.slice(i + 1);
   }
   const list = (s: string | undefined) => (s ? s.split(",").filter(Boolean) : []);
-  return sanitizeProfile({ skin: f.s, sensitive: f.v === "1", concerns: list(f.c), likes: list(f.l), dislikes: list(f.d), pregnant: f.p === "1", breastfeeding: f.b === "1" });
+  return sanitizeProfile({ skin: f.s, sensitive: f.v === "1", fungalAcne: f.f === "1", concerns: list(f.c), likes: list(f.l), dislikes: list(f.d), pregnant: f.p === "1", breastfeeding: f.b === "1" });
 }
 
 /** Whether the profile has anything the match score uses. */
 export function hasProfile(p: Profile): boolean {
-  return !!p.skin || p.sensitive || p.concerns.length > 0 || p.likes.length > 0 || p.dislikes.length > 0;
+  return !!p.skin || p.sensitive || p.fungalAcne || p.concerns.length > 0 || p.likes.length > 0 || p.dislikes.length > 0;
 }
 
 /** Whether there's anything worth keeping in the cookie at all. */
@@ -118,7 +174,7 @@ export function withLocalFlags(saved: Profile, local: Profile): Profile {
 /**
  * At sign-in: this browser's profile and the account's become one. Lists are
  * combined; a single-choice field (skin type) keeps the account's value
- * unless it has none; sensitive is kept if either side says so; a disliked
+ * unless it has none; sensitive and fungal acne are kept if either side says so; a disliked
  * ingredient always beats a liked one.
  * Pregnancy and breastfeeding come from this browser only.
  */
@@ -128,6 +184,7 @@ export function mergeProfiles(saved: Profile | null, local: Profile): Profile {
   return sanitizeProfile({
     skin: saved.skin ?? local.skin,
     sensitive: saved.sensitive || local.sensitive,
+    fungalAcne: saved.fungalAcne || local.fungalAcne,
     concerns: union(saved.concerns, local.concerns),
     likes: union(saved.likes, local.likes),
     dislikes: union(saved.dislikes, local.dislikes),
@@ -216,18 +273,19 @@ export function matchProduct(
     if (flags && !flags.includes("alcohol-free")) add(-8, "Dry skin: contains drying alcohol");
   }
 
+  if (profile.fungalAcne && flags) {
+    if (flags.includes("fungal-acne-safe")) add(12, "Fungal-acne-safe ingredient list");
+    else {
+      add(-25, "Contains fungal-acne triggers");
+      cap = Math.min(cap, 45);
+    }
+  }
+
+  const listedActives = new Set(ingredients.filter((i) => i.isActive).map((i) => i.id));
+  const counted = new Set([...meaningful].filter((id) => !ONLY_AS_ACTIVE.has(id) || listedActives.has(id)));
   for (const c of PROFILE_CONCERNS) {
     if (!profile.concerns.includes(c.id)) continue;
-    if (c.id === "fungal-acne") {
-      if (!flags) continue;
-      if (flags.includes("fungal-acne-safe")) add(12, "Fungal-acne-safe ingredient list");
-      else {
-        add(-25, "Contains fungal-acne triggers");
-        cap = Math.min(cap, 45);
-      }
-      continue;
-    }
-    const hits = [...new Set(hitsFor(c.boosters, meaningful))];
+    const hits = [...new Set(hitsFor(c.boosters, counted))];
     if (hits.length > 0) add(10 + Math.min(2, hits.length - 1) * 4, `${c.label}: ${hits.slice(0, 3).map(prettify).join(", ")}`);
   }
 

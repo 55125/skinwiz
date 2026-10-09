@@ -1,4 +1,4 @@
-// `npm test`: retinoid detection for the regimen cautions and the aging match
+// `npm test`: retinoid detection for the regimen cautions and the brightening match
 // score (lib/retinoids.ts). Real lists: INKEY Retinol Serum has retinyl
 // acetate 7th and hydroxypinacolone retinoate 19th; CeraVe Skin Renewing
 // Retinol Serum has retinol 21st.
@@ -38,14 +38,14 @@ test("acids keep the position cutoff", () => {
   assert.ok(!classesFromIngredients(list(["glycolic-acid", 30])).has("exfoliant"));
 });
 
-test("aging profiles credit retinoids low on the list", () => {
-  const profile = { ...EMPTY_PROFILE, concerns: ["aging"] };
+test("brightening & texture profiles credit retinoids low on the list", () => {
+  const profile = { ...EMPTY_PROFILE, concerns: ["brightening-texture"] };
   const product = { freeFromFlags: [] };
   const ing = (id: string, position: number) => ({ id, position, isActive: false });
   const hpr = matchProduct(product, [ing("water", 1), ing("hydroxypinacolone-retinoate", 19)], profile, []);
   assert.ok(hpr?.reasons.some((r) => r.tone === "good" && /hydroxypinacolone retinoate/.test(r.text)), JSON.stringify(hpr));
   const retinol = matchProduct(product, [ing("water", 1), ing("retinol-cosmetic", 21)], profile, []);
-  assert.ok(retinol?.reasons.some((r) => /Fine lines & aging: retinol/.test(r.text)), JSON.stringify(retinol));
+  assert.ok(retinol?.reasons.some((r) => /Brightening & Texture: retinol/.test(r.text)), JSON.stringify(retinol));
   const trace = matchProduct(product, [ing("water", 1), ing("retinyl-palmitate", 25)], profile, []);
-  assert.ok(!trace?.reasons.some((r) => /aging/.test(r.text)), JSON.stringify(trace));
+  assert.ok(!trace?.reasons.some((r) => /Brightening/.test(r.text)), JSON.stringify(trace));
 });

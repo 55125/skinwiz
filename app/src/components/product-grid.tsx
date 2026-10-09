@@ -3,7 +3,7 @@ import { HsaListingNote } from "@/components/hsa-badge";
 import { getBestProductImages, getEwgScoresForProducts } from "@/lib/queries";
 import { getScoresForProducts } from "@/lib/scoring";
 import { readAvoidIds } from "@/lib/avoid";
-import { avoidLabelsFor, getIngredientMembership, matchProduct, readProfile } from "@/lib/profile";
+import { avoidLabelsFor, getIngredientMembership, hasProfile, matchProduct, readProfile } from "@/lib/profile";
 import { cn } from "@/lib/utils";
 import { isHsaEligible } from "@/lib/otc-index";
 import { hsaSaidOnce } from "@/lib/hsa";
@@ -25,7 +25,7 @@ export async function ProductGrid({
   const avoidIds = await readAvoidIds();
   const profile = await readProfile();
   const avoidLabels = avoidLabelsFor(avoidIds);
-  const personalized = avoidLabels.length > 0 || profile.skin || profile.sensitive || profile.concerns.length + profile.likes.length + profile.dislikes.length > 0;
+  const personalized = avoidLabels.length > 0 || hasProfile(profile);
   const membership = personalized ? getIngredientMembership(rows.map((p) => p.id)) : null;
   const hsa = new Set(rows.filter((p) => isHsaEligible(p.id)).map((p) => p.id));
   // Mostly eligible: said once above the grid, not on every card.

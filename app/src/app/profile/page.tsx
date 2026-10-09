@@ -38,7 +38,7 @@ export default async function ProfilePage() {
           <p>
             The match score is a transparent, rule-based estimate from each product&apos;s published ingredient list
             (for example, sensitive skin is marked down for fragrance, drying alcohol and essential oils; your
-            concerns reward well-known ingredients for them). It is not a clinical assessment and cannot predict how
+            concerns reward the ingredients their concern pages list). It is not a clinical assessment and cannot predict how
             your skin will react. Products without a full ingredient list get no score rather than a guess.
           </p>
           <p>

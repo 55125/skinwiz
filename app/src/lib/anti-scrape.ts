@@ -11,7 +11,8 @@ import { BlockList, isIP } from "node:net";
 
 // Crawlers that have no business copying the catalog. Search-engine crawlers
 // (Googlebot, Bingbot, DuckDuckBot, Applebot) are deliberately absent.
-const BLOCKED_UA = new RegExp(
+// Refused even while OPEN_FOR_REVIEW is on: no affiliate reviewer uses them.
+const ALWAYS_BLOCKED_UA = new RegExp(
   [
     // AI training / dataset crawlers (answer-engine fetchers -- OAI-SearchBot,
     // ChatGPT-User, PerplexityBot -- are allowed: they send readers our way)
@@ -19,13 +20,20 @@ const BLOCKED_UA = new RegExp(
     "bytespider", "amazonbot", "google-extended", "applebot-extended",
     "meta-externalagent", "meta-externalfetcher", "facebookbot", "diffbot", "imagesiftbot", "omgili",
     "cohere-ai", "mistralai-user", "youbot", "timpibot", "ai2bot", "friendlycrawler", "petalbot",
-    // SEO / data-mining crawlers
-    "semrushbot", "ahrefsbot", "mj12bot", "dotbot", "dataforseobot", "blexbot", "serpstatbot", "barkrowler",
     // dedicated scraping frameworks
     "scrapy",
   ].join("|"),
   "i",
 );
+
+// SEO / data-mining crawlers. Let in while OPEN_FOR_REVIEW is on, since
+// affiliate managers size a site from their traffic estimates.
+const SEO_UA = /semrushbot|ahrefsbot|mj12bot|dotbot|dataforseobot|blexbot|serpstatbot|barkrowler/i;
+
+/** AI-training crawlers and scraping frameworks: refused even in review mode. */
+export function alwaysBlockedCrawler(ua: string): boolean {
+  return ALWAYS_BLOCKED_UA.test(ua) && !ALLOWED_UA.test(ua);
+}
 
 // Scripting libraries, headless browsers and generic bots. These aren't
 // refused outright: affiliate-network reviewers, link checkers and preview
@@ -206,7 +214,7 @@ export function judge(req: RequestInfo): Verdict {
   let automated = false;
   if (!ALLOWED_UA.test(ua)) {
     if (!ua.trim()) return { action: "block", status: 403, reason: "missing user agent" };
-    if (BLOCKED_UA.test(ua)) return { action: "block", status: 403, reason: "automated client" };
+    if (ALWAYS_BLOCKED_UA.test(ua) || SEO_UA.test(ua)) return { action: "block", status: 403, reason: "automated client" };
     // a bare "Java/17.0.2"-style UA is tooling too, not a browser
     automated = AUTOMATION_UA.test(ua) || ua.trim().length < 12;
   }

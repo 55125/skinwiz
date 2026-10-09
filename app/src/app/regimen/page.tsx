@@ -11,6 +11,7 @@ import { RegimenActions } from "@/components/regimen-actions";
 import { ClinicianPlan } from "@/components/clinician-plan";
 import { gpcEnabled } from "@/lib/gpc";
 import { EmailSignupCard } from "@/components/email-signup-card";
+import { InstallAppCard } from "@/components/install-app-card";
 import { readDeviceSessionId, readSessionId } from "@/lib/session";
 import { personForSession } from "@/lib/identity";
 import { EMPTY_REGIMEN, getRegimen, guidanceForActives, guidanceForStep, STEP_LABEL, suggestSlot, type RegimenStep } from "@/lib/regimen";
@@ -201,6 +202,7 @@ export default async function RegimenPage({ searchParams }: { searchParams: Prom
       />
 
       <RedFlagBanner />
+      <InstallAppCard />
       {selected && <RegimenTabs list={list} selectedId={selected.id} />}
       {skipped && (
         <p role="status" className="rounded-xl border bg-muted/40 p-3 text-sm">

@@ -9,7 +9,8 @@
 import { purgeExpiredTokens } from "@/lib/identity";
 import { purgeOldRaterApplications } from "@/lib/retention";
 import { sendDueCheckins, type CheckinRunResult } from "@/lib/checkins";
-import { notifyRecalls, syncRecalls, type NotifyResult, type SyncResult } from "@/lib/recalls";
+import { notifyRecalls, setState, syncRecalls, type NotifyResult, type SyncResult } from "@/lib/recalls";
+import { purgeAnalytics } from "@/lib/analytics/store";
 import { refreshPrices, type PriceRefreshReport } from "@/lib/prices/refresh";
 import { syncDailymedImages, type ImageSyncReport } from "@/lib/product-images/sync";
 
@@ -34,6 +35,7 @@ export type JobReport = {
   checkins?: CheckinRunResult;
   purgedTokens?: number;
   purgedRaterApplications?: number;
+  purgedAnalytics?: number;
   prices?: PriceRefreshReport | { error: string };
   images?: ImageSyncReport | { error: string } | { skipped: string };
 };
@@ -60,6 +62,7 @@ export async function runJobs(now: Date, jobs: JobName[] = ALL_JOBS, opts: { for
     if (jobs.includes("cleanup")) {
       report.purgedTokens = purgeExpiredTokens(now);
       report.purgedRaterApplications = purgeOldRaterApplications(now);
+      report.purgedAnalytics = purgeAnalytics(now);
     }
     if (jobs.includes("prices")) {
       try {
@@ -79,6 +82,8 @@ export async function runJobs(now: Date, jobs: JobName[] = ALL_JOBS, opts: { for
         }
       }
     }
+    // Shown on the admin page's health panel (real clock, not the test one).
+    setState("cron:last_run", jobs.join(","));
     return report;
   } finally {
     running = false;

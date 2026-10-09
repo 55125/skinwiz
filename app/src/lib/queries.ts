@@ -29,6 +29,8 @@ import { POTENT_RETINOIDS } from "@/lib/retinoids";
 import { RX_CONCERN_ID } from "@/db/rx";
 import { isDailymedImageUrl } from "@/lib/image-urls";
 import { LISTED, inProductGroup } from "@/lib/canonical";
+import { originIdsJson } from "@/lib/origin";
+import { ORIGINS, type OriginId } from "@/lib/origin-shared";
 
 // Prescription rows (products.isRx) are reference/handout data and must never
 // reach a consumer listing, search, count, score, equivalence list or the
@@ -159,6 +161,26 @@ function concernListingClause(): SQL {
 }
 // Every listing and search: one row per product (lib/listing-rules.ts
 // duplicateKey), and junk or non-English community titles last.
+// The header's region pick (lib/origin.ts): only that region's brands.
+function originClause(origin: OriginId): SQL {
+  return sql`${products.id} IN (SELECT value FROM json_each(${originIdsJson(origin)}))`;
+}
+
+// How many rows under `where` come from each region: one scan, for the
+// counts on the "Brand from" chips.
+function countByOrigin(where: SQL | undefined): Map<OriginId, number> {
+  const row = db
+    .select(
+      Object.fromEntries(
+        ORIGINS.map((o) => [o.id, sql<number>`coalesce(sum(CASE WHEN ${originClause(o.id)} THEN 1 ELSE 0 END), 0)`]),
+      ) as Record<OriginId, SQL<number>>,
+    )
+    .from(products)
+    .where(where)
+    .get();
+  return new Map(ORIGINS.map((o) => [o.id, Number(row?.[o.id] ?? 0)]));
+}
+
 function notDuplicate(): SQL {
   return sql`${products.id} NOT IN (SELECT value FROM json_each(${duplicateIdsJson()}))`;
 }
@@ -185,10 +207,12 @@ export function getProductsForConcern(
   freeFromIds: string[] = [],
   strengthPct?: number,
   excludeIngredientIds?: string[],
+  origin?: OriginId,
 ) {
   const offset = (page - 1) * PAGE_SIZE;
   const clauses = [LISTED_OTC, eq(products.concernId, concernId), concernListingClause(), notDuplicate(), ...freeFromWhereClauses(freeFromIds)];
   if (excludeIngredientIds) clauses.push(excludesIngredientsClause(excludeIngredientIds));
+  if (origin) clauses.push(originClause(origin));
   if (activeId) {
     clauses.push(jsonArrayContains(products.activeIds, activeId));
     if (strengthPct !== undefined) clauses.push(sql`${strengthExpr(activeId)} = ${strengthPct}`);
@@ -223,6 +247,8 @@ export type BrowseFilters = {
   strengthPct?: number;
   /** A concern page's listing: applies lib/listing-rules.ts exclusions. */
   concernListing?: boolean;
+  /** The header's region pick: only brands from there. */
+  origin?: OriginId;
 };
 
 export function browseWhere(filters: BrowseFilters): SQL | undefined {
@@ -232,11 +258,17 @@ export function browseWhere(filters: BrowseFilters): SQL | undefined {
   if (filters.dataSources && filters.dataSources.length > 0) clauses.push(inArray(products.dataSource, filters.dataSources));
   if (filters.activeId) clauses.push(jsonArrayContains(products.activeIds, filters.activeId));
   if (filters.concernListing) clauses.push(concernListingClause());
+  if (filters.origin) clauses.push(originClause(filters.origin));
   if (filters.activeId && filters.strengthPct !== undefined) clauses.push(sql`${strengthExpr(filters.activeId)} = ${filters.strengthPct}`);
   // The eligible set is computed in lib/otc-index.ts (label-text rules for
   // sunscreens), bound here as one JSON array parameter.
   if (filters.hsaOnly) clauses.push(sql`${products.id} IN (SELECT value FROM json_each(${hsaEligibleIdsJson()}))`);
   return clauses.length > 0 ? and(...clauses) : undefined;
+}
+
+/** Each region's count under every other filter, for the "Brand from" chips. */
+export function browseOriginCounts(filters: BrowseFilters): Map<OriginId, number> {
+  return countByOrigin(browseWhere({ ...filters, origin: undefined }));
 }
 
 export function browseProducts(filters: BrowseFilters, page: number, sort?: "name") {
@@ -531,7 +563,7 @@ export function getVideoLinksForProduct(productId: string) {
 // order of magnitude or search feels slow in practice.
 const SEARCH_LIMIT = 40;
 
-type SearchFilters = { concernId?: string; dataSources?: string[]; freeFromIds?: string[] };
+type SearchFilters = { concernId?: string; dataSources?: string[]; freeFromIds?: string[]; origin?: OriginId };
 
 // One parsed word (lib/search-terms.ts) against one column: any alternative,
 // as a substring or, for short words, at the start of a word.
@@ -557,6 +589,7 @@ function buildSearchWhere(terms: SearchTerm[], filters: SearchFilters) {
   ];
   if (filters.concernId) clauses.push(eq(products.concernId, filters.concernId));
   if (filters.dataSources && filters.dataSources.length > 0) clauses.push(inArray(products.dataSource, filters.dataSources));
+  if (filters.origin) clauses.push(originClause(filters.origin));
   return and(...clauses);
 }
 
@@ -635,6 +668,12 @@ export function searchProductsCount(q: string, filters: SearchFilters = {}) {
     .where(buildSearchWhere(terms, filters))
     .all();
   return count;
+}
+
+export function searchOriginCounts(q: string, filters: SearchFilters = {}): Map<OriginId, number> {
+  const { terms } = parseSearch(q);
+  if (!terms.length) return new Map();
+  return countByOrigin(buildSearchWhere(terms, { ...filters, origin: undefined }));
 }
 
 export function searchActives(q: string) {
@@ -838,9 +877,9 @@ export function getIngredientStats(id: string) {
       COUNT(*) AS products,
       COUNT(DISTINCT LOWER(COALESCE(p.manufacturer, ''))) AS brands,
       SUM(pi.is_active) AS asActive,
-      SUM(CASE WHEN p.data_source IN ('open_beauty_facts','brand_direct') THEN 1 ELSE 0 END) AS inciLists,
-      SUM(CASE WHEN p.data_source IN ('open_beauty_facts','brand_direct') AND pi.position BETWEEN 1 AND 5 THEN 1 ELSE 0 END) AS topFive,
-      AVG(CASE WHEN p.data_source IN ('open_beauty_facts','brand_direct') THEN pi.position END) AS avgPosition,
+      SUM(CASE WHEN p.data_source IN ('open_beauty_facts','brand_direct','third_party') THEN 1 ELSE 0 END) AS inciLists,
+      SUM(CASE WHEN p.data_source IN ('open_beauty_facts','brand_direct','third_party') AND pi.position BETWEEN 1 AND 5 THEN 1 ELSE 0 END) AS topFive,
+      AVG(CASE WHEN p.data_source IN ('open_beauty_facts','brand_direct','third_party') THEN pi.position END) AS avgPosition,
       '' AS bySource
     FROM product_ingredients pi
     JOIN products p ON p.id = pi.product_id

@@ -30,6 +30,23 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       { source: "/:path*", headers: securityHeaders },
+      // The owner's dashboard (app/admin): never indexed or cached by anyone.
+      ...["/admin", "/admin/:path*", "/api/admin/:path*"].map((source) => ({
+        source,
+        headers: [
+          { key: "X-Robots-Tag", value: "noindex, nofollow, noarchive" },
+          { key: "Cache-Control", value: "no-store" },
+        ],
+      })),
+      // The service worker must be re-checked on every visit, or a fix to it
+      // can take a day to reach people who already have it.
+      {
+        source: "/sw.js",
+        headers: [
+          { key: "Cache-Control", value: "no-cache" },
+          { key: "Content-Type", value: "application/javascript; charset=utf-8" },
+        ],
+      },
       // Catalog photos in public/ (names aren't content-hashed, so not
       // immutable). Saves every product view a revalidation round trip to
       // the single Node process.

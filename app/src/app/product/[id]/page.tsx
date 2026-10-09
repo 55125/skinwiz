@@ -182,7 +182,9 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
   const retailerSearches = retailerSearchLinks(
     product.brandName,
     // Only these sources carry the brand in `manufacturer`; FDA rows carry the labeler.
-    product.dataSource === "brand_direct" || product.dataSource === "open_beauty_facts" ? product.manufacturer : null,
+    product.dataSource === "brand_direct" || product.dataSource === "open_beauty_facts" || product.dataSource === "third_party"
+      ? product.manufacturer
+      : null,
     process.env,
     gpc,
   );
@@ -481,7 +483,9 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
                   ? "Active ingredient (from FDA label)"
                   : product.dataSource === "brand_direct"
                     ? "Ingredients (from manufacturer)"
-                    : "Ingredients (community-sourced)"}
+                    : product.dataSource === "third_party"
+                      ? "Ingredients (third-party listing)"
+                      : "Ingredients (community-sourced)"}
               </h2>
               {isDrugLabel ? (
                 <>
@@ -572,7 +576,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
 
       <div
         className={
-          product.dataSource === "open_beauty_facts" || product.dataSource === "brand_direct"
+          product.dataSource === "open_beauty_facts" || product.dataSource === "brand_direct" || product.dataSource === "third_party"
             ? "grid gap-3 md:grid-cols-2 md:items-start"
             : undefined
         }
@@ -593,6 +597,19 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
               Open Database License
             </a>
             .
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {product.dataSource === "third_party" && (
+        <Alert className="border-dashed bg-transparent">
+          <Info className="h-4 w-4 text-amber-600" />
+          <AlertTitle>Third-party listing, not from the manufacturer</AlertTitle>
+          <AlertDescription className="text-[13px]">
+            {product.manufacturer ? displayManufacturer(product.manufacturer) : "The brand"} doesn&apos;t publish this
+            product&apos;s ingredient list, so it comes from independent ingredient databases that agree with each other.
+            It hasn&apos;t been checked against the package, and older stock may have a different formula. Check the
+            label if an ingredient matters to you.
           </AlertDescription>
         </Alert>
       )}

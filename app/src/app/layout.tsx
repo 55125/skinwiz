@@ -1,10 +1,12 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Fraunces, Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { siteUrl } from "@/lib/site-url";
 import { SITE_NAME } from "@/lib/brand";
+import { AnalyticsBeacon } from "@/components/analytics-beacon";
+import { ServiceWorker } from "@/components/service-worker";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -41,6 +43,13 @@ export const metadata: Metadata = {
   // share previews fall back to each page's own <title> and description.
   openGraph: { type: "website", siteName: SITE_NAME, locale: "en_US" },
   twitter: { card: "summary" },
+  // Home-screen install on iPhone/iPad (Android reads app/manifest.ts).
+  appleWebApp: { capable: true, title: SITE_NAME, statusBarStyle: "default" },
+};
+
+// Browser and installed-app toolbar color: the brand teal from icon.svg.
+export const viewport: Viewport = {
+  themeColor: "#006761",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
@@ -70,6 +79,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <SiteHeader />
         <main id="main" className="flex-1">{children}</main>
         <SiteFooter />
+        <AnalyticsBeacon />
+        <ServiceWorker />
       </body>
     </html>
   );

@@ -60,6 +60,14 @@ export function ClinicianProfileForm({ initial, submitLabel = "Verify and save" 
         NPI verification confirms you are a licensed prescriber; it is not board certification. We check the number against the public
         NPPES registry and store your registry name, credential, primary specialty and state.
       </p>
+      <p className="text-xs text-muted-foreground">
+        By saving, you confirm this NPI is your own and agree to the{" "}
+        <a href="/terms#clinic-tools" className="underline underline-offset-2">
+          terms for clinic tools
+        </a>
+        : you stay responsible for what you hand out, never type patient details into a handout, and know that the
+        patient&apos;s view may include affiliate links for over-the-counter products.
+      </p>
       <Button type="submit" disabled={pending}>
         {pending ? "Checking…" : submitLabel}
       </Button>

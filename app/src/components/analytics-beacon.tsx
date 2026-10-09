@@ -5,9 +5,10 @@ import { usePathname } from "next/navigation";
 
 // First-party, cookieless site statistics (lib/analytics/, POST /api/e).
 // Sends a pageview on each navigation, outbound link clicks (retailer
-// host only), and clicks on elements marked data-track="tool-name". Does
-// nothing when the browser sends Global Privacy Control or Do Not Track;
-// the server checks the same signals again.
+// host only), and clicks on elements marked data-track="tool-name". Under
+// Global Privacy Control or Do Not Track it sends only the bare kind of a
+// page view or outbound click, which the server adds to a daily count; the
+// server checks the same signals again.
 
 function optedOut(): boolean {
   const nav = navigator as Navigator & { globalPrivacyControl?: boolean };
@@ -15,9 +16,11 @@ function optedOut(): boolean {
 }
 
 export function sendEvent(body: Record<string, unknown>): void {
-  if (typeof window === "undefined" || optedOut()) return;
+  if (typeof window === "undefined") return;
+  const counted = optedOut();
+  if (counted && body.kind !== "pageview" && body.kind !== "outbound") return;
   try {
-    const payload = JSON.stringify({ path: window.location.pathname, ...body });
+    const payload = JSON.stringify(counted ? { kind: body.kind } : { path: window.location.pathname, ...body });
     if (navigator.sendBeacon?.("/api/e", new Blob([payload], { type: "application/json" }))) return;
     void fetch("/api/e", { method: "POST", body: payload, keepalive: true, headers: { "Content-Type": "application/json" } }).catch(() => {});
   } catch {

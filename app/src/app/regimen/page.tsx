@@ -9,6 +9,7 @@ import { HowToUse } from "@/components/how-to-use";
 import { MdBadge } from "@/components/md-badge";
 import { RegimenActions } from "@/components/regimen-actions";
 import { ClinicianPlan } from "@/components/clinician-plan";
+import { gpcEnabled } from "@/lib/gpc";
 import { EmailSignupCard } from "@/components/email-signup-card";
 import { InstallAppCard } from "@/components/install-app-card";
 import { readDeviceSessionId, readSessionId } from "@/lib/session";
@@ -158,7 +159,7 @@ export default async function RegimenPage({ searchParams }: { searchParams: Prom
         <RegimenTabs list={list} selectedId={selected.id} />
         {FEATURES.HANDOUTS ? (
           <>
-            <ClinicianPlan version={plan.version} products={plan.products} states={plan.states} regimenId={selected.id} rxLinks={rxLinks} />
+            <ClinicianPlan version={plan.version} products={plan.products} states={plan.states} regimenId={selected.id} rxLinks={rxLinks} gpc={await gpcEnabled()} />
             <RegimenActions regimenId={selected.id} kind="clinician" active={selected.active} name={selected.name} />
             <EmailSignupCard
               signedInAs={person?.email ?? null}

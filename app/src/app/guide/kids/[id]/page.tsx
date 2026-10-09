@@ -31,6 +31,13 @@ export default async function KidsGuidePage({ params }: { params: Promise<{ id: 
         your child&apos;s doctor or dermatologist. It&apos;s general information, not a diagnosis, and any prescription is used
         only as your child&apos;s clinician directs.
       </p>
+      {!t.reviewed && (
+        <p className="rounded-xl border-2 border-amber-400 bg-amber-50 p-3 text-sm dark:border-amber-800 dark:bg-amber-950/30">
+          <strong>Draft, not yet reviewed by a physician.</strong> This guide was drafted with AI assistance and its review
+          is still in progress. Check anything here, especially product directions for your child&apos;s age, with your
+          child&apos;s doctor before relying on it.
+        </p>
+      )}
 
       <article className="space-y-6 rounded-2xl border bg-card p-6">
         <h2 className="sr-only">The guide</h2>

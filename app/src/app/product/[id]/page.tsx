@@ -68,6 +68,8 @@ import { PregnancyNotice } from "@/components/pregnancy-notice";
 import { DAILYMED_IMAGE_CAPTION, isOpenBeautyFactsImageUrl, isDailymedImageUrl, productImageAlt } from "@/lib/image-urls";
 import { recallsForProduct } from "@/lib/recalls";
 import { RecallBanner } from "@/components/recall-banner";
+import { DiscontinuedBanner } from "@/components/discontinued-banner";
+import { availabilityOf } from "@/lib/availability";
 import { canViewRxReference } from "@/lib/clinicians";
 import { isAmazonLink, manualLinkHref, manualLinkLabel } from "@/lib/manual-links";
 import { headers } from "next/headers";
@@ -315,6 +317,11 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
           </div>
 
           <RecallBanner recalls={recallsForProduct(product.id)} />
+
+          <DiscontinuedBanner
+            reason={availabilityOf(product.id).discontinued}
+            alternatives={concern ? { href: `/concern/${concern.id}`, label: `Find an alternative among ${concern.name} products` } : undefined}
+          />
 
           <DualScoreBadges dermScore={dermScore} audienceScore={audienceScore} />
 

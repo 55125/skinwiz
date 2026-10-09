@@ -1,6 +1,6 @@
 // The patch-test series clinicians read from, item by item, mapped to the
 // allergen and family ids in contact-allergens.ts. Used by the clinician
-// sheet (/for-clinicians/patch-test), the patient import page and the
+// sheet (/clinic-tools/patch-test-reader?mode=tick), the patient import page and the
 // "pick from a series" option on /avoid.
 //
 // Some series allergens never appear on a cosmetic label (rubber

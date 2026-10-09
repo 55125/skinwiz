@@ -107,7 +107,7 @@ export default async function CliniciansPage({ searchParams }: { searchParams: P
           <h2 id="lists-h" className="text-lg font-semibold">
             Starter lists
           </h2>
-          <p className="text-sm text-muted-foreground">Your practice&apos;s standard avoid lists, ready for the patch-test sheet and handouts.</p>
+          <p className="text-sm text-muted-foreground">Your practice&apos;s standard avoid lists, ready for the patch-test reader and handouts.</p>
         </div>
         <StarterLists lists={listsForClinician(clinician.id).map((l) => ({ id: l.id, name: l.name, ids: l.ids }))} />
       </section>

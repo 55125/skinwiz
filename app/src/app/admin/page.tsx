@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { ADMIN_COOKIE, adminPassword, isAdminCookie, passwordWarning } from "@/lib/admin-auth";
 import {
@@ -19,6 +19,8 @@ import {
 import { FEATURES } from "@/lib/feature-flags";
 import { openForReview } from "@/lib/review-mode";
 import { livePricesEnabled, sovrnSiteKey } from "@/lib/prices/config";
+import { clientIpFromHeaders } from "@/lib/api-guard";
+import { clientIp as botLimitIp } from "@/lib/anti-scrape";
 
 // The owner's dashboard. Not linked from anywhere on the site, kept out of
 // search engines (noindex here and an X-Robots-Tag header in next.config),
@@ -71,6 +73,12 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
   const errors = errorReport(now, days);
   const health = healthReport();
   const warning = passwordWarning(adminPassword()!);
+  // The login/sign-in-code limits and the bot limits read the visitor's IP
+  // from different headers. Both should show this browser's public address;
+  // if either shows a private or shared one, those limits lump visitors together.
+  const requestHeaders = await headers();
+  const ipForLimits = clientIpFromHeaders(requestHeaders);
+  const ipForBots = botLimitIp(requestHeaders) ?? "unknown";
 
   return (
     <div className="mx-auto max-w-6xl space-y-10 px-4 py-8">
@@ -358,6 +366,11 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
             <HealthRow label="Uptime" value={`${duration(health.uptimeSeconds)} since last restart`} />
             <HealthRow label="Memory" value={`${bytes(health.rssBytes)} resident · ${bytes(health.heapBytes)} heap`} />
             <HealthRow label="Runtime" value={`Node ${health.node}${health.commit ? ` · commit ${health.commit}` : ""}`} />
+            <HealthRow
+              label="Your IP as seen"
+              ok={ipForLimits === ipForBots && ipForLimits !== "unknown"}
+              value={ipForLimits === ipForBots ? ipForLimits : `${ipForLimits} (login limits) vs ${ipForBots} (bot limits): should match`}
+            />
             <HealthRow label="Stats rows" value={`${fmt(health.analyticsRows)} (kept ${health.retentionDays} days)`} />
           </dl>
           <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 text-sm">

@@ -983,7 +983,13 @@ export const analyticsEvents = sqliteTable(
     value: integer("value"), // search: result count
     productId: text("product_id"), // outbound clicks from a product page
   },
-  (table) => [index("analytics_events_kind_day_idx").on(table.kind, table.day), index("analytics_events_day_idx").on(table.day)],
+  (table) => [
+    index("analytics_events_kind_day_idx").on(table.kind, table.day),
+    index("analytics_events_day_idx").on(table.day),
+    // The once-a-minute pageview de-duplication in recordEvent(); without it
+    // every beacon scanned all of today's events.
+    index("analytics_events_visitor_path_at_idx").on(table.visitor, table.path, table.at),
+  ],
 );
 
 // One random salt per UTC day for analytics_events.visitor; rows older than

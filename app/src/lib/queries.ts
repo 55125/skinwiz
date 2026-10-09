@@ -1062,6 +1062,42 @@ export function getRetailBarcodes(ids: string[]): string[] {
  * artwork, the canonical's own first within each kind.
  */
 export function bestProductImage(product: { imageUrl: string | null }, duplicates: { imageUrl: string | null }[]): string | null {
-  const all = [product, ...duplicates].filter((p) => p.imageUrl);
-  return (all.find((p) => !isDailymedImageUrl(p.imageUrl)) ?? all[0])?.imageUrl ?? null;
+  return productImages(product, duplicates).photo;
+}
+
+/**
+ * A product page's two images: `photo` is bestProductImage; `label` is the
+ * DailyMed label artwork shown second, only when a retail photo took the
+ * first spot (otherwise the label already is the photo, or there is none).
+ */
+export function productImages(
+  product: { imageUrl: string | null },
+  duplicates: { imageUrl: string | null }[],
+): { photo: string | null; label: string | null } {
+  const urls = [product, ...duplicates].map((p) => p.imageUrl).filter((u): u is string => !!u);
+  const retail = urls.find((u) => !isDailymedImageUrl(u));
+  const label = urls.find((u) => isDailymedImageUrl(u)) ?? null;
+  return retail ? { photo: retail, label } : { photo: label, label: null };
+}
+
+/**
+ * bestProductImage for a whole grid in one query: each product's image
+ * after looking at its merged listings, so a card shows the same retail
+ * photo as the product page rather than the canonical row's label artwork.
+ */
+export function getBestProductImages(ids: string[]): Map<string, string | null> {
+  if (ids.length === 0) return new Map();
+  const rows = db
+    .select({ id: products.id, canonicalId: products.canonicalId, imageUrl: products.imageUrl })
+    .from(products)
+    .where(and(OTC_ONLY, sql`${products.imageUrl} IS NOT NULL`, sql`(${inArray(products.id, ids)} OR ${inArray(products.canonicalId, ids)})`))
+    .orderBy(products.id)
+    .all();
+  const own = new Map<string, string | null>();
+  const dups = new Map<string, { imageUrl: string | null }[]>();
+  for (const r of rows) {
+    if (ids.includes(r.id)) own.set(r.id, r.imageUrl);
+    if (r.canonicalId) dups.set(r.canonicalId, [...(dups.get(r.canonicalId) ?? []), r]);
+  }
+  return new Map(ids.map((id) => [id, bestProductImage({ imageUrl: own.get(id) ?? null }, dups.get(id) ?? [])]));
 }

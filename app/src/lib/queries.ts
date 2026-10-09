@@ -99,7 +99,7 @@ export function getAllergenProductCounts(): Map<string, number> {
 export function getFreeOfAllergenByConcern(id: string): { id: string; name: string; n: number }[] {
   return db.all<{ id: string; name: string; n: number }>(sql`
     SELECT c.id AS id, c.name AS name, COUNT(*) AS n
-    FROM products JOIN concerns c ON c.id = products.concern_id
+    FROM products JOIN concerns c ON c.id IN (SELECT value FROM json_each(products.concern_ids))
     WHERE ${and(LISTED_OTC, ...freeFromWhereClauses([id]))}
     GROUP BY c.id ORDER BY n DESC
   `);
@@ -110,7 +110,7 @@ export function getSafeProductsByConcern(ids: string[]): { id: string; name: str
   if (ids.length === 0) return [];
   return db.all<{ id: string; name: string; n: number }>(sql`
     SELECT c.id AS id, c.name AS name, COUNT(*) AS n
-    FROM products JOIN concerns c ON c.id = products.concern_id
+    FROM products JOIN concerns c ON c.id IN (SELECT value FROM json_each(products.concern_ids))
     WHERE ${and(LISTED_OTC, ...freeFromWhereClauses(ids))}
     GROUP BY c.id ORDER BY n DESC
   `);
@@ -125,6 +125,11 @@ export function getAssessedProductCount(): number {
 // unassessed products out of every filter.
 function jsonArrayContains(column: SQLWrapper, value: string): SQL {
   return sql`EXISTS (SELECT 1 FROM json_each(${column}) WHERE json_each.value = ${value})`;
+}
+
+// Listed under a concern: its own, or another it also fits (products.concernIds).
+function inConcern(concernId: string): SQL {
+  return jsonArrayContains(products.concernIds, concernId);
 }
 
 function likeContains(q: string): string {
@@ -157,8 +162,8 @@ export function getActivesForConcern(concernId: string) {
 // Concern pages only: products lib/listing-rules.ts keeps off them, and its
 // tier order (dedicated SPF 30+ sunscreens first, diaper products after
 // general eczema care), then catalog order.
-function concernListingClause(): SQL {
-  return sql`${products.id} NOT IN (SELECT value FROM json_each(${concernExcludedIdsJson()}))`;
+function concernListingClause(concernId?: string): SQL {
+  return sql`${products.id} NOT IN (SELECT value FROM json_each(${concernExcludedIdsJson(concernId)}))`;
 }
 // Every listing and search: one row per product (lib/listing-rules.ts
 // duplicateKey), and junk or non-English community titles last.
@@ -188,8 +193,8 @@ function notDuplicate(): SQL {
 function poorTitleLast(): SQL {
   return sql`CASE WHEN ${products.id} IN (SELECT value FROM json_each(${poorTitleIdsJson()})) THEN 1 ELSE 0 END`;
 }
-function concernTierOrder(): SQL {
-  const [tier1, tier2] = concernTierJson();
+function concernTierOrder(concernId: string): SQL {
+  const [tier1, tier2] = concernTierJson(concernId);
   return sql`CASE WHEN ${products.id} IN (SELECT value FROM json_each(${tier2})) THEN 2 WHEN ${products.id} IN (SELECT value FROM json_each(${tier1})) THEN 1 ELSE 0 END`;
 }
 
@@ -211,7 +216,7 @@ export function getProductsForConcern(
   origin?: OriginId,
 ) {
   const offset = (page - 1) * PAGE_SIZE;
-  const clauses = [LISTED_OTC, eq(products.concernId, concernId), concernListingClause(), notDuplicate(), ...freeFromWhereClauses(freeFromIds)];
+  const clauses = [LISTED_OTC, inConcern(concernId), concernListingClause(concernId), notDuplicate(), ...freeFromWhereClauses(freeFromIds)];
   if (excludeIngredientIds) clauses.push(excludesIngredientsClause(excludeIngredientIds));
   if (origin) clauses.push(originClause(origin));
   if (activeId) {
@@ -221,7 +226,7 @@ export function getProductsForConcern(
   const whereClause = and(...clauses);
 
   const rows = db.select().from(products).where(whereClause).orderBy(
-        concernTierOrder(),
+        concernTierOrder(concernId),
         poorTitleLast(),
         // FDA-listed OTC drugs (the actives a concern page is built on) before
         // cosmetics matched on an ingredient, then listings with a photo.
@@ -255,10 +260,10 @@ export type BrowseFilters = {
 export function browseWhere(filters: BrowseFilters): SQL | undefined {
   const clauses = [LISTED_OTC, notDuplicate(), ...freeFromWhereClauses(filters.freeFromIds ?? [])];
   if (filters.excludeIngredientIds) clauses.push(excludesIngredientsClause(filters.excludeIngredientIds));
-  if (filters.concernId) clauses.push(eq(products.concernId, filters.concernId));
+  if (filters.concernId) clauses.push(inConcern(filters.concernId));
   if (filters.dataSources && filters.dataSources.length > 0) clauses.push(inArray(products.dataSource, filters.dataSources));
   if (filters.activeId) clauses.push(jsonArrayContains(products.activeIds, filters.activeId));
-  if (filters.concernListing) clauses.push(concernListingClause());
+  if (filters.concernListing) clauses.push(concernListingClause(filters.concernId));
   if (filters.origin) clauses.push(originClause(filters.origin));
   if (filters.activeId && filters.strengthPct !== undefined) clauses.push(sql`${strengthExpr(filters.activeId)} = ${filters.strengthPct}`);
   // The eligible set is computed in lib/otc-index.ts (label-text rules for
@@ -357,7 +362,7 @@ export function getStrengthOptionsForActive(concernId: string, activeId: string)
   return db
     .select({ pct: sql<number>`${expr}`, count: sql<number>`count(*)` })
     .from(products)
-    .where(and(LISTED_OTC, eq(products.concernId, concernId), sql`${expr} IS NOT NULL`))
+    .where(and(LISTED_OTC, inConcern(concernId), sql`${expr} IS NOT NULL`))
     .groupBy(expr)
     .orderBy(expr)
     .all();
@@ -605,7 +610,7 @@ function buildSearchWhere(terms: SearchTerm[], filters: SearchFilters) {
     ...(terms.length ? terms.map((t) => sql`(${sql.join(SEARCH_COLUMNS.map((c) => termMatches(c, t, true)), sql` OR `)})`) : [sql`0`]),
     ...freeFromWhereClauses(filters.freeFromIds ?? []),
   ];
-  if (filters.concernId) clauses.push(eq(products.concernId, filters.concernId));
+  if (filters.concernId) clauses.push(inConcern(filters.concernId));
   if (filters.dataSources && filters.dataSources.length > 0) clauses.push(inArray(products.dataSource, filters.dataSources));
   if (filters.origin) clauses.push(originClause(filters.origin));
   return and(...clauses);
@@ -854,12 +859,12 @@ export function getIngredientsForProduct(productId: string) {
 export function getProductsForIngredient(id: string, page: number, concernId?: string) {
   const offset = (page - 1) * INGREDIENT_PAGE_SIZE;
   const membership = sql`${products.id} IN (SELECT product_id FROM product_ingredients WHERE ingredient_id = ${id})`;
-  const where = concernId ? and(LISTED_OTC, membership, eq(products.concernId, concernId)) : and(LISTED_OTC, membership);
+  const where = concernId ? and(LISTED_OTC, membership, inConcern(concernId)) : and(LISTED_OTC, membership);
   const rows = db
     .select({ product: products, position: productIngredients.position, isActive: productIngredients.isActive })
     .from(productIngredients)
     .innerJoin(products, eq(products.id, productIngredients.productId))
-    .where(and(LISTED_OTC, eq(productIngredients.ingredientId, id), concernId ? eq(products.concernId, concernId) : undefined))
+    .where(and(LISTED_OTC, eq(productIngredients.ingredientId, id), concernId ? inConcern(concernId) : undefined))
     .orderBy(
       sql`${productIngredients.isActive} DESC`,
       sql`CASE ${products.dataSource} WHEN 'brand_direct' THEN 0 WHEN 'openfda' THEN 1 WHEN 'dailymed' THEN 2 ELSE 3 END`,
@@ -878,7 +883,7 @@ export function getIngredientConcernCounts(id: string) {
     SELECT c.id AS concernId, c.name AS name, COUNT(*) AS count
     FROM product_ingredients pi
     JOIN products p ON p.id = pi.product_id
-    JOIN concerns c ON c.id = p.concern_id
+    JOIN concerns c ON c.id IN (SELECT value FROM json_each(p.concern_ids))
     WHERE pi.ingredient_id = ${id} AND p.is_rx = 0 AND p.canonical_id IS NULL
     GROUP BY c.id
     ORDER BY count DESC

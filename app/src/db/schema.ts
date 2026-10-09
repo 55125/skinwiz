@@ -84,7 +84,12 @@ export const evidenceNotes = sqliteTable("evidence_notes", {
 // what an existing review/link/citation pointed at.
 export const products = sqliteTable("products", {
   id: text("id").primaryKey(), // product_ndc (drug) or barcode (cosmetic)
+  // The product's own concern: its page, evidence notes, scores and ratings.
   concernId: text("concern_id").notNull().references(() => concerns.id),
+  // Every concern it's listed under, concernId first: an SPF moisturizer is
+  // on both the sun protection and dry skin pages (db/labeled-actives.ts
+  // productNiches). Concern listings, filters and counts use this.
+  concernIds: text("concern_ids", { mode: "json" }).$type<string[]>().notNull().default(sql`'[]'`),
   brandName: text("brand_name").notNull(),
   manufacturer: text("manufacturer"),
   dosageForm: text("dosage_form"),

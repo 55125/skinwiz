@@ -2,7 +2,7 @@
 // brand-direct banner may say about OTC monograph status (db/labeled-actives.ts).
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { brandDirectNiche, brandDirectStatus, labeledActiveSegment, labeledDrugActives, namesSunscreen, sunscreenNiche } from "./labeled-actives";
+import { brandDirectNiche, brandDirectStatus, labeledActiveSegment, labeledDrugActives, namesSunscreen, productNiches, sunscreenNiche } from "./labeled-actives";
 
 test("reads a Drug Facts-style active line and stops at the inactive list", () => {
   const text = "Active ingredients: Pramoxine Hydrochloride 1% Inactive ingredients: Water, Glycerin, Petrolatum , Cetyl Alcohol";
@@ -124,4 +124,24 @@ test("namesSunscreen", () => {
   assert.ok(namesSunscreen("Complexion Rescue Broad Spectrum SPF 30"));
   assert.ok(!namesSunscreen("Healing Ointment"));
   assert.ok(!namesSunscreen(null));
+});
+
+test("an SPF product moved to Sun Protection stays listed where its source filed it", () => {
+  assert.deepEqual(productNiches("sunscreen", "skin-protectant", []), ["sunscreen", "skin-protectant"]);
+  assert.deepEqual(productNiches("sunscreen", "brightening-texture", []), ["sunscreen", "brightening-texture"]);
+  assert.deepEqual(productNiches("sunscreen", "sunscreen", []), ["sunscreen"]);
+  // An acne wash out of a brand's "cleansers" bucket isn't kept there.
+  assert.deepEqual(productNiches("acne", "brightening-texture", ["benzoyl-peroxide"]), ["acne"]);
+});
+
+test("each single-niche labeled drug active adds its niche", () => {
+  // ChapStick SPF: petrolatum + avobenzone.
+  assert.deepEqual(productNiches("sunscreen", "skin-protectant", ["petrolatum", "avobenzone"]), ["sunscreen", "skin-protectant"]);
+  // An acne kit that includes a sunscreen.
+  assert.deepEqual(productNiches("acne", "acne", ["benzoyl-peroxide", "avobenzone"]), ["acne", "sunscreen"]);
+  // Zinc oxide (sunscreen and diaper cream) and salicylic acid (acne and dandruff) don't say which.
+  assert.deepEqual(productNiches("skin-protectant", "skin-protectant", ["zinc-oxide"]), ["skin-protectant"]);
+  assert.deepEqual(productNiches("acne", "acne", ["salicylic-acid"]), ["acne"]);
+  // Cosmetic ingredients on a drug label add nothing.
+  assert.deepEqual(productNiches("acne", "acne", ["salicylic-acid", "niacinamide"]), ["acne"]);
 });

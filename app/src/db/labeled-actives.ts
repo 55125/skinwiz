@@ -155,3 +155,30 @@ export function sunscreenNiche(niche: Concern, brandName: string | null | undefi
   if (namesSunscreen(brandName) || labeledActiveIds.some((id) => SUNSCREEN_ONLY_ACTIVES.has(id))) return "sunscreen";
   return niche;
 }
+
+const ACTIVE_CATEGORIES = new Map(ACTIVE_DEFINITIONS.map((a) => [a.id, a.categories]));
+
+/**
+ * Every niche a product is listed under, its own niche first. A product can
+ * fit more than one:
+ * - An SPF moisturizer or lip balm moved to Sun Protection is still what its
+ *   source filed it as (a dry-skin moisturizer, a chapped-lip protectant), so
+ *   it stays listed there too. An acne wash moved out of a brand's
+ *   "cleansers" bucket isn't kept there: that bucket was never about the
+ *   product.
+ * - Each labeled drug active adds its own niche (ChapStick's petrolatum and
+ *   avobenzone: dry skin and sun protection). Actives with more than one
+ *   niche (zinc oxide: sunscreen and diaper cream; salicylic acid: acne and
+ *   dandruff) don't say which one applies, so they add nothing.
+ * Only OTC drug actives count: a cosmetic ingredient an FDA label lists among
+ * its actives (niacinamide, ginseng) doesn't make a product brightening care.
+ */
+export function productNiches(niche: Concern, sourceNiche: Concern, labeledActiveIds: string[]): Concern[] {
+  const out = new Set<Concern>([niche]);
+  if (niche === "sunscreen") out.add(sourceNiche);
+  for (const id of labeledActiveIds.filter(isDrugActive)) {
+    const cats = ACTIVE_CATEGORIES.get(id);
+    if (cats?.length === 1) out.add(cats[0] as Concern);
+  }
+  return [...out];
+}

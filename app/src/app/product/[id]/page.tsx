@@ -139,6 +139,8 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
     .filter((c, i, all) => c !== product.id && !c.startsWith("http") && all.indexOf(c) === i);
 
   const concern = getConcern(product.concernId);
+  // Other concern pages it's listed on (an SPF moisturizer: sun protection and dry skin).
+  const alsoIn = (product.concernIds as string[]).filter((id) => id !== product.concernId).flatMap((id) => getConcern(id) ?? []);
   const evidenceNotes = getEvidenceNotesForActives(product.activeIds as string[], product.concernId);
   const affiliateLinks = getAffiliateLinksForProduct(product.id);
   const manualLinks = getManualLinksForProduct(product.id);
@@ -255,6 +257,19 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
           <ChevronLeft className="h-4 w-4" />
           {concern.name}
         </Link>
+      )}
+      {concern && alsoIn.length > 0 && (
+        <span className="ml-3 text-sm text-muted-foreground">
+          Also in{" "}
+          {alsoIn.map((c, i) => (
+            <span key={c.id}>
+              {i > 0 && ", "}
+              <Link href={`/concern/${c.id}`} className="underline decoration-border underline-offset-4 hover:text-foreground">
+                {c.name}
+              </Link>
+            </span>
+          ))}
+        </span>
       )}
 
       <div className={imageUrl ? "grid gap-8 md:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] md:items-start" : ""}>

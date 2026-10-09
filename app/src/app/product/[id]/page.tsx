@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound, permanentRedirect, redirect } from "next/navigation";
-import { AlertTriangle, ChevronLeft, ExternalLink, Info, PlaySquare, Music2, Camera, ShieldCheck } from "lucide-react";
+import { AlertTriangle, ChevronLeft, ExternalLink, Info, Music2, Camera, ShieldCheck } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -924,9 +924,10 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
         )}
       </section>
 
-      <section className="space-y-4">
-        <h2 className="text-xl font-semibold">Video reviews</h2>
-        {videoLinks.length > 0 ? (
+      {/* With nothing indexed, the review search links are one line rather than a whole section. */}
+      {videoLinks.length > 0 ? (
+        <section className="space-y-4">
+          <h2 className="text-xl font-semibold">Video reviews</h2>
           <div className="grid gap-3 sm:grid-cols-3">
             {videoLinks.map((v) => (
               <a
@@ -947,44 +948,48 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
               <span className="sr-only"> (opens in new tab)</span></a>
             ))}
           </div>
-        ) : (
-          <p className="text-sm text-muted-foreground">
-            We haven&apos;t indexed specific videos for this product yet — search directly:
-          </p>
-        )}
-        <div className="flex flex-wrap gap-2">
-          {videoLinks.length === 0 && (
+          <div className="flex flex-wrap gap-2">
             <a
-              href={videoSearchLinks.youtube}
+              href={videoSearchLinks.tiktok}
               target="_blank"
               rel="noopener noreferrer"
               className={buttonVariants({ variant: "outline", size: "sm" })}
             >
-              <PlaySquare className="h-3.5 w-3.5" /> YouTube
+              <Music2 className="h-3.5 w-3.5" /> TikTok
             <span className="sr-only"> (opens in new tab)</span></a>
-          )}
-          <a
-            href={videoSearchLinks.tiktok}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={buttonVariants({ variant: "outline", size: "sm" })}
-          >
-            <Music2 className="h-3.5 w-3.5" /> TikTok
-          <span className="sr-only"> (opens in new tab)</span></a>
-          <a
-            href={videoSearchLinks.instagram}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={buttonVariants({ variant: "outline", size: "sm" })}
-          >
-            <Camera className="h-3.5 w-3.5" /> Instagram
-          <span className="sr-only"> (opens in new tab)</span></a>
-        </div>
-        <p className="text-xs italic text-muted-foreground">
-          These are search links, not vetted reviews — {SITE_NAME} doesn&apos;t screen or endorse social
-          content. Only the scores above come from feedback collected on {SITE_NAME}.
+            <a
+              href={videoSearchLinks.instagram}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={buttonVariants({ variant: "outline", size: "sm" })}
+            >
+              <Camera className="h-3.5 w-3.5" /> Instagram
+            <span className="sr-only"> (opens in new tab)</span></a>
+          </div>
+          <p className="text-xs italic text-muted-foreground">
+            These are search links, not vetted reviews — {SITE_NAME} doesn&apos;t screen or endorse social
+            content. Only the scores above come from feedback collected on {SITE_NAME}.
+          </p>
+        </section>
+      ) : (
+        <p className="text-sm text-muted-foreground">
+          Looking for reviews? Search{" "}
+          {([
+            ["YouTube", videoSearchLinks.youtube],
+            ["TikTok", videoSearchLinks.tiktok],
+            ["Instagram", videoSearchLinks.instagram],
+          ] as const).map(([label, href], i) => (
+            <span key={label}>
+              {i === 2 ? " or " : i === 1 ? ", " : ""}
+              <a href={href} target="_blank" rel="noopener noreferrer" className="font-medium text-brand hover:underline">
+                {label}
+                <span className="sr-only"> (opens in new tab)</span>
+              </a>
+            </span>
+          ))}
+          . These are search links; {SITE_NAME} doesn&apos;t screen or endorse social content.
         </p>
-      </section>
+      )}
 
       {aliasCodes.length > 0 && (
         <p className="text-xs text-muted-foreground">

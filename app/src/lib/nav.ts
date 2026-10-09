@@ -4,10 +4,10 @@
 export type NavItem = { href: string; label: string; hint?: string; divider?: boolean };
 
 export const INGREDIENT_ITEMS: NavItem[] = [
-  { href: "/ingredients", label: "Ingredient library", hint: "Every active, what it does, which products use it" },
+  { href: "/ingredients", label: "Ingredient library", hint: "Every ingredient, with the products that use it" },
   { href: "/check", label: "Check an ingredient list", hint: "Paste any label and see what it contains" },
   { href: "/allergens", label: "Allergen guide", hint: "Contact allergens under all their label names" },
-  { href: "/compare", label: "Compare products", hint: "Two or more products side by side" },
+  { href: "/compare", label: "Compare products", hint: "Two products side by side" },
 ];
 
 // The four personal pages, shown as tabs on each of them.

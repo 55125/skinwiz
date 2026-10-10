@@ -57,11 +57,12 @@ which also appears in its image file names. Fixes made to the brands' published 
 
 - **ISDIN Night Peel**: ISDIN's US sitemap (isdin.com/us/sitemaps/sitemap-us-product.xml)
   doesn't list it, so it isn't sold on ISDIN's US site. Nothing added.
-- **Olay Regenerist** ("olay regenerates" 2/0, "olay regen" 1/16): not covered in this pass.
-  Worth a follow-up; "regenerates" also needs an alias to Regenerist.
+- **Olay Regenerist** ("olay regenerates" 2/0, "olay regen" 1/16): a spelling miss, not a
+  catalog gap. `lib/search-terms.ts` now maps regenerates/regenerating to Regenerist, so it
+  finds the 16 Regenerist products. No rows added.
 - **K18** (1/0): hair care, out of scope.
-- **Rogaine / minoxidil** (3/0): no rows added. There's no hair-loss niche yet, and Michael
-  is deciding whether to add one. The DailyMed data a follow-up would need is below. All are
+- **Rogaine / minoxidil** (3/0): no rows added here. Michael chose a Hair Thinning & Loss
+  concern as its own PR (branch claude/hair-loss-concern), which adds these rows. The DailyMed data a follow-up would need is below. All are
   OTC drug SPLs, so they'd be `drug` rows in `curated_products.csv` (product NDC as the id).
 
 | Product | DailyMed set id | Product NDC | Strength |

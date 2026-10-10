@@ -136,7 +136,7 @@ function RegimenTabs({ list, selectedId }: { list: RegimenSummary[]; selectedId:
         >
           {r.name}
           {r.badge && <MdBadge credential={r.badge.credential} className={r.id === selectedId ? "border-white/40 bg-white/15 text-inherit" : ""} />}
-          {r.active && <span className="text-[10px] uppercase tracking-wide opacity-70">default</span>}
+          {r.active && <span className="text-[10px] uppercase tracking-wide">default</span>}
         </Link>
       ))}
     </nav>

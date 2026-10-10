@@ -131,6 +131,9 @@ export const ACTIVE_USES: Record<string, string> = {
   "aluminum-zirconium-complex": ANTIPERSPIRANT,
   "magnesium-hydroxide": "Underarm odor; it doesn't reduce sweating.",
 
+  // --- Hair loss ---
+  minoxidil: "Regrowing hair and slowing hereditary thinning on the top of the scalp.",
+
   // --- Brightening & texture (cosmetic) ---
   niacinamide: "The look of uneven tone, dark spots, enlarged pores and oiliness; supporting the skin barrier.",
   "vitamin-c": VITAMIN_C,

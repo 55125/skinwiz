@@ -25,11 +25,11 @@ export type { StepType };
 // Application order within a slot (face steps), then body/scalp steps after.
 export const STEP_ORDER: Record<StepType, number> = {
   cleanser: 10, toner: 20, serum: 30, gel: 40, spot: 45, lotion: 50, cream: 60, ointment: 80, sunscreen: 90,
-  scalp: 100, "body-powder": 110, antiperspirant: 120,
+  scalp: 100, "scalp-leave-on": 105, "body-powder": 110, antiperspirant: 120,
 };
 export const STEP_LABEL: Record<StepType, string> = {
   cleanser: "Cleanse", toner: "Toner", serum: "Serum", gel: "Gel", spot: "Spot treatment", lotion: "Lotion",
-  cream: "Cream", ointment: "Ointment", sunscreen: "Sunscreen", scalp: "Scalp", "body-powder": "Body", antiperspirant: "Underarms",
+  cream: "Cream", ointment: "Ointment", sunscreen: "Sunscreen", scalp: "Scalp", "scalp-leave-on": "Scalp", "body-powder": "Body", antiperspirant: "Underarms",
 };
 
 const SUNSCREEN_ACTIVES = new Set(ACTIVE_DEFINITIONS.filter((a) => a.categories.includes("sunscreen")).map((a) => a.id));
@@ -45,6 +45,7 @@ export function stepTypeOf(p: Pick<Product, "brandName" | "dosageForm" | "active
   const actives = p.activeIds ?? [];
 
   if (actives.some((a) => ANTIPERSPIRANT_ACTIVES.has(a)) || p.concernId === "excessive-sweating" || has(/antiperspirant|deodorant/)) return "antiperspirant";
+  if (actives.includes("minoxidil") || p.concernId === "hair-loss") return "scalp-leave-on";
   if (has(/shampoo|scalp|conditioner/)) return "scalp";
   if (has(/cleanser|cleansing|face wash|facial wash|body wash|\bwash\b|soap|scrub|\bbar\b|micellar/)) return "cleanser";
   if (actives.some((a) => SUNSCREEN_ACTIVES.has(a)) || p.concernId === "sun-protection" || has(/\bspf\b|sunscreen/)) return "sunscreen";

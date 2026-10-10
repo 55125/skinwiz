@@ -33,7 +33,7 @@ export type Concern =
 // one place so seed.ts and lib/queries.ts don't each hardcode their own
 // copy of this mapping.
 export const CONCERN_DEFINITIONS: { niche: Concern; id: string; name: string; description: string }[] = [
-  { niche: "acne", id: "acne", name: "Acne", description: "Evidence-graded OTC actives and products for acne-prone skin." },
+  { niche: "acne", id: "acne", name: "Acne", description: "FDA-recognized OTC actives and products for acne-prone skin." },
   { niche: "sunscreen", id: "sun-protection", name: "Sun Protection", description: "FDA-recognized sunscreen actives and products." },
   { niche: "antifungal", id: "antifungal", name: "Antifungal", description: "OTC actives and products for athlete's foot, jock itch, and ringworm." },
   { niche: "antidandruff", id: "dandruff-seb-derm", name: "Dandruff & Seborrheic Dermatitis", description: "OTC actives and products for flaking, itchy, or seborrheic scalp." },

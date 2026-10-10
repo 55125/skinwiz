@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { SiteLogo } from "@/components/site-header";
 import { FREE_FROM_CHECKS } from "@/db/ingredient-flags";
-import { ALLERGEN_GROUPS } from "@/db/contact-allergens";
 import { SITE_NAME } from "@/lib/brand";
 // Concern names are code constants (the seed copies them into the concerns
 // table), so the header and footer read them directly: no database query on
@@ -48,8 +47,8 @@ export function SiteFooter() {
           <div className="col-span-2 space-y-3 md:col-span-1">
             <SiteLogo />
             <p className="max-w-sm text-sm text-muted-foreground">
-              OTC skincare, matched ingredient by ingredient — scored by real reported outcomes, with a
-              verified dermatologist panel in the works.
+              OTC skincare, matched ingredient by ingredient against FDA label data. User Scores build as people
+              log their results, and a verified dermatologist panel is in the works.
             </p>
           </div>
           {footerLinks().map((group) => (
@@ -70,20 +69,14 @@ export function SiteFooter() {
           ))}
         </div>
 
+        {/* Allergen families and patch-test mixes are listed on the Allergen guide, linked above. */}
         <div className="mt-10 border-t pt-8">
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Ingredient guides</h2>
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Free-from guides</h2>
           <ul className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5 text-sm">
             {FREE_FROM_CHECKS.map((c) => (
               <li key={c.id}>
                 <Link href={`/guide/${c.id}`} className="text-foreground/70 hover:text-foreground">
                   {c.label}
-                </Link>
-              </li>
-            ))}
-            {ALLERGEN_GROUPS.map((g) => (
-              <li key={g.id}>
-                <Link href={`/allergens/${g.id}`} className="text-foreground/70 hover:text-foreground">
-                  {g.name}
                 </Link>
               </li>
             ))}

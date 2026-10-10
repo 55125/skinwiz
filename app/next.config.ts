@@ -14,7 +14,10 @@ const securityHeaders = [
 
 // Addresses people guess or type that would otherwise 404.
 const HSA_GUIDE = "/guide/hsa-fsa-eligible";
+// /shelf became part of My products (/regimen); old links, bookmarks and
+// check-in emails land there with their query string.
 const guessedUrls = [
+  { source: "/shelf", destination: "/regimen", permanent: true },
   { source: "/ingredient/retinol", destination: "/ingredient/retinol-cosmetic", permanent: true },
   ...["/hsa", "/fsa", "/hsa-fsa", "/guide/hsa", "/guide/fsa", "/guide/hsa-fsa"].map((source) => ({
     source,

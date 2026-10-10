@@ -104,6 +104,12 @@ function IngredientPicker({
   );
 }
 
+// Yes/no answers that work with any skin type.
+const SKIN_FLAGS: { key: "sensitive" | "fungalAcne"; label: string; hint: string }[] = [
+  { key: "sensitive", label: "My skin is sensitive", hint: "Stings, burns or reddens easily. Works with any skin type above." },
+  { key: "fungalAcne", label: "Prone to fungal acne", hint: "Marks down oils, fatty esters and other ingredients that can feed it." },
+];
+
 const LIFE_STAGE: { key: "pregnant" | "breastfeeding"; label: string }[] = [
   { key: "pregnant", label: "Pregnant or trying" },
   { key: "breastfeeding", label: "Breastfeeding" },
@@ -166,20 +172,22 @@ export function ProfileEditor({
             </button>
           )}
         </div>
-        <label className="flex w-fit cursor-pointer items-start gap-2 text-sm">
-          <input
-            type="checkbox"
-            className="mt-0.5 h-4 w-4 accent-[var(--brand)]"
-            checked={profile.sensitive}
-            onChange={(e) => update({ sensitive: e.target.checked })}
-          />
-          <span>
-            My skin is sensitive
-            <span className="block text-xs text-muted-foreground">
-              Stings, burns or reddens easily. Works with any skin type above.
-            </span>
-          </span>
-        </label>
+        <div className="grid gap-3 sm:grid-cols-2">
+          {SKIN_FLAGS.map((f) => (
+            <label key={f.key} className="flex w-fit cursor-pointer items-start gap-2 text-sm">
+              <input
+                type="checkbox"
+                className="mt-0.5 h-4 w-4 accent-[var(--brand)]"
+                checked={profile[f.key]}
+                onChange={(e) => update({ [f.key]: e.target.checked })}
+              />
+              <span>
+                {f.label}
+                <span className="block text-xs text-muted-foreground">{f.hint}</span>
+              </span>
+            </label>
+          ))}
+        </div>
       </fieldset>
 
       <fieldset className="space-y-3">

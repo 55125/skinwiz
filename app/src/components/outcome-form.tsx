@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Check, ThumbsDown, ThumbsUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -78,8 +79,7 @@ export function OutcomeForm({
             : `Used this for ${concernName.toLowerCase()}? Log your result`}
         </h2>
         <p className="text-sm text-muted-foreground">
-          Anonymous, one answer per visitor. Your answer feeds the User Score once a few people have
-          logged an outcome — real reported results, not store reviews.
+          Anonymous, one answer per visitor. Answers make up the User Score: reported results, not store reviews.
         </p>
       </div>
 
@@ -132,8 +132,10 @@ export function OutcomeForm({
       </div>
       )}
       <p className="text-xs text-muted-foreground">
-        Not medical advice and not a review of your skin — an outcome you report about a product you chose to
-        use. Stop and see a board-certified dermatologist if anything gets worse.
+        Not medical advice. If anything gets worse, stop and see a board-certified dermatologist.{" "}
+        <Link href="/about#how-we-check" className="font-medium text-brand hover:underline">
+          How we check
+        </Link>
       </p>
     </div>
   );

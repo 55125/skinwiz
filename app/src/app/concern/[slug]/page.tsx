@@ -2,13 +2,11 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ProductGrid } from "@/components/product-grid";
-import { FilterChip } from "@/components/filter-chip";
 import { PageHeader } from "@/components/page-header";
 import { Pagination } from "@/components/pagination";
 import { RedFlagBanner } from "@/components/red-flag-banner";
-import { FreeFromFilters } from "@/components/free-from-filters";
-import { OriginChips } from "@/components/origin-chips";
-import { ORIGIN_PARAM, parseOrigin, type OriginId } from "@/lib/origin-shared";
+import { FilteredListing, ListingFilters } from "@/components/listing-filters";
+import { ORIGIN_PARAM, parseOrigin } from "@/lib/origin-shared";
 import {
   browseProducts,
   browseProductsByMatch,
@@ -18,11 +16,9 @@ import {
   getStrengthOptionsForActive,
   browseOriginCounts,
 } from "@/lib/queries";
-import { ChevronDown, SlidersHorizontal } from "lucide-react";
-import { MatchSortNote, SortChips, parseListSort, type ListSort } from "@/components/sort-chips";
+import { MatchSortNote, SortChips, parseListSort } from "@/components/sort-chips";
 import { readAvoidIds } from "@/lib/avoid";
 import { hasProfile, scoreProducts } from "@/lib/profile";
-import { formatPct } from "@/db/strength";
 import { variantRobots, breadcrumbLd } from "@/lib/seo";
 import { JsonLd } from "@/components/json-ld";
 import { siteUrl } from "@/lib/site-url";
@@ -49,7 +45,7 @@ export async function generateMetadata({
   if (!concern) return {};
   return {
     title: `${concern.name} products`,
-    description: `${concern.description} Products matched by active ingredient, with User Scores from real reported outcomes.`,
+    description: `${concern.description} Products matched by active ingredient, with User Scores as people log their results.`,
     alternates: { canonical: `/concern/${slug}` },
     robots: variantRobots(await searchParams),
   };
@@ -87,8 +83,6 @@ export default async function ConcernPage({
   const showPregnancyFilter = pregnancyMode && (pregnancyHide || profile.pregnant);
   const canMatch = hasProfile(profile) || avoidIds.length > 0;
   const sort = parseListSort(sortParam, canMatch);
-  // ?sort and ?pregnancy ride along on every filter and page link.
-  const preg = `${pregnancyHide ? `&${PREGNANCY_FILTER_PARAM}=${PREGNANCY_FILTER_VALUE}` : ""}${sort ? `&sort=${sort}` : ""}${origin ? `&${ORIGIN_PARAM}=${origin}` : ""}`;
   const excludeIngredientIds = pregnancyHide ? pregnancyAvoidIngredientIds() : undefined;
   const listFilters = { concernId: slug, activeId: active, freeFromIds, strengthPct, excludeIngredientIds, concernListing: true, origin };
   const { rows, total, pageSize } =
@@ -98,93 +92,44 @@ export default async function ConcernPage({
         ? browseProducts(listFilters, page, "name")
         : getProductsForConcern(slug, page, active, freeFromIds, strengthPct, excludeIngredientIds, origin);
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
-  const pageLinkSuffix = `${active ? `&active=${active}` : ""}${free ? `&free=${free}` : ""}${strengthPct !== undefined ? `&strength=${strengthPct}` : ""}${preg}`;
-  const strengthHref = (pct?: number) =>
-    `/concern/${slug}?active=${active}${free ? `&free=${free}` : ""}${pct !== undefined ? `&strength=${pct}` : ""}${preg}`;
-  const pregnancyToggleHref = (() => {
+  // Every filter, sort and page link keeps the other params (a new active
+  // also clears ?strength, inside ListingFilters).
+  const current: Record<string, string | undefined> = {
+    active,
+    free,
+    strength: strengthPct !== undefined ? String(strengthPct) : undefined,
+    [PREGNANCY_FILTER_PARAM]: pregnancyHide ? PREGNANCY_FILTER_VALUE : undefined,
+    sort,
+    [ORIGIN_PARAM]: origin,
+  };
+  const hrefWith = (overrides: Record<string, string | undefined>) => {
     const qs = new URLSearchParams();
-    if (active) qs.set("active", active);
-    if (free) qs.set("free", free);
-    if (strengthPct !== undefined) qs.set("strength", String(strengthPct));
-    if (!pregnancyHide) qs.set(PREGNANCY_FILTER_PARAM, PREGNANCY_FILTER_VALUE);
-    if (sort) qs.set("sort", sort);
-    if (origin) qs.set(ORIGIN_PARAM, origin);
+    for (const [k, v] of Object.entries({ ...current, ...overrides })) if (v) qs.set(k, v);
     const q = qs.toString();
     return `/concern/${slug}${q ? `?${q}` : ""}`;
-  })();
+  };
   const escalation = FEATURES.ESCALATION_GUIDANCE ? escalationFor(slug) : undefined;
-  const sortHref = (next: ListSort) => {
-    const qs = new URLSearchParams();
-    if (active) qs.set("active", active);
-    if (free) qs.set("free", free);
-    if (strengthPct !== undefined) qs.set("strength", String(strengthPct));
-    if (pregnancyHide) qs.set(PREGNANCY_FILTER_PARAM, PREGNANCY_FILTER_VALUE);
-    if (next) qs.set("sort", next);
-    if (origin) qs.set(ORIGIN_PARAM, origin);
-    const q = qs.toString();
-    return `/concern/${slug}${q ? `?${q}` : ""}`;
-  };
-  const originHref = (next: OriginId | undefined) => {
-    const qs = new URLSearchParams();
-    if (active) qs.set("active", active);
-    if (free) qs.set("free", free);
-    if (strengthPct !== undefined) qs.set("strength", String(strengthPct));
-    if (pregnancyHide) qs.set(PREGNANCY_FILTER_PARAM, PREGNANCY_FILTER_VALUE);
-    if (sort) qs.set("sort", sort);
-    if (next) qs.set(ORIGIN_PARAM, next);
-    const q = qs.toString();
-    return `/concern/${slug}${q ? `?${q}` : ""}`;
-  };
   const originCounts = browseOriginCounts(listFilters);
   const filterCount = [active, origin, strengthPct !== undefined ? "s" : undefined, pregnancyHide ? "p" : undefined].filter(Boolean).length + freeFromIds.length;
 
   const filters = (
-    <>
-      <div className="space-y-3">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Active ingredient</p>
-          <div className="flex flex-wrap gap-1.5">
-            <FilterChip href={`/concern/${slug}${`${free ? `&free=${free}` : ""}${preg}`.replace(/^&/, "?")}`} selected={!active}>
-              All actives
-            </FilterChip>
-            {activesList.map((a) => (
-              <FilterChip
-                key={a.id}
-                href={`/concern/${slug}?active=${a.id}${free ? `&free=${free}` : ""}${preg}`}
-                selected={active === a.id}
-              >
-                {a.canonicalName}
-              </FilterChip>
-            ))}
-          </div>
-        </div>
-  
-        {active && strengthOptions.length > 1 && (
-          <div className="space-y-3">
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-              Strength <span className="font-normal normal-case tracking-normal">(from the FDA label)</span>
-            </p>
-            <div className="flex flex-wrap gap-1.5">
-              <FilterChip href={strengthHref()} selected={strengthPct === undefined}>
-                All strengths
-              </FilterChip>
-              {strengthOptions.map((o) => (
-                <FilterChip key={o.pct} href={strengthHref(o.pct)} selected={strengthPct === o.pct}>
-                  {formatPct(o.pct)} <span className="ml-1 opacity-70">{o.count}</span>
-                </FilterChip>
-              ))}
-            </div>
-          </div>
-        )}
-  
-        <OriginChips selected={origin} counts={originCounts} hrefFor={originHref} />
-
-        <FreeFromFilters
-          basePath={`/concern/${slug}`}
-          searchParams={{ active, free, strength, sort, [PREGNANCY_FILTER_PARAM]: pregnancyHide ? PREGNANCY_FILTER_VALUE : undefined, [ORIGIN_PARAM]: origin }}
-          selected={freeFromIds}
-          extra={showPregnancyFilter ? <PregnancyFilter href={pregnancyToggleHref} selected={pregnancyHide} /> : undefined}
-        />
-    </>
+    <ListingFilters
+      hrefWith={hrefWith}
+      active={{
+        selected: active,
+        options: activesList,
+        strength: active ? { selected: strengthPct, options: strengthOptions } : undefined,
+      }}
+      origin={{ selected: origin, counts: originCounts }}
+      freeFrom={{
+        basePath: `/concern/${slug}`,
+        searchParams: current,
+        selected: freeFromIds,
+        extra: showPregnancyFilter ? (
+          <PregnancyFilter href={hrefWith({ [PREGNANCY_FILTER_PARAM]: pregnancyHide ? undefined : PREGNANCY_FILTER_VALUE })} selected={pregnancyHide} />
+        ) : undefined,
+      }}
+    />
   );
 
   return (
@@ -215,44 +160,20 @@ export default async function ConcernPage({
         <RedFlagBanner />
       )}
 
-      {/* Rendered twice like /browse: collapsed behind "Filters" on phones,
-          where the open panel pushed the first product a full screen down,
-          and always open from md up. Server-rendered, no client JS. */}
-      <details className="group rounded-2xl border bg-card md:hidden">
-        <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-3 text-sm font-medium [&::-webkit-details-marker]:hidden">
-          <span className="flex items-center gap-2">
-            <SlidersHorizontal className="h-4 w-4 text-brand" aria-hidden />
-            Filters
-            {filterCount > 0 && <span className="rounded-full bg-primary px-2 py-0.5 text-xs text-primary-foreground">{filterCount}</span>}
-          </span>
-          <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform group-open:rotate-180" aria-hidden />
-        </summary>
-        <div className="space-y-6 border-t p-4">{filters}</div>
-      </details>
-      <div className="hidden space-y-8 md:block">{filters}</div>
-
-      <div className="space-y-4">
-        <AvoidSwitch
-          basePath={`/concern/${slug}`}
-          searchParams={{ active, free, strength, sort, [PREGNANCY_FILTER_PARAM]: pregnancyHide ? PREGNANCY_FILTER_VALUE : undefined, [ORIGIN_PARAM]: origin }}
-          selected={freeFromIds}
-        />
+      <FilteredListing filters={filters} filterCount={filterCount}>
+        <AvoidSwitch basePath={`/concern/${slug}`} searchParams={current} selected={freeFromIds} />
         <div className="flex flex-wrap items-center justify-between gap-3">
           <p className="text-sm text-muted-foreground">
             <span className="font-semibold text-foreground tabular-nums">{total.toLocaleString()}</span> product
             {total === 1 ? "" : "s"}
           </p>
-          <SortChips sort={sort} canMatch={canMatch} hrefFor={sortHref} />
+          <SortChips sort={sort} canMatch={canMatch} hrefFor={(next) => hrefWith({ sort: next })} />
         </div>
         {sort === "match" && <MatchSortNote />}
         <h2 className="sr-only">Products</h2>
-        <ProductGrid products={rows} />
-        <Pagination
-          page={page}
-          totalPages={totalPages}
-          hrefFor={(p) => `/concern/${slug}?page=${p}${pageLinkSuffix}`}
-        />
-      </div>
+        <ProductGrid products={rows} columns="sm:grid-cols-2 xl:grid-cols-3" />
+        <Pagination page={page} totalPages={totalPages} hrefFor={(p) => hrefWith({ page: p > 1 ? String(p) : undefined })} />
+      </FilteredListing>
 
       {escalation && <EscalationPanel guidance={escalation} concernName={concern.name} />}
     </div>

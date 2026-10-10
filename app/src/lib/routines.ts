@@ -2,12 +2,14 @@ import { and, eq, sql } from "drizzle-orm";
 import { db } from "@/db/client";
 import { routines, routineSteps, routineVotes, routineReports, concerns, products } from "@/db/schema";
 import { resolvedProductId } from "@/lib/canonical";
+import { STARTER_SESSION_ID } from "@/db/starter-routines";
 
 // Vote score is computed on read (SUM of routine_votes.value), never
 // stored as a column on routines — see schema.ts's comment on why: a
 // stored score column could drift from the votes table, a computed one
 // can't.
 const scoreExpr = sql<number>`COALESCE(SUM(${routineVotes.value}), 0)`;
+const isStarterExpr = sql<number>`${routines.sessionId} = ${STARTER_SESSION_ID}`;
 const stepCountExpr = sql<number>`(SELECT COUNT(*) FROM routine_steps WHERE routine_steps.routine_id = ${routines.id})`;
 
 export function getTopRoutines(limit = 6) {
@@ -37,6 +39,7 @@ export function getRoutinesForConcern(concernId: string) {
       id: routines.id,
       title: routines.title,
       authorName: routines.authorName,
+      isStarter: isStarterExpr,
       notes: routines.notes,
       createdAt: routines.createdAt,
       score: scoreExpr,
@@ -58,6 +61,7 @@ export function getRoutine(id: number) {
       concernId: routines.concernId,
       concernName: concerns.name,
       authorName: routines.authorName,
+      isStarter: isStarterExpr,
       notes: routines.notes,
       createdAt: routines.createdAt,
       score: scoreExpr,

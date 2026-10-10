@@ -122,7 +122,7 @@ export default function Home() {
             Find your <span className="text-brand">actives</span>.
           </h1>
           <p className="mx-auto mt-5 max-w-xl text-lg font-medium text-foreground/85 sm:text-[19px]">
-            Every product, every ingredient. Build the perfect regimen.
+            Every product, every ingredient.
           </p>
           <div className="mx-auto mt-8 max-w-2xl [text-shadow:none]">
             <SearchBar large />
@@ -145,7 +145,7 @@ export default function Home() {
         <section className="space-y-6">
           <SectionHeader
             title="Browse by concern"
-            description="Start from what you're treating — every concern maps to evidence-recognized actives."
+            description="Start from what you're treating — every concern maps to FDA-recognized actives."
           />
           <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
             {concerns.map((c) => {
@@ -221,7 +221,8 @@ export default function Home() {
           <ProductGrid products={topProducts} />
         </section>
 
-        <section className="grid gap-6 lg:grid-cols-2">
+        {/* Top routines hides until there is one, so the row isn't half empty. */}
+        <section className={topRoutines.length > 0 ? "grid gap-6 lg:grid-cols-2" : "grid gap-6"}>
           <div className="min-w-0 space-y-5 rounded-2xl border bg-card p-6">
             <SectionHeader title="Top actives" description="Most common ingredients across the catalog." />
             <div className="flex flex-wrap gap-2">
@@ -238,17 +239,9 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="min-w-0 space-y-5 rounded-2xl border bg-card p-6">
-            <SectionHeader title="Top routines" action={{ href: "/routines", label: "See all" }} />
-            {topRoutines.length === 0 ? (
-              <p className="text-sm text-muted-foreground">
-                No routines yet —{" "}
-                <Link href="/routines/new" className="font-medium text-brand hover:underline">
-                  post the first one
-                </Link>
-                .
-              </p>
-            ) : (
+          {topRoutines.length > 0 && (
+            <div className="min-w-0 space-y-5 rounded-2xl border bg-card p-6">
+              <SectionHeader title="Top routines" action={{ href: "/routines", label: "See all" }} />
               <ul className="divide-y">
                 {topRoutines.map((r) => (
                   <li key={r.id} className="py-3 first:pt-0 last:pb-0">
@@ -268,8 +261,8 @@ export default function Home() {
                   </li>
                 ))}
               </ul>
-            )}
-          </div>
+            </div>
+          )}
         </section>
 
         <section className="rounded-3xl border bg-gradient-to-br from-brand-soft/70 via-card to-card p-8 sm:p-10">

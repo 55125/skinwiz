@@ -51,7 +51,7 @@ export function signInEmail(link: string, code: string): Rendered {
   const html = layout(
     subject,
     [
-      p(`Use this link to save your shelf to this email address. It works once and expires in 15 minutes.`),
+      p(`Use this link to save My products to this email address. It works once and expires in 15 minutes.`),
       p(button(link, "Confirm my email")),
       p(`Or paste this address into your browser:<br><a href="${escapeHtml(link)}" style="color:#1f5f4a;word-break:break-all;">${escapeHtml(link)}</a>`),
       p(`Using ${escapeHtml(SITE_NAME)} from your home screen? Type this code there instead:<br><strong style="font-size:24px;letter-spacing:4px;">${escapeHtml(code)}</strong>`),
@@ -60,7 +60,7 @@ export function signInEmail(link: string, code: string): Rendered {
     `You're getting this one-time email because someone entered this address on ${escapeHtml(SITE_NAME)}.`,
   );
   const text = [
-    `Use this link to save your shelf to this email address. It works once and expires in 15 minutes:`,
+    `Use this link to save My products to this email address. It works once and expires in 15 minutes:`,
     "",
     link,
     "",
@@ -159,7 +159,7 @@ export function recallEmail(r: RecallEmailInput, unsubscribeUrl: string, setting
   const html = layout(
     subject,
     [
-      p(`A product on your ${escapeHtml(SITE_NAME)} shelf matches an FDA drug recall: <strong>${escapeHtml(r.brandName)}</strong>.`),
+      p(`A product in your My products list on ${escapeHtml(SITE_NAME)} matches an FDA drug recall: <strong>${escapeHtml(r.brandName)}</strong>.`),
       `<ul style="margin:0 0 14px;padding-left:20px;">${facts.join("")}</ul>`,
       p(`Recalls usually cover specific lots. Compare the lot number on your package with the FDA notice:`),
       `<p style="margin:0 0 14px;font-size:14px;color:#55554f;">${escapeHtml(truncate(r.codeInfo ?? r.description, 500))}</p>`,
@@ -167,12 +167,12 @@ export function recallEmail(r: RecallEmailInput, unsubscribeUrl: string, setting
       p(`If yours is affected, stop using it and follow the instructions in the notice or from the store. If you've had a reaction, talk to a doctor or pharmacist.`),
     ].join("\n"),
     [
-      `You're getting this because this product is on your shelf and safety alerts are on. We send each recall once.`,
+      `You're getting this because this product is in My products and safety alerts are on. We send each recall once.`,
       `<a href="${escapeHtml(unsubscribeUrl)}" style="color:#55554f;">Unsubscribe from safety alerts</a> · <a href="${escapeHtml(settingsUrl)}" style="color:#55554f;">Email settings</a>`,
     ].join("<br>"),
   );
   const text = [
-    `A product on your ${SITE_NAME} shelf matches an FDA drug recall: ${r.brandName}.`,
+    `A product in your My products list on ${SITE_NAME} matches an FDA drug recall: ${r.brandName}.`,
     "",
     r.classification ? `${r.classification}${r.classMeaning ? ` — ${r.classMeaning}` : ""}` : null,
     r.initiated ? `Recall started ${r.initiated}` : null,

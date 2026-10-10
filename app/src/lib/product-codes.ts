@@ -44,6 +44,12 @@ export function validGtin(code: string): boolean {
   return /^\d{8}$|^\d{12,14}$/.test(code) && gtinCheckDigit(code.slice(0, -1)) === Number(code.slice(-1));
 }
 
+/** The UPC/EAN in a brand-direct id like "aquaphor-072140633776", when it is one (valid check digit). */
+export function brandSiteBarcode(id: string): string | null {
+  const m = /^[a-z]+-(\d{12,13})$/.exec(id);
+  return m && validGtin(m[1]) ? m[1].padStart(13, "0") : null;
+}
+
 /** The 8/12/13/14-digit spellings of one GTIN, as stored barcodes and ids may use any of them. */
 export function gtinSpellings(code: string): string[] {
   const core = code.replace(/^0+/, "");

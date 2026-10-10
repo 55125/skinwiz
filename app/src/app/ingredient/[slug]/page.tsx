@@ -105,6 +105,7 @@ export default async function IngredientPage({
   const selectedConcern = concernCounts.find((c) => c.concernId === concern);
   const { rows, total, pageSize } = productsCached(id, page, selectedConcern?.concernId);
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const allTotal = selectedConcern ? productsCached(id, 1, undefined).total : total;
   const brands = topBrandsCached(id);
   const ewg = ewgCached(id);
 
@@ -119,7 +120,6 @@ export default async function IngredientPage({
   const profile = await readProfile();
   const preference = profile.likes.includes(id) ? "like" : profile.dislikes.includes(id) ? "dislike" : null;
 
-  const inciShare = stats.inciLists >= 10 ? Math.round((stats.topFive / stats.inciLists) * 100) : null;
   const avgPos = stats.inciLists >= 10 && stats.avgPosition ? Math.round(stats.avgPosition) : null;
 
   function hrefWith(overrides: { concern?: string; page?: number }) {
@@ -159,18 +159,13 @@ export default async function IngredientPage({
         <IngredientPreference id={id} initial={preference} />
       </header>
 
-      <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <dl className="grid grid-cols-3 gap-3">
         <Stat value={stats.products.toLocaleString()} label={stats.products === 1 ? "product contains it" : "products contain it"} />
         <Stat value={stats.brands.toLocaleString()} label={stats.brands === 1 ? "brand" : "brands"} />
         {stats.asActive > 0 ? (
           <Stat value={stats.asActive.toLocaleString()} label="list it as an active" />
         ) : (
           <Stat value="—" label="list it as an active" />
-        )}
-        {inciShare !== null ? (
-          <Stat value={`${inciShare}%`} label={`of ${stats.inciLists.toLocaleString()} full ingredient lists put it in the first 5`} />
-        ) : (
-          <Stat value="—" label="position data needs 10+ full ingredient lists" />
         )}
       </dl>
 
@@ -428,7 +423,7 @@ export default async function IngredientPage({
                 !selectedConcern ? "border-brand bg-brand-soft font-medium text-brand-foreground" : "hover:border-brand/40",
               )}
             >
-              All ({stats.products.toLocaleString()})
+              All ({allTotal.toLocaleString()})
             </Link>
             {concernCounts.map((c) => (
               <Link

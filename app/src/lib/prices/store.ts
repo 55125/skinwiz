@@ -5,10 +5,12 @@
 // retailer sources (Kroger), whose links are plain product pages.
 import { and, eq, inArray, or, sql } from "drizzle-orm";
 import { db } from "@/db/client";
-import { priceChecks, priceQuotes, productBarcodes, products, productViews } from "@/db/schema";
+import { labelBarcodes, priceChecks, priceQuotes, productBarcodes, products, productViews } from "@/db/schema";
 import { inProductGroup, productGroupsFor } from "@/lib/canonical";
 import {
   ERROR_RETRY_MS,
+  KROGER_IMAGE_MAX_AGE_MS,
+  krogerConfig,
   livePricesEnabled,
   MISS_RETRY_MAX_MS,
   MISS_RETRY_MS,
@@ -112,6 +114,35 @@ export function getBestQuotes(productIds: string[], now = new Date()): Map<strin
   return best;
 }
 
+/**
+ * Kroger's front photo URL per product, for products with no retail photo
+ * of their own (lib/queries.ts productImages). Empty unless Kroger is
+ * configured; only lookups from the last KROGER_IMAGE_MAX_AGE_MS; OTC only.
+ * The URL points at kroger.com: the page loads it from Kroger and credits it.
+ */
+export function getKrogerImages(productIds: string[], now = new Date()): Map<string, string> {
+  const out = new Map<string, string>();
+  if (productIds.length === 0 || !krogerConfig()) return out;
+  const cutoff = new Date(now.getTime() - KROGER_IMAGE_MAX_AGE_MS).toISOString();
+  for (let i = 0; i < productIds.length; i += 500) {
+    const rows = db
+      .select({ productId: priceChecks.productId, imageUrl: priceChecks.imageUrl })
+      .from(priceChecks)
+      .where(
+        and(
+          inArray(priceChecks.productId, productIds.slice(i, i + 500)),
+          eq(priceChecks.source, "kroger"),
+          sql`${priceChecks.imageUrl} IS NOT NULL`,
+          sql`${priceChecks.checkedAt} >= ${cutoff}`,
+          sql`${priceChecks.productId} IN (SELECT id FROM products WHERE is_rx = 0)`,
+        ),
+      )
+      .all();
+    for (const r of rows) if (r.imageUrl) out.set(r.productId, r.imageUrl);
+  }
+  return out;
+}
+
 /** Replace a product's quotes from one source with a fresh lookup, and book the next check. */
 export function saveLookup(productId: string, source: PriceSourceId, result: LookupResult, now: Date): void {
   const at = now.toISOString();
@@ -149,7 +180,7 @@ export function saveLookup(productId: string, source: PriceSourceId, result: Loo
         .onConflictDoNothing()
         .run();
     }
-    upsertCheck(tx, productId, source, at, result.status, misses, new Date(now.getTime() + wait).toISOString(), found ? at : undefined);
+    upsertCheck(tx, productId, source, at, result.status, misses, new Date(now.getTime() + wait).toISOString(), found ? at : undefined, result.image ?? null);
   });
 }
 
@@ -172,12 +203,17 @@ function upsertCheck(
   misses: number,
   nextCheckAt: string,
   lastMatchedAt?: string,
+  // undefined (a failed lookup) keeps the stored photo; null clears it.
+  imageUrl?: string | null,
 ) {
   // lastMatchedAt only ever moves forward: a miss or an error keeps it.
   const matched = lastMatchedAt ? { lastMatchedAt } : {};
   tx.insert(priceChecks)
-    .values({ productId, source, checkedAt, status, misses, nextCheckAt, ...matched })
-    .onConflictDoUpdate({ target: [priceChecks.productId, priceChecks.source], set: { checkedAt, status, misses, nextCheckAt, ...matched } })
+    .values({ productId, source, checkedAt, status, misses, nextCheckAt, ...matched, imageUrl: imageUrl ?? null })
+    .onConflictDoUpdate({
+      target: [priceChecks.productId, priceChecks.source],
+      set: { checkedAt, status, misses, nextCheckAt, ...matched, ...(imageUrl !== undefined && { imageUrl }) },
+    })
     .run();
 }
 
@@ -235,6 +271,28 @@ export function loadLookupProducts(ids: string[]): LookupProduct[] {
     const owner = ownerOf.get(c.productId)!;
     const list = byProduct.get(owner) ?? byProduct.set(owner, []).get(owner)!;
     if (!list.some((x) => x.barcode === c.barcode)) list.push({ barcode: c.barcode, source: c.source });
+  }
+  // Barcodes read off a product's DailyMed label (lib/label-barcodes.ts) rank
+  // after the catalog's retail barcodes and before the NDC-derived guess.
+  const memberSets = db
+    .select({ id: products.id, setId: sql<string>`lower(${products.splSetId})` })
+    .from(products)
+    .where(and(inArray(products.id, [...ownerOf.keys()]), sql`${products.splSetId} IS NOT NULL`))
+    .all();
+  const setOwners = new Map<string, Set<string>>();
+  for (const m of memberSets) (setOwners.get(m.setId) ?? setOwners.set(m.setId, new Set()).get(m.setId)!).add(ownerOf.get(m.id)!);
+  const labelCodes = setOwners.size
+    ? db.select().from(labelBarcodes).where(inArray(labelBarcodes.splSetId, [...setOwners.keys()])).orderBy(labelBarcodes.barcode).all()
+    : [];
+  for (const c of labelCodes) {
+    for (const owner of setOwners.get(c.splSetId) ?? []) {
+      const list = byProduct.get(owner) ?? byProduct.set(owner, []).get(owner)!;
+      if (list.some((x) => x.barcode === c.barcode)) continue;
+      const derived = list.findIndex((x) => x.source === "ndc_derived");
+      const entry = { barcode: c.barcode, source: "label_scan" };
+      if (derived >= 0) list.splice(derived, 0, entry);
+      else list.push(entry);
+    }
   }
   const byId = new Map(rows.map((r) => [r.id, { ...r, barcodes: byProduct.get(r.id) ?? [] }]));
   return ids.flatMap((id) => (byId.has(id) ? [byId.get(id)!] : []));

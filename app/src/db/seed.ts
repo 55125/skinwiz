@@ -10,14 +10,16 @@ import { ACTIVE_TEXT_OVERRIDES } from "./active-overrides";
 import { computeFreeFromFlags } from "./ingredient-flags";
 import { computeAllergenHits } from "./contact-allergens";
 import { parseStrengths, strengthKey } from "./strength";
-import { labeledDrugActives } from "./labeled-actives";
+import { brandDirectNiche, labeledDrugActives, productNiches, sunscreenNiche } from "./labeled-actives";
 import { aliasesFor, canonicalSlug, parseIngredients, pickDisplayName } from "./ingredient-parse";
 import { SITE_NAME } from "@/lib/brand";
+import { brandSiteBarcode, validGtin } from "@/lib/product-codes";
 import { validateManualLinks, type ManualLinkRow } from "@/lib/manual-links";
 import { RX_CONCERN } from "./rx";
 import { steroidPotencyClass, type Ingredient } from "./steroid-potency";
 import { drugInactiveList, groupSplInactive, type SplInactiveCsvRow } from "./spl-inactive";
 import { linkAllDailymedImages } from "@/lib/product-images/link";
+import { seedStarterRoutines } from "./starter-routines";
 import { resolveMerges, reviewedMergeRows, type FlaggedRow, type MergeRow } from "./product-merges";
 
 const REPO_ROOT = path.resolve(process.cwd(), "..");
@@ -42,6 +44,10 @@ const AFFILIATE_CSV = path.join(REPO_ROOT, "tools/affiliate_feeds/output/matched
 // Retail barcodes for the live-price lookups (lib/prices/), from
 // tools/affiliate_feeds/fetch_barcodes.py. Optional.
 const BARCODES_CSV = path.join(REPO_ROOT, "tools/affiliate_feeds/output/product_barcodes.csv");
+// Barcodes read off a real package by hand, for products no source gives
+// one for. Kept apart from product_barcodes.csv, which fetch_barcodes.py
+// rebuilds from scratch.
+const MANUAL_BARCODES_CSV = path.join(REPO_ROOT, "tools/affiliate_feeds/manual_barcodes.csv");
 const LABEL_SECTIONS_CSV = path.join(REPO_ROOT, "tools/catalog_pipeline/output/label_sections.csv");
 const IMAGE_OVERRIDES_CSV = path.join(REPO_ROOT, "tools/catalog_pipeline/output/image_overrides.csv");
 // Hand-made affiliate links (sovrn.co short links), one row per product +
@@ -228,6 +234,7 @@ async function main() {
   const hasCatalog = !!db.get<{ one: number }>(sql`SELECT 1 AS one FROM products LIMIT 1`);
   if (process.env.FORCE_SEED !== "1" && hasCatalog && storedSeedHash() === inputsHash) {
     console.log(`Seed inputs unchanged (${inputsHash.slice(0, 12)}); keeping the current catalog. FORCE_SEED=1 reseeds anyway.`);
+    addStarterRoutines();
     return;
   }
   console.log(`Seeding ${SITE_NAME} database...`);
@@ -270,7 +277,15 @@ async function main() {
   } finally {
     db.run(sql`PRAGMA foreign_keys = ON`);
   }
+  addStarterRoutines();
   console.log("Done. dermRaters, dermRatings, audienceOutcomes, routines (incl. votes/reports), shelves and regimens are intentionally left untouched.");
+}
+
+// Runs whether or not the catalog was reseeded: it only adds starter
+// routines that are missing, so a new one ships with the next deploy.
+function addStarterRoutines() {
+  const added = seedStarterRoutines();
+  if (added) console.log(`  added ${added} starter routines`);
 }
 
 function reseed() {
@@ -319,6 +334,8 @@ function reseed() {
   let skippedNoActive = 0;
   let skippedHomeopathic = 0;
   let skippedSunscreenNoFilter = 0;
+  let movedToSunscreen = 0;
+  let multiConcern = 0;
   const productBatch: (typeof schema.products.$inferInsert)[] = [];
   const seenNdc = new Set<string>();
   const memberships: { productId: string; position: number; slug: string; rawName: string; isActive: boolean }[] = [];
@@ -371,6 +388,11 @@ function reseed() {
       // matched cosmetic ids on them, so the drug active and its strength
       // come from that line here (labeled-actives.ts).
       const brandDrug = row.source === "brand_direct" ? labeledDrugActives(row.active_ingredient_text) : null;
+      // The niche the source filed it under, before the moves below.
+      const sourceNiche = row.niche;
+      // A brand-category row with an acne drug active (a BPO wash filed under
+      // "cleansers") belongs under Acne.
+      if (brandDrug) row.niche = brandDirectNiche(row.niche, row.brand_name, brandDrug.activeIds);
       const labeledActiveIds = isPreMatched
         ? [...new Set([...(brandDrug?.activeIds ?? []), ...(row.active_ingredients_structured ?? "").split(";").filter(Boolean)])]
         : matchActiveIds([row.active_ingredients_structured, row.substance_name, row.active_ingredient_text].join(" "));
@@ -400,6 +422,15 @@ function reseed() {
           continue;
         }
       }
+      // An SPF lotion or lip balm filed under another category (a brand's
+      // "moisturizers") belongs under Sun Protection. Only labeled drug
+      // actives count, not a UV filter in a cosmetic INCI list.
+      const niche = sunscreenNiche(row.niche, row.brand_name, isPreMatched ? (brandDrug?.activeIds ?? []) : labeledActiveIds);
+      if (niche !== row.niche) movedToSunscreen++;
+      row.niche = niche;
+      // Also listed under every other niche it fits (labeled-actives.ts).
+      const concernIds = productNiches(row.niche, sourceNiche, isPreMatched ? (brandDrug?.activeIds ?? []) : labeledActiveIds).map(nicheToConcernId);
+      if (concernIds.length > 1) multiConcern++;
       seenNdc.add(row.product_ndc);
       const trimmedBrandName = row.brand_name?.trim() || "(unnamed product)";
       // The full ingredient list for free-from-flag purposes -- NOT the
@@ -444,6 +475,7 @@ function reseed() {
       productBatch.push({
         id: row.product_ndc,
         concernId: nicheToConcernId(row.niche),
+        concernIds,
         // Only openfda/dailymed rows get normalized -- brand_direct/OBF brand
         // names are already human-written product names, not SPL label text.
         brandName: isPreMatched ? trimmedBrandName : normalizeBrandName(trimmedBrandName),
@@ -489,6 +521,7 @@ function reseed() {
   }
   console.log(`  inserted ${inserted} products, skipped ${skippedNoActive} with no recognized active ingredient`);
   console.log(`  skipped ${skippedHomeopathic} homeopathic and ${skippedSunscreenNoFilter} "sunscreens" with no UV filter`);
+  console.log(`  filed ${movedToSunscreen} SPF products from other categories under Sun Protection; ${multiConcern} products listed under more than one concern`);
   console.log(`  drug inactive lists by source: ${JSON.stringify(inactiveSources)}`);
 
   insertIngredients(memberships, duplicateIds);
@@ -518,7 +551,10 @@ function reseed() {
     console.log("  no affiliate output found, skipping (run tools/affiliate_feeds/match_catalog.py first)");
   }
 
-  insertBarcodes(new Set(productBatch.filter((p) => !p.isRx).map((p) => p.id)));
+  insertBarcodes(
+    new Set(productBatch.filter((p) => !p.isRx).map((p) => p.id)),
+    productBatch.filter((p) => p.dataSource === "brand_direct").map((p) => p.id),
+  );
   insertLabelSections();
   insertRxLabelSections();
   linkPackageImages();
@@ -563,25 +599,38 @@ function applyImageOverrides() {
 
 // Lookup order for lib/prices: real retail barcodes first, the NDC-derived
 // guess last (fetch_barcodes.py's header says how reliable each is).
-const BARCODE_RANK: Record<string, number> = { openfda_upc: 0, obf_id: 1, ndc_derived: 2 };
+// package: typed in off a real package (MANUAL_BARCODES_CSV). brand_site:
+// the UPC a brand's own product page tags the product with, which
+// build_brand_direct_catalog.py keeps in the id ("aquaphor-072140633776").
+const BARCODE_RANK: Record<string, number> = { openfda_upc: 0, package: 0, brand_site: 0, obf_id: 1, ndc_derived: 2 };
 
-function insertBarcodes(otcIds: Set<string>) {
-  if (!fs.existsSync(BARCODES_CSV)) {
-    console.log("  no product_barcodes.csv, skipping (run tools/affiliate_feeds/fetch_barcodes.py)");
-    return;
-  }
+function insertBarcodes(otcIds: Set<string>, brandDirectIds: string[]) {
+  const csvRows = fs.existsSync(BARCODES_CSV)
+    ? readCsv<{ product_id: string; barcode: string; source: string }>(BARCODES_CSV)
+    : (console.log("  no product_barcodes.csv (run tools/affiliate_feeds/fetch_barcodes.py)"), []);
+  const manual = fs.existsSync(MANUAL_BARCODES_CSV)
+    ? readCsv<{ product_id: string; barcode: string }>(MANUAL_BARCODES_CSV).map((r) => ({ ...r, source: "package" }))
+    : [];
+  const brandSite = brandDirectIds.flatMap((id) => {
+    const barcode = brandSiteBarcode(id);
+    return barcode ? [{ product_id: id, barcode, source: "brand_site" }] : [];
+  });
   const seen = new Set<string>();
-  const rows = readCsv<{ product_id: string; barcode: string; source: string }>(BARCODES_CSV).flatMap((r) => {
+  const rows = [...manual, ...csvRows, ...brandSite].flatMap((r) => {
     const barcode = r.barcode?.trim();
     const rank = BARCODE_RANK[r.source];
     const key = `${r.product_id}|${barcode}`;
     if (!barcode || rank === undefined || !otcIds.has(r.product_id) || seen.has(key)) return [];
+    if (r.source === "package" && !validGtin(barcode)) {
+      console.log(`  manual barcode ${barcode} for ${r.product_id} has a bad check digit, skipped`);
+      return [];
+    }
     seen.add(key);
     return [{ productId: r.product_id, barcode, source: r.source, rank }];
   });
   const BATCH = 200;
   for (let i = 0; i < rows.length; i += BATCH) db.insert(schema.productBarcodes).values(rows.slice(i, i + BATCH)).run();
-  console.log(`  inserted ${rows.length} product barcodes`);
+  console.log(`  inserted ${rows.length} product barcodes (${manual.length} typed off packages, ${brandSite.length} from brand sites)`);
 }
 
 // Prescription rows (build_rx_catalog.py). Deliberately bare on everything a
@@ -613,6 +662,7 @@ function rxProducts(seenNdc: Set<string>): (typeof schema.products.$inferInsert)
     out.push({
       id: row.product_ndc,
       concernId: RX_CONCERN.id,
+      concernIds: [RX_CONCERN.id],
       brandName: normalizeBrandName(row.brand_name?.trim() || row.generic_name || "(unnamed product)"),
       manufacturer: row.labeler || null,
       dosageForm: row.dosage_form || null,

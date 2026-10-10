@@ -103,12 +103,12 @@ export async function FreeFromFilters({
             </FilterChip>
           ))}
       </FilterGroup>
+      {/* The full method and its limits are on the About page. */}
       <p className="text-[11px] leading-relaxed text-muted-foreground">
-        Computed from each product&apos;s published ingredient list, not a brand&apos;s marketing claim or a
-        certification, and not exhaustive — see a board-certified dermatologist about your own known allergens.
-        Products we don&apos;t have a full ingredient list for (most openFDA-only listings) won&apos;t match any
-        filter here rather than being assumed clean, and a product listing only &ldquo;fragrance&rdquo; doesn&apos;t
-        pass a fragrance-allergen filter, since the blend could contain it.
+        Checked against each product&apos;s full ingredient list.{" "}
+        <Link href="/about#how-we-check" className="font-medium text-brand hover:underline">
+          How we check
+        </Link>
       </p>
     </div>
   );

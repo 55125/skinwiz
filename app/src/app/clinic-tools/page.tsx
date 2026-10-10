@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, BookOpen, ClipboardCheck, FilePlus2, FileText, ListChecks, ShieldCheck } from "lucide-react";
+import { ArrowRight, ClipboardCheck, FilePlus2, ListChecks, ShieldCheck } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { HandoutLibrary } from "@/components/handout-library";
 import { HANDOUT_CATEGORIES, libraryItems } from "@/db/handout-templates";
@@ -9,7 +9,7 @@ import { SITE_NAME } from "@/lib/brand";
 
 export const metadata: Metadata = {
   title: "Free tools for dermatology practices",
-  description: `Ready-made patient handouts, a patch-test reading tool for medical assistants, and patch-test result sheets with QR codes. Free from ${SITE_NAME}; no patient data stored.`,
+  description: `Ready-made patient handouts and a patch-test reading tool for medical assistants that prints a results sheet with a QR code. Free from ${SITE_NAME}; no patient data stored.`,
   alternates: { canonical: "/clinic-tools" },
 };
 
@@ -18,21 +18,26 @@ export const dynamic = "force-dynamic";
 export default function ClinicToolsPage() {
   const items = FEATURES.HANDOUTS ? libraryItems() : [];
   const tools = [
-    // Moved here from /for-clinicians so clinicians land on it directly.
+    // One entry for handouts: the library below is the starting point, with
+    // a blank page and the print/QR/email options inside it.
     ...(FEATURES.HANDOUTS
       ? [{
-          href: "/clinicians",
+          href: items.length ? "#library" : "/clinicians",
           icon: FilePlus2,
-          title: "Patient handouts with a QR code",
-          body: "Start from the handout library or a blank page: patient information, OTC and prescription steps, your own directions and when to call. Print it with a QR code, show the code, or email the link from your own email app, and paste a chart note. Your patient scans it to save the plan privately on their phone. Sign in with your email and NPI; no patient details are ever sent to us.",
+          title: items.length ? `${items.length} patient handouts with a QR code` : "Patient handouts with a QR code",
+          body: `${items.length ? "Conditions, surgery and procedures, cosmetic, pediatric and treatment how-tos to use as is or customize, or start from a blank page." : "Write your own from a blank page."} Print it with a QR code or email the link from your own email app, and paste a chart note; your patient saves the plan privately on their phone. Sign in with your email and NPI; no patient details are ever sent to us.`,
         }]
       : []),
-    ...(items.length
-      ? [{ href: "#library", icon: BookOpen, title: `${items.length} patient handouts`, body: "Conditions, surgery and procedures, cosmetic, pediatric and treatment how-tos. Use as is or customize, or write your own." }]
+    {
+      href: "/clinic-tools/patch-test-reader",
+      icon: ClipboardCheck,
+      title: "Patch-test reader",
+      body: "For MAs: tap each chamber to grade it, then copy a ready-to-chart write-up and hand the patient a QR code. Already read? Tick the positives and print a one-page sheet instead.",
+    },
+    // Starter lists live on the clinician dashboard, which is a 404 while handouts are off.
+    ...(FEATURES.HANDOUTS
+      ? [{ href: "/clinicians#lists", icon: ListChecks, title: "Starter lists", body: "Save your practice's standard avoid lists (for example, fragrance-allergic) and issue them in one click." }]
       : []),
-    { href: "/clinic-tools/patch-test-reader", icon: ClipboardCheck, title: "Patch-test reader", body: "For MAs: tap each chamber to grade it, then copy a ready-to-chart write-up and hand the patient a QR code." },
-    { href: "/for-clinicians/patch-test", icon: FileText, title: "Patch-test results sheet", body: "Tick the positives and print a one-page sheet whose QR code loads the patient's avoid list." },
-    { href: "/clinicians#lists", icon: ListChecks, title: "Starter lists", body: "Save your practice's standard avoid lists (for example, fragrance-allergic) and issue them in one click." },
   ];
 
   return (
@@ -99,6 +104,14 @@ export default function ClinicToolsPage() {
               {items.every((t) => !t.draft)
                 ? "Drafted with AI assistance and reviewed by the site's dermatologist before clinical use."
                 : "Drafted with AI assistance; physician review in progress. Read each one before you hand it out."}
+            </p>
+            <p className="flex flex-wrap gap-x-4 gap-y-1 pt-1 text-sm">
+              <Link href="/clinicians/handouts/new" className="font-medium text-brand hover:underline">
+                Start from a blank page →
+              </Link>
+              <Link href="/clinicians" className="font-medium text-brand hover:underline">
+                Your saved handouts →
+              </Link>
             </p>
           </div>
           <HandoutLibrary items={items} categories={HANDOUT_CATEGORIES} useHref="/clinicians/handouts/new?template=" previewHref="/clinic-tools/handouts/" />

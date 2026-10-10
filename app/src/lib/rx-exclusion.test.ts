@@ -33,10 +33,10 @@ before(async () => {
   db.run(sql`INSERT INTO actives (id, canonical_name, categories, synonyms) VALUES ('adapalene', 'Adapalene', '["acne"]', '[]')`);
   db.run(sql`INSERT INTO ingredients (id, name, aliases, product_count) VALUES ('adapalene', 'Adapalene', '[]', 4), ('water', 'Water', '[]', 4)`);
   const product = (id: string, concern: string, rx: boolean, name: string) =>
-    db.run(sql`INSERT INTO products (id, concern_id, brand_name, manufacturer, dosage_form, active_ingredient_text, active_ids,
+    db.run(sql`INSERT INTO products (id, concern_id, concern_ids, brand_name, manufacturer, dosage_form, active_ingredient_text, active_ids,
         spl_set_id, free_from_flags, allergen_hits, strengths, strength_key, data_source, verified, is_rx, generic_name,
         package_description, marketing_category)
-      VALUES (${id}, ${concern}, ${name}, 'Galderma', 'GEL', 'ADAPALENE 1 mg/g', '["adapalene"]', NULL,
+      VALUES (${id}, ${concern}, json_array(${concern}), ${name}, 'Galderma', 'GEL', 'ADAPALENE 1 mg/g', '["adapalene"]', NULL,
         '["fragrance-free"]', '[]', '{"adapalene":0.1}', 'adapalene:0.1', 'openfda', 1, ${rx ? 1 : 0}, 'adapalene',
         '45 g in 1 TUBE', ${rx ? "NDA" : "OTC MONOGRAPH DRUG"})`);
   product("otc-1", "acne", false, "Adapalene Gel 0.1%");
@@ -78,6 +78,8 @@ test("search and autocomplete", () => {
   noRx(q.searchProducts("adapalene").map((r) => r.id), "searchProducts");
   assert.equal(q.searchProductsCount("adapalene"), 2);
   noRx(q.suggestProducts("adapalene", 10).map((r) => r.id), "suggestProducts");
+  db.run(sql`INSERT INTO product_barcodes (product_id, barcode, source, rank) VALUES ('rx-bait-1', '0302994910458', 'openfda_upc', 0)`);
+  assert.deepEqual(q.lookupProductsByCode("302994910458"), [], "lookupProductsByCode leaked an Rx row");
 });
 
 test("product lookups, similar/dupes and equivalents", async () => {
@@ -96,7 +98,8 @@ test("ingredient and allergen pages", () => {
   assert.equal(q.getProductsForIngredient("adapalene", 1).total, 2);
   assert.deepEqual(q.getIngredientConcernCounts("adapalene").map((c) => c.count), [2]);
   assert.equal(q.getIngredientStats("adapalene").products, 2);
-  assert.equal(q.getIngredientTopBrands("adapalene")[0].count, 2);
+  // No brand in these FDA listing names, so the card's fallback: the labeler.
+  assert.deepEqual(q.getIngredientTopBrands("adapalene"), [{ brand: "Galderma", count: 2 }]);
   assert.equal(q.getActiveStrengthStats("adapalene").n, 2);
   db.run(sql`UPDATE products SET allergen_hits = '["fragrance"]'`);
   assert.equal(q.getAllergenProductCounts().get("fragrance"), 2);

@@ -8,12 +8,16 @@ const securityHeaders = [
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "X-Frame-Options", value: "DENY" },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
-  { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), interest-cohort=()" },
+  // camera: our own pages only, for the barcode scanner in the search bar.
+  { key: "Permissions-Policy", value: "camera=(self), microphone=(), geolocation=(), interest-cohort=()" },
 ];
 
 // Addresses people guess or type that would otherwise 404.
 const HSA_GUIDE = "/guide/hsa-fsa-eligible";
+// /shelf became part of My products (/regimen); old links, bookmarks and
+// check-in emails land there with their query string.
 const guessedUrls = [
+  { source: "/shelf", destination: "/regimen", permanent: true },
   { source: "/ingredient/retinol", destination: "/ingredient/retinol-cosmetic", permanent: true },
   ...["/hsa", "/fsa", "/hsa-fsa", "/guide/hsa", "/guide/fsa", "/guide/hsa-fsa"].map((source) => ({
     source,

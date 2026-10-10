@@ -11,7 +11,8 @@ import { BlockList, isIP } from "node:net";
 
 // Crawlers that have no business copying the catalog. Search-engine crawlers
 // (Googlebot, Bingbot, DuckDuckBot, Applebot) are deliberately absent.
-const BLOCKED_UA = new RegExp(
+// Refused even while OPEN_FOR_REVIEW is on: no affiliate reviewer uses them.
+const ALWAYS_BLOCKED_UA = new RegExp(
   [
     // AI training / dataset crawlers (answer-engine fetchers -- OAI-SearchBot,
     // ChatGPT-User, PerplexityBot -- are allowed: they send readers our way)
@@ -19,13 +20,16 @@ const BLOCKED_UA = new RegExp(
     "bytespider", "amazonbot", "google-extended", "applebot-extended",
     "meta-externalagent", "meta-externalfetcher", "facebookbot", "diffbot", "imagesiftbot", "omgili",
     "cohere-ai", "mistralai-user", "youbot", "timpibot", "ai2bot", "friendlycrawler", "petalbot",
-    // SEO / data-mining crawlers
-    "semrushbot", "ahrefsbot", "mj12bot", "dotbot", "dataforseobot", "blexbot", "serpstatbot", "barkrowler",
     // dedicated scraping frameworks
     "scrapy",
   ].join("|"),
   "i",
 );
+
+// SEO / data-mining crawlers. Let in while OPEN_FOR_REVIEW is on, since
+// affiliate managers size a site from their traffic estimates.
+const SEO_UA = /semrushbot|ahrefsbot|mj12bot|dotbot|dataforseobot|blexbot|serpstatbot|barkrowler/i;
+
 
 // Scripting libraries, headless browsers and generic bots. These aren't
 // refused outright: affiliate-network reviewers, link checkers and preview
@@ -130,6 +134,25 @@ export async function verifyCrawler(ip: string, ua: string, now = Date.now()): P
   return p;
 }
 
+// Recent heavy visitors, for the admin page. In-process like the counters
+// above, so it empties on each deploy; each entry is also logged. Kept on
+// globalThis because the proxy and the admin page are separate bundles that
+// each get their own copy of this module (one Node process on Railway).
+export type HeavyVisitor = { ip: string; ua: string; detailPagesThisHour: number; what: string; at: number };
+const HEAVY_KEY = Symbol.for("skinwiz.antiScrape.heavyVisitors");
+const heavy: HeavyVisitor[] = ((globalThis as Record<symbol, HeavyVisitor[] | undefined>)[HEAVY_KEY] ??= []);
+const MAX_HEAVY = 50;
+
+function noteHeavy(ip: string, ua: string, detailPagesThisHour: number, what: string, at: number) {
+  heavy.unshift({ ip, ua: ua.slice(0, 200), detailPagesThisHour, what, at });
+  if (heavy.length > MAX_HEAVY) heavy.length = MAX_HEAVY;
+  console.warn(`[anti-scrape] ${what}: ip=${ip} detail/h=${detailPagesThisHour} ua=${JSON.stringify(ua.slice(0, 200))}`);
+}
+
+export function recentHeavyVisitors(): HeavyVisitor[] {
+  return heavy.slice();
+}
+
 export type Verdict = { action: "allow" } | { action: "block"; status: number; reason: string; retryAfter?: number };
 
 type Window = { start: number; count: number };
@@ -148,6 +171,12 @@ export const LIMITS = {
   automatedPagesPerMinute: 20,
   automatedDetailPagesPerHour: 60,
   apiPerMinute: 40,
+  // While OPEN_FOR_REVIEW is on, everyone (tooling included) gets one high
+  // ceiling instead: far above anyone clicking through the site, well below
+  // copying all ~24k detail pages in one sitting.
+  review: { pagesPerMinute: 600, routerFetchesPerMinute: 1_200, detailPagesPerHour: 3_000, apiPerMinute: 240 },
+  // detail pages in an hour that put an IP on the admin page's heavy-visitor list
+  heavyDetailPagesPerHour: 1_000,
   banMs: 15 * 60_000,
   // strikes (limit breaches) before a ban
   strikes: 3,
@@ -188,6 +217,8 @@ export type RequestInfo = {
   ip: string | null;
   // set when verifyCrawler() confirmed the IP belongs to a search engine
   verifiedCrawler?: boolean;
+  // OPEN_FOR_REVIEW (lib/review-mode.ts): SEO crawlers allowed, LIMITS.review apply
+  reviewMode?: boolean;
   now?: number;
 };
 
@@ -206,7 +237,7 @@ export function judge(req: RequestInfo): Verdict {
   let automated = false;
   if (!ALLOWED_UA.test(ua)) {
     if (!ua.trim()) return { action: "block", status: 403, reason: "missing user agent" };
-    if (BLOCKED_UA.test(ua)) return { action: "block", status: 403, reason: "automated client" };
+    if (ALWAYS_BLOCKED_UA.test(ua) || (!req.reviewMode && SEO_UA.test(ua))) return { action: "block", status: 403, reason: "automated client" };
     // a bare "Java/17.0.2"-style UA is tooling too, not a browser
     automated = AUTOMATION_UA.test(ua) || ua.trim().length < 12;
   }
@@ -240,6 +271,7 @@ export function judge(req: RequestInfo): Verdict {
   }
 
   const isApi = DATA_API.test(path);
+  const review = req.reviewMode;
   // Next strips its own router headers (rsc, next-router-prefetch) before the
   // proxy runs, so spot router fetches by the browser's Sec-Fetch headers:
   // fetch() is dest "empty", a real page load is "document". They get their
@@ -248,12 +280,22 @@ export function judge(req: RequestInfo): Verdict {
     !isApi &&
     req.headers.get("sec-fetch-dest") === "empty" &&
     req.headers.get("sec-fetch-site") === "same-origin";
-  const over = isRouterFetch
-    ? bump(c.routerMinute, now, 60_000) > LIMITS.routerFetchesPerMinute
-    : (isApi && bump(c.apiMinute, now, 60_000) > LIMITS.apiPerMinute) ||
-      (!isApi && bump(c.minute, now, 60_000) > (automated ? LIMITS.automatedPagesPerMinute : LIMITS.pagesPerMinute)) ||
-      (DETAIL_PATH.test(path) &&
-        bump(c.hour, now, 3_600_000) > (automated ? LIMITS.automatedDetailPagesPerHour : LIMITS.detailPagesPerHour));
+  const L = review
+    ? { ...LIMITS.review, automatedPagesPerMinute: LIMITS.review.pagesPerMinute, automatedDetailPagesPerHour: LIMITS.review.detailPagesPerHour }
+    : LIMITS;
+  let over: boolean;
+  if (isRouterFetch) {
+    over = bump(c.routerMinute, now, 60_000) > L.routerFetchesPerMinute;
+  } else {
+    over =
+      (isApi && bump(c.apiMinute, now, 60_000) > L.apiPerMinute) ||
+      (!isApi && bump(c.minute, now, 60_000) > (automated ? L.automatedPagesPerMinute : L.pagesPerMinute));
+    if (DETAIL_PATH.test(path)) {
+      const n = bump(c.hour, now, 3_600_000);
+      if (n === LIMITS.heavyDetailPagesPerHour) noteHeavy(ip, ua, n, "1,000+ detail pages this hour", now);
+      over ||= n > (automated ? L.automatedDetailPagesPerHour : L.detailPagesPerHour);
+    }
+  }
   if (!over) return { action: "allow" };
 
   const s = (strikes.get(ip) ?? 0) + 1;
@@ -261,6 +303,7 @@ export function judge(req: RequestInfo): Verdict {
   if (s >= LIMITS.strikes) {
     c.bannedUntil = now + LIMITS.banMs;
     strikes.delete(ip);
+    noteHeavy(ip, ua, c.hour.count, "banned for 15 min after repeated limit hits", now);
   }
   return { action: "block", status: 429, reason: "rate limit", retryAfter: 60 };
 }

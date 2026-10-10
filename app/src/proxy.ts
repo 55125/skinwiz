@@ -32,9 +32,7 @@ export async function proxy(request: NextRequest) {
   ) {
     return NextResponse.json({ error: "Cross-site request refused." }, { status: 403 });
   }
-  // OPEN_FOR_REVIEW (lib/review-mode.ts) is a temporary switch for affiliate
-  // network reviews; it lets everything through like ANTI_SCRAPE=off.
-  if (process.env.ANTI_SCRAPE === "off" || openForReview()) return NextResponse.next();
+  if (process.env.ANTI_SCRAPE === "off") return NextResponse.next();
   // Owner-only escape hatch for our own automated testing: set the secret in
   // the environment and send it as this header. Unset (the default) = disabled.
   const bypass = process.env.ANTI_SCRAPE_BYPASS_TOKEN;
@@ -54,6 +52,9 @@ export async function proxy(request: NextRequest) {
     headers: request.headers,
     ip,
     verifiedCrawler,
+    // OPEN_FOR_REVIEW (lib/review-mode.ts), the temporary switch for affiliate
+    // network reviews: SEO crawlers allowed and one high rate ceiling for all.
+    reviewMode: openForReview(),
   });
   if (verdict.action === "allow") return NextResponse.next();
   return new NextResponse("Automated access is not permitted. See /robots.txt.", {
@@ -67,5 +68,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\.(?:png|jpg|jpeg|svg|webp|gif|ico|woff2?)$).*)"],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\.(?:png|jpg|jpeg|svg|webp|gif|ico|woff2?|wasm)$).*)"],
 };

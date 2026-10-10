@@ -3,6 +3,7 @@ import { Separator } from "@/components/ui/separator";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { SITE_NAME } from "@/lib/brand";
+import { FEATURES } from "@/lib/feature-flags";
 
 export const metadata: Metadata = {
   alternates: { canonical: "/for-clinicians" },
@@ -10,7 +11,11 @@ export const metadata: Metadata = {
   description: `Request to join the ${SITE_NAME} dermatologist rating panel.`,
 };
 
+// The clinic-tools blurb depends on a runtime feature flag.
+export const dynamic = "force-dynamic";
+
 export default function ForCliniciansPage() {
+  const handouts = FEATURES.HANDOUTS;
   return (
     <div className="mx-auto max-w-2xl px-4 py-10 space-y-8">
       <div>
@@ -25,9 +30,9 @@ export default function ForCliniciansPage() {
       <section className="space-y-2 rounded-2xl border-2 border-brand/40 bg-card p-4 text-sm">
         <h2 className="text-base font-semibold text-foreground">Free clinic tools</h2>
         <p className="text-muted-foreground">
-          A library of patient handouts to use as is or customize, a tap-to-grade patch-test reader for medical assistants with a
-          chart-ready write-up, and starter lists for your standard avoid lists. Patients get them by print, QR code or your own
-          email, and land on a private page of their own.
+          {handouts
+            ? "A library of patient handouts to use as is or customize, a tap-to-grade patch-test reader for medical assistants with a chart-ready write-up, and starter lists for your standard avoid lists. Patients get them by print, QR code or your own email, and land on a private page of their own."
+            : "A tap-to-grade patch-test reader for medical assistants with a chart-ready write-up, or a one-page results sheet when the reading is already done. Patients scan its QR code and land on a private avoid list of their own."}
         </p>
         <Link href="/clinic-tools" className="inline-block font-medium text-brand hover:underline">
           See the clinic tools →

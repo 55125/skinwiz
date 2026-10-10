@@ -22,7 +22,7 @@ export async function POST(request: Request) {
   const sessionId = await getOrCreateSessionId();
   const before = getShelfEntry(sessionId, product.id);
   const result = setShelfEntry(sessionId, product.id, body.status as never, body.opened === true);
-  if (result === "full") return NextResponse.json({ error: "Your shelf is full (500 items)." }, { status: 400 });
+  if (result === "full") return NextResponse.json({ error: "My products is full (500 items)." }, { status: 400 });
   // Starting a product (marked opened) schedules outcome check-ins for
   // visitors who saved an email with check-ins on; see lib/checkins.ts.
   onShelfChange(sessionId, product.id, product.concernId, before, getShelfEntry(sessionId, product.id), new Date());

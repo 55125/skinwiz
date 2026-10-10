@@ -351,9 +351,9 @@ export function HandoutBuilder({
           Patch-test results (optional)
         </h2>
         <p className="text-xs text-muted-foreground">
-          Paste the link from a{" "}
-          <a href="/for-clinicians/patch-test" target="_blank" className="text-brand underline">
-            patch-test sheet
+          Paste the avoid-list link from the{" "}
+          <a href="/clinic-tools/patch-test-reader" target="_blank" className="text-brand underline">
+            patch-test reader
           </a>{" "}
           to include the patient&apos;s avoid list with this plan. Only the allergen code is kept.
         </p>

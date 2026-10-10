@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { AlertTriangle, ArrowRight, CheckCircle2, Moon, Sun } from "lucide-react";
+import { AlertTriangle, ArrowRight, CheckCircle2, Moon, ShieldAlert, Sun } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { MySkinTabs } from "@/components/my-skin-tabs";
 import { RedFlagBanner } from "@/components/red-flag-banner";
@@ -10,6 +10,13 @@ import { MdBadge } from "@/components/md-badge";
 import { RegimenActions } from "@/components/regimen-actions";
 import { ClinicianPlan } from "@/components/clinician-plan";
 import { gpcEnabled } from "@/lib/gpc";
+import { ProductGrid } from "@/components/product-grid";
+import { ShelfOutcomePrompt } from "@/components/shelf-outcome-prompt";
+import { getShelf } from "@/lib/shelf";
+import { findRoutineConflicts } from "@/lib/routine-conflicts";
+import { getSessionOutcomes, type OutcomeInput } from "@/lib/outcomes";
+import { shelfRecallAlerts } from "@/lib/recalls";
+import { EMAIL_CONFIDENCE, fdaRecallUrl } from "@/lib/recall-match";
 import { EmailSignupCard } from "@/components/email-signup-card";
 import { InstallAppCard } from "@/components/install-app-card";
 import { readDeviceSessionId, readSessionId } from "@/lib/session";
@@ -20,7 +27,7 @@ import { RxRetinoidCard } from "@/components/rx-retinoid-card";
 import { describeStrengths } from "@/lib/strength-display";
 import { displayManufacturer } from "@/lib/format";
 import { FEATURES } from "@/lib/feature-flags";
-import { escalationFor, type EscalationGuidance } from "@/db/escalation-guidance";
+import { escalationFor } from "@/db/escalation-guidance";
 import { EscalationList } from "@/components/escalation-guidance";
 import { getConcerns } from "@/lib/queries";
 import { cn } from "@/lib/utils";
@@ -28,8 +35,9 @@ import { SITE_NAME } from "@/lib/brand";
 import { canViewRxReference } from "@/lib/clinicians";
 
 export const metadata: Metadata = {
-  title: "My regimen",
-  description: "Your morning and night skincare steps, in the order to apply them, with each product's own label directions.",
+  title: "My products",
+  description:
+    "Your morning and night skincare steps, in the order to apply them, with each product's own label directions, plus what you own, want and have finished.",
   robots: { index: false },
 };
 
@@ -143,13 +151,13 @@ export default async function RegimenPage({ searchParams }: { searchParams: Prom
   const selected = list.find((x) => String(x.id) === r) ?? list.find((x) => x.active) ?? list[0] ?? null;
 
   const plan = sessionId && selected?.kind === "clinician" ? getClinicianPlan(sessionId, selected.id) : null;
+  const device = await readDeviceSessionId();
+  const person = device ? personForSession(device) : null;
   if (selected && plan) {
-    const device = await readDeviceSessionId();
-    const person = device ? personForSession(device) : null;
     return (
       <div className="mx-auto max-w-6xl space-y-8 px-4 py-10">
         <MySkinTabs />
-        <PageHeader title="My regimen" />
+        <PageHeader title="My products" />
         {saved && (
           <p role="status" className="rounded-xl border border-emerald-300 bg-emerald-50 p-4 text-sm text-emerald-900 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-200">
             Saved. This plan is now in your regimens, private to this browser
@@ -179,26 +187,78 @@ export default async function RegimenPage({ searchParams }: { searchParams: Prom
     );
   }
 
+
   const regimenId = selected?.kind === "own" ? selected.id : null;
   const own = regimenId !== null && sessionId ? getOwnedRegimen(sessionId, regimenId) : null;
   const regimen = regimenId !== null ? getRegimen(regimenId, own?.rxRetinoidSlot ?? null) : EMPTY_REGIMEN;
   const sameTime = regimen.conflicts.filter((c) => c.status === "same-time");
   const split = regimen.conflicts.filter((c) => c.status === "split");
-  // Gated "When OTC isn't enough" guidance for the concerns this regimen covers.
+
+  // What you own, want and have finished. Adding a product to the morning or
+  // night steps marks it as owned and in use; owned products that aren't in
+  // those steps are listed under "Not in my routine".
+  const alerts = sessionId ? shelfRecallAlerts(sessionId) : [];
+  const items = sessionId ? getShelf(sessionId) : [];
+  const inRoutine = new Set([...regimen.am, ...regimen.pm].map((s) => s.product.id));
+  const inUse = items.filter((i) => i.status === "own" && i.opened);
+  const notInRoutine = items
+    .filter((i) => i.status === "own" && !inRoutine.has(i.product.id))
+    .sort((a, b) => Number(b.opened) - Number(a.opened));
+  const want = items.filter((i) => i.status === "want");
+  const empties = items.filter((i) => i.status === "empty");
+  // Opened products worth checking together, beyond the pairs the
+  // morning/night check already covers.
+  const shelfConflicts = findRoutineConflicts(inUse.map((i) => ({ productId: i.product.id, productBrandName: i.product.brandName }))).filter(
+    (c) => !(inRoutine.has(c.a.productId) && inRoutine.has(c.b.productId)),
+  );
+
+  // Finished products first -- that's when someone actually knows whether
+  // it worked. In-use ones are asked too; an answer can be changed later.
+  const askable = [...empties, ...inUse];
+  const outcomes = sessionId
+    ? getSessionOutcomes(sessionId, askable.map((i) => ({ productId: i.product.id, concernId: i.product.concernId })))
+    : new Map<string, OutcomeInput>();
+  const logged = new Set(outcomes.keys());
   const concernNames = new Map(getConcerns().map((c) => [c.id, c.name]));
-  const escalations = FEATURES.ESCALATION_GUIDANCE
-    ? [...new Set([...regimen.am, ...regimen.pm].map((s) => s.product.concernId))].flatMap((id) => {
-        const guidance = escalationFor(id);
-        return guidance ? [{ guidance, concernName: concernNames.get(id) ?? id }] : ([] as { guidance: EscalationGuidance; concernName: string }[]);
-      })
+  const toAsk = askable
+    .filter((i) => !logged.has(i.product.id))
+    .slice(0, 8)
+    .map((i) => ({
+      productId: i.product.id,
+      brandName: i.product.brandName,
+      concernName: concernNames.get(i.product.concernId) ?? "this concern",
+      finished: i.status === "empty",
+    }));
+
+  // Gated "When OTC isn't enough" guidance: first for concerns where you said
+  // a product didn't help, then for the concerns your routine covers.
+  const notHelped = FEATURES.ESCALATION_GUIDANCE ? askable.filter((i) => outcomes.get(i.product.id)?.improved === false) : [];
+  const escalationConcerns = FEATURES.ESCALATION_GUIDANCE
+    ? [...new Set([...notHelped.map((i) => i.product.concernId), ...[...regimen.am, ...regimen.pm].map((s) => s.product.concernId)])]
     : [];
+  const escalations = escalationConcerns.flatMap((concernId) => {
+    const guidance = escalationFor(concernId);
+    if (!guidance) return [];
+    const names = notHelped.filter((i) => i.product.concernId === concernId).map((i) => i.product.brandName);
+    const note = names.length
+      ? `You said ${names.slice(0, 2).join(" and ")}${names.length > 2 ? ` and ${names.length - 2} more` : ""} didn't help.`
+      : undefined;
+    return [{ guidance, concernName: concernNames.get(concernId) ?? concernId, note }];
+  });
+
+  const hasRoutine = regimenId !== null && regimen.count > 0;
+  const isEmpty = !hasRoutine && items.length === 0;
+  const shelfSections = [
+    { title: "Want", items: want },
+    { title: "Finished", items: empties },
+  ].filter((s) => s.items.length > 0);
 
   return (
     <div className="mx-auto max-w-6xl space-y-8 px-4 py-10">
       <MySkinTabs />
       <PageHeader
-        title={selected && list.length > 1 ? selected.name : "My regimen"}
-        description="What you use morning and night, in the order to apply it: thinnest to thickest, with sunscreen last in the morning. Saved in this browser with no account. Add an email in Email settings if you want it on other devices too."
+        title={selected && list.length > 1 ? selected.name : "My products"}
+        description={`What you use morning and night, in the order to apply it (thinnest to thickest, with sunscreen last in the morning), and what you own, want and have finished. Saved in this browser with no account.${isEmpty ? "" : " Add an email in the card below if you want it on other devices too."}`}
       />
 
       <RedFlagBanner />
@@ -211,73 +271,153 @@ export default async function RegimenPage({ searchParams }: { searchParams: Prom
         </p>
       )}
 
-      {regimenId === null || regimen.count === 0 ? (
+      {alerts.length > 0 && (
+        <section aria-labelledby="safety-alerts" className="space-y-3 rounded-2xl border border-amber-300 bg-amber-50/70 p-4 dark:border-amber-900 dark:bg-amber-950/30">
+          <h2 id="safety-alerts" className="flex items-center gap-2 text-base font-semibold">
+            <ShieldAlert className="h-5 w-5" aria-hidden /> Safety alerts
+          </h2>
+          <ul className="space-y-2 text-sm">
+            {alerts.map((a) => (
+              <li key={`${a.recallNumber}-${a.productId}`}>
+                <Link href={`/product/${encodeURIComponent(a.productId)}`} className="font-medium hover:underline">
+                  {a.brandName}
+                </Link>{" "}
+                <span className="text-muted-foreground">
+                  ({a.shelfStatus === "want" ? "on your want list" : "one of your products"}) —{" "}
+                  {a.confidence >= EMAIL_CONFIDENCE ? "FDA recall" : "a recall may cover it"}
+                  {a.classification && <>, {a.classification}</>}
+                  {a.recallInitiationDate && <>, started {a.recallInitiationDate}</>}
+                  {a.status === "Terminated" && <>, recall has ended</>}.{" "}
+                </span>
+                <a href={fdaRecallUrl(a.eventId)} target="_blank" rel="noopener noreferrer" className="text-brand hover:underline">
+                  FDA notice<span className="sr-only"> for {a.brandName} (opens in a new tab)</span>
+                </a>
+              </li>
+            ))}
+          </ul>
+          <p className="text-xs text-muted-foreground">
+            Recalls usually cover specific lots — compare your package&apos;s lot number with the notice.
+            {person ? " We email you once about each new recall." : " Add an email below to be told about new ones."}
+          </p>
+        </section>
+      )}
+
+      {isEmpty && (
         <div className="space-y-3 rounded-2xl border bg-card p-6">
-          <p className="font-medium">Your regimen is empty.</p>
+          <p className="font-medium">No products here yet.</p>
           <p className="text-sm text-muted-foreground">
-            Open any product and choose <span className="font-medium text-foreground">Add to my regimen</span>. It&apos;ll land in the
-            morning, at night or both, and you can move it any time.
+            Open any product and choose <span className="font-medium text-foreground">Add to my regimen</span> to put it in your morning or
+            night steps, or <span className="font-medium text-foreground">I own this</span>,{" "}
+            <span className="font-medium text-foreground">Want it</span> or <span className="font-medium text-foreground">Finished it</span>{" "}
+            to keep track of it.
           </p>
           <Link href="/browse" className="inline-flex items-center gap-1 text-sm font-medium text-brand hover:underline">
             Browse products <ArrowRight className="h-3.5 w-3.5" />
           </Link>
           {selected && list.length > 1 && <RegimenActions regimenId={selected.id} kind="own" active={selected.active} name={selected.name} />}
         </div>
-      ) : null}
-      {regimenId !== null && <RxRetinoidCard key={regimenId} regimenId={regimenId} initialSlot={regimen.rxRetinoid} />}
-      {regimenId === null || regimen.count === 0 ? null : (
-        <>
-          {sameTime.length > 0 && (
-            <div className="space-y-2 rounded-2xl border border-amber-200 bg-amber-50/60 p-4 dark:border-amber-900/60 dark:bg-amber-950/20">
-              <p className="flex items-center gap-2 text-sm font-semibold">
-                <AlertTriangle className="h-4 w-4 text-amber-600" /> Worth a look: used at the same time
-              </p>
-              <ul className="space-y-2 text-sm">
-                {sameTime.map((c) => (
-                  <li key={`${c.a.productId}-${c.b.productId}-${c.note}`}>
-                    <span className="font-medium">{c.a.brand}</span> ({c.a.cls}) and <span className="font-medium">{c.b.brand}</span> ({c.b.cls}).{" "}
-                    <span className="text-foreground/80">{c.note}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-          {split.length > 0 && (
-            <div className="space-y-2 rounded-2xl border bg-card p-4">
-              <p className="flex items-center gap-2 text-sm font-semibold">
-                <CheckCircle2 className="h-4 w-4 text-brand" /> Already split between morning and night
-              </p>
-              <ul className="space-y-1 text-sm text-foreground/80">
-                {split.map((c) => (
-                  <li key={`${c.a.productId}-${c.b.productId}-${c.note}`}>
-                    {c.a.brand} ({c.a.cls}) and {c.b.brand} ({c.b.cls}) aren&apos;t used at the same time, which is the usual way to
-                    combine them.
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          <div className="grid gap-8 md:grid-cols-2">
-            <SlotColumn title="Morning" icon={Sun} steps={regimen.am} empty="Nothing in the morning yet." regimenId={regimenId} rxLinks={rxLinks} />
-            <SlotColumn title="Night" icon={Moon} steps={regimen.pm} empty="Nothing at night yet." regimenId={regimenId} rxLinks={rxLinks} />
-          </div>
-
-          {selected && list.length > 1 && <RegimenActions regimenId={selected.id} kind="own" active={selected.active} name={selected.name} />}
-
-          <EscalationList
-            title="When OTC isn't enough"
-            intro="For the concerns your regimen covers: how long to give it before judging, and signs that mean seeing a dermatologist."
-            items={escalations}
-          />
-
-          <p className="text-xs text-muted-foreground">
-            Steps are ordered by formulation, not by importance, and this page doesn&apos;t tell you what to use. Directions are quoted
-            from each product&apos;s FDA label; the product&apos;s own label always comes first. Products in your regimen also show as in
-            use on <Link href="/shelf" className="underline underline-offset-4 hover:text-foreground">your shelf</Link>.
-          </p>
-        </>
       )}
+      {regimenId !== null && <RxRetinoidCard key={regimenId} regimenId={regimenId} initialSlot={regimen.rxRetinoid} />}
+
+      {sameTime.length > 0 && (
+        <div className="space-y-2 rounded-2xl border border-amber-200 bg-amber-50/60 p-4 dark:border-amber-900/60 dark:bg-amber-950/20">
+          <p className="flex items-center gap-2 text-sm font-semibold">
+            <AlertTriangle className="h-4 w-4 text-amber-600" /> Worth a look: used at the same time
+          </p>
+          <ul className="space-y-2 text-sm">
+            {sameTime.map((c) => (
+              <li key={`${c.a.productId}-${c.b.productId}-${c.note}`}>
+                <span className="font-medium">{c.a.brand}</span> ({c.a.cls}) and <span className="font-medium">{c.b.brand}</span> ({c.b.cls}).{" "}
+                <span className="text-foreground/80">{c.note}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {split.length > 0 && (
+        <div className="space-y-2 rounded-2xl border bg-card p-4">
+          <p className="flex items-center gap-2 text-sm font-semibold">
+            <CheckCircle2 className="h-4 w-4 text-brand" /> Already split between morning and night
+          </p>
+          <ul className="space-y-1 text-sm text-foreground/80">
+            {split.map((c) => (
+              <li key={`${c.a.productId}-${c.b.productId}-${c.note}`}>
+                {c.a.brand} ({c.a.cls}) and {c.b.brand} ({c.b.cls}) aren&apos;t used at the same time, which is the usual way to combine
+                them.
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {shelfConflicts.length > 0 && (
+        <div className="space-y-2 rounded-2xl border border-amber-300 bg-amber-50 p-4 dark:border-amber-900 dark:bg-amber-950/30">
+          <p className="flex items-center gap-2 text-sm font-medium text-amber-900 dark:text-amber-200">
+            <AlertTriangle className="h-4 w-4" aria-hidden /> Products you&apos;re using that are worth checking together
+          </p>
+          <ul className="space-y-2 text-sm">
+            {shelfConflicts.map((c) => (
+              <li key={`${c.a.productId}-${c.b.productId}-${c.note}`}>
+                <span className="font-medium">
+                  {c.a.brand} ({c.a.cls}) + {c.b.brand} ({c.b.cls}):
+                </span>{" "}
+                <span className="text-muted-foreground">{c.note}</span>
+              </li>
+            ))}
+          </ul>
+          <p className="text-xs text-muted-foreground">
+            General interaction cautions from ingredient lists, not medical advice. Many people use these on different days or at different
+            times — ask a board-certified dermatologist.
+          </p>
+        </div>
+      )}
+
+      {!isEmpty && (
+        <div className="grid gap-8 md:grid-cols-2">
+          <SlotColumn title="Morning" icon={Sun} steps={regimen.am} empty="Nothing in the morning yet." regimenId={regimenId ?? 0} rxLinks={rxLinks} />
+          <SlotColumn title="Night" icon={Moon} steps={regimen.pm} empty="Nothing at night yet." regimenId={regimenId ?? 0} rxLinks={rxLinks} />
+        </div>
+      )}
+
+      {!isEmpty && selected && list.length > 1 && <RegimenActions regimenId={selected.id} kind="own" active={selected.active} name={selected.name} />}
+
+      {notInRoutine.length > 0 && (
+        <section className="space-y-4">
+          <div className="space-y-1">
+            <h2 className="text-xl font-semibold">
+              Not in my routine <span className="text-sm font-normal text-muted-foreground tabular-nums">({notInRoutine.length})</span>
+            </h2>
+            <p className="text-sm text-muted-foreground">Products you own that aren&apos;t in your morning or night steps, opened ones first.</p>
+          </div>
+          <ProductGrid products={notInRoutine.map((i) => i.product)} />
+        </section>
+      )}
+      {shelfSections.map((s) => (
+        <section key={s.title} className="space-y-4">
+          <h2 className="text-xl font-semibold">
+            {s.title} <span className="text-sm font-normal text-muted-foreground tabular-nums">({s.items.length})</span>
+          </h2>
+          <ProductGrid products={s.items.map((i) => i.product)} />
+        </section>
+      ))}
+
+      {toAsk.length > 0 && <ShelfOutcomePrompt items={toAsk} />}
+
+      <EscalationList
+        title="When OTC isn't enough"
+        intro="For the concerns your products cover: how long to give them before judging, and signs that mean seeing a dermatologist."
+        items={escalations}
+      />
+
+      {hasRoutine && (
+        <p className="text-xs text-muted-foreground">
+          Steps are ordered by formulation, not by importance, and this page doesn&apos;t tell you what to use. Directions are quoted from
+          each product&apos;s FDA label; the product&apos;s own label always comes first. Adding a product to your morning or night steps also
+          marks it as one you own; taking it out moves it to Not in my routine.
+        </p>
+      )}
+
+      {/* Asked for only once there's something here to keep. */}
+      {!isEmpty && <EmailSignupCard signedInAs={person?.email ?? null} />}
     </div>
   );
 }

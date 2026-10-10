@@ -8,13 +8,13 @@ import { Input } from "@/components/ui/input";
 import { LIMITS } from "@/lib/limits";
 import { isStandalone } from "@/lib/install-prompt";
 
-// "Save your shelf & get alerts": optional email via a one-time link. When
+// "Keep My skin on all your devices": optional email via a one-time link. When
 // the browser is already linked, collapses to a one-line status.
 export function EmailSignupCard({
   signedInAs,
   next,
-  title = "Save your shelf & get alerts",
-  blurb = "Optional. Add an email to keep your shelf on any device, get a short check-in at 2, 4, 8 and 12 weeks after you open a product, and hear about FDA recalls of anything on your shelf. No password; we send a one-time link.",
+  title = "Keep My skin on all your devices",
+  blurb = "Optional. Add an email to keep your profile, products and avoid list on any device, get a short check-in at 2, 4, 8 and 12 weeks after you open a product, and hear about FDA recalls of anything you own or want. No password; we send a one-time link.",
   footnote = "We only email you sign-in links and the check-ins and recall alerts you choose. Turn any of it off or delete everything at any time.",
 }: {
   signedInAs: string | null;

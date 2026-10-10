@@ -1,12 +1,20 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { SearchBar } from "@/components/search-bar";
 import { ProductGrid } from "@/components/product-grid";
-import { FreeFromFilters } from "@/components/free-from-filters";
-import { OriginChips } from "@/components/origin-chips";
+import { FilteredListing, ListingFilters } from "@/components/listing-filters";
 import { parseOrigin } from "@/lib/origin-shared";
-import { FilterChip } from "@/components/filter-chip";
 import { PageHeader } from "@/components/page-header";
-import { searchOriginCounts, searchProducts, searchShelfCounts, searchActives, getConcerns } from "@/lib/queries";
+import {
+  lookupProductsByCode,
+  searchOriginCounts,
+  searchProducts,
+  searchShelfCounts,
+  searchActives,
+  getConcerns,
+  getIngredient,
+} from "@/lib/queries";
+import { ingredientHref } from "@/components/ingredient-link";
 import { TRUST_TIERS } from "@/lib/trust-tiers";
 import type { Metadata } from "next";
 import { parseFreeParam } from "@/lib/avoid-shared";
@@ -36,25 +44,30 @@ export default async function SearchPage({
 }) {
   const { q, concern, tier, free, from: fromParam } = await searchParams;
   const query = (q ?? "").trim();
+  // A barcode, NDC or other product identifier goes straight to its product;
+  // a code several listings share lists just those (lib/product-codes.ts).
+  const codeMatches = query ? lookupProductsByCode(query) : null;
+  if (codeMatches?.length === 1) redirect(`/product/${encodeURIComponent(codeMatches[0].id)}`);
   const freeFromIds = parseFreeParam(free);
   const selectedTier = TRUST_TIERS.find((t) => t.label === tier);
   const concerns = getConcerns();
 
   const origin = parseOrigin(fromParam);
   const searchFilters = { concernId: concern, dataSources: selectedTier?.dataSources, freeFromIds, origin };
-  const activeResults = query ? searchActives(query) : [];
+  const keyword = codeMatches ? "" : query;
+  const activeResults = keyword ? searchActives(keyword) : [];
   // Sold in the US first; imported brands and likely-discontinued products
   // in their own sections below (lib/availability-rules.ts), each fetched
   // only when it has results.
-  const shelfCounts = query ? searchShelfCounts(query, searchFilters) : { main: 0, import: 0, discontinued: 0 };
-  const productResults = shelfCounts.main ? searchProducts(query, { ...searchFilters, shelf: "main" }) : [];
-  const importResults = shelfCounts.import ? searchProducts(query, { ...searchFilters, shelf: "import" }, SECTION_LIMIT) : [];
+  const shelfCounts = keyword ? searchShelfCounts(keyword, searchFilters) : { main: 0, import: 0, discontinued: 0 };
+  const productResults = shelfCounts.main ? searchProducts(keyword, { ...searchFilters, shelf: "main" }) : [];
+  const importResults = shelfCounts.import ? searchProducts(keyword, { ...searchFilters, shelf: "import" }, SECTION_LIMIT) : [];
   const discontinuedResults = shelfCounts.discontinued
-    ? searchProducts(query, { ...searchFilters, shelf: "discontinued" }, SECTION_LIMIT)
+    ? searchProducts(keyword, { ...searchFilters, shelf: "discontinued" }, SECTION_LIMIT)
     : [];
   const productTotal = shelfCounts.main + shelfCounts.import + shelfCounts.discontinued;
-  const originCounts = query ? searchOriginCounts(query, searchFilters) : new Map();
-  const hints = query ? parseSearch(query).hints : [];
+  const originCounts = keyword ? searchOriginCounts(keyword, searchFilters) : new Map();
+  const hints = keyword ? parseSearch(keyword).hints : [];
 
   function hrefWith(overrides: Record<string, string | undefined>) {
     const params = new URLSearchParams();
@@ -63,57 +76,42 @@ export default async function SearchPage({
     return `/search?${params.toString()}`;
   }
 
-  return (
-    <div className="mx-auto max-w-6xl space-y-8 px-4 py-10">
-      {query && <SearchBeacon term={query} results={activeResults.length + productTotal} />}
-      <div className="space-y-5">
-        <PageHeader
-          eyebrow="Search"
-          title={query ? `Results for “${query}”` : "Search the catalog"}
-          description={query ? undefined : "Search by product name, brand, or active ingredient."}
-        />
-        <div className="max-w-2xl">
-          <SearchBar defaultValue={query} large />
-        </div>
-      </div>
+  const filters = (
+    <ListingFilters
+      hrefWith={hrefWith}
+      concern={{ selected: concern, options: concerns }}
+      origin={{ selected: origin, counts: originCounts }}
+      freeFrom={{ basePath: "/search", searchParams: { q, concern, tier, free, from: origin }, selected: freeFromIds }}
+      source={{ selected: tier }}
+    />
+  );
+  const filterCount = [concern, selectedTier, origin].filter(Boolean).length + freeFromIds.length;
+  const grid = keyword ? "sm:grid-cols-2 xl:grid-cols-3" : undefined;
 
-      {query && (
-        <div className="space-y-4">
-          <div className="flex flex-wrap items-center gap-1.5">
-            <span className="mr-1 w-16 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-              Concern
-            </span>
-            <FilterChip href={hrefWith({ concern: undefined })} selected={!concern}>
-              All
-            </FilterChip>
-            {concerns.map((c) => (
-              <FilterChip key={c.id} href={hrefWith({ concern: c.id })} selected={concern === c.id}>
-                {c.name}
-              </FilterChip>
-            ))}
-          </div>
-          <div className="flex flex-wrap items-center gap-1.5">
-            <span className="mr-1 w-16 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-              Source
-            </span>
-            <FilterChip href={hrefWith({ tier: undefined })} selected={!tier}>
-              All
-            </FilterChip>
-            {TRUST_TIERS.map((t) => (
-              <FilterChip key={t.label} href={hrefWith({ tier: t.label })} selected={tier === t.label}>
-                {t.label}
-              </FilterChip>
-            ))}
-          </div>
-          <OriginChips selected={origin} counts={originCounts} hrefFor={(next) => hrefWith({ from: next })} label="From" labelClassName="w-16" />
-          <FreeFromFilters basePath="/search" searchParams={{ q, concern, tier, free, from: origin }} selected={freeFromIds} />
-          <AvoidSwitch basePath="/search" searchParams={{ q, concern, tier, from: origin }} selected={freeFromIds} />
+  const results = (
+    <>
+      <SearchHints hints={hints} />
+
+      {codeMatches && codeMatches.length === 0 && (
+        <div className="space-y-1 rounded-2xl border border-dashed p-10 text-center text-muted-foreground">
+          <p>No product in our catalog has the code &quot;{query}&quot;.</p>
+          <p className="text-sm">
+            We don&apos;t have the barcode on file for every product yet. Try searching by the product&apos;s name or brand.
+          </p>
         </div>
       )}
 
-      <SearchHints hints={hints} />
+      {codeMatches && codeMatches.length > 1 && (
+        <div className="space-y-4">
+          <h2 className="text-xl font-semibold">
+            Products with this code{" "}
+            <span className="text-base font-normal tabular-nums text-muted-foreground">{codeMatches.length}</span>
+          </h2>
+          <ProductGrid products={codeMatches} />
+        </div>
+      )}
 
-      {query && activeResults.length === 0 && productTotal === 0 && hints.length === 0 && (
+      {keyword && activeResults.length === 0 && productTotal === 0 && hints.length === 0 && (
         <div className="rounded-2xl border border-dashed p-10 text-center text-muted-foreground">
           No results for &quot;{query}&quot;.
         </div>
@@ -126,7 +124,7 @@ export default async function SearchPage({
             {activeResults.map((a) => (
               <Link
                 key={a.id}
-                href={`/browse?active=${encodeURIComponent(a.id)}`}
+                href={getIngredient(a.id) ? ingredientHref(a.id) : `/browse?active=${encodeURIComponent(a.id)}`}
                 className="inline-flex h-8 items-center rounded-full border bg-card px-3 text-sm transition-colors hover:border-brand/40 hover:bg-brand-soft"
               >
                 {a.canonicalName}
@@ -146,11 +144,11 @@ export default async function SearchPage({
           </h2>
           {shelfCounts.main > productResults.length && (
             <p className="text-xs text-muted-foreground">
-              Showing the first {productResults.length} — narrow with a filter above or refine your search to see
+              Showing the first {productResults.length} — narrow with a filter or refine your search to see
               others.
             </p>
           )}
-          <ProductGrid products={productResults} />
+          <ProductGrid products={productResults} columns={grid} />
         </div>
       )}
 
@@ -166,10 +164,10 @@ export default async function SearchPage({
             <p className="text-sm text-muted-foreground">
               Brands from abroad that we haven&apos;t found at a US store. They&apos;re usually bought online from import
               sellers, so shipping takes longer and labels may not be in English.
-              {shelfCounts.import > importResults.length && <> Pick a region under &ldquo;From&rdquo; above to see them all.</>}
+              {shelfCounts.import > importResults.length && <> Pick a region under &ldquo;Brand from&rdquo; in the filters to see them all.</>}
             </p>
           </div>
-          <ProductGrid products={importResults} />
+          <ProductGrid products={importResults} columns={grid} />
         </section>
       )}
 
@@ -187,10 +185,34 @@ export default async function SearchPage({
             have one at home.
             {shelfCounts.discontinued > discontinuedResults.length && <> Showing the first {discontinuedResults.length}.</>}
           </p>
-          <ProductGrid products={discontinuedResults} />
+          <ProductGrid products={discontinuedResults} columns={grid} />
         </details>
       )}
+    </>
+  );
 
+  return (
+    <div className="mx-auto max-w-6xl space-y-8 px-4 py-10">
+      {query && <SearchBeacon term={query} results={codeMatches ? codeMatches.length : activeResults.length + productTotal} />}
+      <div className="space-y-5">
+        <PageHeader
+          eyebrow="Search"
+          title={query ? `Results for “${query}”` : "Search the catalog"}
+          description={query ? undefined : "Search by product name, brand, active ingredient, or a barcode or NDC."}
+        />
+        <div className="max-w-2xl">
+          <SearchBar defaultValue={query} large />
+        </div>
+      </div>
+
+      {keyword ? (
+        <FilteredListing filters={filters} filterCount={filterCount}>
+          <AvoidSwitch basePath="/search" searchParams={{ q, concern, tier, from: origin }} selected={freeFromIds} />
+          {results}
+        </FilteredListing>
+      ) : (
+        results
+      )}
       <p className="text-xs text-muted-foreground">
         Looking for a full catalog browse instead?{" "}
         <Link href="/browse" className="underline">

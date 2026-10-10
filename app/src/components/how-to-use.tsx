@@ -2,6 +2,8 @@ import { BookOpen, ClipboardList } from "lucide-react";
 import type { labelSections } from "@/db/schema";
 import type { ActiveGuidance, FormulationGuidance } from "@/db/usage-guidance";
 import { ACTIVE_DEFINITIONS } from "@/db/actives";
+import { IngredientLink } from "@/components/ingredient-link";
+import { directionSteps } from "@/lib/label-directions";
 
 const ACTIVE_NAME = new Map(ACTIVE_DEFINITIONS.map((a) => [a.id, a.canonicalName]));
 
@@ -11,6 +13,17 @@ type Label = typeof labelSections.$inferSelect;
 // so the wording stays verbatim but reads as a list.
 function labelText(text: string) {
   return text.replace(/\s*[•■▪●◦]\s*/g, "\n• ").replace(/^\n/, "").trim();
+}
+
+// The label's Directions as short steps (lib/label-directions), words as printed.
+function DirectionSteps({ text }: { text: string }) {
+  const steps = directionSteps(text);
+  if (steps.length <= 1) return <p className="text-sm leading-relaxed">{steps[0] ?? text}</p>;
+  return (
+    <ul className="list-disc space-y-0.5 pl-5 text-sm leading-relaxed marker:text-muted-foreground">
+      {steps.map((s, i) => <li key={i}>{s}</li>)}
+    </ul>
+  );
 }
 
 const WARNING_PARTS: { key: keyof Label; title: string }[] = [
@@ -51,7 +64,7 @@ export function HowToUse({
       {label?.directions && (
         <div className="space-y-1">
           <p className="text-xs font-medium text-muted-foreground">Directions (from the FDA label)</p>
-          <p className="whitespace-pre-line text-sm leading-relaxed">{labelText(label.directions)}</p>
+          <DirectionSteps text={label.directions} />
         </div>
       )}
 
@@ -72,7 +85,8 @@ export function HowToUse({
       {activeGuidance.map((g) => (
         <div key={g.activeId} className="space-y-1.5">
           <p className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-            <ClipboardList className="h-3.5 w-3.5" /> Using {(ACTIVE_NAME.get(g.activeId) ?? g.activeId).toLowerCase()}
+            <ClipboardList className="h-3.5 w-3.5" /> Using{" "}
+            <IngredientLink id={g.activeId}>{(ACTIVE_NAME.get(g.activeId) ?? g.activeId).toLowerCase()}</IngredientLink>
             {g.draft && <span className="rounded-full bg-amber-100 px-1.5 py-px text-[10px] font-semibold uppercase tracking-wider text-amber-900">Draft</span>}
           </p>
           <ul className="list-disc space-y-0.5 pl-5 text-sm leading-relaxed">

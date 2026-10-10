@@ -120,7 +120,7 @@ test("watch-for names come from label synonyms and family members", () => {
 
 test("import and issue pages are reachable from an ordinary phone", () => {
   const iphone = "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1";
-  for (const pathname of ["/avoid/import", "/for-clinicians/patch-test"]) {
+  for (const pathname of ["/avoid/import", "/clinic-tools/patch-test-reader"]) {
     const v = judge({ pathname, method: "GET", headers: new Headers({ "user-agent": iphone }), ip: "203.0.113.7" });
     assert.equal(v.action, "allow", pathname);
   }

@@ -1,9 +1,7 @@
-import Link from "next/link";
 import type { Metadata } from "next";
-import { ChevronDown, SlidersHorizontal } from "lucide-react";
 import { ProductGrid } from "@/components/product-grid";
-import { FreeFromFilters } from "@/components/free-from-filters";
-import { ORIGINS, parseOrigin } from "@/lib/origin-shared";
+import { FilteredListing, ListingFilters } from "@/components/listing-filters";
+import { parseOrigin } from "@/lib/origin-shared";
 import { RedFlagBanner } from "@/components/red-flag-banner";
 import { PageHeader } from "@/components/page-header";
 import { Pagination } from "@/components/pagination";
@@ -11,12 +9,10 @@ import { browseOriginCounts, browseProducts, browseProductsByMatch, getConcerns,
 import { hasProfile, readProfile, scoreProducts } from "@/lib/profile";
 import { readAvoidIds } from "@/lib/avoid";
 import { TRUST_TIERS } from "@/lib/trust-tiers";
-import { cn } from "@/lib/utils";
 import { variantRobots } from "@/lib/seo";
 import { SITE_NAME } from "@/lib/brand";
 import { parseFreeParam } from "@/lib/avoid-shared";
 import { AvoidSwitch } from "@/components/avoid-switch";
-import { HSA_GUIDE_PATH } from "@/lib/hsa";
 import { FEATURES } from "@/lib/feature-flags";
 import { PREGNANCY_FILTER_VALUE, pregnancyAvoidIngredientIds } from "@/lib/pregnancy";
 import { PregnancyFilter } from "@/components/pregnancy-notice";
@@ -33,39 +29,9 @@ export async function generateMetadata({ searchParams }: { searchParams: Promise
   };
 }
 
-function SidebarLink({ href, selected, children }: { href: string; selected: boolean; children: React.ReactNode }) {
-  return (
-    <Link
-      href={href}
-      aria-current={selected ? "true" : undefined}
-      className={cn(
-        "block rounded-lg px-2.5 py-1.5 transition-colors",
-        selected
-          ? "bg-brand-soft font-medium text-brand-foreground"
-          : "text-muted-foreground hover:bg-muted hover:text-foreground",
-      )}
-    >
-      {children}
-    </Link>
-  );
-}
-
-function SidebarGroup({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div>
-      <h2 className="mb-2 px-2.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{title}</h2>
-      {children}
-    </div>
-  );
-}
-
-// The general catalog browser -- unlike /concern/[slug] (one concern, top
-// filter chips) or /search (requires a query), this is every product,
-// every filter, all at once, with the filters in a left sidebar -- the
-// conventional e-commerce-catalog layout, requested explicitly rather than
-// reusing the top-chip pattern the other two pages use.
-const ACTIVES_SHOWN = 8;
-
+// The general catalog browser -- unlike /concern/[slug] (one concern) or
+// /search (requires a query), this is every product with every filter.
+// The filters are the shared listing panel (components/listing-filters.tsx).
 export default async function BrowsePage({
   searchParams,
 }: {
@@ -119,126 +85,22 @@ export default async function BrowsePage({
   }
 
   const filters = (
-    <div className="space-y-6 text-sm">
-      <SidebarGroup title="Concern">
-        <ul className="space-y-0.5">
-          <li>
-            <SidebarLink href={hrefWith({ concern: undefined })} selected={!concern}>
-              All concerns
-            </SidebarLink>
-          </li>
-          {concerns.map((c) => (
-            <li key={c.id}>
-              <SidebarLink href={hrefWith({ concern: c.id })} selected={concern === c.id}>
-                {c.name}
-              </SidebarLink>
-            </li>
-          ))}
-        </ul>
-      </SidebarGroup>
-
-      <SidebarGroup title="Source">
-        <ul className="space-y-0.5">
-          <li>
-            <SidebarLink href={hrefWith({ tier: undefined })} selected={!tier}>
-              All sources
-            </SidebarLink>
-          </li>
-          {TRUST_TIERS.map((t) => (
-            <li key={t.label}>
-              <SidebarLink href={hrefWith({ tier: t.label })} selected={tier === t.label}>
-                {t.label}
-              </SidebarLink>
-            </li>
-          ))}
-        </ul>
-      </SidebarGroup>
-
-      <SidebarGroup title="Brand from">
-        <ul className="space-y-0.5">
-          <li>
-            <SidebarLink href={hrefWith({ from: undefined })} selected={!origin}>
-              Anywhere
-            </SidebarLink>
-          </li>
-          {ORIGINS.filter((o) => o.id === origin || (originCounts.get(o.id) ?? 0) > 0).map((o) => (
-            <li key={o.id}>
-              <SidebarLink href={hrefWith({ from: o.id })} selected={origin === o.id}>
-                <span className="flex justify-between gap-2">
-                  {o.place}
-                  <span className="tabular-nums opacity-70">{(originCounts.get(o.id) ?? 0).toLocaleString()}</span>
-                </span>
-              </SidebarLink>
-            </li>
-          ))}
-        </ul>
-      </SidebarGroup>
-
-      <SidebarGroup title="Active ingredient">
-        {/* First few inline, the rest behind a disclosure (opened when the
-            selected active is in it) -- a short scroll box inside the
-            sidebar cut the list off mid-word. */}
-        <ul className="space-y-0.5">
-          <li>
-            <SidebarLink href={hrefWith({ active: undefined })} selected={!active}>
-              All actives
-            </SidebarLink>
-          </li>
-          {allActives.slice(0, ACTIVES_SHOWN).map((a) => (
-            <li key={a.id}>
-              <SidebarLink href={hrefWith({ active: a.id })} selected={active === a.id}>
-                {a.canonicalName}
-              </SidebarLink>
-            </li>
-          ))}
-        </ul>
-        {allActives.length > ACTIVES_SHOWN && (
-          <details className="group/actives" open={allActives.slice(ACTIVES_SHOWN).some((a) => a.id === active)}>
-            <summary className="mt-1 flex cursor-pointer list-none items-center gap-1 px-3 py-1.5 text-xs font-medium text-brand [&::-webkit-details-marker]:hidden">
-              <span className="group-open/actives:hidden">Show all {allActives.length} actives</span>
-              <span className="hidden group-open/actives:inline">Show fewer</span>
-              <ChevronDown className="h-3.5 w-3.5 transition-transform group-open/actives:rotate-180" />
-            </summary>
-            <ul className="space-y-0.5">
-              {allActives.slice(ACTIVES_SHOWN).map((a) => (
-                <li key={a.id}>
-                  <SidebarLink href={hrefWith({ active: a.id })} selected={active === a.id}>
-                    {a.canonicalName}
-                  </SidebarLink>
-                </li>
-              ))}
-            </ul>
-          </details>
-        )}
-      </SidebarGroup>
-
-      <SidebarGroup title="Spending account">
-        <ul className="space-y-0.5">
-          <li>
-            <SidebarLink href={hrefWith({ hsa: hsa ? undefined : "1" })} selected={!!hsa}>
-              HSA/FSA eligible
-            </SidebarLink>
-          </li>
-        </ul>
-        <p className="mt-1 px-2.5 text-xs text-muted-foreground">
-          OTC medicines and broad spectrum SPF 15+ sunscreens. Your plan decides.{" "}
-          <Link href={HSA_GUIDE_PATH} className="underline">
-            How this works
-          </Link>
-        </p>
-      </SidebarGroup>
-
-      <FreeFromFilters
-        basePath="/browse"
-        searchParams={{ concern, tier, active, free, hsa, sort, pregnancy, from: origin }}
-        selected={freeFromIds}
-        extra={
-          showPregnancyFilter ? (
-            <PregnancyFilter href={hrefWith({ pregnancy: pregnancy ? undefined : PREGNANCY_FILTER_VALUE })} selected={!!pregnancy} />
-          ) : undefined
-        }
-      />
-    </div>
+    <ListingFilters
+      hrefWith={hrefWith}
+      concern={{ selected: concern, options: concerns }}
+      active={{ selected: active, options: allActives }}
+      origin={{ selected: origin, counts: originCounts }}
+      hsa={{ selected: !!hsa }}
+      freeFrom={{
+        basePath: "/browse",
+        searchParams: { concern, tier, active, free, hsa, sort, pregnancy, from: origin },
+        selected: freeFromIds,
+        extra: showPregnancyFilter ? (
+          <PregnancyFilter href={hrefWith({ pregnancy: pregnancy ? undefined : PREGNANCY_FILTER_VALUE })} selected={!!pregnancy} />
+        ) : undefined,
+      }}
+      source={{ selected: tier }}
+    />
   );
 
   return (
@@ -249,55 +111,33 @@ export default async function BrowsePage({
         description="Filter the full catalog by concern, source, active ingredient, or ingredient-based flags."
       />
 
-      <div className="grid gap-8 lg:grid-cols-[250px_1fr]">
-        {/* Rendered twice (collapsed on mobile, always-open sidebar on
-            desktop) since <details> can't be forced open per breakpoint
-            and this page stays server-rendered with no client JS. */}
-        <details className="group rounded-2xl border bg-card lg:hidden">
-          <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-3 text-sm font-medium [&::-webkit-details-marker]:hidden">
-            <span className="flex items-center gap-2">
-              <SlidersHorizontal className="h-4 w-4 text-brand" />
-              Filters
-              {activeFilterCount > 0 && (
-                <span className="rounded-full bg-primary px-2 py-0.5 text-xs text-primary-foreground">
-                  {activeFilterCount}
-                </span>
-              )}
-            </span>
-            <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform group-open:rotate-180" />
-          </summary>
-          <div className="border-t p-3">{filters}</div>
-        </details>
-        <aside className="hidden lg:block">{filters}</aside>
+      <FilteredListing filters={filters} filterCount={activeFilterCount}>
+        <RedFlagBanner />
 
-        <div className="min-w-0 space-y-5">
-          <RedFlagBanner />
+        <AvoidSwitch basePath="/browse" searchParams={{ concern, tier, active, free, hsa, sort, pregnancy, from: origin }} selected={freeFromIds} />
 
-          <AvoidSwitch basePath="/browse" searchParams={{ concern, tier, active, free, hsa, sort, pregnancy, from: origin }} selected={freeFromIds} />
-
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <p className="text-sm text-muted-foreground">
-              <span className="font-semibold text-foreground tabular-nums">{total.toLocaleString()}</span> product
-              {total === 1 ? "" : "s"}
-            </p>
-            <SortChips sort={sort} canMatch={canMatch} hrefFor={(id) => hrefWith({ sort: id })} />
-          </div>
-          {sort === "match" && <MatchSortNote />}
-
-          {rows.length === 0 ? (
-            <div className="rounded-2xl border border-dashed p-10 text-center text-muted-foreground">
-              No products match this combination of filters.
-            </div>
-          ) : (
-            <>
-              <h2 className="sr-only">Products</h2>
-              <ProductGrid products={rows} columns="sm:grid-cols-2 xl:grid-cols-3" />
-            </>
-          )}
-
-          <Pagination page={page} totalPages={totalPages} hrefFor={pageHref} />
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <p className="text-sm text-muted-foreground">
+            <span className="font-semibold text-foreground tabular-nums">{total.toLocaleString()}</span> product
+            {total === 1 ? "" : "s"}
+          </p>
+          <SortChips sort={sort} canMatch={canMatch} hrefFor={(id) => hrefWith({ sort: id })} />
         </div>
-      </div>
+        {sort === "match" && <MatchSortNote />}
+
+        {rows.length === 0 ? (
+          <div className="rounded-2xl border border-dashed p-10 text-center text-muted-foreground">
+            No products match this combination of filters.
+          </div>
+        ) : (
+          <>
+            <h2 className="sr-only">Products</h2>
+            <ProductGrid products={rows} columns="sm:grid-cols-2 xl:grid-cols-3" />
+          </>
+        )}
+
+        <Pagination page={page} totalPages={totalPages} hrefFor={pageHref} />
+      </FilteredListing>
     </div>
   );
 }

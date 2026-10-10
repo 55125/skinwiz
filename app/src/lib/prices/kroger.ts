@@ -5,6 +5,11 @@
 //   GET  /v1/locations?filter.zipCode.near={zip}&filter.limit=1
 //   GET  /v1/products/{productId}?filter.locationId={id}       (barcode lookups)
 //   GET  /v1/products?filter.term=...&filter.locationId={id}    (keyword search)
+// The same product responses carry Kroger's own product photos (an images
+// array of perspectives and sizes). We keep the front photo's URL for a
+// product Kroger carries and show it, loaded from Kroger's servers and
+// credited to Kroger, only where we have no retail photo of our own; the
+// image itself is never downloaded or re-hosted (see store.ts getKrogerImages).
 // Prices and stock are per store, so each run resolves one store: the one
 // pinned by KROGER_LOCATION_ID, else the nearest to KROGER_ZIP. That zip is
 // a server setting; no visitor's location or anything else about a visitor
@@ -54,6 +59,7 @@ export type KrogerOffer = {
   regular: number | null;
   promo: number | null;
   availability: Availability | null;
+  image: string | null; // Kroger's front product photo, on kroger.com
 };
 
 function num(v: unknown): number | null {
@@ -130,6 +136,37 @@ function productPage(uri: string | null, productId: string): string {
   return `https://www.kroger.com/p/item/${productId}`;
 }
 
+// Largest first that still loads fast in a card; xlarge is ~1000px.
+const IMAGE_SIZES = ["large", "xlarge", "medium", "small"];
+
+/** An https URL on kroger.com (Kroger's own image host), else null. */
+function krogerImageUrl(v: unknown): string | null {
+  const s = str(v);
+  if (!s) return null;
+  try {
+    const u = new URL(s);
+    return u.protocol === "https:" && /(^|\.)kroger\.com$/i.test(u.hostname) && !u.username && !u.password ? u.href : null;
+  } catch {
+    return null;
+  }
+}
+
+/** The front photo from a product's images array (the featured one first), in the best size it has. */
+export function krogerFrontImage(images: unknown): string | null {
+  const list = Array.isArray(images) ? images.map(obj) : [];
+  const fronts = list
+    .filter((i) => str(i.perspective)?.toLowerCase() === "front")
+    .sort((a, b) => Number(b.featured === true) - Number(a.featured === true));
+  for (const front of fronts) {
+    const sizes = Array.isArray(front.sizes) ? front.sizes.map(obj) : [];
+    for (const want of IMAGE_SIZES) {
+      const url = krogerImageUrl(sizes.find((s) => str(s.size)?.toLowerCase() === want)?.url);
+      if (url) return url;
+    }
+  }
+  return null;
+}
+
 /** Reads a Products response (one product or a list) into offers; unreadable items are skipped. */
 export function parseKrogerProducts(body: unknown): KrogerOffer[] {
   const data = obj(body).data;
@@ -155,6 +192,7 @@ export function parseKrogerProducts(body: unknown): KrogerOffer[] {
       regular: num(price.regular),
       promo: num(price.promo),
       availability: availabilityOf(item),
+      image: krogerFrontImage(r.images),
     });
   }
   return out;
@@ -183,7 +221,7 @@ export function krogerSearchTerm(p: LookupProduct): string {
     .join(" ");
 }
 
-const CONFIDENCE: Record<string, number> = { openfda_upc: 0.95, obf_id: 0.9, ndc_derived: 0.7, keywords: 0.6 };
+const CONFIDENCE: Record<string, number> = { openfda_upc: 0.95, package: 0.95, brand_site: 0.95, obf_id: 0.9, label_scan: 0.9, ndc_derived: 0.7, keywords: 0.6 };
 
 export type KrogerDeps = {
   fetch?: typeof fetch;
@@ -326,7 +364,9 @@ export class KrogerSource implements PriceSource {
 
     // A product Kroger's catalog has but this store doesn't price is "listed":
     // carried by Kroger, with no quote to show here.
+    // Its photo comes from the offer we matched, or from a verified listing.
     let listed = false;
+    let image: string | null = null;
     const tried = new Set<string>();
     for (const b of p.barcodes) {
       for (const id of krogerProductIds(b.barcode)) {
@@ -336,8 +376,9 @@ export class KrogerSource implements PriceSource {
           b.source === "ndc_derived" ? verifyDerivedBarcode(p, o.name).ok : !contradicts(p, o.name),
         );
         const offer = priced(hits)[0];
-        if (offer) return { status: "matched", quotes: toQuotes(offer, "barcode", CONFIDENCE[b.source] ?? 0.7) };
+        if (offer) return { status: "matched", quotes: toQuotes(offer, "barcode", CONFIDENCE[b.source] ?? 0.7), image: offer.image };
         if (hits.length) listed = true;
+        image ??= hits.find((o) => o.image)?.image ?? null;
       }
     }
     const term = krogerSearchTerm(p);
@@ -346,10 +387,11 @@ export class KrogerSource implements PriceSource {
         await this.get("/products", { "filter.term": term, "filter.locationId": store.locationId, "filter.limit": "20" }),
       ).filter((o) => verifyKeywordMatch(p, o.name).ok);
       const best = priced(hits).sort((a, b) => krogerPrice(a)! - krogerPrice(b)!)[0];
-      if (best) return { status: "matched", quotes: toQuotes(best, "keywords", CONFIDENCE.keywords) };
+      if (best) return { status: "matched", quotes: toQuotes(best, "keywords", CONFIDENCE.keywords), image: best.image };
       if (hits.length) listed = true;
+      image ??= hits.find((o) => o.image)?.image ?? null;
     }
-    if (listed) return { status: "listed", quotes: [] };
+    if (listed) return { status: "listed", quotes: [], image };
     return { status: "miss", quotes: [] };
   }
 }

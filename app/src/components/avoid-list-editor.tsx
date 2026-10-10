@@ -14,6 +14,7 @@ import {
   labelNames,
   normalizeForAllergens,
   searchAllergens,
+  type AllergenGroup,
   type ContactAllergen,
 } from "@/db/contact-allergens";
 import { PatchTestPaste } from "@/components/patch-test-paste";
@@ -202,6 +203,21 @@ export function AvoidListEditor({
   );
 }
 
+// Each family or patch-test mix sits as a switch at the top of the one
+// category all its members belong to; a family spanning categories stays in
+// a short list of its own above them.
+const SECTION_OF = new Map(CONTACT_ALLERGENS.map((a) => [a.id, a.section]));
+const GROUPS_BY_SECTION = new Map<string, AllergenGroup[]>();
+const LOOSE_GROUPS: AllergenGroup[] = [];
+for (const g of ALLERGEN_GROUPS) {
+  const sections = new Set(g.members.map((m) => SECTION_OF.get(m)));
+  const [only] = sections;
+  if (sections.size === 1 && only) GROUPS_BY_SECTION.set(only, [...(GROUPS_BY_SECTION.get(only) ?? []), g]);
+  else LOOSE_GROUPS.push(g);
+}
+// The group that covers most comes first ("Fragrance allergens (all)" before the mixes).
+for (const groups of GROUPS_BY_SECTION.values()) groups.sort((a, b) => b.members.length - a.members.length);
+
 function AllergenPicker({ ids, toggle }: { ids: Set<string>; toggle: (id: string) => void }) {
   const [query, setQuery] = useState("");
   const q = normalizeForAllergens(query);
@@ -263,27 +279,44 @@ function AllergenPicker({ ids, toggle }: { ids: Set<string>; toggle: (id: string
         )
       ) : (
         <>
-          <div className="space-y-2">
-            <p className="text-sm font-medium">Families and patch-test mixes</p>
-            <div className="grid gap-2 sm:grid-cols-2">
-              {ALLERGEN_GROUPS.map((g) => (
-                <CheckRow key={g.id} on={ids.has(g.id)} onToggle={() => toggle(g.id)} label={g.name} hint={g.note} />
-              ))}
+          {LOOSE_GROUPS.length > 0 && (
+            <div className="space-y-2">
+              <p className="text-sm font-medium">Families and patch-test mixes</p>
+              <div className="grid gap-2 sm:grid-cols-2">
+                {LOOSE_GROUPS.map((g) => (
+                  <CheckRow key={g.id} on={ids.has(g.id)} onToggle={() => toggle(g.id)} label={g.name} hint={g.note} />
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
           <div className="divide-y rounded-xl border">
             {ALLERGEN_SECTIONS.map((section) => {
               const items = CONTACT_ALLERGENS.filter((a) => a.section === section.id);
-              const count = items.filter((a) => ids.has(a.id)).length;
+              const groups = GROUPS_BY_SECTION.get(section.id) ?? [];
+              const count = items.filter((a) => ids.has(a.id)).length + groups.filter((g) => ids.has(g.id)).length;
               return (
-                <details key={section.id} className="group/sec" open={count > 0 ? true : undefined}>
+                <details key={section.id} className="group/sec">
                   <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-4 py-3 text-sm font-medium [&::-webkit-details-marker]:hidden">
                     <span>
                       {section.title} <span className="text-muted-foreground">({items.length})</span>
                       {count > 0 && <span className="ml-1.5 rounded-full bg-primary px-1.5 py-px text-[10px] text-primary-foreground">{count}</span>}
                     </span>
                   </summary>
+                  {groups.length > 0 && (
+                    <div className="mx-4 mb-3 divide-y rounded-xl border bg-card">
+                      {groups.map((g) => (
+                        <GroupSwitch
+                          key={g.id}
+                          on={ids.has(g.id)}
+                          onToggle={() => toggle(g.id)}
+                          // A group covering the whole section is the section's own switch.
+                          label={items.every((a) => g.members.includes(a.id)) ? "Select the whole group" : g.name}
+                          hint={items.every((a) => g.members.includes(a.id)) ? `${g.name}. ${g.note}` : g.note}
+                        />
+                      ))}
+                    </div>
+                  )}
                   <div className="grid gap-2 px-4 pb-4 sm:grid-cols-2">
                     {items.map((a) => (
                       <AllergenRow key={a.id} allergen={a} on={ids.has(a.id)} onToggle={() => toggle(a.id)} coveredBy={coveredBy.get(a.id)} />
@@ -315,6 +348,26 @@ function AllergenRow({
     .slice(0, 3);
   const hint = coveredBy && !on ? `Included via ${coveredBy}` : alsoListedAs.length > 0 ? `Also listed as ${alsoListedAs.join(", ")}` : undefined;
   return <CheckRow on={on} onToggle={onToggle} label={allergen.name} hint={hint} muted={!!coveredBy && !on} />;
+}
+
+function GroupSwitch({ on, onToggle, label, hint }: { on: boolean; onToggle: () => void; label: string; hint: string }) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={on}
+      onClick={onToggle}
+      className="flex w-full items-start gap-3 px-3.5 py-3 text-left text-sm transition-colors first:rounded-t-xl last:rounded-b-xl hover:bg-muted"
+    >
+      <span className="min-w-0 flex-1">
+        <span className="block font-medium">{label}</span>
+        <span className="mt-0.5 block text-xs leading-snug text-muted-foreground">{hint}</span>
+      </span>
+      <span aria-hidden className={cn("relative mt-0.5 h-6 w-11 shrink-0 rounded-full transition-colors", on ? "bg-primary" : "bg-muted-foreground/30")}>
+        <span className={cn("absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all", on ? "left-[22px]" : "left-0.5")} />
+      </span>
+    </button>
+  );
 }
 
 function CheckRow({ on, onToggle, label, hint, muted }: { on: boolean; onToggle: () => void; label: string; hint?: string; muted?: boolean }) {

@@ -39,6 +39,14 @@ export const HSA_GUIDE_PATH = "/guide/hsa-fsa-eligible";
 // product-page eligibility note both render it with an affiliate disclosure.
 export const HSA_STORE_AFFILIATE: { name: string; url: string } | null = null;
 
+// A product listing where most cards would carry the HSA/FSA badge (a drug
+// concern's page) says so once above the grid instead, and the badge drops
+// off its cards; where eligible products are the exception, each keeps its
+// badge. Too few cards to call it "most" keep their badges too.
+export function hsaSaidOnce(eligible: number, total: number): boolean {
+  return total >= 3 && eligible * 2 > total;
+}
+
 // Lower-case substrings, matched case-insensitively both here and in SQL
 // (otc-index.ts builds LIKE clauses from these same arrays).
 export const BROAD_SPECTRUM_15_PHRASES = ["sun protection measures", "broad spectrum spf value of 15 or higher"];

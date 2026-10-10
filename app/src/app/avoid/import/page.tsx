@@ -11,7 +11,7 @@ import { personForSession } from "@/lib/identity";
 import { readDeviceSessionId } from "@/lib/session";
 import { FilterChip } from "@/components/filter-chip";
 
-// Where a dermatologist's QR code lands (/for-clinicians/patch-test). A
+// Where a dermatologist's QR code lands (/clinic-tools/patch-test-reader). A
 // tool page: noindex, and /avoid is disallowed in robots.txt anyway.
 export const metadata: Metadata = {
   title: "Add your patch-test allergens",
@@ -179,7 +179,7 @@ export default async function AvoidImportPage({ searchParams }: { searchParams: 
           // Back here after the emailed sign-in link, so a list not yet added isn't lost.
           next={`/avoid/import?a=${encodeURIComponent(one(params.a) ?? "")}${date ? `&d=${date}` : ""}`}
           title="Keep this list on every device"
-          blurb="Optional. Add your email and your avoid list is saved to your account, so it's there on any phone or computer you sign in on, along with your shelf and any plans from your clinic. No password; we send a one-time link."
+          blurb="Optional. Add your email and your avoid list is saved to your account, so it's there on any phone or computer you sign in on, along with My products and any plans from your clinic. No password; we send a one-time link."
         />
       )}
 

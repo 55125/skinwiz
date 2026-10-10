@@ -84,7 +84,12 @@ export const evidenceNotes = sqliteTable("evidence_notes", {
 // what an existing review/link/citation pointed at.
 export const products = sqliteTable("products", {
   id: text("id").primaryKey(), // product_ndc (drug) or barcode (cosmetic)
+  // The product's own concern: its page, evidence notes, scores and ratings.
   concernId: text("concern_id").notNull().references(() => concerns.id),
+  // Every concern it's listed under, concernId first: an SPF moisturizer is
+  // on both the sun protection and dry skin pages (db/labeled-actives.ts
+  // productNiches). Concern listings, filters and counts use this.
+  concernIds: text("concern_ids", { mode: "json" }).$type<string[]>().notNull().default(sql`'[]'`),
   brandName: text("brand_name").notNull(),
   manufacturer: text("manufacturer"),
   dosageForm: text("dosage_form"),
@@ -878,7 +883,7 @@ export const productBarcodes = sqliteTable(
   {
     productId: text("product_id").notNull(),
     barcode: text("barcode").notNull(),
-    source: text("source").notNull(), // "openfda_upc" | "obf_id" | "ndc_derived"
+    source: text("source").notNull(), // "openfda_upc" | "package" | "brand_site" | "obf_id" | "ndc_derived"
     rank: integer("rank").notNull(),
   },
   (table) => [uniqueIndex("product_barcodes_product_barcode_idx").on(table.productId, table.barcode)],
@@ -935,6 +940,9 @@ export const priceChecks = sqliteTable(
     // "listed"); kept through later misses, so a product retailers stopped
     // carrying can be told from one they never had (lib/availability.ts).
     lastMatchedAt: text("last_matched_at"),
+    // The source's own product photo URL (Kroger's front photo) from the last
+    // matched/listed lookup; cleared on a miss. Hotlinked, never downloaded.
+    imageUrl: text("image_url"),
   },
   (table) => [
     uniqueIndex("price_checks_product_source_idx").on(table.productId, table.source),
@@ -988,6 +996,42 @@ export const dailymedImages = sqliteTable(
     retryAfter: text("retry_after"),
   },
   (table) => [index("dailymed_images_status_idx").on(table.status)],
+);
+
+// Barcodes read off DailyMed label photos (lib/label-barcodes.ts), for FDA
+// products that have no retail barcode from openFDA. One row per label
+// image scanned, so no image is fetched or decoded twice; the image sync
+// scans every photo it downloads, and the hourly "labels" job works through
+// the other label images of products still missing a barcode. Not seeded:
+// survives reseeds and deploys. Per set id, not per product: one label can
+// cover several package sizes, so a barcode may stand for any of them.
+export const labelScans = sqliteTable(
+  "label_scans",
+  {
+    splSetId: text("spl_set_id").notNull(),
+    imageName: text("image_name").notNull(),
+    status: text("status").notNull(), // "ok" (read, maybe no barcode) | "rejected" (404, not an image) | "error" (retry later)
+    barcodes: text("barcodes", { mode: "json" }).$type<string[]>().notNull().default(sql`'[]'`),
+    attempts: integer("attempts").notNull().default(0),
+    lastError: text("last_error"),
+    scannedAt: text("scanned_at").notNull(),
+    retryAfter: text("retry_after"),
+  },
+  (table) => [primaryKey({ columns: [table.splSetId, table.imageName] })],
+);
+
+export const labelBarcodes = sqliteTable(
+  "label_barcodes",
+  {
+    splSetId: text("spl_set_id").notNull(),
+    barcode: text("barcode").notNull(), // as read: 12-digit UPC-A, 13-digit EAN, 8-digit EAN-8 or 14-digit GTIN
+    imageName: text("image_name").notNull(),
+    foundAt: text("found_at").notNull(),
+  },
+  (table) => [
+    uniqueIndex("label_barcodes_set_barcode_idx").on(table.splSetId, table.barcode),
+    index("label_barcodes_barcode_idx").on(table.barcode),
+  ],
 );
 
 // ---------------------------------------------------------------------------

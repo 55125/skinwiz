@@ -9,7 +9,7 @@ export default function manifest(): MetadataRoute.Manifest {
     id: "/",
     name: SITE_NAME,
     short_name: SITE_NAME,
-    description: "Your skincare shelf, regimen and avoid list, matched by active ingredient.",
+    description: "Your skincare products, routine and avoid list, matched by active ingredient.",
     start_url: "/regimen?utm_source=homescreen",
     scope: "/",
     display: "standalone",
@@ -21,7 +21,7 @@ export default function manifest(): MetadataRoute.Manifest {
       { src: "/icons/icon-maskable-512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
     ],
     shortcuts: [
-      { name: "My shelf", url: "/shelf?utm_source=homescreen" },
+      { name: "My products", url: "/regimen?utm_source=homescreen" },
       { name: "Search products", url: "/search?utm_source=homescreen" },
     ],
   };

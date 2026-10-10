@@ -2,7 +2,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { RoutineDisclaimer } from "@/components/routine-disclaimer";
+import { RoutineDisclaimer, StarterRoutineNotice } from "@/components/routine-disclaimer";
+import { starterSource } from "@/db/starter-routines";
 import { RoutineVote } from "@/components/routine-vote";
 import { RoutineReport } from "@/components/routine-report";
 import { getRoutine, getSessionVote, getSessionReported } from "@/lib/routines";
@@ -18,7 +19,9 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   if (!routine) return {};
   return {
     title: `${routine.title} — ${routine.concernName} routine`,
-    description: `A community-submitted ${routine.concernName.toLowerCase()} routine on ${SITE_NAME}. User-posted and not reviewed by dermatologists.`,
+    description: routine.isStarter
+      ? `A starter ${routine.concernName.toLowerCase()} routine on ${SITE_NAME}, written from published dermatology guidance.`
+      : `A community-submitted ${routine.concernName.toLowerCase()} routine on ${SITE_NAME}. User-posted and not reviewed by dermatologists.`,
     alternates: { canonical: `/routines/${routine.id}` },
   };
 }
@@ -50,7 +53,7 @@ export default async function RoutineDetailPage({ params }: { params: Promise<{ 
         <RoutineVote routineId={routine.id} initialScore={routine.score} initialVote={myVote} />
       </div>
 
-      <RoutineDisclaimer />
+      {routine.isStarter ? <StarterRoutineNotice source={starterSource(routine.title)} /> : <RoutineDisclaimer />}
 
       <RoutineReport routineId={routine.id} initialReported={alreadyReported} />
 

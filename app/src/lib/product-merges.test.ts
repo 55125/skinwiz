@@ -34,10 +34,10 @@ before(async () => {
   db.run(sql`INSERT INTO actives (id, canonical_name, categories, synonyms) VALUES ('adapalene', 'Adapalene', '["acne"]', '[]')`);
   db.run(sql`INSERT INTO ingredients (id, name, aliases, product_count) VALUES ('adapalene', 'Adapalene', '[]', 3)`);
   const product = (id: string, name: string, maker: string, opts: { rx?: boolean; canonical?: string; image?: string } = {}) =>
-    db.run(sql`INSERT INTO products (id, concern_id, brand_name, manufacturer, dosage_form, active_ingredient_text, active_ids,
+    db.run(sql`INSERT INTO products (id, concern_id, concern_ids, brand_name, manufacturer, dosage_form, active_ingredient_text, active_ids,
         spl_set_id, free_from_flags, allergen_hits, strengths, strength_key, data_source, verified, is_rx, canonical_id, image_url,
         package_description, marketing_category)
-      VALUES (${id}, ${opts.rx ? "rx" : "acne"}, ${name}, ${maker}, 'GEL', 'ADAPALENE 1 mg/g', '["adapalene"]', NULL,
+      VALUES (${id}, ${opts.rx ? "rx" : "acne"}, json_array(${opts.rx ? "rx" : "acne"}), ${name}, ${maker}, 'GEL', 'ADAPALENE 1 mg/g', '["adapalene"]', NULL,
         '["fragrance-free"]', '[]', '{"adapalene":0.1}', 'adapalene:0.1', 'openfda', 1, ${opts.rx ? 1 : 0},
         ${opts.canonical ?? null}, ${opts.image ?? null}, '45 g in 1 TUBE', 'NDA')`);
   product(CANON, "Differin Adapalene Gel 0.1%", "Galderma");
@@ -163,6 +163,51 @@ test("canonical page data: URL, buy links, barcodes, best image", () => {
   assert.deepEqual(q.getRetailBarcodes([CANON, DUP]), ["0302993917564"]);
   assert.equal(q.bestProductImage(q.getProduct(CANON)!, q.getMergedDuplicates(CANON)), "https://images.example/differin.jpg");
   assert.equal(q.bestProductImage({ imageUrl: "/img/dm/0a0a0a0a-0a0a-0a0a-0a0a-0a0a0a0a0a0a/0123456789ab/full.webp" }, [{ imageUrl: "https://x/y.jpg" }]), "https://x/y.jpg");
+});
+
+test("product photos lead, label artwork second, on the page and in grids", () => {
+  const label = "/img/dm/0a0a0a0a-0a0a-0a0a-0a0a-0a0a0a0a0a0a/0123456789ab/full.webp";
+  const photo = "https://x/y.jpg";
+  // both: the photo first, the label kept as the second image
+  assert.deepEqual(q.productImages({ imageUrl: label }, [{ imageUrl: photo }]), { photo, label });
+  assert.deepEqual(q.productImages({ imageUrl: photo }, [{ imageUrl: label }]), { photo, label });
+  // only a label: it is the image, with nothing second
+  assert.deepEqual(q.productImages({ imageUrl: label }, []), { photo: label, label: null });
+  assert.deepEqual(q.productImages({ imageUrl: null }, [{ imageUrl: null }]), { photo: null, label: null });
+  // Kroger's photo fills in only when there is no retail photo of our own
+  const kroger = "https://www.kroger.com/product/images/large/front/0030299491045";
+  assert.deepEqual(q.productImages({ imageUrl: label }, [], kroger), { photo: kroger, label });
+  assert.deepEqual(q.productImages({ imageUrl: null }, [], kroger), { photo: kroger, label: null });
+  assert.deepEqual(q.productImages({ imageUrl: label }, [{ imageUrl: photo }], kroger), { photo, label });
+  assert.deepEqual(q.productImages({ imageUrl: photo }, [], kroger), { photo, label: null });
+
+  // a grid card uses the merged listing's photo over the canonical's own label
+  db.run(sql`UPDATE products SET image_url = ${label} WHERE id = ${CANON}`);
+  db.run(sql`UPDATE products SET image_url = ${label} WHERE id = 'otc-other'`);
+  try {
+    const images = q.getBestProductImages([CANON, "otc-other", "rx-1"]);
+    assert.equal(images.get(CANON), "https://images.example/differin.jpg");
+    assert.equal(images.get("otc-other"), label);
+    assert.equal(images.get("rx-1"), null);
+    assert.deepEqual(q.getBestProductImages([]), new Map());
+
+    // with Kroger configured, its photo replaces the label-only card, never a retail photo
+    process.env.KROGER_CLIENT_ID = "client";
+    process.env.KROGER_CLIENT_SECRET = "secret";
+    const at = new Date().toISOString();
+    for (const id of [CANON, "otc-other", "rx-1"])
+      db.run(sql`INSERT INTO price_checks (product_id, source, checked_at, status, misses, next_check_at, image_url)
+        VALUES (${id}, 'kroger', ${at}, 'listed', 0, ${at}, ${`https://www.kroger.com/product/images/large/front/${id}`})`);
+    const withKroger = q.getBestProductImages([CANON, "otc-other", "rx-1"]);
+    assert.equal(withKroger.get(CANON), "https://images.example/differin.jpg");
+    assert.equal(withKroger.get("otc-other"), "https://www.kroger.com/product/images/large/front/otc-other");
+    assert.equal(withKroger.get("rx-1"), null);
+  } finally {
+    delete process.env.KROGER_CLIENT_ID;
+    delete process.env.KROGER_CLIENT_SECRET;
+    db.run(sql`DELETE FROM price_checks`);
+    db.run(sql`UPDATE products SET image_url = NULL WHERE id IN (${CANON}, 'otc-other')`);
+  }
 });
 
 test("a duplicate's product page 308s to its canonical", async () => {

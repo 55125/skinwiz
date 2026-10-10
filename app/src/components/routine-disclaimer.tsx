@@ -9,12 +9,37 @@ import { SITE_NAME } from "@/lib/brand";
 export function RoutineDisclaimer() {
   return (
     <Alert className="border-amber-300 bg-amber-50 dark:border-amber-900 dark:bg-amber-950/40">
-      <AlertTitle>User-submitted, not reviewed by {SITE_NAME}</AlertTitle>
+      <AlertTitle>Visitor routines aren&apos;t reviewed by {SITE_NAME}</AlertTitle>
       <AlertDescription>
         Routines are posted directly by other visitors and are not checked by dermatologists or{" "}
-        {SITE_NAME} staff. Vote score reflects community opinion, not clinical accuracy. Don&apos;t
-        treat a routine as medical advice — see a board-certified dermatologist for guidance
+        {SITE_NAME} staff. Vote score reflects community opinion, not clinical accuracy. Routines marked
+        Starter were written by {SITE_NAME} from the published dermatology guidance each one links to.
+        Don&apos;t treat any routine as medical advice — see a board-certified dermatologist for guidance
         specific to you.
+      </AlertDescription>
+    </Alert>
+  );
+}
+
+// Shown instead of the visitor disclaimer on a starter routine's own page.
+export function StarterRoutineNotice({ source }: { source?: { sourceName: string; sourceTitle: string; sourceUrl: string } }) {
+  return (
+    <Alert>
+      <AlertTitle>Starter routine from {SITE_NAME}</AlertTitle>
+      <AlertDescription>
+        <p>
+          Written by {SITE_NAME} from published dermatology guidance
+          {source ? (
+            <>
+              {": "}
+              <a href={source.sourceUrl} target="_blank" rel="noopener noreferrer" className="font-medium text-brand hover:underline">
+                {source.sourceName}, &ldquo;{source.sourceTitle}&rdquo;
+                <span className="sr-only"> (opens in new tab)</span>
+              </a>
+            </>
+          ) : null}
+          . A general starting point, not medical advice — see a board-certified dermatologist for guidance specific to you.
+        </p>
       </AlertDescription>
     </Alert>
   );

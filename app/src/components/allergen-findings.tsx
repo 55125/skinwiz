@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { CONTACT_ALLERGENS, allergenMembers, allergensInIngredient, getAllergen, normalizeForAllergens } from "@/db/contact-allergens";
 import { tidyIngredientName } from "@/lib/format";
+import { IngredientLink } from "@/components/ingredient-link";
 import { cn } from "@/lib/utils";
 
 // The contact allergens a product's ingredient list contains, each with the
@@ -9,24 +10,24 @@ import { cn } from "@/lib/utils";
 // ("Kathon CG" is MCI/MI), so showing the mapping is the point.
 export function AllergenFindings({
   hits,
-  ingredientNames,
+  ingredients,
   avoidIds,
 }: {
   hits: string[];
-  ingredientNames: string[];
+  ingredients: { ingredientId: string; rawName: string }[];
   avoidIds: string[];
 }) {
   const avoided = new Set(avoidIds.flatMap(allergenMembers));
-  const listedAs = new Map<string, string[]>();
-  for (const raw of ingredientNames) {
-    for (const id of allergensInIngredient(raw)) listedAs.set(id, [...(listedAs.get(id) ?? []), raw]);
+  const listedAs = new Map<string, { ingredientId: string; rawName: string }[]>();
+  for (const ing of ingredients) {
+    for (const id of allergensInIngredient(ing.rawName)) listedAs.set(id, [...(listedAs.get(id) ?? []), ing]);
   }
   const rows = hits.flatMap((id) => {
     const a = getAllergen(id);
     if (!a) return [];
     // Only the label names that say something the allergen's own name doesn't.
     const own = normalizeForAllergens(a.name);
-    const names = (listedAs.get(id) ?? []).filter((n) => !own.includes(normalizeForAllergens(n))).map(tidyIngredientName);
+    const names = (listedAs.get(id) ?? []).filter((n) => !own.includes(normalizeForAllergens(n.rawName)));
     return [{ allergen: a, names, onList: avoided.has(id) }];
   });
   rows.sort((x, y) => Number(y.onList) - Number(x.onList));
@@ -57,7 +58,16 @@ export function AllergenFindings({
                 </Badge>
               )}
               {names.length > 0 && (
-                <span className="text-xs text-muted-foreground"> — listed as {names.slice(0, 3).join(", ")}</span>
+                <span className="text-xs text-muted-foreground">
+                  {" "}
+                  — listed as{" "}
+                  {names.slice(0, 3).map((n, i) => (
+                    <span key={`${n.ingredientId}-${i}`}>
+                      {i > 0 && ", "}
+                      <IngredientLink id={n.ingredientId}>{tidyIngredientName(n.rawName)}</IngredientLink>
+                    </span>
+                  ))}
+                </span>
               )}
               {allergen.id === "fragrance" && (
                 <p className="text-xs text-muted-foreground">
@@ -73,9 +83,13 @@ export function AllergenFindings({
         </ul>
       )}
       <p className="mt-2 text-xs text-muted-foreground">
-        Matched on label names and synonyms from the published list.{" "}
+        Matched on label names and synonyms.{" "}
         <Link href="/allergens" className="font-medium text-brand hover:underline">
-          About the allergen list →
+          About the allergen list
+        </Link>
+        {" · "}
+        <Link href="/about#how-we-check" className="font-medium text-brand hover:underline">
+          How we check
         </Link>
       </p>
     </div>

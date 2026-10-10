@@ -29,7 +29,7 @@ export default async function VerifyPage({ searchParams }: { searchParams: Promi
           <input type="hidden" name="token" value={token} />
           {next && <input type="hidden" name="next" value={next} />}
           <p>
-            Save this browser&apos;s shelf to <span className="font-medium">{maskEmail(pending.email)}</span> and sign in
+            Save this browser&apos;s products to <span className="font-medium">{maskEmail(pending.email)}</span> and sign in
             on this device?
           </p>
           <Button type="submit" size="lg">

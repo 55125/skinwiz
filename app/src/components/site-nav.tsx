@@ -24,20 +24,32 @@ function concernItems(concerns: Concern[]): NavItem[] {
 
 const CONCERN_PREFIXES = ["/concern", "/browse", "/product", "/same"];
 
-function useDismiss(open: boolean, close: () => void, ref: React.RefObject<HTMLElement | null>) {
+// Closes on an outside click or Escape. With a returnFocus button, Escape
+// also puts focus back on it, so a keyboard user isn't left on a link that
+// just disappeared.
+function useDismiss(
+  open: boolean,
+  close: () => void,
+  ref: React.RefObject<HTMLElement | null>,
+  returnFocus?: React.RefObject<HTMLElement | null>,
+) {
   useEffect(() => {
     if (!open) return;
     const onPointer = (e: PointerEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node)) close();
     };
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && close();
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      close();
+      returnFocus?.current?.focus();
+    };
     document.addEventListener("pointerdown", onPointer);
     document.addEventListener("keydown", onKey);
     return () => {
       document.removeEventListener("pointerdown", onPointer);
       document.removeEventListener("keydown", onKey);
     };
-  }, [open, close, ref]);
+  }, [open, close, ref, returnFocus]);
 }
 
 function NavMenu({
@@ -59,13 +71,14 @@ function NavMenu({
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
-  useDismiss(open, () => setOpen(false), ref);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  useDismiss(open, () => setOpen(false), ref, buttonRef);
   return (
     <div ref={ref} className="relative">
       <button
+        ref={buttonRef}
         type="button"
         aria-expanded={open}
-        aria-haspopup="menu"
         onClick={() => setOpen((o) => !o)}
         className={cn(
           "flex items-center gap-1.5 rounded-full px-3 py-1.5 transition-colors",
@@ -80,7 +93,6 @@ function NavMenu({
       </button>
       {open && (
         <div
-          role="menu"
           className={cn(
             "absolute top-full z-30 mt-2 rounded-2xl border bg-popover p-1.5 shadow-xl shadow-foreground/5",
             align === "right" ? "right-0" : "left-0",
@@ -91,7 +103,6 @@ function NavMenu({
             <Link
               key={item.href}
               href={item.href}
-              role="menuitem"
               onClick={() => setOpen(false)}
               aria-current={isActive(pathname, item.href) ? "page" : undefined}
               className={cn(
@@ -166,7 +177,8 @@ function PhoneSearch({ pathname }: { pathname: string }) {
 function MobileMenu({ pathname, concerns, showSearch }: { pathname: string; concerns: Concern[]; showSearch: boolean }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
-  useDismiss(open, () => setOpen(false), ref);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  useDismiss(open, () => setOpen(false), ref, buttonRef);
   // Close on navigation (a search submit or suggestion doesn't pass through our links).
   const [lastPath, setLastPath] = useState(pathname);
   if (pathname !== lastPath) {
@@ -190,6 +202,7 @@ function MobileMenu({ pathname, concerns, showSearch }: { pathname: string; conc
   return (
     <div ref={ref} className="lg:hidden">
       <button
+        ref={buttonRef}
         type="button"
         aria-expanded={open}
         aria-label={open ? "Close menu" : "Open menu"}

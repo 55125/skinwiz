@@ -17,7 +17,7 @@ export default function AccessibilityPage() {
   return (
     <LegalPage
       title="Accessibility"
-      updated="October 7, 2026"
+      updated="October 10, 2026"
       intro={
         <p>
           We want {SITE_NAME} to work for everyone, including people who use screen readers, keyboard navigation,
@@ -39,6 +39,14 @@ export default function AccessibilityPage() {
         Some product photos come from manufacturers&apos; package labels and may contain text that isn&apos;t
         repeated on the page; the ingredient list and label details on each product page carry that information as
         text.
+      </p>
+      <p>
+        The barcode scanner needs a camera. Typing the number printed under the barcode into search finds the same
+        product.
+      </p>
+      <p>
+        Links to retailers, videos and other outside sites take you to pages we don&apos;t control, and their
+        accessibility is up to those sites.
       </p>
 
       <h2>Report a barrier</h2>

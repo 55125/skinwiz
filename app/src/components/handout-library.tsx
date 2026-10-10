@@ -55,20 +55,19 @@ export function HandoutLibrary({
           aria-label="Search handouts"
         />
       </div>
-      <div className="flex flex-wrap gap-1.5" role="tablist" aria-label="Handout categories">
+      <div className="flex flex-wrap gap-1.5" role="group" aria-label="Handout categories">
         {[{ id: "all" as const, name: "All", n: items.length }, ...categories.map((c) => ({ id: c.id, name: c.name, n: count(c.id) }))].map((c) => (
           <button
             key={c.id}
             type="button"
-            role="tab"
-            aria-selected={cat === c.id}
+            aria-pressed={cat === c.id}
             onClick={() => setCat(c.id)}
             className={cn(
               "rounded-full border px-3 py-1 text-xs font-medium transition-colors",
               cat === c.id ? "border-primary bg-primary text-primary-foreground" : "bg-card hover:bg-muted",
             )}
           >
-            {c.name} <span className="opacity-70">{c.n}</span>
+            {c.name} <span className="tabular-nums">{c.n}</span>
           </button>
         ))}
       </div>

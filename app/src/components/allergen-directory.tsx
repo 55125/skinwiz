@@ -55,7 +55,7 @@ export function AllergenDirectory({ counts, avoidIds }: { counts: Record<string,
                 <li key={a.id} className="flex flex-col gap-2 p-4 sm:flex-row sm:items-start sm:justify-between">
                   <div className="min-w-0 space-y-1">
                     <p className="flex flex-wrap items-center gap-2">
-                      <Link href={`/allergens/${a.id}`} className="font-medium hover:underline">
+                      <Link href={`/allergens/${a.id}`} className="font-medium [overflow-wrap:anywhere] hover:underline">
                         {a.name}
                       </Link>
                       {a.rare && <Badge variant="secondary">rarely relevant</Badge>}

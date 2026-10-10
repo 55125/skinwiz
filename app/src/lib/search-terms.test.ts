@@ -18,6 +18,13 @@ test("phrases and synonyms match what labels say", () => {
   assert.deepEqual(alts("paula's choice")[0], ["paula's", "paulas"]);
 });
 
+test("brand spellings people type find the real names", () => {
+  assert.deepEqual(alts("olay regenerates")[1], ["regenerist", "regenerat"]);
+  assert.ok(alts("loreal")[0].includes("l'oreal"));
+  // Accented searches also match the plain-ASCII rows.
+  assert.deepEqual(alts("l’oréal night")[0], ["l'oréal", "loréal", "l'oreal", "loreal"]);
+});
+
 test("short words only match at the start of a word", () => {
   const [spf] = parseSearch("spf").terms;
   assert.equal(spf.wordStart, true);

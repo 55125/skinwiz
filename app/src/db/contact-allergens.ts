@@ -56,11 +56,27 @@ export type ContactAllergen = {
   note?: string;
   // Low current relevance; still matchable, sorted last.
   rare?: boolean;
+  // Acrylates only: match in polymer ingredients ("... copolymer", carbomer)
+  // or only outside them, since the raw acrylates and the finished polymers
+  // carry very different risk.
+  form?: "monomer" | "polymer";
+};
+
+// "cross-reacting": react to one, likely to react to the others.
+// "mix": the chemicals in one patch-test preparation.
+// "all": a convenience list of every allergen of one kind.
+export type AllergenGroupKind = "cross-reacting" | "mix" | "all";
+
+export const GROUP_KIND_LABEL: Record<AllergenGroupKind, string> = {
+  "cross-reacting": "Cross-reacting family",
+  mix: "Patch-test mix",
+  all: "All of a kind",
 };
 
 export type AllergenGroup = {
   id: string;
   name: string;
+  kind: AllergenGroupKind;
   members: string[];
   note: string;
 };
@@ -78,9 +94,9 @@ export const ALLERGEN_SECTIONS: AllergenSection[] = [
     id: "formaldehyde",
     title: "Formaldehyde and formaldehyde releasers",
     intro:
-      "About 1 in 6 stay-on and 1 in 4 rinse-off products contain a formaldehyde releaser. If you react to formaldehyde, avoid the whole group. Release strength runs quaternium-15 > diazolidinyl urea > DMDM hydantoin > imidazolidinyl urea > bronopol.",
+      "About 1 in 6 stay-on and 1 in 4 rinse-off products contain a formaldehyde releaser. If you react to formaldehyde, avoid the whole group. Diazolidinyl urea and quaternium-15 release the most; quaternium-15 is also the releaser people most often react to, sometimes on its own rather than through formaldehyde.",
     sources:
-      "Goossens & Aerts, Contact Dermatitis, 2022; Yang et al., JAMA Dermatology, 2023; Stewart et al., Int J Toxicol, 2023; Fonacier et al., 2015.",
+      "Goossens & Aerts, Contact Dermatitis, 2022; Yang et al., JAMA Dermatology, 2023; Stewart et al., Int J Toxicol, 2023; Fonacier et al., 2015; de Groot et al., Contact Dermatitis, 2009-2010.",
   },
   {
     id: "preservative",
@@ -214,8 +230,40 @@ export const CONTACT_ALLERGENS: ContactAllergen[] = [
     id: "balsam-of-peru",
     name: "Balsam of Peru (Myroxylon pereirae)",
     section: "fragrance",
-    terms: ["myroxylon pereirae", "balsam of peru", "balsam peru", "peru balsam", "myroxylon balsamum"],
+    terms: ["myroxylon pereirae", "pereirae", "balsam of peru", "balsam peru", "peru balsam", "peruvian balsam"],
     note: `A fragrance and flavor marker made of many fragrance chemicals: cinnamic acid, cinnamyl cinnamate, benzyl benzoate, benzoic acid, eugenol and vanillin. ${HIDDEN_IN_UNSCENTED}`,
+  },
+  // Balsam of Peru's usual co-reactors (Fonacier et al., 2015; de Groot,
+  // Patch Testing, 4th ed.).
+  {
+    id: "tolu-balsam",
+    name: "Tolu balsam (Myroxylon balsamum)",
+    section: "fragrance",
+    terms: ["myroxylon balsamum", "balsam tolu", "tolu balsam", "balsam of tolu"],
+    unless: ["myroxylon balsamum var. pereirae", "myroxylon balsamum var pereirae", "myroxylon balsamum pereirae"],
+    note: "A close relative of balsam of Peru with many of the same chemicals; the two often react together.",
+  },
+  {
+    id: "benzoin",
+    name: "Benzoin and storax (styrax)",
+    section: "fragrance",
+    terms: ["styrax", "benzoin", "storax", "liquidambar"],
+    note: "Resins used as fragrance fixatives, and benzoin tincture as a skin adhesive under bandages. Often react together with balsam of Peru.",
+  },
+  {
+    id: "cinnamon",
+    name: "Cinnamon (bark oil and extracts)",
+    section: "fragrance",
+    terms: ["cinnamomum", "cinnamon"],
+    unless: ["cinnamomum camphora"],
+    note: "A main natural source of cinnamal (fragrance mix I), in lip plumpers, flavored lip products and toothpaste. Often reacts together with balsam of Peru.",
+  },
+  {
+    id: "clove",
+    name: "Clove (bud, leaf and flower oil)",
+    section: "fragrance",
+    terms: ["eugenia caryophyllus", "syzygium aromaticum", "clove"],
+    note: "Mostly eugenol (fragrance mix I). Often reacts together with balsam of Peru.",
   },
   { id: "limonene", name: "Limonene", section: "fragrance", terms: ["limonene", "d-limonene", "dipentene"], note: OXIDIZES },
   { id: "linalool", name: "Linalool", section: "fragrance", terms: ["linalool"], unless: ["ethyl linalool"], note: OXIDIZES },
@@ -256,7 +304,7 @@ export const CONTACT_ALLERGENS: ContactAllergen[] = [
     name: "Quaternium-15",
     section: "formaldehyde",
     terms: ["quaternium-15", "dowicil", "methenamine 3-chloroallylochloride", "chloroallyl methenamine chloride"],
-    note: "The strongest formaldehyde releaser.",
+    note: "One of the two strongest formaldehyde releasers, and the one people most often react to; some react to it without being allergic to formaldehyde.",
   },
   { id: "diazolidinyl-urea", name: "Diazolidinyl urea", section: "formaldehyde", terms: ["diazolidinyl urea", "germall ii"] },
   { id: "imidazolidinyl-urea", name: "Imidazolidinyl urea", section: "formaldehyde", terms: ["imidazolidinyl urea", "germall 115"] },
@@ -280,6 +328,17 @@ export const CONTACT_ALLERGENS: ContactAllergen[] = [
   },
   { id: "sodium-hydroxymethylglycinate", name: "Sodium hydroxymethylglycinate", section: "formaldehyde", terms: ["hydroxymethylglycinate"] },
   { id: "benzylhemiformal", name: "Benzylhemiformal", section: "formaldehyde", terms: ["benzylhemiformal", "benzyl hemiformal"] },
+  // de Groot et al., Contact Dermatitis 2009-2010 (formaldehyde-releasers in
+  // cosmetics series).
+  {
+    id: "methenamine",
+    name: "Methenamine (hexamethylenetetramine)",
+    section: "formaldehyde",
+    terms: ["methenamine", "hexamethylenetetramine", "hexamine"],
+    unless: ["methenamine 3-chloroallylochloride", "chloroallyl methenamine chloride"],
+    rare: true,
+  },
+  { id: "mdm-hydantoin", name: "MDM hydantoin", section: "formaldehyde", terms: ["mdm hydantoin", "monomethylol dimethyl hydantoin"], rare: true },
   {
     id: "hydroxyethyl-triazine",
     name: "Hexahydro-1,3,5-tris(2-hydroxyethyl)triazine",
@@ -299,7 +358,7 @@ export const CONTACT_ALLERGENS: ContactAllergen[] = [
     name: "Tosylamide/formaldehyde resin",
     section: "formaldehyde",
     terms: ["tosylamide formaldehyde", "tosylamide/formaldehyde", "toluene sulfonamide formaldehyde", "toluenesulfonamide formaldehyde"],
-    note: "Common in nail polish; reactions often show up on the eyelids, face and neck rather than the fingers.",
+    note: "Common in nail polish; reactions often show up on the eyelids, face and neck rather than the fingers. The allergy is usually to the resin itself, and most people with it aren't allergic to formaldehyde, so it isn't part of the formaldehyde groups.",
   },
 
   // --- 3. Other preservatives ---
@@ -317,7 +376,12 @@ export const CONTACT_ALLERGENS: ContactAllergen[] = [
     section: "preservative",
     // Misspellings seen on real labels ("methyisothiazolinone") and the bare
     // class name some labels use.
-    terms: ["methylisothiazolinone", "methyisothiazolinone", "methyl isothiazolinone", "2-methyl-4-isothiazolin-3-one", "neolone", "isothiazolinones", "kathon"],
+    // MCI is only sold mixed with MI, so its names flag MI too (as the MCI/MI
+    // note promises) even when a label lists the chloro half alone.
+    terms: [
+      "methylisothiazolinone", "methyisothiazolinone", "methyl isothiazolinone", "2-methyl-4-isothiazolin-3-one", "neolone", "isothiazolinones", "kathon",
+      "methylchloroisothiazolinone", "methylchloroisothiazolone", "chloromethylisothiazolinone", "5-chloro-2-methyl-4-isothiazolin-3-one",
+    ],
     aka: ["MI", "MIT"],
     note: "Rising prevalence, especially from rinse-off products and wet wipes.",
   },
@@ -371,7 +435,7 @@ export const CONTACT_ALLERGENS: ContactAllergen[] = [
     section: "preservative",
     terms: ["octylisothiazolinone", "2-octyl-4-isothiazolin-3-one", "octhilinone"],
     aka: ["OIT"],
-    note: "A preservative in leather (furniture, shoes, gloves), paints and some cosmetics.",
+    note: "A preservative in leather (furniture, shoes, gloves), paints and some cosmetics. Some people allergic to MI react to it too.",
   },
   {
     id: "benzalkonium-chloride",
@@ -462,7 +526,13 @@ export const CONTACT_ALLERGENS: ContactAllergen[] = [
   },
 
   // --- 6. UV filters ---
-  { id: "octocrylene", name: "Octocrylene", section: "uv-filter", terms: ["octocrylene"] },
+  {
+    id: "octocrylene",
+    name: "Octocrylene",
+    section: "uv-filter",
+    terms: ["octocrylene"],
+    note: "Causes contact and photocontact allergy. People photoallergic to ketoprofen (an anti-inflammatory gel) often react to it, and to benzophenones, too.",
+  },
   {
     id: "oxybenzone",
     name: "Oxybenzone (benzophenone-3)",
@@ -540,9 +610,10 @@ export const CONTACT_ALLERGENS: ContactAllergen[] = [
     terms: [
       "chamomile", "chamomilla", "matricaria", "anthemis nobilis", "chamaemelum", "arnica", "feverfew", "chrysanthemum parthenium", "tanacetum", "calendula",
       "achillea millefolium", "yarrow", "artemisia", "mugwort", "taraxacum", "dandelion", "sesquiterpene lactone",
+      "centaurea cyanus", "cornflower", "echinacea", "arctium lappa", "burdock", "helichrysum", "inula", "elecampane", "cynara scolymus", "artichoke",
     ],
     aka: ["Asteraceae", "sesquiterpene lactone mix"],
-    note: "The patch-test marker is sesquiterpene lactone mix. Bisabolol, though chamomile-derived, is listed separately.",
+    note: "The patch-test marker is sesquiterpene lactone mix. Bisabolol, though chamomile-derived, is listed separately. Refined sunflower and safflower oils, also from this family, carry almost none of the allergen and aren't flagged.",
   },
   { id: "propolis", name: "Propolis", section: "botanical", terms: ["propolis", "bee glue"] },
   { id: "tea-tree-oil", name: "Tea tree oil", section: "botanical", terms: ["melaleuca alternifolia", "tea tree"], note: OXIDIZES },
@@ -615,7 +686,7 @@ export const CONTACT_ALLERGENS: ContactAllergen[] = [
     name: "p-Phenylenediamine (PPD)",
     section: "hair",
     terms: ["p-phenylenediamine", "para-phenylenediamine", "paraphenylenediamine", "1,4-phenylenediamine", "1,4-diaminobenzene", "ppd"],
-    note: "Also in “black henna” temporary tattoos. Cross-reacts with toluene-2,5-diamine. PPD derivatives such as 2-methoxymethyl-p-phenylenediamine are flagged too, since many PPD-allergic people react to them.",
+    note: "Also in “black henna” temporary tattoos. Cross-reacts with toluene-2,5-diamine. PPD derivatives such as 2-methoxymethyl-p-phenylenediamine are flagged too, since many PPD-allergic people react to them. Can also cross-react with other “para” compounds: benzocaine, PABA sunscreens and some textile dyes.",
   },
   {
     id: "ptd",
@@ -633,8 +704,8 @@ export const CONTACT_ALLERGENS: ContactAllergen[] = [
     id: "neomycin",
     name: "Neomycin",
     section: "medicament",
-    terms: ["neomycin", "framycetin", "paromomycin"],
-    note: "Cross-reacts with framycetin, paromomycin and other aminoglycosides, which are flagged too.",
+    terms: ["neomycin", "framycetin", "paromomycin", "gentamicin", "tobramycin", "kanamycin"],
+    note: "Cross-reacts with framycetin, paromomycin and other aminoglycosides (gentamicin, tobramycin, kanamycin), which are flagged too.",
   },
   { id: "bacitracin", name: "Bacitracin", section: "medicament", terms: ["bacitracin"] },
   { id: "polymyxin-b", name: "Polymyxin B", section: "medicament", terms: ["polymyxin"] },
@@ -659,37 +730,60 @@ export const CONTACT_ALLERGENS: ContactAllergen[] = [
     id: "corticosteroid-class-b",
     name: "Corticosteroids, class B (acetonide type)",
     section: "medicament",
-    terms: ["budesonide", "triamcinolone", "fluocinolone acetonide", "fluocinonide", "desonide", "amcinonide", "halcinonide"],
+    terms: ["budesonide", "triamcinolone", "fluocinolone acetonide", "fluocinonide", "desonide", "amcinonide", "halcinonide", "flurandrenolide", "fludroxycortide", "flunisolide"],
     aka: ["budesonide (patch-test marker)"],
-    note: "Budesonide also cross-reacts with some class D steroids.",
+    note: "Budesonide also cross-reacts with class D2 steroids (hydrocortisone butyrate type).",
   },
   {
     id: "corticosteroid-class-c",
     name: "Corticosteroids, class C (non-esterified)",
     section: "medicament",
     terms: ["betamethasone", "dexamethasone", "desoximetasone"],
-    unless: ["betamethasone valerate", "betamethasone dipropionate", "betamethasone 17-valerate", "dexamethasone valerate"],
+    unless: ["betamethasone valerate", "betamethasone dipropionate", "betamethasone 17-valerate", "betamethasone 17,21-dipropionate", "dexamethasone valerate"],
   },
+  // Class D split per Coopman et al., 1989 and Baeck et al., 2011: D1 (C16-
+  // methylated, halogenated esters) cross-reacts with class C, D2 (labile
+  // esters) with class A and budesonide.
   {
-    id: "corticosteroid-class-d",
-    name: "Corticosteroids, class D (ester type)",
+    id: "corticosteroid-class-d1",
+    name: "Corticosteroids, class D1 (halogenated esters)",
     section: "medicament",
     terms: [
-      "hydrocortisone 17-butyrate", "hydrocortisone butyrate", "hydrocortisone valerate", "hydrocortisone probutate", "clobetasol", "clobetasone",
-      "betamethasone valerate", "betamethasone dipropionate", "mometasone", "fluticasone", "methylprednisolone aceponate", "prednicarbate",
-      // Esters the class A and C lists exclude, so they must land here.
-      "hydrocortisone 17-valerate", "hydrocortisone buteprate", "betamethasone 17-valerate", "dexamethasone valerate",
+      "clobetasol", "clobetasone", "betamethasone valerate", "betamethasone dipropionate", "mometasone", "fluticasone",
+      // Esters the class C list excludes, so they must land here.
+      "betamethasone 17-valerate", "betamethasone 17,21-dipropionate", "dexamethasone valerate",
+      "halobetasol", "ulobetasol", "beclomethasone dipropionate", "beclometasone dipropionate", "alclometasone", "diflorasone",
     ],
-    aka: ["hydrocortisone-17-butyrate (patch-test marker)", "clobetasol-17-propionate (patch-test marker)"],
+    aka: ["clobetasol-17-propionate (patch-test marker)"],
+    note: "Most often cross-reacts with class C (betamethasone, dexamethasone), less with D2.",
+  },
+  {
+    id: "corticosteroid-class-d2",
+    name: "Corticosteroids, class D2 (labile esters)",
+    section: "medicament",
+    terms: [
+      "hydrocortisone 17-butyrate", "hydrocortisone butyrate", "hydrocortisone valerate", "hydrocortisone 17-valerate", "hydrocortisone probutate",
+      "hydrocortisone buteprate", "methylprednisolone aceponate", "prednicarbate",
+    ],
+    aka: ["hydrocortisone-17-butyrate (patch-test marker)"],
+    note: "Often cross-reacts with class A (hydrocortisone type) and with budesonide.",
   },
   {
     id: "benzocaine",
     name: "Benzocaine",
     section: "medicament",
     terms: ["benzocaine", "ethyl aminobenzoate", "ethyl 4-aminobenzoate"],
-    note: "In anti-itch, sunburn, teething and hemorrhoid products.",
+    note: "In anti-itch, sunburn, teething and hemorrhoid products. An ester-type anesthetic: cross-reacts with tetracaine and procaine, rarely with lidocaine.",
   },
-  { id: "lidocaine", name: "Lidocaine", section: "medicament", terms: ["lidocaine", "lignocaine"] },
+  {
+    id: "other-ester-caines",
+    name: "Procaine and butamben",
+    section: "medicament",
+    terms: ["procaine", "novocain", "novocaine", "chloroprocaine", "butamben", "butyl aminobenzoate"],
+    note: "Ester-type anesthetics like benzocaine, which they cross-react with.",
+    rare: true,
+  },
+  { id: "lidocaine", name: "Lidocaine", section: "medicament", terms: ["lidocaine", "lignocaine"], note: "An amide-type anesthetic; rarely cross-reacts with benzocaine and the other ester types." },
   { id: "pramoxine", name: "Pramoxine", section: "medicament", terms: ["pramoxine", "pramocaine"] },
   { id: "dyclonine", name: "Dyclonine", section: "medicament", terms: ["dyclonine"] },
   // Dibucaine and tetracaine make up the T.R.U.E. Test caine mix with
@@ -758,12 +852,31 @@ export const CONTACT_ALLERGENS: ContactAllergen[] = [
   },
 
   // --- 12. Acrylates ---
+  // Raw (monomer) acrylates are the strong sensitizers; fully polymerized
+  // ones are considered inert (ACDS Allergen of the Year 2012; Cutis,
+  // "Tackling acrylate allergy"), so they are separate entries.
   {
-    id: "acrylates",
-    name: "Acrylates and methacrylates",
+    id: "acrylate-monomers",
+    name: "Acrylates (nail, lash and adhesive monomers)",
     section: "acrylate",
-    terms: ["*acrylat*", "carbomer", "hema", "acrylic acid"],
-    note: "Thickeners such as acrylates copolymer and carbomer are in ~79% of best-selling sunscreens; monomers such as HEMA, methyl methacrylate and ethyl cyanoacrylate in nail products and adhesives are the strong sensitizers.",
+    terms: [
+      "hema", "hydroxyethyl methacrylate", "hydroxypropyl methacrylate", "methyl methacrylate", "ethyl methacrylate", "butyl methacrylate",
+      "ethyl acrylate", "ethylhexyl acrylate", "isobornyl acrylate", "tetrahydrofurfuryl methacrylate", "*cyanoacrylate",
+      "ethylene glycol dimethacrylate", "triethylene glycol dimethacrylate", "tegdma", "di-hema trimethylhexyl dicarbamate",
+      "tripropylene glycol diacrylate", "trimethylolpropane triacrylate", "pentaerythritol triacrylate", "urethane acrylate",
+      "urethane methacrylate", "bis-gma", "acrylic acid", "methacrylic acid",
+    ],
+    aka: ["2-hydroxyethyl methacrylate", "Methacrylates"],
+    form: "monomer",
+    note: "The strong sensitizers, in gel and acrylic nails, nail glue, lash glue and medical adhesives. Polymers made from them are listed separately.",
+  },
+  {
+    id: "acrylate-polymers",
+    name: "Acrylate polymers (thickeners and film formers)",
+    section: "acrylate",
+    terms: ["*acrylat*", "carbomer"],
+    form: "polymer",
+    note: "Acrylates copolymer, carbomer, sodium polyacrylate and the like, in ~79% of best-selling sunscreens. Fully polymerized, they rarely cause allergy even in people allergic to raw acrylates; avoid them only if your dermatologist says to.",
   },
   // ACDS Core Allergen Series 2020 (Schalock et al., Dermatitis, 2020).
   {
@@ -775,67 +888,141 @@ export const CONTACT_ALLERGENS: ContactAllergen[] = [
   },
 ];
 
-// Cross-reacting families and patch-test mixes, selectable as one unit.
+// Cross-reacting families, patch-test mixes and "all of a kind" lists,
+// selectable as one unit.
+const FORMALDEHYDE_GROUP_EXCLUDES = new Set(["tosylamide-formaldehyde-resin"]);
+
 export const ALLERGEN_GROUPS: AllergenGroup[] = [
   {
     id: "formaldehyde-and-releasers",
     name: "Formaldehyde and all releasers",
-    members: CONTACT_ALLERGENS.filter((a) => a.section === "formaldehyde").map((a) => a.id),
+    kind: "cross-reacting",
+    members: CONTACT_ALLERGENS.filter((a) => a.section === "formaldehyde" && !FORMALDEHYDE_GROUP_EXCLUDES.has(a.id)).map((a) => a.id),
     note: "If you react to formaldehyde, avoid the whole group: every releaser frees formaldehyde into the product.",
   },
   {
     id: "formaldehyde-releasers",
     name: "Formaldehyde releasers",
-    members: CONTACT_ALLERGENS.filter((a) => a.section === "formaldehyde" && a.id !== "formaldehyde").map((a) => a.id),
-    note: "The preservatives that release formaldehyde, without formaldehyde itself.",
+    kind: "cross-reacting",
+    members: CONTACT_ALLERGENS.filter((a) => a.section === "formaldehyde" && a.id !== "formaldehyde" && !FORMALDEHYDE_GROUP_EXCLUDES.has(a.id)).map((a) => a.id),
+    note: "The preservatives and resins that release formaldehyde, without formaldehyde itself.",
   },
   {
     id: "isothiazolinones",
     name: "Isothiazolinones (MI, MCI/MI)",
+    kind: "cross-reacting",
     members: ["methylisothiazolinone", "mci-mi"],
     note: "MCI/MI always contains MI.",
   },
   {
     id: "fragrance-mix-1",
     name: "Fragrance mix I",
+    kind: "mix",
     members: ["amyl-cinnamal", "cinnamal", "cinnamyl-alcohol", "eugenol", "isoeugenol", "geraniol", "hydroxycitronellal", "oakmoss"],
     note: "The eight fragrance chemicals in the Fragrance mix I patch test.",
   },
   {
     id: "fragrance-mix-2",
     name: "Fragrance mix II",
+    kind: "mix",
     members: ["citral", "citronellol", "coumarin", "farnesol", "hexyl-cinnamal", "hicc"],
     note: "The six fragrance chemicals in the Fragrance mix II patch test.",
   },
   {
     id: "named-fragrance-allergens",
     name: "Fragrance allergens (all)",
+    kind: "all",
     members: CONTACT_ALLERGENS.filter((a) => a.section === "fragrance").map((a) => a.id),
     note: "Every fragrance allergen on this list, plus undisclosed fragrance.",
   },
   {
+    id: "balsam-of-peru-related",
+    name: "Balsam of Peru and related",
+    kind: "cross-reacting",
+    members: ["balsam-of-peru", "tolu-balsam", "benzoin", "cinnamon", "clove", "propolis", "colophonium"],
+    note: "Often react together with balsam of Peru, through shared chemicals or frequent co-reaction; not everyone reacts to all of them. Vanilla and citrus peel are sometimes on the list too.",
+  },
+  {
+    id: "oakmoss-treemoss",
+    name: "Oakmoss and treemoss (lichens)",
+    kind: "cross-reacting",
+    members: ["oakmoss", "lichen"],
+    note: "Both lichen extracts carry atranol and chloroatranol, and they cross-react strongly.",
+  },
+  {
     id: "glucosides",
     name: "Alkyl glucosides",
+    kind: "cross-reacting",
     members: ["decyl-glucoside", "lauryl-glucoside", "coco-glucoside", "other-alkyl-glucosides"],
     note: "Mild surfactants common in “gentle” and baby cleansers, and in Tinosorb M; they cross-react.",
   },
   {
     id: "ppd-type-dyes",
     name: "PPD-type hair dyes",
+    kind: "cross-reacting",
     members: ["ppd", "ptd", "aminophenols"],
     note: "PPD and PTD cross-react; aminophenols are frequent co-reactors.",
   },
   {
     id: "chemical-uv-filters",
     name: "Chemical UV filters (all)",
+    kind: "all",
     members: CONTACT_ALLERGENS.filter((a) => a.section === "uv-filter" && a.id !== "mineral-uv-filters").map((a) => a.id),
     note: "Every organic filter on this list; leaves mineral-only (titanium dioxide, zinc oxide) sunscreens.",
   },
   {
+    id: "ester-anesthetics",
+    name: "Ester-type anesthetics (“-caines”)",
+    kind: "cross-reacting",
+    members: ["benzocaine", "tetracaine", "other-ester-caines"],
+    note: "Benzocaine, tetracaine and procaine cross-react. Amide types such as lidocaine rarely react with them.",
+  },
+  {
     id: "corticosteroids",
     name: "Topical corticosteroids (all)",
-    members: ["corticosteroid-class-a", "corticosteroid-class-b", "corticosteroid-class-c", "corticosteroid-class-d"],
-    note: "All four structural classes.",
+    kind: "all",
+    members: ["corticosteroid-class-a", "corticosteroid-class-b", "corticosteroid-class-c", "corticosteroid-class-d1", "corticosteroid-class-d2"],
+    note: "All the structural classes.",
+  },
+  // Kept as a group so avoid lists, links and printed sheets from before the
+  // D1/D2 split keep meaning what they did.
+  {
+    id: "corticosteroid-class-d",
+    name: "Corticosteroids, class D (D1 and D2)",
+    kind: "all",
+    members: ["corticosteroid-class-d1", "corticosteroid-class-d2"],
+    note: "Both kinds of corticosteroid ester.",
+  },
+  // Baeck et al., 2011: cross-reaction groups from patch-test data.
+  {
+    id: "hydrocortisone-type-steroids",
+    name: "Hydrocortisone-type steroids (class A and D2)",
+    kind: "cross-reacting",
+    members: ["corticosteroid-class-a", "corticosteroid-class-d2"],
+    note: "Hydrocortisone and its labile esters (hydrocortisone butyrate, prednicarbate) often cross-react.",
+  },
+  {
+    id: "budesonide-type-steroids",
+    name: "Acetonide-type steroids and class D2",
+    kind: "cross-reacting",
+    members: ["corticosteroid-class-b", "corticosteroid-class-d2"],
+    note: "Budesonide cross-reacts with the class B acetonides and with the class D2 esters.",
+  },
+  {
+    id: "halogenated-steroids",
+    name: "Halogenated steroids (class C and D1)",
+    kind: "cross-reacting",
+    members: ["corticosteroid-class-c", "corticosteroid-class-d1"],
+    note: "Betamethasone, dexamethasone and their esters, clobetasol and mometasone often cross-react.",
+  },
+  // Kept as a group so avoid lists from before the monomer/polymer split
+  // keep meaning what they did.
+  {
+    id: "acrylates",
+    name: "Acrylates and acrylate polymers (all)",
+    kind: "all",
+    members: ["acrylate-monomers", "acrylate-polymers"],
+    note: "Raw acrylates and the polymers made from them. Most people allergic to acrylates only need to avoid the raw ones.",
   },
 ];
 
@@ -854,7 +1041,7 @@ export const FEATURED_ALLERGEN_IDS = [
   "tocopherol",
   "chemical-uv-filters",
   "compositae",
-  "acrylates",
+  "acrylate-monomers",
 ];
 
 // Ids of the former contact-allergen free-from checks (ingredient-flags.ts),
@@ -921,11 +1108,21 @@ export const PATCH_TEST_FAMILY: Record<string, { id: string; byDefault: boolean 
   formaldehyde: { id: "formaldehyde-and-releasers", byDefault: true },
   ppd: { id: "ppd-type-dyes", byDefault: true },
   ptd: { id: "ppd-type-dyes", byDefault: true },
-  "decyl-glucoside": { id: "glucosides", byDefault: false },
-  "lauryl-glucoside": { id: "glucosides", byDefault: false },
-  "coco-glucoside": { id: "glucosides", byDefault: false },
+  "decyl-glucoside": { id: "glucosides", byDefault: true },
+  "lauryl-glucoside": { id: "glucosides", byDefault: true },
+  "coco-glucoside": { id: "glucosides", byDefault: true },
   methylisothiazolinone: { id: "isothiazolinones", byDefault: false },
   "mci-mi": { id: "isothiazolinones", byDefault: false },
+  "balsam-of-peru": { id: "balsam-of-peru-related", byDefault: false },
+  oakmoss: { id: "oakmoss-treemoss", byDefault: false },
+  lichen: { id: "oakmoss-treemoss", byDefault: false },
+  benzocaine: { id: "ester-anesthetics", byDefault: false },
+  tetracaine: { id: "ester-anesthetics", byDefault: false },
+  "corticosteroid-class-a": { id: "hydrocortisone-type-steroids", byDefault: false },
+  "corticosteroid-class-b": { id: "budesonide-type-steroids", byDefault: false },
+  "corticosteroid-class-d2": { id: "hydrocortisone-type-steroids", byDefault: false },
+  "corticosteroid-class-c": { id: "halogenated-steroids", byDefault: false },
+  "corticosteroid-class-d1": { id: "halogenated-steroids", byDefault: false },
 };
 
 // --- Matching ---
@@ -954,10 +1151,29 @@ function termPattern(term: string): string {
   return `${open ? "" : "(?<![a-z0-9])"}${escapeRe(core)}${close ? "" : "(?![a-z0-9])"}`;
 }
 
+// An ingredient that is a finished polymer, judged per comma-separated
+// ingredient: "Methyl Methacrylate Crosspolymer", "Sodium Polyacrylate",
+// "Carbomer".
+const POLYMER = /polymer|(?<![a-z0-9])poly|carbomer|crosslinked/;
+const MONOMER_TERMS = new RegExp(CONTACT_ALLERGENS.filter((a) => a.form === "monomer").flatMap((a) => a.terms).map(termPattern).join("|"));
+
+// Blanks the ingredients a `form` allergen must not match in.
+function formFilter(form: ContactAllergen["form"]): ((t: string) => string) | null {
+  if (!form) return null;
+  const drop =
+    form === "monomer" ? (seg: string) => POLYMER.test(seg) : (seg: string) => !POLYMER.test(seg) && MONOMER_TERMS.test(seg);
+  return (t) =>
+    t
+      .split(",")
+      .map((seg) => (drop(seg) ? " " : seg))
+      .join(",");
+}
+
 const MATCHERS = CONTACT_ALLERGENS.map((a) => ({
   id: a.id,
   re: new RegExp(a.terms.map(termPattern).join("|")),
   unless: a.unless?.length ? new RegExp(a.unless.map(termPattern).join("|"), "g") : null,
+  form: formFilter(a.form),
 }));
 
 // Marketing claims inside ingredient text ("Paraben-free.", "nickel free,
@@ -967,7 +1183,11 @@ const FREE_CLAIM = /(?<![a-z0-9])[a-z0-9]+ free(?=\s*(?:[,.;!]|$| and | & ))/g;
 
 function matchNormalized(text: string): string[] {
   const t = text.replace(FREE_CLAIM, " ");
-  return MATCHERS.filter((m) => m.re.test(m.unless ? t.replace(m.unless, " ") : t)).map((m) => m.id);
+  return MATCHERS.filter((m) => {
+    let u = m.form ? m.form(t) : t;
+    if (m.unless) u = u.replace(m.unless, " ");
+    return m.re.test(u);
+  }).map((m) => m.id);
 }
 
 /** Allergen ids named by one ingredient ("Parfum (Fragrance)" -> ["fragrance"]). */
@@ -1064,6 +1284,9 @@ const PATCH_TEST_NAMES: [string, string][] = [
   ["amidoamine", "cocamidopropyl-betaine"],
   ["dimethylaminopropylamine", "cocamidopropyl-betaine"],
   ["dmapa", "cocamidopropyl-betaine"],
+  // MI's terms include MCI's names (products with MCI contain MI), but a
+  // results line naming MCI is the MCI/MI test, not MI alone.
+  ["methylchloroisothiazolinone", "mci-mi"],
   ["mci mi", "mci-mi"],
   ["mci", "mci-mi"],
   ["mit", "methylisothiazolinone"],

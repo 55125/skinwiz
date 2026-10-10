@@ -45,7 +45,7 @@ export async function generateMetadata({
   if (!concern) return {};
   return {
     title: `${concern.name} products`,
-    description: `${concern.description} Products matched by active ingredient, with User Scores from real reported outcomes.`,
+    description: `${concern.description} Products matched by active ingredient, with User Scores as people log their results.`,
     alternates: { canonical: `/concern/${slug}` },
     robots: variantRobots(await searchParams),
   };

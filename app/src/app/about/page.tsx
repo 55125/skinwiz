@@ -14,7 +14,7 @@ export default function AboutPage() {
       <div>
         <h1 className="text-3xl font-semibold sm:text-4xl">About {SITE_NAME}</h1>
         <p className="mt-2 text-muted-foreground">
-          {SITE_NAME} matches self-reported skin concerns to evidence-graded active ingredients and specific
+          {SITE_NAME} matches self-reported skin concerns to FDA-recognized active ingredients and specific
           OTC products. It is built for education and product matching — not diagnosis or individualized
           treatment.
         </p>

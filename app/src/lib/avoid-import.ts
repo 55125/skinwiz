@@ -37,6 +37,11 @@ export const IMPORT_CODES: readonly string[] = [
   "cocamide-dea", "bht", "gallates", "carmine", "shellac", "diphenylguanidine", "disperse-orange-3", "disperse-yellow-3",
   // 2026-10-08
   "other-uv-filters",
+  // 2026-10-10: cross-reactor review (class D and acrylates split; the old
+  // ids above are now groups of the new halves)
+  "corticosteroid-class-d1", "corticosteroid-class-d2", "acrylate-monomers", "acrylate-polymers", "methenamine", "mdm-hydantoin",
+  "tolu-balsam", "benzoin", "cinnamon", "clove", "other-ester-caines", "balsam-of-peru-related", "oakmoss-treemoss",
+  "ester-anesthetics", "hydrocortisone-type-steroids", "budesonide-type-steroids", "halogenated-steroids",
 ];
 
 const CODE_INDEX = new Map(IMPORT_CODES.map((id, i) => [id, i]));

@@ -3,7 +3,7 @@ import Link from "next/link";
 import { PageHeader } from "@/components/page-header";
 import { AllergenDirectory } from "@/components/allergen-directory";
 import { AvoidToggleButton } from "@/components/avoid-toggle-button";
-import { ALLERGEN_GROUPS, CONTACT_ALLERGENS } from "@/db/contact-allergens";
+import { ALLERGEN_GROUPS, CONTACT_ALLERGENS, GROUP_KIND_LABEL } from "@/db/contact-allergens";
 import { getAllergenProductCounts, getAssessedProductCount } from "@/lib/queries";
 import { readAvoidIds } from "@/lib/avoid";
 import { SITE_NAME } from "@/lib/brand";
@@ -59,8 +59,8 @@ const LABEL_NOTES: { title: string; body: React.ReactNode }[] = [
     title: "Formaldehyde releasers travel together",
     body: (
       <>
-        If you react to formaldehyde, avoid every releaser. Release strength runs quaternium-15 &gt; diazolidinyl urea
-        &gt; DMDM hydantoin &gt; imidazolidinyl urea &gt; bronopol.
+        If you react to formaldehyde, avoid every releaser. Diazolidinyl urea and quaternium-15 release the most, and
+        quaternium-15 is the one people most often react to.
       </>
     ),
   },
@@ -111,15 +111,20 @@ export default async function AllergensPage() {
       <section className="space-y-3">
         <h2 className="text-xl font-semibold">Families and patch-test mixes</h2>
         <p className="max-w-3xl text-sm text-muted-foreground">
-          Allergens that cross-react or are tested together, so you can avoid them as one.
+          Allergens you can avoid as one. A cross-reacting family means a reaction to one often comes with the others; a
+          patch-test mix is the chemicals tested together under one name; an &ldquo;all&rdquo; list is every allergen of
+          one kind, for convenience.
         </p>
         <ul className="grid gap-2 sm:grid-cols-2">
           {ALLERGEN_GROUPS.map((g) => (
             <li key={g.id} className="flex items-start justify-between gap-3 rounded-2xl border bg-card p-4">
               <div className="min-w-0 space-y-1">
-                <Link href={`/allergens/${g.id}`} className="font-medium hover:underline">
-                  {g.name}
-                </Link>
+                <div className="flex flex-wrap items-baseline gap-x-2">
+                  <Link href={`/allergens/${g.id}`} className="font-medium hover:underline">
+                    {g.name}
+                  </Link>
+                  <span className="text-xs text-muted-foreground">{GROUP_KIND_LABEL[g.kind]}</span>
+                </div>
                 <p className="text-xs leading-relaxed text-muted-foreground">
                   {g.note} {g.members.length} allergens.
                 </p>

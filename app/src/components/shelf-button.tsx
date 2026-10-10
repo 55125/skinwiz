@@ -26,10 +26,20 @@ export function ShelfButton({
   const router = useRouter();
   const [status, setStatus] = useState<Status>(initialStatus);
   const [opened, setOpened] = useState(initialOpened);
+  // Follow the server's values after a refresh (adding to the regimen marks
+  // it owned) without remounting: a remount drops keyboard focus to the top
+  // of the page.
+  const [synced, setSynced] = useState({ initialStatus, initialOpened });
+  if (synced.initialStatus !== initialStatus || synced.initialOpened !== initialOpened) {
+    setSynced({ initialStatus, initialOpened });
+    setStatus(initialStatus);
+    setOpened(initialOpened);
+  }
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
 
   function save(next: Status, nextOpened: boolean) {
+    if (pending) return;
     start(async () => {
       setError(null);
       const res = await fetch("/api/shelf", {
@@ -62,11 +72,12 @@ export function ShelfButton({
             <button
               key={o.id}
               type="button"
-              disabled={pending || inRegimen}
+              disabled={inRegimen}
+              aria-disabled={pending || undefined}
               aria-pressed={on}
               onClick={() => save(on ? null : o.id, o.id === "own" ? opened : false)}
               className={cn(
-                "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-60",
+                "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-60 aria-disabled:opacity-60",
                 on ? "border-brand/50 bg-brand-soft text-brand-foreground" : "bg-card hover:bg-muted",
               )}
             >
@@ -77,11 +88,12 @@ export function ShelfButton({
         {status === "own" && (
           <button
             type="button"
-            disabled={pending || inRegimen}
+            disabled={inRegimen}
+              aria-disabled={pending || undefined}
             aria-pressed={opened}
             onClick={() => save("own", !opened)}
             className={cn(
-              "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-60",
+              "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-60 aria-disabled:opacity-60",
               opened ? "border-brand/50 bg-brand-soft text-brand-foreground" : "bg-card hover:bg-muted",
             )}
           >
@@ -92,7 +104,7 @@ export function ShelfButton({
       {inRegimen && (
         <p className="text-xs text-muted-foreground">In your regimen, so it&apos;s in My products as in use. Remove it from the regimen to change this.</p>
       )}
-      {error && <p className="text-xs text-red-600">{error}</p>}
+      {error && <p role="alert" className="text-xs text-red-600">{error}</p>}
     </div>
   );
 }

@@ -27,6 +27,7 @@ export function PlanStepControls({
   const [error, setError] = useState<string | null>(null);
 
   function set(patch: { hidden?: boolean; done?: boolean; have?: boolean }) {
+    if (pending) return;
     start(async () => {
       setError(null);
       const res = await fetch("/api/regimens", {
@@ -41,23 +42,23 @@ export function PlanStepControls({
 
   const pill = (on: boolean) =>
     cn(
-      "inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors disabled:opacity-60",
+      "inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors aria-disabled:opacity-60",
       on ? "border-primary bg-primary text-primary-foreground" : "bg-card hover:bg-muted",
     );
   return (
     <div className="space-y-1">
       <div className="flex flex-wrap gap-2">
-        <button type="button" className={pill(have)} aria-pressed={have} disabled={pending} onClick={() => set({ have: !have })}>
+        <button type="button" className={pill(have)} aria-pressed={have} aria-disabled={pending || undefined} onClick={() => set({ have: !have })}>
           <PackageCheck className="h-3.5 w-3.5" /> {rx ? "I've filled it" : "I have it"}
         </button>
-        <button type="button" className={pill(done)} aria-pressed={done} disabled={pending} onClick={() => set({ done: !done })}>
+        <button type="button" className={pill(done)} aria-pressed={done} aria-disabled={pending || undefined} onClick={() => set({ done: !done })}>
           <Check className="h-3.5 w-3.5" /> Done for now
         </button>
-        <button type="button" className={pill(false)} disabled={pending} onClick={() => set({ hidden: !hidden })}>
+        <button type="button" className={pill(false)} aria-disabled={pending || undefined} onClick={() => set({ hidden: !hidden })}>
           {hidden ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />} {hidden ? "Show" : "Hide"}
         </button>
       </div>
-      {error && <p className="text-xs text-red-600">{error}</p>}
+      {error && <p role="alert" className="text-xs text-red-600">{error}</p>}
     </div>
   );
 }

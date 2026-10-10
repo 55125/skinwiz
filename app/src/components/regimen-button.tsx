@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowRight, Moon, Plus, Sun, SunMoon } from "lucide-react";
@@ -35,8 +35,21 @@ export function RegimenButton({
   const [slot, setSlot] = useState<Slot | null>(initialSlot);
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
+  // Adding swaps the Add button for the slot pills (and Remove swaps back),
+  // so the button that had focus is gone: move focus to its replacement
+  // rather than letting it fall to the top of the page.
+  const addRef = useRef<HTMLButtonElement>(null);
+  const pillsRef = useRef<HTMLDivElement>(null);
+  const refocus = useRef(false);
+  useEffect(() => {
+    if (!refocus.current) return;
+    refocus.current = false;
+    if (slot === null) addRef.current?.focus();
+    else pillsRef.current?.querySelector<HTMLButtonElement>("[aria-pressed=true]")?.focus();
+  }, [slot]);
 
   function save(next: Slot | null) {
+    if (pending) return;
     start(async () => {
       setError(null);
       const res = await fetch("/api/regimen", {
@@ -45,6 +58,7 @@ export function RegimenButton({
         body: JSON.stringify(regimenId === undefined ? { productId, slot: next } : { productId, slot: next, regimenId }),
       });
       if (res.ok) {
+        refocus.current = (next === null) !== (slot === null);
         setSlot(next);
         router.refresh();
       } else {
@@ -57,31 +71,32 @@ export function RegimenButton({
     return (
       <div className="space-y-2">
         <button
+          ref={addRef}
           type="button"
-          disabled={pending}
+          aria-disabled={pending || undefined}
           onClick={() => save(suggestedSlot)}
-          className="inline-flex h-9 items-center gap-1.5 rounded-full bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/85 disabled:opacity-60"
+          className="inline-flex h-9 items-center gap-1.5 rounded-full bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/85 aria-disabled:opacity-60"
         >
           <Plus className="h-4 w-4" /> Add to my regimen
         </button>
-        {error && <p className="text-xs text-red-600">{error}</p>}
+        {error && <p role="alert" className="text-xs text-red-600">{error}</p>}
       </div>
     );
   }
 
   const pills = (
-    <div className="flex flex-wrap items-center gap-2" role="group" aria-label="When you use it">
+    <div ref={pillsRef} className="flex flex-wrap items-center gap-2" role="group" aria-label="When you use it">
       {SLOT_OPTIONS.map((o) => {
         const on = slot === o.id;
         return (
           <button
             key={o.id}
             type="button"
-            disabled={pending}
+            aria-disabled={pending || undefined}
             aria-pressed={on}
             onClick={() => !on && save(o.id)}
             className={cn(
-              "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-60",
+              "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors aria-disabled:opacity-60",
               on ? "border-primary bg-primary text-primary-foreground" : "bg-card hover:bg-muted",
             )}
           >
@@ -91,9 +106,9 @@ export function RegimenButton({
       })}
       <button
         type="button"
-        disabled={pending}
+        aria-disabled={pending || undefined}
         onClick={() => save(null)}
-        className="ml-auto text-xs text-muted-foreground underline-offset-4 hover:text-foreground hover:underline disabled:opacity-60"
+        className="ml-auto text-xs text-muted-foreground underline-offset-4 hover:text-foreground hover:underline aria-disabled:opacity-60"
       >
         Remove
       </button>
@@ -104,7 +119,7 @@ export function RegimenButton({
     return (
       <div className="space-y-1">
         {pills}
-        {error && <p className="text-xs text-red-600">{error}</p>}
+        {error && <p role="alert" className="text-xs text-red-600">{error}</p>}
       </div>
     );
   }
@@ -119,7 +134,7 @@ export function RegimenButton({
       </div>
       {pills}
       {suggestedReason && slot === suggestedSlot && <p className="text-xs text-muted-foreground">{suggestedReason}</p>}
-      {error && <p className="text-xs text-red-600">{error}</p>}
+      {error && <p role="alert" className="text-xs text-red-600">{error}</p>}
     </div>
   );
 }

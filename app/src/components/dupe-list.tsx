@@ -74,7 +74,7 @@ export function DupeRows({ rows, compareWith }: { rows: Dupe[]; compareWith: str
             href={`/compare?a=${encodeURIComponent(compareWith)}&b=${encodeURIComponent(d.product.id)}`}
             className={buttonVariants({ variant: "outline", size: "sm" })}
           >
-            Compare
+            Compare<span className="sr-only"> with {d.product.brandName}</span>
           </Link>
         </div>
       ))}

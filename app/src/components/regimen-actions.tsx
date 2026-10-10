@@ -28,6 +28,7 @@ export function RegimenActions({
   const [note, setNote] = useState<string | null>(null);
 
   function run(body: Record<string, unknown>, after?: (r: Awaited<ReturnType<typeof post>>) => void) {
+    if (pending) return;
     start(async () => {
       setError(null);
       const r = await post({ regimenId, ...body });
@@ -40,12 +41,12 @@ export function RegimenActions({
     });
   }
 
-  const btn = "inline-flex items-center gap-1.5 rounded-full border bg-card px-3 py-1.5 text-xs font-medium hover:bg-muted disabled:opacity-60";
+  const btn = "inline-flex items-center gap-1.5 rounded-full border bg-card px-3 py-1.5 text-xs font-medium hover:bg-muted aria-disabled:opacity-60";
   return (
     <div className="space-y-1">
       <div className="flex flex-wrap gap-2">
         {!active && (
-          <button type="button" className={btn} disabled={pending} onClick={() => run({ action: "activate" })}>
+          <button type="button" className={btn} aria-disabled={pending || undefined} onClick={() => run({ action: "activate" })}>
             <Star className="h-3.5 w-3.5" /> Open this one by default
           </button>
         )}
@@ -53,7 +54,7 @@ export function RegimenActions({
           <button
             type="button"
             className={btn}
-            disabled={pending}
+            aria-disabled={pending || undefined}
             onClick={() =>
               run({ action: "copy" }, (r) => {
                 if (r.regimenId) router.push(`/regimen?r=${r.regimenId}${r.skipped ? `&skipped=${r.skipped}` : ""}`);
@@ -67,7 +68,7 @@ export function RegimenActions({
           <button
             type="button"
             className={btn}
-            disabled={pending}
+            aria-disabled={pending || undefined}
             onClick={() => {
               const next = window.prompt("Name this regimen", name)?.trim();
               if (next) run({ action: "rename", name: next });
@@ -79,7 +80,7 @@ export function RegimenActions({
         <button
           type="button"
           className={btn}
-          disabled={pending}
+          aria-disabled={pending || undefined}
           onClick={() => {
             const msg =
               kind === "clinician"
@@ -91,7 +92,7 @@ export function RegimenActions({
           <Trash2 className="h-3.5 w-3.5" /> {kind === "clinician" ? "Remove plan" : "Delete"}
         </button>
       </div>
-      {error && <p className="text-xs text-red-600">{error}</p>}
+      {error && <p role="alert" className="text-xs text-red-600">{error}</p>}
       {note && <p className="text-xs text-muted-foreground">{note}</p>}
     </div>
   );

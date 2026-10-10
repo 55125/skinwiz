@@ -438,7 +438,6 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
             />
 
             <ShelfButton
-              key={`${shelfEntry?.status ?? "none"}-${shelfEntry?.opened ?? false}-${regimenSlot ?? "out"}`}
               productId={product.id}
               initialStatus={shelfEntry?.status ?? null}
               initialOpened={shelfEntry?.opened ?? false}

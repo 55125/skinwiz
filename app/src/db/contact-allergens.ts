@@ -317,7 +317,12 @@ export const CONTACT_ALLERGENS: ContactAllergen[] = [
     section: "preservative",
     // Misspellings seen on real labels ("methyisothiazolinone") and the bare
     // class name some labels use.
-    terms: ["methylisothiazolinone", "methyisothiazolinone", "methyl isothiazolinone", "2-methyl-4-isothiazolin-3-one", "neolone", "isothiazolinones", "kathon"],
+    // MCI is only sold mixed with MI, so its names flag MI too (as the MCI/MI
+    // note promises) even when a label lists the chloro half alone.
+    terms: [
+      "methylisothiazolinone", "methyisothiazolinone", "methyl isothiazolinone", "2-methyl-4-isothiazolin-3-one", "neolone", "isothiazolinones", "kathon",
+      "methylchloroisothiazolinone", "methylchloroisothiazolone", "chloromethylisothiazolinone", "5-chloro-2-methyl-4-isothiazolin-3-one",
+    ],
     aka: ["MI", "MIT"],
     note: "Rising prevalence, especially from rinse-off products and wet wipes.",
   },
@@ -633,8 +638,8 @@ export const CONTACT_ALLERGENS: ContactAllergen[] = [
     id: "neomycin",
     name: "Neomycin",
     section: "medicament",
-    terms: ["neomycin", "framycetin", "paromomycin"],
-    note: "Cross-reacts with framycetin, paromomycin and other aminoglycosides, which are flagged too.",
+    terms: ["neomycin", "framycetin", "paromomycin", "gentamicin", "tobramycin", "kanamycin"],
+    note: "Cross-reacts with framycetin, paromomycin and other aminoglycosides (gentamicin, tobramycin, kanamycin), which are flagged too.",
   },
   { id: "bacitracin", name: "Bacitracin", section: "medicament", terms: ["bacitracin"] },
   { id: "polymyxin-b", name: "Polymyxin B", section: "medicament", terms: ["polymyxin"] },
@@ -659,7 +664,7 @@ export const CONTACT_ALLERGENS: ContactAllergen[] = [
     id: "corticosteroid-class-b",
     name: "Corticosteroids, class B (acetonide type)",
     section: "medicament",
-    terms: ["budesonide", "triamcinolone", "fluocinolone acetonide", "fluocinonide", "desonide", "amcinonide", "halcinonide"],
+    terms: ["budesonide", "triamcinolone", "fluocinolone acetonide", "fluocinonide", "desonide", "amcinonide", "halcinonide", "flurandrenolide", "fludroxycortide", "flunisolide"],
     aka: ["budesonide (patch-test marker)"],
     note: "Budesonide also cross-reacts with some class D steroids.",
   },
@@ -668,7 +673,7 @@ export const CONTACT_ALLERGENS: ContactAllergen[] = [
     name: "Corticosteroids, class C (non-esterified)",
     section: "medicament",
     terms: ["betamethasone", "dexamethasone", "desoximetasone"],
-    unless: ["betamethasone valerate", "betamethasone dipropionate", "betamethasone 17-valerate", "dexamethasone valerate"],
+    unless: ["betamethasone valerate", "betamethasone dipropionate", "betamethasone 17-valerate", "betamethasone 17,21-dipropionate", "dexamethasone valerate"],
   },
   {
     id: "corticosteroid-class-d",
@@ -678,7 +683,9 @@ export const CONTACT_ALLERGENS: ContactAllergen[] = [
       "hydrocortisone 17-butyrate", "hydrocortisone butyrate", "hydrocortisone valerate", "hydrocortisone probutate", "clobetasol", "clobetasone",
       "betamethasone valerate", "betamethasone dipropionate", "mometasone", "fluticasone", "methylprednisolone aceponate", "prednicarbate",
       // Esters the class A and C lists exclude, so they must land here.
-      "hydrocortisone 17-valerate", "hydrocortisone buteprate", "betamethasone 17-valerate", "dexamethasone valerate",
+      "hydrocortisone 17-valerate", "hydrocortisone buteprate", "betamethasone 17-valerate", "betamethasone 17,21-dipropionate", "dexamethasone valerate",
+      // Halogenated esters sold in the US, all class D (D1).
+      "halobetasol", "ulobetasol", "beclomethasone dipropionate", "beclometasone dipropionate", "alclometasone", "diflorasone",
     ],
     aka: ["hydrocortisone-17-butyrate (patch-test marker)", "clobetasol-17-propionate (patch-test marker)"],
   },
@@ -1064,6 +1071,9 @@ const PATCH_TEST_NAMES: [string, string][] = [
   ["amidoamine", "cocamidopropyl-betaine"],
   ["dimethylaminopropylamine", "cocamidopropyl-betaine"],
   ["dmapa", "cocamidopropyl-betaine"],
+  // MI's terms include MCI's names (products with MCI contain MI), but a
+  // results line naming MCI is the MCI/MI test, not MI alone.
+  ["methylchloroisothiazolinone", "mci-mi"],
   ["mci mi", "mci-mi"],
   ["mci", "mci-mi"],
   ["mit", "methylisothiazolinone"],

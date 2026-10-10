@@ -29,6 +29,14 @@ const NAMES: [string, string[], string[]][] = [
   ["Ammonium Acryloyldimethyltaurate/VP Copolymer", [], ["acrylates"]],
   ["Hydrocortisone Acetate", ["corticosteroid-class-a"], ["corticosteroid-class-d"]],
   ["Hydrocortisone Butyrate", ["corticosteroid-class-d"], ["corticosteroid-class-a"]],
+  ["Methylchloroisothiazolinone", ["mci-mi", "methylisothiazolinone"], []],
+  ["Gentamicin Sulfate", ["neomycin"], []],
+  ["Betamethasone 17,21-Dipropionate", ["corticosteroid-class-d"], ["corticosteroid-class-c"]],
+  ["Betamethasone Sodium Phosphate", ["corticosteroid-class-c"], ["corticosteroid-class-d"]],
+  ["Halobetasol Propionate", ["corticosteroid-class-d"], []],
+  ["Alclometasone Dipropionate", ["corticosteroid-class-d"], []],
+  ["Diflorasone Diacetate", ["corticosteroid-class-d"], []],
+  ["Flurandrenolide", ["corticosteroid-class-b"], []],
   ["Chrysanthemum Parthenium (Feverfew) Extract", ["compositae"], []],
   ["Caprylyl/Capryl Glucoside", ["other-alkyl-glucosides"], []],
   ["Ascorbyl Glucoside", [], ["other-alkyl-glucosides"]],
@@ -70,6 +78,8 @@ test("patch-test results sheets", () => {
   assert.deepEqual(read("Amerchol L-101 50% pet ++").ids, ["lanolin"]);
   assert.deepEqual(read("Tixocortol-21-pivalate 0.1% pet +").ids, ["corticosteroid-class-a"]);
   assert.deepEqual(read("MI").ids, ["methylisothiazolinone"]);
+  assert.deepEqual(read("Methylchloroisothiazolinone/methylisothiazolinone 0.02% aq ++").ids, ["mci-mi"]);
+  assert.deepEqual(read("Methylchloroisothiazolinone 0.01% aq +").ids, ["mci-mi"]);
   assert.deepEqual(read("Carba mix 3% pet +").ids, []);
   assert.equal(read("Quaternium-15 2% pet negative").negative, true);
   assert.equal(read("Quaternium-15 2% pet -").negative, true);
@@ -80,7 +90,7 @@ test("patch-test results sheets", () => {
 test("label spellings seen in the catalog, and short pasted lists", async () => {
   const { allergensInList } = await import("./contact-allergens");
   assert.deepEqual(allergensInIngredient("methyisothiazolinone"), ["methylisothiazolinone"]);
-  assert.deepEqual(allergensInIngredient("Methylchloroisothiazolone"), ["mci-mi"]);
+  assert.deepEqual(allergensInIngredient("Methylchloroisothiazolone"), ["mci-mi", "methylisothiazolinone"]);
   assert.deepEqual(allergensInIngredient("Cocoamidopropyl Betaine"), ["cocamidopropyl-betaine"]);
   assert.deepEqual(allergensInIngredient("Paraformaldehyde"), ["formaldehyde"]);
   assert.deepEqual(allergensInIngredient("Hydrocortisone 17-Valerate"), ["corticosteroid-class-d"]);

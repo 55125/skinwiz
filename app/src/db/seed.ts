@@ -81,6 +81,7 @@ type CatalogRow = {
     | "anti-itch"
     | "skin-protectant"
     | "antiperspirant"
+    | "hair-loss"
     | "brightening-texture";
   brand_name: string;
   manufacturer_name: string;

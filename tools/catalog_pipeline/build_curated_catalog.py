@@ -66,7 +66,7 @@ OUT = os.path.join(OUT_DIR, "curated_catalog.csv")
 IMAGE_DIR = os.path.join(HERE, "..", "..", "app", "public", "product-images", "brand-direct")
 IMAGE_URL_PREFIX = "/product-images/brand-direct"
 
-NICHES = {"acne", "sunscreen", "antifungal", "antidandruff", "anti-itch", "skin-protectant", "antiperspirant", "brightening-texture"}
+NICHES = {"acne", "sunscreen", "antifungal", "antidandruff", "anti-itch", "skin-protectant", "antiperspirant", "hair-loss", "brightening-texture"}
 
 FIELDNAMES = [
     "product_ndc", "niche", "brand_name", "manufacturer_name", "substance_name",

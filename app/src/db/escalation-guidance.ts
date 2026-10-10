@@ -40,6 +40,9 @@ const SRC_AAD_ECZEMA = "AAD public guidance on atopic dermatitis / eczema (aad.o
 const SRC_AAD_ECZEMA_GUIDELINE =
   "Sidbury R, et al. Guidelines of care for the management of atopic dermatitis in adults with topical therapies. J Am Acad Dermatol. 2023;89(1):e1-e20";
 const SRC_AAD_HYPERHIDROSIS = "AAD public guidance on hyperhidrosis (aad.org)";
+const SRC_MINOXIDIL_LABEL =
+  "FDA-approved OTC minoxidil Drug Facts (Rogaine and generics): do not use if hair loss is sudden or patchy; stop use and ask a doctor if no regrowth after 4 months (men's 5%, women's 5% foam) or 4 to 6 months (women's 2%)";
+const SRC_AAD_HAIR_LOSS = "AAD public guidance: hair loss diagnosis and treatment (aad.org)";
 const SRC_IHHS = "International Hyperhidrosis Society patient guidance (sweathelp.org)";
 const SRC_AAD_MELASMA = "AAD public guidance on melasma and dark spots (aad.org)";
 const SRC_AAD_SJS = "AAD public guidance on serious drug reactions (Stevens-Johnson syndrome / TEN warning signs)";
@@ -152,6 +155,21 @@ export const ESCALATION_GUIDANCE: EscalationGuidance[] = [
     ],
     urgent: ["Sweating with chest pain, shortness of breath, or feeling lightheaded: call 911."],
     sources: [SRC_AAD_HYPERHIDROSIS, SRC_IHHS],
+  },
+  {
+    concernId: "hair-loss",
+    trialWeeks: 16,
+    fairTrial:
+      "Minoxidil labels say to expect results after 2 to 4 months of use as directed, and to ask a doctor if there is no regrowth after about 4 months. It works only while you keep using it. Some extra shedding in the first weeks is common.",
+    seeDermatologistIf: [
+      "No regrowth after about 4 months of consistent use as the label directs.",
+      "Hair loss that is sudden, patchy, or falling out in clumps.",
+      "Hair loss with a red, scaly, itchy, painful or scarred scalp.",
+      "Hair loss with no family history of it, or that started after an illness, a new medicine, pregnancy or a big change in weight.",
+      "Thinning in children or teenagers.",
+    ],
+    urgent: ["Chest pain, a racing heartbeat, fainting, or sudden swelling of the hands or feet while using minoxidil: stop it and get care right away."],
+    sources: [SRC_MINOXIDIL_LABEL, SRC_AAD_HAIR_LOSS],
   },
   {
     concernId: "brightening-texture",

@@ -9,6 +9,7 @@ import {
   ShieldCheck,
   ShieldPlus,
   Sparkles,
+  Sprout,
   Stethoscope,
   Sun,
   ThermometerSun,
@@ -49,6 +50,7 @@ const CONCERN_ICONS: Record<string, LucideIcon> = {
   "itch-relief": Hand,
   "dry-skin-eczema": Droplets,
   "excessive-sweating": ThermometerSun,
+  "hair-loss": Sprout,
   "brightening-texture": Sparkles,
 };
 

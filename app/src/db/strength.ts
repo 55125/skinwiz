@@ -1,4 +1,5 @@
 import { matchActiveIds } from "./actives";
+import { MONOGRAPH_RANGES } from "./monograph-ranges";
 
 // Parses the exact-strength text an FDA drug label carries ("BENZOYL
 // PEROXIDE 50 mg/mL", "SALICYLIC ACID 2 g/100g", "SULFUR 1.4 g in 14 g",
@@ -99,6 +100,45 @@ export function parseStrengths(activeIngredientText: string | null | undefined):
     const parsed = percents > 1 ? null : parseSegment(segment);
     if (parsed) add(parsed.name, parsed.pct);
     else if (percents > 0) scan(segment);
+  }
+  return Object.keys(out).length > 0 ? out : null;
+}
+
+/**
+ * Strengths for an FDA drug row from both of its active-ingredient fields:
+ * the Drug Facts line printed on the box ("Clotrimazole USP, 1%") wins per
+ * active, and the openFDA structured field ("CLOTRIMAZOLE 1 g/mL") fills in
+ * any active the label line doesn't give a strength for. The structured
+ * field is typed in by the filer and about one row in twelve disagrees with
+ * its own label, mostly unit slips: "1 g/mL" for a 1% solution (read as
+ * 100%), "4.5 g/50mL" for a 4.5% lotion (read as 9%), "2 mg/2mL" for a 2%
+ * pad (read as 0.1%). The printed percent is what a patient reads on the
+ * shelf, so that's the one shown and matched on.
+ */
+export function labelFirstStrengths(structured: string | null | undefined, labelText: string | null | undefined): Strengths | null {
+  const fromStructured = parseStrengths(structured);
+  const fromLabel = parseStrengths(labelText);
+  if (!fromStructured && !fromLabel) return null;
+  return dropUnitSlips({ ...fromStructured, ...fromLabel });
+}
+
+// Half the product or more, for an active whose OTC monograph tops out at a
+// quarter or less (salicylic acid 3%, titanium dioxide 25%), is a unit slip
+// on a row with no Drug Facts line to check it against: DailyMed's
+// "SALICYLIC ACID 2 g in 2 mL" on an acne cleanser, "Titanium Dioxide
+// 4.95 mL in 9.9 g". Dropped, so the page says the strength is unclear
+// rather than printing 100%. High-strength actives (petrolatum, glycerin,
+// zinc oxide ointment) top out above 25% and are never touched.
+const UNIT_SLIP_PCT = 50;
+const LOW_CEILING_PCT = 25;
+
+function dropUnitSlips(strengths: Strengths): Strengths | null {
+  const out: Strengths = {};
+  for (const [id, pct] of Object.entries(strengths)) {
+    const ranges = MONOGRAPH_RANGES[id];
+    const ceiling = ranges ? Math.max(...ranges.map((r) => r.max)) : Infinity;
+    if (pct >= UNIT_SLIP_PCT && ceiling <= LOW_CEILING_PCT) continue;
+    out[id] = pct;
   }
   return Object.keys(out).length > 0 ? out : null;
 }

@@ -314,7 +314,7 @@ export const ACTIVE_DEFINITIONS: ActiveDefinition[] = [
     id: "bisoctrizole",
     canonicalName: "Bisoctrizole (Tinosorb M)",
     categories: ["sunscreen"],
-    synonyms: ["bisoctrizole", "methylene bis-benzotriazolyl tetramethylbutylphenol", "methylene bis benzotriazolyl tetramethylbutylphenol", "tinosorb m"],
+    synonyms: ["bisoctrizole", "methylene bis-benzotriazolyl tetramethylbutylphenol", "methylene bis-benzotriazolyl tetramethylbutyiphenol", "methylene bis benzotriazolyl tetramethylbutylphenol", "tinosorb m"],
     summary:
       "A broad-spectrum particulate organic UV filter (Tinosorb M). Approved in the EU, Australia and Asia; not an FDA-recognized US sunscreen active.",
     typicalConcentrationText: "EU maximum is 10%; not a US monograph active.",

@@ -6,10 +6,10 @@ import { sql } from "drizzle-orm";
 import { db } from "./client";
 import * as schema from "./schema";
 import { ACTIVE_DEFINITIONS, ANYWHERE_LISTED_ACTIVE_IDS, CONCERN_DEFINITIONS, matchActiveIds, nicheToConcernId } from "./actives";
-import { ACTIVE_TEXT_OVERRIDES } from "./active-overrides";
+import { ACTIVE_TEXT_OVERRIDES, DOSAGE_FORM_OVERRIDES } from "./active-overrides";
 import { computeFreeFromFlags } from "./ingredient-flags";
 import { computeAllergenHits } from "./contact-allergens";
-import { parseStrengths, strengthKey } from "./strength";
+import { labelFirstStrengths, strengthKey } from "./strength";
 import { brandDirectNiche, labeledDrugActives, productNiches, sunscreenNiche } from "./labeled-actives";
 import { aliasesFor, canonicalSlug, parseIngredients, pickDisplayName } from "./ingredient-parse";
 import { SITE_NAME } from "@/lib/brand";
@@ -448,11 +448,12 @@ function reseed() {
             `${row.active_ingredients_structured || ""} ${row.active_ingredient_text || ""} ${inactive.text}`
           : null;
       // Cosmetic sources never disclose concentrations, so only the FDA
-      // label line is parsed -- see db/strength.ts -- plus a brand page's
-      // own labeled drug-active line.
+      // label lines are parsed -- the printed Drug Facts percent first, then
+      // the filer's structured field (db/strength.ts labelFirstStrengths) --
+      // plus a brand page's own labeled drug-active line.
       const strengths = isPreMatched
         ? (brandDrug?.strengths ?? null)
-        : parseStrengths(row.active_ingredients_structured || row.active_ingredient_text);
+        : labelFirstStrengths(row.active_ingredients_structured, row.active_ingredient_text);
       const activeIdSet = new Set(activeIds);
       // Drug labels: the tracked actives (position 0) plus the SPL's own
       // inactive list. Cosmetic sources: the single INCI list, in order.
@@ -480,7 +481,7 @@ function reseed() {
         // names are already human-written product names, not SPL label text.
         brandName: isPreMatched ? trimmedBrandName : normalizeBrandName(trimmedBrandName),
         manufacturer: row.manufacturer_name || null,
-        dosageForm: row.dosage_form || null,
+        dosageForm: DOSAGE_FORM_OVERRIDES[row.product_ndc] ?? (row.dosage_form || null),
         // For pre-matched sources, active_ingredients_structured holds
         // internal canonical ids (see activeIds above), not display text —
         // show the raw ingredient list instead.

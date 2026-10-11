@@ -3057,6 +3057,7 @@ setid,rank,image_name,score,section_code,caption,reasons,usable
 1b54250b-ea78-21ae-e063-6394a90a2345,3,411-3.jpg,11.0,51945-4,3,pdp-section title:pdp title:package,1
 1b54250b-ea78-21ae-e063-6394a90a2345,4,411-4.jpg,10.5,51945-4,4,pdp-section title:pdp title:package,1
 1b582f4e-553f-a511-e063-6294a90af3c0,1,Body SPF30.jpg,10.0,51945-4,Body SPF 30,pdp-section,1
+1b5e2860-6855-4a65-8bbc-e064172a1adf,1,Rogaine-001.jpg,13.0,51945-4,Rogaine 001,pdp-section title:pdp title:container title:package,1
 1b65738f-6546-06f5-e063-6294a90a4e1a,1,Degree Greek Freak Cool Rush AP Deo IS.jpg,10.5,51945-4,Degree Greek Freak Cool Rush AP Deo IS,pdp-section title:package,1
 1b65fc81-1b9e-4260-829a-332cf6891d02,1,Skinfix_Hand_Repair_Cream_v8_30.jpg,10.0,51945-4,Skinfix_Hand_Repair_Cream_v8_30.jpg,pdp-section,1
 1b65fc81-1b9e-4260-829a-332cf6891d02,2,Skinfix_Hand_Repair_Cream_V8_90.jpg,9.5,51945-4,Skinfix_Hand_Repair_Cream_v8_90.jpg,pdp-section,1
@@ -9637,6 +9638,7 @@ setid,rank,image_name,score,section_code,caption,reasons,usable
 4d319110-e6a4-1ad3-e063-6394a90aa99c,2,HazyMauve_SP.jpg,11.5,51945-4,Carton,pdp-section carton,1
 4d31b201-9d6a-730a-e063-6394a90a6700,1,SunlitCoral_PP.jpg,12.0,51945-4,Tube,pdp-section container,1
 4d31b201-9d6a-730a-e063-6394a90a6700,2,SunlitCoral_SP.jpg,11.5,51945-4,Carton,pdp-section carton,1
+4d328537-b7f5-43cc-9837-c5a0c6c390f8,1,rogaine-01.jpg,17.0,51945-4,PRINCIPAL DISPLAY PANEL - 60 g Can Carton,pdp-section pdp carton container,1
 4d384385-f3c5-09ba-e063-6394a90aec7f,1,1230-MN_BX_MASTER_R251027-2.jpg,10.0,51945-4,1230-MN_BX_MASTER,pdp-section,1
 4d384385-f3c5-09ba-e063-6394a90aec7f,2,1233-MN_IN_MASTER_R251020-6.jpg,10.0,51945-4,1233-MN_IN_MASTER,pdp-section,1
 4d39b64c-2e27-afed-e063-6394a90a3812,1,PremierPlastic SP06A.jpg,11.5,51945-4,Premier Tinted Mineral Sunscreen,pdp-section title:pdp,1
@@ -10563,6 +10565,9 @@ setid,rank,image_name,score,section_code,caption,reasons,usable
 545c962f-2a59-4d94-8fef-ebdba4127f42,2,1109.jpg,10.5,51945-4,1109,pdp-section title:package,1
 545c962f-2a59-4d94-8fef-ebdba4127f42,3,Box27.jpg,9.5,51945-4,Box27,pdp-section title:package,1
 545c962f-2a59-4d94-8fef-ebdba4127f42,4,Inner Package27.jpg,7.0,51945-4,Inner Package27,pdp-section title:package inner,1
+545e3e21-6333-4d85-8754-b7a6201234b7,1,image-01.jpg,14.0,51945-4,up&up-hair-regrowth-treatment-for-men-carton-image.jpg,pdp-section title:pdp carton title:package,1
+545e3e21-6333-4d85-8754-b7a6201234b7,2,bottle.jpg,1.5,,bottle,container,1
+545e3e21-6333-4d85-8754-b7a6201234b7,3,vertex.jpg,0.0,,vertex,,1
 545efbc4-82d4-f126-e063-6294a90a9710,1,SOC Cover Shield.jpg,10.0,51945-4,SOC Cover Shield.jpg,pdp-section,1
 5460c86f-1432-0dce-e063-6294a90aaa37,1,US_AP Big Stick_2.65oz_Pro Sport_020626.jpg,12.0,51945-4,Mando Deodorant + Extra Strength Sweat Control Pro Sport Label,pdp-section container,1
 5460ca0d-f6b4-423d-e063-6294a90afce7,1,30ml 1.jpg,10.0,51945-4,30ml 1,pdp-section,1
@@ -14673,6 +14678,7 @@ setid,rank,image_name,score,section_code,caption,reasons,usable
 8be1c27c-7988-47c4-b613-3bc86f53981e,1,82715-108-03.jpg,10.5,51945-4,choco cake-01,pdp-section title:package,1
 8be3d0f5-1ce6-48c4-8599-1be07012196c,1,the oriental gyeol goun two way pact carton.jpg,14.0,51945-4,Image of carton,pdp-section title:pdp carton title:package,1
 8be4bbfa-424c-4ccf-b8bc-65b16c126053,1,42-5-cart.jpg,13.5,51945-4,carton,pdp-section title:pdp carton,1
+8bf0000c-95f3-4a4d-830b-f5ac1539823d,1,Rogaine_01.jpg,13.5,51945-4,Rogaine_01,pdp-section title:pdp title:carton title:container,1
 8bf9cf23-8ffc-401f-981d-4878d694a468,1,163dc662-0414-4df6-aa07-0541cd1b4161-02.jpg,4.0,51945-4,figure,pdp-section title:pdp title:package figure,1
 8bf9cf23-8ffc-401f-981d-4878d694a468,2,163dc662-0414-4df6-aa07-0541cd1b4161-03.jpg,3.5,51945-4,figure,pdp-section title:pdp title:package figure,1
 8bf9cf23-8ffc-401f-981d-4878d694a468,3,163dc662-0414-4df6-aa07-0541cd1b4161-04.jpg,3.0,51945-4,figure,pdp-section title:pdp title:package figure,1
@@ -14953,6 +14959,10 @@ setid,rank,image_name,score,section_code,caption,reasons,usable
 9000fa5a-3c8a-479b-95e8-2abfdabb544f,1,caragala-01.jpg,17.0,51945-4,PRINCIPAL DISPLAY PANEL - 60 G Tube Carton,pdp-section pdp carton container,1
 900bb675-2f03-47e3-854e-257ec4831332,1,mupirocin-02.jpg,17.0,51945-4,PRINCIPAL DISPLAY PANEL - 15 g Tube Carton,pdp-section pdp carton container,1
 900bb675-2f03-47e3-854e-257ec4831332,2,mupirocin-01.jpg,-18.0,34089-3,Chemical Structure,section-34089-3 figure,0
+90137bb7-f0e3-4c3c-9cfb-d4d5eed13a9c,1,kirkland-minoxidil-carton-image-1.jpg,14.0,51945-4,kirkland-minoxidil-carton-image-1.jpg,pdp-section title:pdp carton title:package,1
+90137bb7-f0e3-4c3c-9cfb-d4d5eed13a9c,2,kirkland-minoxidil-carton-image-2.jpg,13.5,51945-4,kirkland-minoxidil-carton-image-2.jpg,pdp-section title:pdp carton title:package,1
+90137bb7-f0e3-4c3c-9cfb-d4d5eed13a9c,3,Image 1.jpg,0.0,,Image 1,,1
+90137bb7-f0e3-4c3c-9cfb-d4d5eed13a9c,4,image 2.jpg,-0.5,,Image 2,,0
 9013ca48-15f2-43cd-a51d-91cf65c72a7c,1,minocycline-fig1.jpg,8.0,51945-4,PACKAGE LABEL-PRINCIPAL DISPLAY PANEL - 50 mg (500 Capsules Bottle),pdp-section pdp container package figure,1
 9013ca48-15f2-43cd-a51d-91cf65c72a7c,2,minocycline-fig2.jpg,8.0,51945-4,PACKAGE LABEL-PRINCIPAL DISPLAY PANEL - 75 mg (500 Capsules Bottle),pdp-section pdp container package figure,1
 9013ca48-15f2-43cd-a51d-91cf65c72a7c,3,minocycline-fig3.jpg,8.0,51945-4,PACKAGE LABEL-PRINCIPAL DISPLAY PANEL - 100 mg (500 Capsules Bottle),pdp-section pdp container package figure,1
@@ -16148,6 +16158,7 @@ a08137a9-331f-4615-9752-e2cb52b3d8fc,3,bffcf34b-figure-03.jpg,-8.5,,bffcf34b-fig
 a08137a9-331f-4615-9752-e2cb52b3d8fc,4,bffcf34b-figure-04.jpg,-9.0,,bffcf34b-figure-04,figure,0
 a08446cf-5eae-40a9-e053-2995a90a846b,1,Dove Men plus Care Cool Silver Antiperspirant.jpg,10.5,51945-4,DoveMenCoolSilverAP,pdp-section title:package,1
 a085ed0a-a7ce-44d6-e053-2a95a90aa956,1,Dove Men plus Care Sensitive Shield Antiperspirant.jpg,10.5,51945-4,DoveMenSensitiveShieldAP,pdp-section title:package,1
+a08edb99-3e45-4d3c-a0f8-c74bd291057a,1,minoxidil-5-percent-topical-liquid-mens-1.jpg,10.5,51945-4,"Minoxidil, USP 5% w/v",pdp-section title:package,1
 a0955423-f210-827d-e053-2a95a90a85f7,1,Dove Men+Care Clean Comfort 48HR+Comfort Antiperspirant.jpg,10.5,51945-4,DoveMenSportcareFreshAP,pdp-section title:package,1
 a09a0b5f-93e4-d18a-e053-2a95a90a65f7,1,C10823 SPF 15 BS GRAPE SODA.jpg,10.5,51945-4,C10823 SPF 15 BS GRAPE SODA,pdp-section title:package,1
 a0a75b54-e484-4e89-bdf2-e2c864cd2734,1,Label.jpg,10.5,51945-4,Label,pdp-section title:package,1
@@ -17386,6 +17397,7 @@ b10a7794-7e4f-412b-9eb2-773107ecb7fc,1,neutrogena-01.jpg,15.0,51945-4,PRINCIPAL 
 b10bdd6e-aa94-470f-8bbf-ff27a1d81938,1,W97745.jpg,10.0,51945-4,W97745,pdp-section,1
 b10bdd6e-aa94-470f-8bbf-ff27a1d81938,2,W97746.jpg,9.5,51945-4,W97746,pdp-section,1
 b10bdd6e-aa94-470f-8bbf-ff27a1d81938,3,W97747.jpg,9.0,51945-4,W97747,pdp-section,1
+b10eb8fd-8301-4c38-af4c-220fe5c3b592,1,minoxidil-01.jpg,17.0,51945-4,PRINCIPAL DISPLAY PANEL - 60 g Can Carton,pdp-section pdp carton container,1
 b11308b3-40f0-414b-8eab-13b68b4f1393,1,roll-on-01.jpg,15.0,51945-4,Principal Display Panel - 45 mL Bottle Label,pdp-section pdp container,1
 b1265797-71dd-4302-ab26-dbff6ccec856,1,50mL 111 Skin Box.jpg,13.5,51945-4,50mL 111 Skin Box,pdp-section carton title:product,1
 b1265797-71dd-4302-ab26-dbff6ccec856,2,15mL 111 Skin Box.jpg,12.5,51945-4,15mL 111 Skin Box,pdp-section carton title:product,1
@@ -17710,6 +17722,7 @@ b53727cf-a57f-443f-8036-3d4bd2737540,3,49603aa6-eb43-458a-b5f8-f1e719ab1031-51-1
 b53727cf-a57f-443f-8036-3d4bd2737540,4,09c8e716-9202-46d9-bb9a-1ef1d18a74d8-01.jpg,-18.0,34089-3,structure,section-34089-3 figure,0
 b545553a-283a-48af-adc5-763758a9ff24,1,5551974_AntiItchCream_BOX.jpg,13.5,51945-4,5551974_AntiItchCream_BOX,pdp-section title:pdp carton,1
 b545553a-283a-48af-adc5-763758a9ff24,2,2802478_AntiItchCream_TUBE.jpg,13.0,51945-4,2802478_AntiItchCream_TUBE,pdp-section title:pdp container,1
+b55198cb-40d8-432b-bdd5-2ecefa35d320,1,minoxidil-2-percent-topical-liquid-women-1.jpg,10.5,51945-4,"Minoxidil, USP 2% w/v",pdp-section title:package,1
 b553aec1-5002-3a3f-e053-2995a90a22e5,1,FF CREAM SPF 30.jpg,4.0,51945-4,DRUG FACTS,pdp-section title:carton drug-facts,1
 b554b787-a7d1-0993-e053-2995a90ade1b,1,label3.jpg,10.5,51945-4,image description,pdp-section title:package,1
 b555aa10-1547-63cc-e053-2995a90ad20d,1,label5.jpg,10.0,51945-4,image description,pdp-section,1
@@ -19812,6 +19825,7 @@ cca417c8-b882-48a7-8bd8-ccc6f961a3d2,1,8271512001-1.jpg,10.5,51945-4,Concealer-1
 cca65f6a-935f-48d4-a07d-831ab6027db0,1,Label.jpg,10.5,51945-4,Label,pdp-section title:package,1
 cca65f6a-935f-48d4-a07d-831ab6027db0,2,Label02.jpg,10.5,51945-4,Label02,pdp-section title:package,1
 ccabd647-ecdd-7230-e053-2a95a90a7a96,1,sage and zinc.jpg,12.0,51945-4,sage and zinc,pdp-section title:product title:package,1
+ccaecec5-5348-4b24-9190-5464c50f6d80,1,Rogaine_01.jpg,13.5,51945-4,Rogaine_01,pdp-section title:pdp title:carton title:container,1
 ccb62898-b614-45b9-95ea-23e5e31893a8,1,hydrocortisone-01.jpg,13.5,51945-4,63187-575-01,pdp-section title:pdp title:carton title:container,1
 ccb651f6-e567-4c5f-9109-8767270cc4be,1,mm01.jpg,10.0,51945-4,image description,pdp-section,1
 ccbe0991-27a1-4ddb-bfc7-1b3422e53390,1,fluconazole-fig1.jpg,8.0,51945-4,PACKAGE LABEL-PRINCIPAL DISPLAY PANEL - 10 mg/mL (35 mL Bottle),pdp-section pdp container package figure,1
@@ -21588,6 +21602,10 @@ e11470b2-80d6-4008-b87e-eb6aeadfce74,1,mm01.jpg,11.5,51945-4,image description,p
 e11470b2-80d6-4008-b87e-eb6aeadfce74,2,mm02.jpg,11.0,51945-4,image description,pdp-section title:pdp,1
 e11c4d87-8dc2-44b1-bf6b-12e7ef4f3d1d,1,box-01.jpg,12.0,51945-4,box-01.jpg,pdp-section carton,1
 e120a659-0dfc-42ca-8158-58e8a0b457e5,1,journee-01.jpg,17.0,51945-4,PRINCIPAL DISPLAY PANEL - 15 ML Bottle Carton,pdp-section pdp carton container,1
+e1211429-46da-4824-9471-c421dae79d24,1,image-04.jpg,14.0,51945-4,up&up-hair-regrowth-treatment-for-women-carton-image.jpg,pdp-section title:pdp carton title:package,1
+e1211429-46da-4824-9471-c421dae79d24,2,image-03.jpg,1.0,,bottle-graphic1,container,1
+e1211429-46da-4824-9471-c421dae79d24,3,image-01.jpg,0.0,,graphic1,,1
+e1211429-46da-4824-9471-c421dae79d24,4,image-02.jpg,-0.5,,graphic2,,0
 e1212f19-d7cc-40a7-a0a8-5a686b2e949e,1,magix cash PDP.jpg,13.0,51945-4,image of label,pdp-section pdp,1
 e1212f19-d7cc-40a7-a0a8-5a686b2e949e,2,magix cash DFB1.jpg,2.5,51945-4,image of DFB,pdp-section drug-facts,1
 e1212f19-d7cc-40a7-a0a8-5a686b2e949e,3,magix cash DFB2.jpg,2.0,51945-4,image of DFB,pdp-section drug-facts,1
@@ -22508,6 +22526,10 @@ ec3bea36-644d-4263-970c-5e001a257fc7,3,Bliss_Smoothing Mineral Primer_secondary.
 ec42800f-0388-45e7-8ff7-5b2577fe40cb,1,Label.jpg,10.5,51945-4,Label,pdp-section title:package,1
 ec4535a1-69f0-40a2-bcba-11afc75c721d,1,doxycycline-20mg.jpg,12.0,51945-4,doxycycline-20mg.jpg,pdp-section title:pdp title:package,1
 ec4535a1-69f0-40a2-bcba-11afc75c721d,2,doxycycline-structure.jpg,-18.0,34089-3,Structure,section-34089-3 figure,0
+ec4b79fd-f68b-4f8d-a173-983835bc82eb,1,kirkland-minoxidil-carton-image-1.jpg,14.0,51945-4,kirkland-minoxidil-carton-image-1.jpg,pdp-section title:pdp carton title:package,1
+ec4b79fd-f68b-4f8d-a173-983835bc82eb,2,kirkland-minoxidil-carton-image-2.jpg,13.5,51945-4,kirkland-minoxidil-carton-image-2.jpg,pdp-section title:pdp carton title:package,1
+ec4b79fd-f68b-4f8d-a173-983835bc82eb,3,image-02.jpg,1.5,,bottle,container,1
+ec4b79fd-f68b-4f8d-a173-983835bc82eb,4,image-01.jpg,0.0,,vertex,,1
 ec55eef0-17e6-416d-bd5e-548f2f323cea,1,AVASOL_label_stick-50_24-31r.jpg,13.5,51945-4,Avasol SPF 50+,pdp-section title:pdp container,1
 ec5b82f5-b36c-fbc5-e053-2995a90afa0c,1,mini can.jpg,12.0,51945-4,2,pdp-section container,1
 ec5b82f5-b36c-fbc5-e053-2995a90afa0c,2,Screenshot (28).jpg,9.5,51945-4,1,pdp-section,1
@@ -23526,6 +23548,7 @@ f6cf5315-6678-486c-85b2-d4b3f748600e,2,Funginix AF Insert.jpg,2.5,51945-4,Fungin
 f6cf9454-552b-486e-a38b-ab3c183b24a1,1,Image_1.jpg,11.5,51945-4,image description,pdp-section title:product,1
 f6cff3d1-cca5-4b3e-a481-0c4def90684c,1,nmensensitvebox12.jpg,10.0,51945-4,nmensensitive12,pdp-section,1
 f6d653f5-52a0-42ad-8308-b8d6f57050cc,1,MoistMag SPF15-1.jpg,11.5,51945-4,image description,pdp-section title:pdp,1
+f6d90382-dc51-480c-a46c-bad041915d07,1,minoxidil-mens-01.jpg,17.0,51945-4,PRINCIPAL DISPLAY PANEL - 60 g Can Carton,pdp-section pdp carton container,1
 f6db0332-58ed-4c82-a9dc-7fac621f1ac1,1,REVERSE IT_TEMP_Front.jpg,8.0,51945-4,REVERSE IT_TEMP_Front,pdp-section front back,1
 f6db0332-58ed-4c82-a9dc-7fac621f1ac1,2,REVERSE IT_TEMP_Back-1.jpg,3.5,51945-4,REVERSE IT_TEMP_Back-1,pdp-section back,1
 f6db0332-58ed-4c82-a9dc-7fac621f1ac1,3,REVERSE IT_TEMP_Page_2.jpg,3.0,51945-4,REVERSE IT_TEMP_Page_2,pdp-section back,1
@@ -24094,6 +24117,10 @@ fd66ee9b-5a24-776a-e053-6294a90a6559,2,79330D.jpg,9.5,51945-4,79330D,pdp-section
 fd67566a-1076-019d-e053-6394a90a415c,1,Gericare Hydrocortisone 0.9g CDER.jpg,10.0,51945-4,Gericare Hydrocortisone 0.9g CDER,pdp-section,1
 fd67b009-accc-6c7b-e053-6294a90ad80e,1,LS58802A.jpg,10.0,51945-4,LS58802A,pdp-section,1
 fd67b009-accc-6c7b-e053-6294a90ad80e,2,79350D.jpg,9.5,51945-4,79350D,pdp-section,1
+fd67b4d2-e71d-4145-bf69-437d0aa86cd3,1,77A302EC2.jpg,14.0,51945-4,Hair Regrowth Treatment Carton,pdp-section title:pdp carton title:package,1
+fd67b4d2-e71d-4145-bf69-437d0aa86cd3,2,export-02.jpg,0.0,,"A picture containing game, mirror Description automatically generated",,1
+fd67b4d2-e71d-4145-bf69-437d0aa86cd3,3,export-01.jpg,-0.5,,A screenshot of a cell phone Description automatically generated,,0
+fd67b4d2-e71d-4145-bf69-437d0aa86cd3,4,export-00.jpg,-9.0,,A picture containing table Description automatically generated,figure,0
 fd67fa5d-f997-c607-e053-6294a90aee2b,1,LS58804A.jpg,10.0,51945-4,LS58804A,pdp-section,1
 fd67fa5d-f997-c607-e053-6294a90aee2b,2,79250D.jpg,9.5,51945-4,79250D,pdp-section,1
 fd68012d-814b-ac07-e053-6394a90afc68,1,LS58803A.jpg,10.0,51945-4,LS58803A,pdp-section,1

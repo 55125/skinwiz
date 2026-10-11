@@ -40,7 +40,8 @@ export type StepType =
   | "sunscreen"
   | "scalp"
   | "body-powder"
-  | "antiperspirant";
+  | "antiperspirant"
+  | "scalp-leave-on";
 
 export type ActiveGuidance = {
   activeId: string;
@@ -72,6 +73,7 @@ const SRC_DANDRUFF = "21 CFR 358.750 (dandruff, seborrheic dermatitis and psoria
 const SRC_PROTECTANT = "21 CFR 347.50 (skin protectant drug products: labeling)";
 const SRC_ANALGESIC = "OTC Monograph M017 (external analgesic drug products: labeling); follow the product's label";
 const SRC_ANTIPERSPIRANT = "21 CFR 350.50 (antiperspirant drug products: labeling)";
+const SRC_MINOXIDIL = "FDA-approved OTC Drug Facts labels for minoxidil topical solution 2% and 5% and foam 5% (Rogaine and generics); follow the product's label";
 const SRC_COSMETIC = "General dermatology practice; no FDA monograph applies (cosmetic ingredient)";
 const SRC_AHA_GUIDANCE =
   "FDA guidance for industry: labeling for topically applied cosmetic products containing alpha hydroxy acids (sunburn alert)";
@@ -571,6 +573,29 @@ const ENTRIES: ActiveGuidance[] = [
   antiperspirant("aluminum-chlorohydrate"),
   antiperspirant("aluminum-zirconium-complex"),
 
+  // --- Hair loss (approved-application OTC, not a monograph) -------------------------
+  {
+    activeId: "minoxidil",
+    defaultSlot: "both",
+    slotReason: "Most minoxidil labels direct twice-daily use, morning and night; the women's 5% foam is once daily. Follow your product's label.",
+    howToUse: [
+      "Apply to a dry scalp, on the thinning area, not to the hair itself.",
+      "Use the amount the label directs (for example 1 mL of solution or half a capful of foam); more does not work better.",
+      "Wash your hands well afterward, and let it dry before styling, putting on a hat or going to bed.",
+    ],
+    frequency: "Twice daily for most products, once daily for the women's 5% foam, as the label directs. Results usually take at least 2 to 4 months.",
+    cautions: [
+      "For external use only. Use only on the scalp; avoid contact with the eyes.",
+      "Do not use if hair loss is sudden or patchy, there is no family history of hair loss, or the scalp is red, inflamed, infected, irritated or painful.",
+      "Women: do not use if pregnant or breastfeeding.",
+      "Stop use and ask a doctor if you have chest pain, a rapid heartbeat, faintness or dizziness, sudden unexplained weight gain, swollen hands or feet, or scalp irritation that continues.",
+      "Some extra shedding in the first weeks is common. Unwanted facial hair can occur, often from product spreading.",
+      "Very toxic to cats; keep pets away from treated skin, hands and bedding.",
+    ],
+    sources: [SRC_MINOXIDIL],
+    reviewed: false,
+  },
+
   // --- Cosmetic ingredients (no FDA monograph; no efficacy claims) --------------------
   {
     activeId: "niacinamide",
@@ -947,6 +972,17 @@ export const FORMULATION_GUIDANCE: Record<StepType, FormulationGuidance> = {
       "Shake or sprinkle a small amount, keeping it away from the face to avoid breathing it in.",
     ],
     layering: "A body step outside the face sequence; apply after bathing and drying.",
+    reviewed: false,
+  },
+  "scalp-leave-on": {
+    stepType: "scalp-leave-on",
+    label: "Leave-on scalp treatment",
+    order: 105,
+    howToApply: [
+      "Apply to a dry scalp, on the thinning area, and spread with the fingertips.",
+      "Wash your hands afterward and let it dry fully before styling or lying down.",
+    ],
+    layering: "A scalp step outside the face sequence. Don't rinse it off; if you wash your hair, apply it after the scalp is dry again.",
     reviewed: false,
   },
   antiperspirant: {

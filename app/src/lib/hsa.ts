@@ -17,6 +17,10 @@
 // - Antiperspirants: no tag, though they're OTC drugs. Pub. 502 excludes
 //   toiletries, and administrators generally want a Letter of Medical
 //   Necessity (hyperhidrosis) for them -- "usually eligible" would mislead.
+// - Hair-loss products (minoxidil): no tag, though they're OTC drugs. Pub. 502
+//   excludes hair transplants as cosmetic, and plan administrators generally
+//   treat hair regrowth products the same way unless there's a Letter of
+//   Medical Necessity -- "usually eligible" would mislead.
 // - Cosmetics (brand-direct, Open Beauty Facts): no tag. Items used for
 //   appearance or general health generally aren't medical care (IRS Pub. 502).
 // - Homeopathic products (NDC marketing category "UNAPPROVED HOMEOPATHIC"):
@@ -88,6 +92,7 @@ export type HsaStatus =
         | "prescription"
         | "homeopathic"
         | "antiperspirant"
+        | "hair-loss"
         | "makeup-with-spf"
         | "sunscreen-unconfirmed"
         | "sunscreen-sunburn-only";
@@ -117,6 +122,7 @@ export function hsaStatus(p: HsaInput): HsaStatus {
   if (p.concernId === "excessive-sweating" || p.activeIds.some((id) => ANTIPERSPIRANT.has(id))) {
     return { eligible: false, reason: "antiperspirant" };
   }
+  if (p.concernId === "hair-loss" || p.activeIds.includes("minoxidil")) return { eligible: false, reason: "hair-loss" };
   if (!isSunscreen(p)) return { eligible: true, reason: "otc-drug" };
   // Makeup with SPF (foundation, lipstick, BB cream) is listed as an OTC drug
   // but plans generally treat it as a cosmetic.

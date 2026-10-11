@@ -49,6 +49,7 @@ const MURASE_PREG =
   "Murase JE, Heller MM, Butler DC. Safety of dermatologic medications in pregnancy and lactation: Part I. Pregnancy. J Am Acad Dermatol. 2014;70(3):401.e1-14";
 const BUTLER_LACT =
   "Butler DC, Heller MM, Murase JE. Safety of dermatologic medications in pregnancy and lactation: Part II. Lactation. J Am Acad Dermatol. 2014;70(3):417.e1-10";
+const MINOXIDIL_LABEL = "FDA-approved OTC minoxidil Drug Facts (women's 2% solution and 5% foam): do not use if pregnant or breastfeeding";
 const BOZZO = "Bozzo P, Chua-Gocheco A, Einarson A. Safety of skin care products during pregnancy. Can Fam Physician. 2011;57(6):665-7";
 const CHIEN = "Chien AL, Qi J, Rainer B, Sachs DL, Helfrich YR. Treatment of acne in pregnancy. J Am Board Fam Med. 2016;29(2):254-62";
 const AAD_ACNE_PREG = "AAD public guidance on treating acne during pregnancy (aad.org)";
@@ -405,6 +406,14 @@ export const PREGNANCY_ENTRIES: PregnancyEntry[] = [
     pregnancy: { level: "ok", note: "Very little is absorbed through intact underarm skin; generally considered acceptable." },
     lactation: { level: "ok", note: "Generally considered acceptable while breastfeeding." },
     sources: [BOZZO],
+  },
+  {
+    id: "minoxidil",
+    name: "Minoxidil",
+    patterns: ["minoxidil"],
+    pregnancy: { level: "avoid", note: "The OTC label says women should not use it while pregnant. Some is absorbed through the scalp." },
+    lactation: { level: "avoid", note: "The OTC label says women should not use it while breastfeeding." },
+    sources: [MINOXIDIL_LABEL],
   },
 ];
 

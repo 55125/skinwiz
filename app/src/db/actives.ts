@@ -26,6 +26,7 @@ export type Concern =
   | "anti-itch"
   | "skin-protectant"
   | "antiperspirant"
+  | "hair-loss"
   | "brightening-texture";
 
 // Maps each niche key (used throughout tools/catalog_pipeline and this
@@ -40,6 +41,12 @@ export const CONCERN_DEFINITIONS: { niche: Concern; id: string; name: string; de
   { niche: "anti-itch", id: "itch-relief", name: "Itch Relief", description: "OTC actives and products for itch from eczema, insect bites, poison ivy, and minor irritation." },
   { niche: "skin-protectant", id: "dry-skin-eczema", name: "Dry Skin & Eczema", description: "OTC skin-protectant actives and products that protect minor cuts, scrapes, and burns and relieve chapped or cracked skin; some also relieve itch from eczema or rashes, or treat diaper rash." },
   { niche: "antiperspirant", id: "excessive-sweating", name: "Excessive Sweating", description: "OTC antiperspirant actives and products." },
+  {
+    niche: "hair-loss",
+    id: "hair-loss",
+    name: "Hair Thinning & Loss",
+    description: "OTC minoxidil products for hereditary hair thinning on the scalp. Sudden, patchy or rapid hair loss needs a dermatologist, not an OTC trial.",
+  },
   {
     niche: "brightening-texture",
     id: "brightening-texture",
@@ -836,6 +843,17 @@ export const ACTIVE_DEFINITIONS: ActiveDefinition[] = [
     summary:
       "A mineral used in aluminum-free \"natural\" underarm products to neutralize odor. Not an FDA OTC antiperspirant active: it doesn't block sweat ducts the way aluminum salts do.",
     typicalConcentrationText: "Concentration varies by product; not a US monograph active.",
+  },
+
+  // --- Hair loss (hereditary thinning on the scalp) ---
+  {
+    id: "minoxidil",
+    canonicalName: "Minoxidil",
+    categories: ["hair-loss"],
+    synonyms: ["minoxidil"],
+    summary:
+      "The only FDA-approved OTC active for hereditary hair loss on the top of the scalp, sold under approved applications (Rogaine and its generics), not a monograph. It works only while it is used.",
+    typicalConcentrationText: "OTC topical minoxidil is 2% (solution, labeled for women) or 5% (solution for men; foam for men and for women). Oral minoxidil is prescription-only.",
   },
 
   // --- Brightening & texture (cosmetic ingredients, NOT FDA drug actives) ---

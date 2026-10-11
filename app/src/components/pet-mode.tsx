@@ -1,27 +1,13 @@
 import Link from "next/link";
-import { AlertTriangle, PawPrint } from "lucide-react";
+import { AlertTriangle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { catCaution, regulatoryStatus, speciesLabel, type PetSpeciesFilter } from "@/db/pet";
 import type { PetProduct } from "@/lib/pet-catalog";
 import { displayManufacturer } from "@/lib/format";
 
-// Shared pieces of the /pets pages: the people/pets switch, the species
-// filter and one product row.
-
-/** The site-wide mode switch, at the top of every pet page. */
-export function PetModeSwitch() {
-  return (
-    <div role="navigation" aria-label="Mode" className="inline-flex rounded-full border bg-card p-1 text-sm">
-      <Link href="/" className="rounded-full px-3 py-1 text-muted-foreground hover:text-foreground">
-        People
-      </Link>
-      <Link href="/pets" aria-current="page" className="inline-flex items-center gap-1.5 rounded-full bg-brand-soft px-3 py-1 font-medium text-brand-foreground">
-        <PawPrint className="h-3.5 w-3.5" /> Pets
-      </Link>
-    </div>
-  );
-}
+// Shared pieces of the /pets pages: the species filter and one product row.
+// (The People / Pets switch is in the site header: site-nav.tsx ModeSwitch.)
 
 export function parseSpecies(s: string | undefined): PetSpeciesFilter | undefined {
   return s === "dog" || s === "cat" ? s : undefined;
@@ -77,13 +63,13 @@ export function CatCautionBadge({ p }: { p: PetProduct }) {
   );
 }
 
-export function PetProductList({ products }: { products: PetProduct[] }) {
+export function PetProductList({ products, species }: { products: PetProduct[]; species?: PetSpeciesFilter }) {
   if (products.length === 0) return <p className="text-sm text-muted-foreground">No products match.</p>;
   return (
     <ul className="divide-y rounded-2xl border bg-card">
       {products.map((p) => (
         <li key={p.id}>
-          <Link href={`/pets/product/${encodeURIComponent(p.id)}`} className="flex gap-4 p-4 transition-colors hover:bg-muted/50">
+          <Link href={`/pets/product/${encodeURIComponent(p.id)}${species ? `?species=${species}` : ""}`} className="flex gap-4 p-4 transition-colors hover:bg-muted/50">
             {p.imageUrl && (
               // eslint-disable-next-line @next/next/no-img-element -- small self-hosted brand photo
               <img src={p.imageUrl} alt="" width={64} height={64} className="h-16 w-16 shrink-0 rounded-xl border bg-white object-contain p-1" loading="lazy" />

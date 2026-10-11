@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { SiteLogoMark } from "@/components/site-logo-mark";
-import { SiteNav } from "@/components/site-nav";
+import { ModeSwitch, SiteNav } from "@/components/site-nav";
 import { SITE_NAME } from "@/lib/brand";
 // Concern names are code constants (the seed copies them into the concerns
 // table), so the header and footer read them directly: no database query on
@@ -24,8 +24,11 @@ export function SiteHeader() {
   return (
     <header className="sticky top-0 z-20 border-b bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/70">
       <div className="relative mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4">
-        <SiteLogo />
-        <SiteNav concerns={concerns} petMode={FEATURES.PET_MODE} />
+        <div className="flex min-w-0 items-center gap-3">
+          <SiteLogo />
+          {FEATURES.PET_MODE && <ModeSwitch />}
+        </div>
+        <SiteNav concerns={concerns} />
       </div>
     </header>
   );

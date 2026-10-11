@@ -33,7 +33,7 @@ export function listPetProducts({ concern, species, q }: { concern?: string; spe
   const words = norm(q).split(/\s+/).filter(Boolean);
   return allPetProducts()
     .filter((p) => !concern || p.concernIds.includes(concern))
-    .filter((p) => !species || forSpecies(p.species, species))
+    .filter((p) => !species || forSpecies(p.species, species, p.notForCats))
     .filter((p) => {
       if (words.length === 0) return true;
       const hay = norm(`${p.brandName} ${p.manufacturer} ${p.activeIngredientText} ${p.inactiveIngredientText} ${p.epaRegNo} ${p.alternateNames}`);
@@ -46,7 +46,7 @@ export function listPetProducts({ concern, species, q }: { concern?: string; spe
 export function petConcernCounts(species?: PetSpeciesFilter): Map<string, number> {
   const counts = new Map<string, number>();
   for (const p of allPetProducts()) {
-    if (species && !forSpecies(p.species, species)) continue;
+    if (species && !forSpecies(p.species, species, p.notForCats)) continue;
     for (const c of p.concernIds) counts.set(c, (counts.get(c) ?? 0) + 1);
   }
   return counts;

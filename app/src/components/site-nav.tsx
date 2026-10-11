@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { ChevronDown, Menu, Search, UserRound, X } from "lucide-react";
+import { ChevronDown, Menu, PawPrint, Search, UserRound, X } from "lucide-react";
 import { SearchBar } from "@/components/search-bar";
 import { cn } from "@/lib/utils";
 import { INGREDIENT_ITEMS, MY_SKIN_ITEMS, isActive, type NavItem } from "@/lib/nav";
@@ -163,7 +163,7 @@ function PhoneSearch({ pathname }: { pathname: string }) {
   );
 }
 
-function MobileMenu({ pathname, concerns, showSearch, petMode }: { pathname: string; concerns: Concern[]; showSearch: boolean; petMode: boolean }) {
+function MobileMenu({ pathname, concerns, showSearch }: { pathname: string; concerns: Concern[]; showSearch: boolean }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   useDismiss(open, () => setOpen(false), ref);
@@ -214,7 +214,6 @@ function MobileMenu({ pathname, concerns, showSearch, petMode }: { pathname: str
             <div className="grid grid-cols-2">{INGREDIENT_ITEMS.map(link)}</div>
             <div className="mt-4 border-t pt-3" />
             {link({ href: "/routines", label: "Community routines" })}
-            {petMode && link({ href: "/pets", label: "Pets" })}
             {link({ href: "/clinic-tools", label: "For clinicians" })}
             {link({ href: "/about", label: "About" })}
           </nav>
@@ -224,12 +223,37 @@ function MobileMenu({ pathname, concerns, showSearch, petMode }: { pathname: str
   );
 }
 
-// petMode: the flag-gated pet catalog (lib/feature-flags.ts PET_MODE) gets a
-// "Pets" link; its pages carry the people/pets switch themselves.
-export function SiteNav({ concerns, petMode = false }: { concerns: Concern[]; petMode?: boolean }) {
+// The People / Pets switch beside the logo, on every page, when the
+// flag-gated pet catalog is on (lib/feature-flags.ts PET_MODE). Pet mode is
+// one mode for both species; its pages filter Dogs / Cats / All themselves.
+export function ModeSwitch() {
   const pathname = usePathname();
-  // Home and Search already have a big search box of their own.
-  const showSearch = pathname !== "/" && pathname !== "/search";
+  const pets = isActive(pathname, "/pets");
+  const item = (href: string, active: boolean, children: React.ReactNode) => (
+    <Link
+      href={href}
+      aria-current={active ? "page" : undefined}
+      className={cn(
+        "inline-flex items-center gap-1 rounded-full px-2.5 py-1 transition-colors",
+        active ? "bg-brand-soft font-medium text-brand-foreground" : "text-muted-foreground hover:text-foreground",
+      )}
+    >
+      {children}
+    </Link>
+  );
+  return (
+    <div role="navigation" aria-label="People or pets" className="flex shrink-0 rounded-full border bg-card p-0.5 text-xs sm:text-sm">
+      {item("/", !pets, "People")}
+      {item("/pets", pets, <><PawPrint className="h-3.5 w-3.5" /> Pets</>)}
+    </div>
+  );
+}
+
+export function SiteNav({ concerns }: { concerns: Concern[] }) {
+  const pathname = usePathname();
+  // Home and Search already have a big search box of their own; pet pages
+  // have their own pet search (the header one searches the people catalog).
+  const showSearch = pathname !== "/" && pathname !== "/search" && !isActive(pathname, "/pets");
   const pill = (href: string, label: string, active: boolean, extra?: string) => (
     <Link
       href={href}
@@ -265,7 +289,6 @@ export function SiteNav({ concerns, petMode = false }: { concerns: Concern[]; pe
           active={[...INGREDIENT_ITEMS.map((i) => i.href), "/ingredient", "/guide"].some((h) => isActive(pathname, h))}
         />
         {pill("/routines", "Routines", isActive(pathname, "/routines"))}
-        {petMode && pill("/pets", "Pets", isActive(pathname, "/pets"))}
         {pill(
           "/clinic-tools",
           "For clinicians",
@@ -283,7 +306,7 @@ export function SiteNav({ concerns, petMode = false }: { concerns: Concern[]; pe
         </div>
       </nav>
       {showSearch && <PhoneSearch pathname={pathname} />}
-      <MobileMenu pathname={pathname} concerns={concerns} showSearch={showSearch} petMode={petMode} />
+      <MobileMenu pathname={pathname} concerns={concerns} showSearch={showSearch} />
     </>
   );
 }

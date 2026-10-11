@@ -68,3 +68,10 @@ test("only the seed and lib/pet-catalog.ts touch pet_products", () => {
   walk(root);
   assert.deepEqual(offenders, []);
 });
+
+test("the Cats view hides dog-only products and labels that say not for cats; the Dogs view hides cat-only ones", () => {
+  assert.ok(!forSpecies(["dog", "horse"], "cat"));
+  assert.ok(!forSpecies(["cat"], "dog"));
+  assert.ok(!forSpecies(["cat", "dog"], "cat", true));
+  assert.ok(forSpecies(["cat", "dog"], "dog", true));
+});

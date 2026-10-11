@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { PageHeader } from "@/components/page-header";
-import { PetModeSwitch, PetProductList, SpeciesFilter, parseSpecies } from "@/components/pet-mode";
+import { PetProductList, SpeciesFilter, parseSpecies } from "@/components/pet-mode";
 import { PET_CONCERNS } from "@/db/pet";
 import { listPetProducts, petConcernCounts } from "@/lib/pet-catalog";
 import { FEATURES } from "@/lib/feature-flags";
@@ -29,7 +29,6 @@ export default async function PetsPage({ searchParams }: { searchParams: Promise
 
   return (
     <div className="mx-auto max-w-5xl space-y-8 px-4 py-10">
-      <PetModeSwitch />
       <PageHeader
         eyebrow="Pet mode"
         title="Skin care for dogs and cats"
@@ -60,7 +59,7 @@ export default async function PetsPage({ searchParams }: { searchParams: Promise
           <h2 id="results" className="text-xl font-semibold">
             {results.length} {results.length === 1 ? "product" : "products"} for “{query}”
           </h2>
-          <PetProductList products={results.slice(0, RESULT_LIMIT)} />
+          <PetProductList products={results.slice(0, RESULT_LIMIT)} species={species} />
         </section>
       ) : (
         <section className="grid gap-3 sm:grid-cols-2" aria-label="Pet concerns">

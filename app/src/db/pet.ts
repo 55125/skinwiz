@@ -61,8 +61,14 @@ export function speciesLabel(species: string[]): string {
   return species.map((s) => SPECIES_LABEL[s] ?? s).join(", ");
 }
 
-/** Whether a product's label covers this species ("pet" labels name none, so they match both). */
-export function forSpecies(species: string[], want: PetSpeciesFilter): boolean {
+/**
+ * Whether a product shows in the Dogs or Cats view: its label covers that
+ * species ("pet" labels name none, so they show in both). A dog-only
+ * product is hidden from the Cats view and vice versa, and so is anything
+ * whose label says not for cats.
+ */
+export function forSpecies(species: string[], want: PetSpeciesFilter, notForCats = false): boolean {
+  if (want === "cat" && notForCats) return false;
   return species.includes(want) || species.includes("pet");
 }
 

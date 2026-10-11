@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { AlertTriangle, ChevronLeft, ExternalLink, Stethoscope } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { RxLabelSection } from "@/components/rx-label-section";
-import { CatCautionBadge, PetModeSwitch, PetStatusBadge } from "@/components/pet-mode";
+import { CatCautionBadge, PetStatusBadge, parseSpecies } from "@/components/pet-mode";
 import { catCaution, petConcern, petWarnings, regulatoryStatus, speciesLabel } from "@/db/pet";
 import { getPetProduct } from "@/lib/pet-catalog";
 import { displayManufacturer } from "@/lib/format";
@@ -24,9 +24,17 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 
 const SPECIES_WORD = { dog: "dogs", cat: "cats" } as const;
 
-export default async function PetProductPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function PetProductPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ species?: string }>;
+}) {
   if (!FEATURES.PET_MODE) notFound();
   const p = getPetProduct(decodeURIComponent((await params).id));
+  // The Dogs / Cats view the visitor came from, kept on the way back.
+  const species = parseSpecies((await searchParams).species);
   if (!p) notFound();
 
   const status = regulatoryStatus(p.regulatoryStatus);
@@ -35,15 +43,15 @@ export default async function PetProductPage({ params }: { params: Promise<{ id:
   const caution = catCaution(input);
   const concern = petConcern(p.concernId);
   const fromFda = p.dataSource === "dailymed_animal";
+  const back = `${concern ? `/pets/${concern.id}` : "/pets"}${species ? `?species=${species}` : ""}`;
 
   return (
     <div className="mx-auto max-w-4xl space-y-8 px-4 py-10">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <Link href={concern ? `/pets/${concern.id}` : "/pets"} className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+        <Link href={back} className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
           <ChevronLeft className="h-4 w-4" /> {concern?.name ?? "Pet skin care"}
         </Link>
-        <PetModeSwitch />
-      </div>
+        </div>
 
       {p.imageUrl && (
         <figure className="float-right ml-6 w-36 sm:w-48">

@@ -177,6 +177,9 @@ PET_CONCERN_RULES: list[tuple[str, str, str]] = [
 ]
 
 PET_CONCERN_IDS = [c for c, _, _ in PET_CONCERN_RULES]
+# Brand-site grooming products (deodorizing shampoos, wipes, detanglers)
+# that match none of the rules above list under this one instead.
+GROOMING = "pet-grooming"
 
 
 def pet_concerns(active_names: list[str], indication_text: str, route_otic: bool = False) -> list[str]:

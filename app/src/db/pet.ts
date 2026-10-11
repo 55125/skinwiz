@@ -6,8 +6,8 @@
 export type Species = "dog" | "cat" | "horse" | "pet";
 export type PetSpeciesFilter = "dog" | "cat";
 
-// Ids match tools/catalog_pipeline/pet_parse.py PET_CONCERN_RULES, which
-// assigns them from each label's actives and indications.
+// Ids match tools/catalog_pipeline/pet_parse.py PET_CONCERN_RULES (assigned
+// from each label's actives and indications) plus its GROOMING fallback.
 export const PET_CONCERNS: { id: string; name: string; description: string }[] = [
   { id: "pet-itch-allergies", name: "Itch and allergies", description: "Scratching, licking and allergic skin flare-ups." },
   { id: "pet-hot-spots", name: "Hot spots", description: "Red, moist, irritated patches that spread fast." },
@@ -17,6 +17,8 @@ export const PET_CONCERNS: { id: string; name: string; description: string }[] =
   { id: "pet-ear-infections", name: "Ear infections and ear care", description: "Ear cleaners and medicated ear drops." },
   { id: "pet-fleas-ticks", name: "Fleas and ticks", description: "Spot-ons, sprays, shampoos and collars that kill or repel fleas, ticks and mites." },
   { id: "pet-dry-skin", name: "Dry skin", description: "Moisturizing shampoos, balms and conditioners." },
+  // Brand-site products with no treatment claim (pet_parse.py GROOMING).
+  { id: "pet-grooming", name: "Grooming", description: "Everyday shampoos, conditioners, wipes and deodorizing sprays." },
 ];
 
 export function petConcern(id: string) {

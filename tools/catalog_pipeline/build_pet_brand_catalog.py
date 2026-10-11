@@ -111,7 +111,7 @@ try:
 except ImportError:
     Image = None  # resizing becomes a no-op; see requirements.txt
 
-from pet_parse import PET_CONCERN_IDS, PET_CONCERN_RULES, parse_species, pet_concerns, species_mentions
+from pet_parse import GROOMING, PET_CONCERN_IDS, PET_CONCERN_RULES, parse_species, pet_concerns, species_mentions
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT_CSV = os.path.join(HERE, "output", "pet_brand_catalog.csv")
@@ -784,7 +784,7 @@ def build_row(key: str, brand: dict, url: str, body: str, title: str, descriptio
         "brand": brand["brand"],
         "product_name": re.sub(r"\s+", " ", title).strip(),
         "species": ";".join(species),
-        "concern_ids": ";".join(c for c in concerns if c in PET_CONCERN_IDS),
+        "concern_ids": ";".join([c for c in concerns if c in PET_CONCERN_IDS] or [GROOMING]),
         "claim_type": claim,
         "epa_reg_no": epa,
         "active_ingredient_text": actives,
@@ -957,9 +957,7 @@ def main() -> None:
             row["id"] = f"{base}-{n}"
             n += 1
         ids.add(row["id"])
-        # Rows with no pet concern aren't seeded (app/src/db/seed-pets.ts),
-        # so their photos would only add weight to the repo.
-        row["image_url"] = download_image(row["image_url"], row["id"]) if row["concern_ids"] else ""
+        row["image_url"] = download_image(row["image_url"], row["id"])
 
     os.makedirs(os.path.dirname(OUT_CSV), exist_ok=True)
     with open(OUT_CSV, "w", newline="") as f:

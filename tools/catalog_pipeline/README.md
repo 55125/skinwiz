@@ -368,7 +368,13 @@ First run, 2026-10-11 (DailyMed release of Sep 21, 2026): 3,601 animal
 labels, 1,659 skin or ear, 564 naming dogs or cats -> 603 products, 555 with
 a pet concern (the seed skips the rest: styptic powders, eye washes,
 anesthetics). EPA: 369 pet-looking registrations, 293 whose EPA site list
-treats dogs or cats. See `pet_catalog_summary.json` for the breakdown.
+treats dogs or cats. Brand sites: 333 products with published ingredients
+from 22 brands (robots.txt per brand in the script's docstring), 230 with a
+pet concern; photos only for those, as 800 px WebP. Blocked or without
+ingredient lists: Frontline (bot wall), Wondercide (403), Elanco's
+K9 Advantix/Advantage/Seresto pages (no strengths; EPA rows cover them),
+Burt's Bees, Hartz, Virbac, Vetoquinol. See `pet_catalog_summary.json` for
+the DailyMed breakdown.
 
 Known limits: species is parsed from label text (SPL has no species
 field), so a few labels with unusual wording may be misfiled; DailyMed

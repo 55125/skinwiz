@@ -5,6 +5,8 @@
 // word must match somewhere (name, brand or ingredients), in any order, and
 // a few everyday words also match what labels actually say.
 
+import { foldAccents } from "@/db/fold";
+
 export type SearchTerm = {
   /** Any one of these, as a substring, satisfies the term. */
   alts: string[];
@@ -57,6 +59,13 @@ const SYNONYMS: Record<string, string[]> = {
   baby: ["baby", "infant"],
   fragrance: ["fragrance"],
   unscented: ["unscented", "fragrance free", "fragrance-free"],
+  // Brand and line names people spell the way they sound. Found in the
+  // admin "Searches" list: "olay regenerates" returned nothing because the
+  // line is Regenerist; "loreal" missed every "L'Oreal" row.
+  regenerates: ["regenerist", "regenerat"],
+  regenerate: ["regenerist", "regenerat"],
+  regenerating: ["regenerist", "regenerating"],
+  loreal: ["l'oreal", "loreal"],
 };
 
 // Topic words: they set a hint and are not matched against products.
@@ -97,8 +106,10 @@ export function parseSearch(raw: string): { terms: SearchTerm[]; hints: SearchHi
       continue;
     }
     const base = SYNONYMS[w] ?? [w];
-    // "paula's" also finds "Paulas"
-    const alts = [...new Set(base.flatMap((a) => (a.includes("'") ? [a, a.replace(/'/g, "")] : [a])))];
+    // "paula's" also finds "Paulas"; "l'oréal" also finds the many rows
+    // spelled plain "L'Oreal" (the SQL fold only covers accented rows).
+    const folded = base.flatMap((a) => [a, foldAccents(a)!]);
+    const alts = [...new Set(folded.flatMap((a) => (a.includes("'") ? [a, a.replace(/'/g, "")] : [a])))];
     terms.push({ alts, wordStart: w.length <= 3 && !SYNONYMS[w] });
   }
   return { terms, hints: [...hints] };

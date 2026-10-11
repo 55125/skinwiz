@@ -25,7 +25,7 @@ export function petConcern(id: string) {
   return PET_CONCERNS.find((c) => c.id === id);
 }
 
-export type RegulatoryStatus = "fda_approved" | "fda_conditional" | "unapproved" | "epa_registered" | "brand_listing";
+export type RegulatoryStatus = "fda_approved" | "fda_conditional" | "unapproved" | "epa_registered" | "brand_listing" | "other_source";
 
 // Shown on pet product pages instead of the human monograph range badges:
 // there is no animal OTC monograph, so "below / in / above range" would mean
@@ -50,6 +50,10 @@ export const REGULATORY_STATUS: Record<RegulatoryStatus, { label: string; detail
   brand_listing: {
     label: "Brand's own listing",
     detail: "Ingredients as the brand publishes them. Grooming products need no FDA or EPA review, and claims on them are the brand's own.",
+  },
+  other_source: {
+    label: "Ingredients from another source",
+    detail: "The brand's own page doesn't list ingredients, so this list was copied from another published page for the same product, often a retailer's. Check the package before relying on it.",
   },
 };
 

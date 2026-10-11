@@ -1123,7 +1123,8 @@ export const petProducts = sqliteTable(
     // product NDC (dailymed_animal), "epa-<reg no>" (epa_pesticide) or the
     // brand-site id (brand_direct)
     id: text("id").primaryKey(),
-    // "dailymed_animal" | "epa_pesticide" | "brand_direct"
+    // "dailymed_animal" | "epa_pesticide" | "brand_direct" | "third_party"
+    // (known only through the ingredient cross-match)
     dataSource: text("data_source").notNull(),
     brandName: text("brand_name").notNull(),
     manufacturer: text("manufacturer"),
@@ -1136,7 +1137,9 @@ export const petProducts = sqliteTable(
     concernIds: text("concern_ids", { mode: "json" }).$type<string[]>().notNull(),
     // "fda_approved" | "fda_conditional" | "unapproved" | "epa_registered" |
     // "brand_listing" (a brand's own page; grooming aids need no FDA or EPA
-    // filing) -- shown instead of the human monograph range badges.
+    // filing) | "other_source" (a third_party row: its list came from
+    // another page, often a retailer's) -- shown instead of the human
+    // monograph range badges.
     regulatoryStatus: text("regulatory_status").notNull(),
     // Prescription animal drug: informational only, never "buy".
     isRx: integer("is_rx", { mode: "boolean" }).notNull().default(false),

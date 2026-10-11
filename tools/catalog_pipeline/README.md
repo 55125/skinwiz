@@ -425,12 +425,11 @@ Walmart and Target are never used.
   burtsbeespets.com has no product pages, and hartz.com shows ingredients
   only as images.
 
-Held back: `pet_ingredient_crossmatch_retailer_pending.csv` has 39 rows
-for 37 targets. They come from retailers outside the banned list (Jeffers
-Pet, Medi-Vet, Revival Animal Health, Giant/Stop & Shop, Homes Alive).
-They cover 28 Davis grooming items, Virbac Epi-Otic Advanced, 10 Burt's
-Bees products and 1 Hartz shampoo. They stay out of the main file until
-Michael decides whether those sites are acceptable sources.
+Retail sources: Michael approved them on 2026-10-11. So 39 more rows (37
+targets) from Jeffers Pet, Medi-Vet, Revival Animal Health, Giant/Stop &
+Shop and Homes Alive are in the main file, all with `source_type`
+`third_party`. Chewy, Petco, PetSmart, Amazon, Walmart and Target are
+still never used.
 
 Exclusions:
 - EPA products: inert ingredients are confidential, so none are filled.
@@ -453,5 +452,14 @@ it fills only empty fields on rows already in the catalog and never
 overwrites, so 96 fields get filled. A list taken from the row's own DailyMed label
 counts as the label's. Any other source is stored as
 `ingredient_source_url`, and the product page says "matched from <site>".
-Targets not in the catalog are skipped: the DailyMed or EPA rows for the same
-products are already listed.
+Targets in no catalog become rows of their own via
+`build_pet_crossmatch_catalog.py` -> `output/pet_crossmatch_catalog.csv`.
+These are seeded as data source `third_party`, with status "Ingredients
+from another source", and the page always names that source. The first run
+gave 37 rows: 24 Davis grooming, 10 Burt's Bees, plus Hartz, Dechra
+TrizEDTA and ZYMOX Ear Cleanser. Three kinds of target are left out:
+- targets matched to a DailyMed label or an EPA registration, because that
+  catalog row already lists the product;
+- targets with only an inactive list and no actives, because half a label
+  would read as the whole product;
+- duplicate formulas.

@@ -207,6 +207,47 @@ function brandRows(file: string): PetRow[] {
   return out;
 }
 
+type CrossmatchCatalogRow = {
+  id: string;
+  brand: string;
+  product_name: string;
+  species: string;
+  concern_ids: string;
+  active_ingredient_text: string;
+  ingredient_text: string;
+  source_url: string;
+  ingredient_source_url: string;
+};
+
+// Products known only through the cross-match (build_pet_crossmatch_catalog.py):
+// a brand page without a list whose ingredients were found elsewhere,
+// mostly on a retailer's page. Always shown with that source.
+function crossmatchCatalogRows(file: string): PetRow[] {
+  const out: PetRow[] = [];
+  for (const r of readCsv<CrossmatchCatalogRow>(file) ?? []) {
+    const concernIds = concernsOf(r.concern_ids);
+    if (!r.id || concernIds.length === 0 || !r.ingredient_source_url) continue;
+    out.push({
+      id: r.id,
+      dataSource: "third_party",
+      brandName: r.product_name.trim(),
+      manufacturer: orNull(r.brand),
+      species: list(r.species),
+      notForCats: false,
+      concernId: concernIds[0],
+      concernIds,
+      regulatoryStatus: "other_source",
+      isRx: false,
+      activeIngredientText: orNull(r.active_ingredient_text),
+      activesJson: [],
+      inactiveIngredientText: orNull(r.ingredient_text),
+      ingredientSourceUrl: r.ingredient_source_url,
+      sourceUrl: orNull(r.source_url),
+    });
+  }
+  return out;
+}
+
 type CrossmatchRow = { target_id: string; field: string; value: string; source_url: string; source_type: string };
 
 /**
@@ -235,7 +276,7 @@ export function applyIngredientCrossmatch(rows: PetRow[], file: string): number 
   return filled;
 }
 
-/** Every pet row, first id wins (DailyMed, then EPA, then brand sites). */
+/** Every pet row, first id wins (DailyMed, then EPA, then brand sites, then cross-match-only products). */
 export function petCatalogRows(outputDir: string): PetRow[] {
   const seen = new Set<string>();
   const rows: PetRow[] = [];
@@ -244,6 +285,7 @@ export function petCatalogRows(outputDir: string): PetRow[] {
     ["dailymed_animal", dailymedRows(path.join(outputDir, "pet_catalog.csv"))],
     ["epa_pesticide", epaRows(path.join(outputDir, "pet_epa_catalog.csv"))],
     ["brand_direct", brandRows(path.join(outputDir, "pet_brand_catalog.csv"))],
+    ["third_party", crossmatchCatalogRows(path.join(outputDir, "pet_crossmatch_catalog.csv"))],
   ] as const) {
     for (const r of batch) {
       if (seen.has(r.id)) continue;

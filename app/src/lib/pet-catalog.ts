@@ -12,7 +12,7 @@ export type PetProduct = typeof petProducts.$inferSelect;
 
 // Within a listing: what a pet owner can buy and use first (Rx last), then
 // by how much review stands behind it.
-const STATUS_ORDER = ["fda_approved", "fda_conditional", "epa_registered", "unapproved", "brand_listing"];
+const STATUS_ORDER = ["fda_approved", "fda_conditional", "epa_registered", "unapproved", "brand_listing", "other_source"];
 
 function rank(p: PetProduct): number {
   return (p.isRx ? 10 : 0) + Math.max(0, STATUS_ORDER.indexOf(p.regulatoryStatus));

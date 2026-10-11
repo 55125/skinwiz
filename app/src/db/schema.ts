@@ -1149,6 +1149,11 @@ export const petProducts = sqliteTable(
     // Full inactive (or, for grooming aids, full) ingredient list; null =
     // not published (EPA labels never list inactives).
     inactiveIngredientText: text("inactive_ingredient_text"),
+    // Set when an ingredient list the product's own label or page lacks was
+    // filled from another source (tools/catalog_pipeline/
+    // pet_ingredient_crossmatch.csv): that page's URL. The UI names it, so
+    // a cross-matched list never reads as the label's own.
+    ingredientSourceUrl: text("ingredient_source_url"),
     marketingCategory: text("marketing_category"), // SPL approval code: NADA, ANADA, UNAPPROVED DRUG OTHER
     applicationNumber: text("application_number"), // NADA141382
     epaRegNo: text("epa_reg_no"),

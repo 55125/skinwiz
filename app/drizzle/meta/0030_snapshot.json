@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "d2a3031c-83be-4ec7-9dbf-57ab324bd37b",
+  "id": "7774560a-cc12-40ca-b05f-541797584c97",
   "prevId": "c5566236-b1b8-4f08-a7f7-e8c33794f1aa",
   "tables": {
     "active_chem_data": {
@@ -2536,6 +2536,13 @@
         },
         "inactive_ingredient_text": {
           "name": "inactive_ingredient_text",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "ingredient_source_url": {
+          "name": "ingredient_source_url",
           "type": "text",
           "primaryKey": false,
           "notNull": false,

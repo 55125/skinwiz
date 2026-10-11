@@ -207,6 +207,34 @@ function brandRows(file: string): PetRow[] {
   return out;
 }
 
+type CrossmatchRow = { target_id: string; field: string; value: string; source_url: string; source_type: string };
+
+/**
+ * Ingredient lists a row's own label or page lacks, found elsewhere by hand
+ * (tools/catalog_pipeline/pet_ingredient_crossmatch.csv). Fills empty fields
+ * only, never overwrites. A list taken from the row's own DailyMed label (a
+ * section build_pet_catalog.py doesn't parse, like "Also contains:") is the
+ * label's own; anything else records its source URL so the page names it.
+ * Targets not in the catalog are skipped: the cross-match found most of
+ * them to be DailyMed or EPA products already listed under another id.
+ */
+export function applyIngredientCrossmatch(rows: PetRow[], file: string): number {
+  const byId = new Map(rows.map((r) => [r.id, r]));
+  let filled = 0;
+  for (const c of readCsv<CrossmatchRow>(file) ?? []) {
+    const row = byId.get(c.target_id);
+    const value = c.value?.trim();
+    if (!row || !value) continue;
+    const key = c.field === "active_ingredient_text" ? "activeIngredientText" : "inactiveIngredientText";
+    if (row[key]) continue;
+    row[key] = value;
+    const ownLabel = c.source_type === "dailymed" && !!row.splSetId && c.source_url.includes(row.splSetId);
+    if (!ownLabel) row.ingredientSourceUrl = c.source_url;
+    filled++;
+  }
+  return filled;
+}
+
 /** Every pet row, first id wins (DailyMed, then EPA, then brand sites). */
 export function petCatalogRows(outputDir: string): PetRow[] {
   const seen = new Set<string>();
@@ -224,6 +252,7 @@ export function petCatalogRows(outputDir: string): PetRow[] {
       counts[source] = (counts[source] ?? 0) + 1;
     }
   }
-  console.log(`  ${rows.length} pet products ${JSON.stringify(counts)}`);
+  const filled = applyIngredientCrossmatch(rows, path.join(outputDir, "..", "pet_ingredient_crossmatch.csv"));
+  console.log(`  ${rows.length} pet products ${JSON.stringify(counts)}, ${filled} ingredient fields filled by cross-match`);
   return rows;
 }

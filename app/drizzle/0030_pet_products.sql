@@ -14,6 +14,7 @@ CREATE TABLE `pet_products` (
 	`active_ingredient_text` text,
 	`actives_json` text NOT NULL,
 	`inactive_ingredient_text` text,
+	`ingredient_source_url` text,
 	`marketing_category` text,
 	`application_number` text,
 	`epa_reg_no` text,

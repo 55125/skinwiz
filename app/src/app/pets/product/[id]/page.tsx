@@ -134,13 +134,22 @@ export default async function PetProductPage({
       </section>
 
       <section className="space-y-1 text-sm">
-        <h2 className="font-semibold">{p.dataSource === "brand_direct" ? "Ingredients" : "Inactive ingredients"}</h2>
+        <h2 className="font-semibold">{p.dataSource === "brand_direct" ? "Ingredients" : "Other ingredients"}</h2>
         <p className="text-muted-foreground">
           {p.inactiveIngredientText ??
             (p.dataSource === "epa_pesticide"
               ? "Not listed: pesticide labels only have to name their active ingredients."
               : "Not listed on the label.")}
         </p>
+        {p.ingredientSourceUrl && (
+          <p className="text-xs text-amber-800 dark:text-amber-300">
+            Ingredient details not on this product&apos;s own {p.dataSource === "brand_direct" ? "page" : "label"}: matched from{" "}
+            <a href={p.ingredientSourceUrl} target="_blank" rel="nofollow noopener noreferrer" className="underline underline-offset-4">
+              {sourceHost(p.ingredientSourceUrl)}
+            </a>
+            . Check the package before relying on it.
+          </p>
+        )}
       </section>
 
       <div className="space-y-3">
@@ -174,6 +183,14 @@ export default async function PetProductPage({
       </p>
     </div>
   );
+}
+
+function sourceHost(url: string): string {
+  try {
+    return new URL(url).hostname.replace(/^www\./, "");
+  } catch {
+    return "another source";
+  }
 }
 
 function Fact({ label, children }: { label: string; children: React.ReactNode }) {

@@ -75,3 +75,29 @@ test("the Cats view hides dog-only products and labels that say not for cats; th
   assert.ok(!forSpecies(["cat", "dog"], "cat", true));
   assert.ok(forSpecies(["cat", "dog"], "dog", true));
 });
+
+test("cross-matched ingredients fill only empty fields, and only outside sources are recorded", async () => {
+  const { applyIngredientCrossmatch } = await import("./seed-pets");
+  const os = await import("node:os");
+  const file = path.join(fs.mkdtempSync(path.join(os.tmpdir(), "pet-")), "x.csv");
+  fs.writeFileSync(
+    file,
+    "target_id,field,value,source_url,source_type\n" +
+      "a,inactive_ingredient_text,WATER; GLYCERIN,https://dailymed.nlm.nih.gov/dailymed/lookup.cfm?setid=s1,dailymed\n" +
+      "b,inactive_ingredient_text,WATER,https://example.com/sds.pdf,manufacturer_document\n" +
+      "c,inactive_ingredient_text,SHOULD NOT REPLACE,https://example.com,third_party\n" +
+      "missing,inactive_ingredient_text,X,https://example.com,third_party\n",
+  );
+  const base = { dataSource: "dailymed_animal", brandName: "x", species: ["dog"], concernId: "pet-yeast", concernIds: ["pet-yeast"], regulatoryStatus: "unapproved", activesJson: [] };
+  const rows: Parameters<typeof applyIngredientCrossmatch>[0] = [
+    { ...base, id: "a", splSetId: "s1" },
+    { ...base, id: "b" },
+    { ...base, id: "c", inactiveIngredientText: "LABEL LIST" },
+  ];
+  assert.equal(applyIngredientCrossmatch(rows, file), 2);
+  assert.deepEqual(rows.map((r) => [r.inactiveIngredientText, r.ingredientSourceUrl ?? null]), [
+    ["WATER; GLYCERIN", null],
+    ["WATER", "https://example.com/sds.pdf"],
+    ["LABEL LIST", null],
+  ]);
+});

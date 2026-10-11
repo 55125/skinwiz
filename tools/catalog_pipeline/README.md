@@ -381,3 +381,77 @@ field), so a few labels with unusual wording may be misfiled; DailyMed
 package photos aren't linked for pet rows yet; EPA labels list no
 inactives; the species-toxicity list in `app/src/db/pet.ts` needs
 veterinary review.
+
+## Ingredient cross-match (pet_ingredient_crossmatch.csv)
+
+Hand-curated and committed, like `curated_products.csv`. It records
+ingredient lists that the three pet catalogs lack, each copied verbatim
+from another published source for the same product, checked 2026-10-11.
+One row per target and field. Columns: `target_id` (the pet_catalog NDC,
+or the `pet-<brand>-<sku>` id that `build_pet_brand_catalog.py` gives or
+would give the page), `brand`, `product_name`, `species`, `target_url`,
+`field` (`inactive_ingredient_text` | `ingredient_text` |
+`active_ingredient_text`), `value`, `source_url`, `source_type`
+(`dailymed` | `brand_document` | `manufacturer_document` | `third_party`),
+`match_evidence`, `checked_on`. An empty field means unknown: nothing is
+inferred or completed.
+
+Rules: a match must be the same brand, product name and variant, matched
+by NDC, package size, SKU/item number or EPA Reg. No. Sources are taken
+in order of preference: DailyMed, then the brand's own documents, then
+manufacturer documents (EPA PPLS and state label PDFs), then third
+parties. Search snippets are never used. Chewy, Petco, PetSmart, Amazon,
+Walmart and Target are never used.
+
+131 rows for 130 targets:
+- **pet_catalog.csv (85 of 152 rows lacking inactives).** 76 of them are
+  in the same DailyMed SPL, but in text `build_pet_catalog.py` doesn't
+  read: "Also contains:" lines (Dechra, GlenHaven), "Inactive ingredients
+  include..." in the DESCRIPTION section (Claro, Simplera, Bravecto,
+  NexGard Combo, Revolution Plus, Osurnia...), and "Each mL contains...
+  in a vehicle of..." composition sentences (stored as `ingredient_text`).
+  The other 9 are Kinetic EquiShield/Vetasan products, whose re-filed
+  Creative Science labels on DailyMed print the inactives. Fixing the
+  parser would make most of these rows redundant.
+- **Brand pages without lists (45 targets).** 33 match DailyMed labels
+  that already sit in pet_catalog.csv: Davis medicated, Curaseb, PetArmor
+  Hot Spot, Hydrocortisone and Ear Rinse, Vetoquinol BPO-3, Sebozole,
+  Universal and Ear Cleansing, and DOUXO S3. Those brand rows duplicate
+  DailyMed rows. 8 PetArmor flea/tick pages get actives with strengths
+  from EPA PPLS labels. 3 Vet's Best spot-ons get "Other ingredients"
+  from WA state label PDFs on WSU PICOL. 3 rows come from brand
+  documents (ZYMOX Ear Cleanser, Dechra TrizEDTA SDS).
+- **Burt's Bees for Pets and Hartz: none.** The brands publish no lists:
+  burtsbeespets.com has no product pages, and hartz.com shows ingredients
+  only as images.
+
+Held back: `pet_ingredient_crossmatch_retailer_pending.csv` has 39 rows
+for 37 targets. They come from retailers outside the banned list (Jeffers
+Pet, Medi-Vet, Revival Animal Health, Giant/Stop & Shop, Homes Alive).
+They cover 28 Davis grooming items, Virbac Epi-Otic Advanced, 10 Burt's
+Bees products and 1 Hartz shampoo. They stay out of the main file until
+Michael decides whether those sites are acceptable sources.
+
+Exclusions:
+- EPA products: inert ingredients are confidential, so none are filled.
+  Only actives with strengths are taken for brand pages that lacked them.
+- Elanco K9 Advantix/Advantage/Seresto and Hartz flea/tick products:
+  the EPA rows already cover them.
+- Rx spot-ons (Advantage Multi and its generics, Profender, Selarid,
+  Senergy, Milbemite): no source prints the inactives. Other-country
+  labels from a different company or under a different brand name were
+  not used.
+- Drugs.com/vet, Jeffers (for Rx) and similar aggregators: not used.
+- Ambiguous family pages (Dechra "MalAcetic", "TrizCHLOR"...): skipped.
+  So were pages whose variant couldn't be pinned down: Curaseb Medicated
+  Shampoo, PetArmor dog shampoo, the PetArmor Extend collar (the dog-only
+  label doesn't cover the cat collar sold on the same page), and Davis
+  Hypoallergenic (possible reformulation).
+
+How the seed uses it (`app/src/db/seed-pets.ts` `applyIngredientCrossmatch`):
+it fills only empty fields on rows already in the catalog and never
+overwrites, so 96 fields get filled. A list taken from the row's own DailyMed label
+counts as the label's. Any other source is stored as
+`ingredient_source_url`, and the product page says "matched from <site>".
+Targets not in the catalog are skipped: the DailyMed or EPA rows for the same
+products are already listed.

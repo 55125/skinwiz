@@ -163,7 +163,7 @@ function PhoneSearch({ pathname }: { pathname: string }) {
   );
 }
 
-function MobileMenu({ pathname, concerns, showSearch }: { pathname: string; concerns: Concern[]; showSearch: boolean }) {
+function MobileMenu({ pathname, concerns, showSearch, petMode }: { pathname: string; concerns: Concern[]; showSearch: boolean; petMode: boolean }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   useDismiss(open, () => setOpen(false), ref);
@@ -214,6 +214,7 @@ function MobileMenu({ pathname, concerns, showSearch }: { pathname: string; conc
             <div className="grid grid-cols-2">{INGREDIENT_ITEMS.map(link)}</div>
             <div className="mt-4 border-t pt-3" />
             {link({ href: "/routines", label: "Community routines" })}
+            {petMode && link({ href: "/pets", label: "Pets" })}
             {link({ href: "/clinic-tools", label: "For clinicians" })}
             {link({ href: "/about", label: "About" })}
           </nav>
@@ -223,7 +224,9 @@ function MobileMenu({ pathname, concerns, showSearch }: { pathname: string; conc
   );
 }
 
-export function SiteNav({ concerns }: { concerns: Concern[] }) {
+// petMode: the flag-gated pet catalog (lib/feature-flags.ts PET_MODE) gets a
+// "Pets" link; its pages carry the people/pets switch themselves.
+export function SiteNav({ concerns, petMode = false }: { concerns: Concern[]; petMode?: boolean }) {
   const pathname = usePathname();
   // Home and Search already have a big search box of their own.
   const showSearch = pathname !== "/" && pathname !== "/search";
@@ -262,6 +265,7 @@ export function SiteNav({ concerns }: { concerns: Concern[] }) {
           active={[...INGREDIENT_ITEMS.map((i) => i.href), "/ingredient", "/guide"].some((h) => isActive(pathname, h))}
         />
         {pill("/routines", "Routines", isActive(pathname, "/routines"))}
+        {petMode && pill("/pets", "Pets", isActive(pathname, "/pets"))}
         {pill(
           "/clinic-tools",
           "For clinicians",
@@ -279,7 +283,7 @@ export function SiteNav({ concerns }: { concerns: Concern[] }) {
         </div>
       </nav>
       {showSearch && <PhoneSearch pathname={pathname} />}
-      <MobileMenu pathname={pathname} concerns={concerns} showSearch={showSearch} />
+      <MobileMenu pathname={pathname} concerns={concerns} showSearch={showSearch} petMode={petMode} />
     </>
   );
 }

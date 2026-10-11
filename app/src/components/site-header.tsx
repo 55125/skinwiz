@@ -6,6 +6,7 @@ import { SITE_NAME } from "@/lib/brand";
 // table), so the header and footer read them directly: no database query on
 // every page, and pages without data can still be prerendered at build time.
 import { CONCERN_DEFINITIONS } from "@/db/actives";
+import { FEATURES } from "@/lib/feature-flags";
 
 export function SiteLogo() {
   return (
@@ -24,7 +25,7 @@ export function SiteHeader() {
     <header className="sticky top-0 z-20 border-b bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/70">
       <div className="relative mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4">
         <SiteLogo />
-        <SiteNav concerns={concerns} />
+        <SiteNav concerns={concerns} petMode={FEATURES.PET_MODE} />
       </div>
     </header>
   );

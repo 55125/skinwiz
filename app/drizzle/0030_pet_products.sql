@@ -1,0 +1,31 @@
+CREATE TABLE `pet_products` (
+	`id` text PRIMARY KEY NOT NULL,
+	`data_source` text NOT NULL,
+	`brand_name` text NOT NULL,
+	`manufacturer` text,
+	`species` text NOT NULL,
+	`not_for_cats` integer DEFAULT false NOT NULL,
+	`concern_id` text NOT NULL,
+	`concern_ids` text NOT NULL,
+	`regulatory_status` text NOT NULL,
+	`is_rx` integer DEFAULT false NOT NULL,
+	`dosage_form` text,
+	`route` text,
+	`active_ingredient_text` text,
+	`actives_json` text NOT NULL,
+	`inactive_ingredient_text` text,
+	`marketing_category` text,
+	`application_number` text,
+	`epa_reg_no` text,
+	`alternate_names` text,
+	`spl_set_id` text,
+	`source_url` text,
+	`image_url` text,
+	`indications` text,
+	`directions` text,
+	`warnings` text,
+	`pests` text,
+	`signal_word` text
+);
+--> statement-breakpoint
+CREATE INDEX `pet_products_concern_idx` ON `pet_products` (`concern_id`);

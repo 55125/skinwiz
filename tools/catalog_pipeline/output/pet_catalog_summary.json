@@ -1,0 +1,46 @@
+{
+  "labels": 3601,
+  "skin_or_ear_labels": 1659,
+  "dog_or_cat_skin_labels": 561,
+  "products": 603,
+  "products_with_a_pet_concern": 555,
+  "not_for_cats": 39,
+  "by_species": {
+    "cat;dog": 216,
+    "cat;dog;horse": 169,
+    "dog": 124,
+    "pet": 36,
+    "dog;horse": 30,
+    "cat": 28
+  },
+  "by_marketing_category": {
+    "UNAPPROVED DRUG OTHER": 481,
+    "ANADA": 65,
+    "NADA": 55,
+    "LEGALLY MARKETED UNAPPROVED NEW ANIMAL DRUGS FOR MINOR SPECIES": 2
+  },
+  "by_status": {
+    "otc unapproved": 474,
+    "rx fda_approved": 117,
+    "rx unapproved": 9,
+    "otc fda_approved": 3
+  },
+  "by_concern": {
+    "pet-bacterial": 320,
+    "pet-yeast": 245,
+    "pet-itch-allergies": 144,
+    "pet-ear-infections": 114,
+    "pet-fleas-ticks": 106,
+    "pet-seborrhea": 55,
+    "(none)": 48,
+    "pet-dry-skin": 25,
+    "pet-hot-spots": 24
+  },
+  "skipped": {
+    "no_product_ndc": 16,
+    "skin_not_dog_or_cat": 1098,
+    "not_marketed": 6,
+    "export_only_or_unknown": 2,
+    "duplicate_ndc": 0
+  }
+}

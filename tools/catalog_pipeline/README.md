@@ -350,3 +350,28 @@ row that would join two products the rules keep apart goes to `needs_owner`
 `reformulated` and `needs_owner` rows are never applied. Rerun the review
 after every `build_product_merges.py` run (the build rewrites the flagged
 file with empty decision columns).
+
+# Pet mode catalogs (2026-10-11)
+
+Dog and cat skin, ear and flea/tick products for the flag-gated `/pets`
+pages (app `FEATURE_PET_MODE`). Seeded into their own `pet_products` table,
+never `products`, so no human listing or search can show one. Rules live in
+`pet_parse.py` (tests: `tests/test_pet_parse.py`).
+
+| Script | Source | Output |
+|---|---|---|
+| `build_pet_catalog.py --zip dm_spl_release_animal.zip` | DailyMed animal SPL bulk zip (~1.2 GB, read in place, not committed) | `output/pet_catalog.csv`, `output/pet_catalog_summary.json` |
+| `build_pet_epa_catalog.py` | EPA PPLS API, one search per active + one detail per candidate (2 req/s, cached) | `output/pet_epa_catalog.csv` |
+| `build_pet_brand_catalog.py` | Brand sites that publish ingredients (robots.txt checked, Shopify `/products.json` or JSON-LD) | `output/pet_brand_catalog.csv` |
+
+First run, 2026-10-11 (DailyMed release of Sep 21, 2026): 3,601 animal
+labels, 1,659 skin or ear, 564 naming dogs or cats -> 603 products, 555 with
+a pet concern (the seed skips the rest: styptic powders, eye washes,
+anesthetics). EPA: 369 pet-looking registrations, 293 whose EPA site list
+treats dogs or cats. See `pet_catalog_summary.json` for the breakdown.
+
+Known limits: species is parsed from label text (SPL has no species
+field), so a few labels with unusual wording may be misfiled; DailyMed
+package photos aren't linked for pet rows yet; EPA labels list no
+inactives; the species-toxicity list in `app/src/db/pet.ts` needs
+veterinary review.

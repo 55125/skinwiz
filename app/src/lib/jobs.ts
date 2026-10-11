@@ -59,6 +59,11 @@ export type JobReport = {
 
 let running = false;
 
+/** True while a run is in progress in this process. */
+export function jobsRunning(): boolean {
+  return running;
+}
+
 export async function runJobs(now: Date, jobs: JobName[] = ALL_JOBS, opts: { forceRecallSync?: boolean; forcePrices?: boolean } = {}): Promise<JobReport | null> {
   // One run at a time per process (the app runs as a single instance).
   if (running) return null;

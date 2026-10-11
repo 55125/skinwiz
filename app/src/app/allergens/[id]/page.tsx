@@ -9,6 +9,7 @@ import { JsonLd } from "@/components/json-ld";
 import {
   allergenMembers,
   concealableByFragrance,
+  GROUP_KIND_LABEL,
   getAllergen,
   getAllergenGroup,
   getAllergenSection,
@@ -63,7 +64,7 @@ export default async function AllergenPage({ params }: { params: Promise<{ id: s
         ← All contact allergens
       </Link>
       <PageHeader
-        eyebrow={section ? section.title : "Allergen family"}
+        eyebrow={section ? section.title : group ? GROUP_KIND_LABEL[group.kind] : "Allergen family"}
         title={name}
         description={
           allergen

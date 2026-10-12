@@ -153,6 +153,11 @@ test("cross-reactor groups: old ids keep their meaning, tosylamide resin is out 
   assert.ok(!allergenMembers("formaldehyde-releasers").includes("tosylamide-formaldehyde-resin"));
   assert.ok(allergenMembers("formaldehyde-releasers").includes("methenamine"));
   assert.equal(PATCH_TEST_FAMILY["corticosteroid-class-d2"].id, "hydrocortisone-type-steroids");
+  // A positive steroid marker ticks its Baeck cross-reacting group by default (budesonide spans A, B and D2);
+  // the halogenated families stay opt-in.
+  for (const k of ["corticosteroid-class-a", "corticosteroid-class-b", "corticosteroid-class-d2"]) assert.equal(PATCH_TEST_FAMILY[k].byDefault, true, k);
+  for (const k of ["corticosteroid-class-c", "corticosteroid-class-d1"]) assert.equal(PATCH_TEST_FAMILY[k].byDefault, false, k);
+  assert.deepEqual(allergenMembers("budesonide-type-steroids"), ["corticosteroid-class-a", "corticosteroid-class-b", "corticosteroid-class-d2"]);
   // Monomer and polymer judged per ingredient within one list.
   const hits = allergensInList("Ethyl Acetate, Butyl Acetate, Methyl Methacrylate Crosspolymer, HEMA, Carbomer");
   assert.ok(hits.includes("acrylate-monomers") && hits.includes("acrylate-polymers"));

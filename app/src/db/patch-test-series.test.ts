@@ -209,3 +209,9 @@ test("series items tick one by one: keys are unique, and shared-id siblings are 
   assert.ok(!sharesIdsInSeries(key(/^Nickel/)));
   assert.deepEqual(positivesById([key(/^Budesonide/)]), { "corticosteroid-class-b": ["Budesonide"] });
 });
+
+test("metals that come mostly from non-label sources say so", async () => {
+  const { mainlyOffLabel } = await import("./patch-test-series");
+  for (const id of ["nickel", "cobalt", "chromium", "gold"]) assert.ok(mainlyOffLabel(id), id);
+  assert.equal(mainlyOffLabel("formaldehyde"), undefined);
+});

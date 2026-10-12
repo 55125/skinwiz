@@ -1115,6 +1115,12 @@ export function groupsContaining(allergenId: string): AllergenGroup[] {
   return ALLERGEN_GROUPS.filter((g) => g.members.includes(allergenId) && g.id !== "named-fragrance-allergens");
 }
 
+// Metals reach skin as unlabelled trace contaminants of pigments and raw
+// materials, and cosmetic makers needn't report them, so an ingredient list
+// can't show a product is free of them (Ahlström et al., Curr Allergy Asthma
+// Rep, 2026; Bocca et al., Regul Toxicol Pharmacol, 2014).
+export const METALS_NOT_ON_LABELS = new Set(["nickel", "cobalt", "chromium", "gold"]);
+
 // Essential oils are complex mixtures: only the named fragrance allergens must
 // be itemized, and only above thresholds, so a botanical oil can sit entirely
 // inside "parfum" (Sabroe et al., Contact Dermatitis, 2016; Verallo-Rowell et

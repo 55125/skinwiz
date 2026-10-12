@@ -683,6 +683,12 @@ export function watchForNames(id: string, max = 6): string[] {
 const MAINLY_OFF_LABEL: Record<string, string> = {
   nickel:
     "Mostly from metal, not product labels: jewelry, belt buckles, jeans buttons, eyeglass frames, keys and metal tools like eyelash curlers.",
+  cobalt:
+    "Mostly from metal and leather, not product labels: cheap jewelry and belt buckles, leather goods, and some paints and hard-metal tools. In cosmetics it is only a pigment or trace contaminant, which labels don't show.",
+  chromium:
+    "Mostly from leather (shoes, gloves, watch straps) and wet cement, not product labels. In cosmetics it is only a pigment or trace contaminant, which labels don't show.",
+  gold:
+    "Mostly from gold jewelry (especially earrings) and dental work, not product labels, and often not the cause of the rash. Gold flakes and colloidal gold are on a few luxury skincare labels.",
 };
 
 export function mainlyOffLabel(id: string): string | undefined {

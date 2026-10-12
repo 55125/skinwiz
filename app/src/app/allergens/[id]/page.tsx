@@ -8,6 +8,7 @@ import { AvoidToggleButton } from "@/components/avoid-toggle-button";
 import { JsonLd } from "@/components/json-ld";
 import {
   allergenMembers,
+  METALS_NOT_ON_LABELS,
   concealableByFragrance,
   GROUP_KIND_LABEL,
   getAllergen,
@@ -54,6 +55,7 @@ export default async function AllergenPage({ params }: { params: Promise<{ id: s
   const { rows, total: freeTotal } = browseProducts({ freeFromIds: [id] }, 1);
   const byConcern = getFreeOfAllergenByConcern(id);
   const hideable = members.some(concealableByFragrance);
+  const unverifiable = allergen ? METALS_NOT_ON_LABELS.has(allergen.id) : false;
   const section = allergen ? getAllergenSection(allergen.section) : undefined;
   const families = allergen ? groupsContaining(allergen.id) : [];
 
@@ -68,7 +70,9 @@ export default async function AllergenPage({ params }: { params: Promise<{ id: s
         title={name}
         description={
           allergen
-            ? `${(counts.get(allergen.id) ?? 0).toLocaleString()} products in our catalog list it; ${freeTotal.toLocaleString()} with a full ingredient list are free of it.`
+            ? unverifiable
+              ? `${(counts.get(allergen.id) ?? 0).toLocaleString()} products in our catalog list it.`
+              : `${(counts.get(allergen.id) ?? 0).toLocaleString()} products in our catalog list it; ${freeTotal.toLocaleString()} with a full ingredient list are free of it.`
             : `${group!.note} ${freeTotal.toLocaleString()} products with a full ingredient list are free of all ${members.length}.`
         }
       >
@@ -134,6 +138,15 @@ export default async function AllergenPage({ params }: { params: Promise<{ id: s
         </section>
       )}
 
+      {unverifiable ? (
+        <p className="rounded-2xl border border-amber-300 bg-amber-50 p-4 text-sm leading-relaxed text-amber-900 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
+          We don&apos;t list products as &ldquo;free of&rdquo; this metal. It reaches skin mostly from metal items and as an
+          unlabelled trace in pigments and raw materials, and makers don&apos;t have to report it, so an ingredient
+          list can&apos;t show a product is free of it. If you react to it, ask your dermatologist about low-metal
+          products that have been measured.
+        </p>
+      ) : (
+        <>
       <section className="space-y-3">
         <h2 className="text-xl font-semibold">Free of {allergen ? "it" : "all of them"}, by category</h2>
         <div className="flex flex-wrap gap-1.5">
@@ -157,6 +170,8 @@ export default async function AllergenPage({ params }: { params: Promise<{ id: s
         </div>
         <ProductGrid products={rows.slice(0, 12)} />
       </section>
+        </>
+      )}
 
       <p className="text-xs leading-relaxed text-muted-foreground">
         {section ? `Sources: ${section.sources} ` : ""}Matched on label names, not an allergy test or medical advice.

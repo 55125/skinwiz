@@ -683,18 +683,18 @@ export const PROCEDURE_HANDOUTS: HandoutTemplate[] = [
     id: "proc-patch-testing",
     name: "Patch testing: before, during and after",
     title: "Patch testing: your guide to the appointment",
-    summary: "Medicines to ask about, no sun on the back, keeping the back dry, the reading visits, and delayed reactions.",
+    summary: "Creams and medicines to hold or ask about, no sun on the back, keeping the back dry, the reading visits (including the later one), and delayed reactions.",
     category: "procedures",
     sections: [
       {
         heading: "What it is",
         body:
-          "Patch testing finds out whether a rash is caused by an allergy to something that touches your skin (allergic contact dermatitis). Small amounts of common substances, like metals, fragrances, preservatives and rubber chemicals, are taped to your back on patches.\n\nIt usually takes 3 visits in about a week: one to put the patches on, one about 2 days later to take them off and do a first reading, and a final reading a day or more after that.",
+          "Patch testing finds out whether a rash is caused by an allergy to something that touches your skin (allergic contact dermatitis). Small amounts of common substances, like metals, fragrances, preservatives and rubber chemicals, are taped to your back on patches.\n\nIt usually takes 3 visits in about a week: one to put the patches on, one about 2 days later to take them off and do a first reading, and a final reading between day 4 and day 7 after the patches went on. Follow the dates we give you.\n\nThe final reading matters. Some allergies, like those to metals (gold, nickel), neomycin and steroids, show up late and can be missed if you skip it.",
       },
       {
         heading: "Before your appointment",
         body:
-          "- Avoid sun, tanning beds and self-tanner on your back for at least 1 to 2 weeks.\n- Don't use steroid creams or other prescription creams on your back for about a week.\n- Ask us about these medicines. They can change the results. Never stop them without talking to the doctor who prescribed them: steroid pills or shots (like prednisone), and medicines that calm the immune system (like methotrexate, cyclosporine, azathioprine, mycophenolate, biologics or JAK inhibitors).\n- Antihistamine pills usually don't affect results, so you can usually keep taking them.\n- Bring your skin care, hair care and work products if we ask.",
+          "- Avoid sun, tanning beds and self-tanner on your back for at least 1 to 2 weeks.\n- Don't use steroid creams or ointments on your back for 1 week before (2 weeks for strong prescription steroids), and don't use tacrolimus, pimecrolimus or JAK-inhibitor creams there for 1 to 2 weeks. You can keep treating rashes elsewhere. Ask us if you are unsure.\n- Ask us about these medicines. They can change the results. Never stop them without talking to the doctor who prescribed them: steroid pills or shots (like prednisone), and medicines that calm the immune system (like methotrexate, cyclosporine, azathioprine, mycophenolate, biologics or JAK inhibitors).\n- Antihistamine pills usually don't affect results, so you can usually keep taking them.\n- Bring your skin care, hair care and work products if we ask.",
       },
       {
         heading: "While the patches are on",
@@ -704,7 +704,7 @@ export const PROCEDURE_HANDOUTS: HandoutTemplate[] = [
       {
         heading: "After the patches come off",
         body:
-          "- Keep the marks on your back until your final reading. Don't scrub them off.\n- You can usually shower after the final reading.\n- Some allergy reactions show up late. Look at your back (or have someone take a photo) for about a week after the last visit.\n- If you have an allergy, we will give you a list of what to avoid and safe products to use. It can take several weeks of avoiding the allergen for your skin to clear.",
+          "- Keep the marks on your back until your final reading. Don't scrub them off.\n- You can usually shower after the final reading.\n- Some allergy reactions show up late, after day 5 or even later. Look at your back (or have someone take a photo) for about a week after the last visit.\n- If you have an allergy, we will give you a list of what to avoid and safe products to use. It can take several weeks of avoiding the allergen for your skin to clear.",
       },
     ],
     steps: [],
@@ -716,6 +716,7 @@ export const PROCEDURE_HANDOUTS: HandoutTemplate[] = [
     notes: "",
     sources: [
       "American Contact Dermatitis Society, patient information on patch testing",
+      "European Society of Contact Dermatitis, Guideline for Diagnostic Patch Testing (Update 2026), Contact Dermatitis 2026;95(3):237-275",
       "American Academy of Dermatology, \"Contact dermatitis: Diagnosis and treatment\" (patient education)",
     ],
     reviewed: false,

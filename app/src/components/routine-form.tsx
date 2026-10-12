@@ -71,9 +71,9 @@ export function RoutineForm({ concerns }: { concerns: { id: string; name: string
       </div>
 
       <div className="space-y-1.5">
-        <Label>Concern</Label>
+        <Label htmlFor="concern">Concern</Label>
         <Select value={concernId} onValueChange={(value) => value && setConcernId(value)}>
-          <SelectTrigger className="w-full">
+          <SelectTrigger id="concern" className="w-full">
             <SelectValue placeholder="Select a concern" />
           </SelectTrigger>
           <SelectContent>
@@ -87,7 +87,7 @@ export function RoutineForm({ concerns }: { concerns: { id: string; name: string
       </div>
 
       <div className="space-y-1.5">
-        <Label>Steps</Label>
+        <p className="text-sm font-medium leading-none">Steps</p>
         <div className="space-y-3">
           {steps.map((step, i) => (
             <div key={step.key} className="space-y-1 rounded-md border p-2">

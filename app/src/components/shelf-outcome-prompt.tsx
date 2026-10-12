@@ -17,6 +17,7 @@ export function ShelfOutcomePrompt({ items }: { items: Item[] }) {
   const [error, setError] = useState<string | null>(null);
 
   async function answer(productId: string, improved: boolean) {
+    if (busy) return;
     setBusy(productId);
     setError(null);
     const res = await fetch(`/api/products/${encodeURIComponent(productId)}/outcome`, {
@@ -49,11 +50,11 @@ export function ShelfOutcomePrompt({ items }: { items: Item[] }) {
           const btn = (value: boolean, Icon: typeof ThumbsUp, label: string, on: string) => (
             <button
               type="button"
-              disabled={busy === item.productId}
+              aria-disabled={busy === item.productId || undefined}
               onClick={() => answer(item.productId, value)}
               aria-pressed={a === value}
               className={cn(
-                "flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-60",
+                "flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors aria-disabled:opacity-60",
                 a === value ? on : "hover:bg-muted",
               )}
             >
@@ -79,7 +80,7 @@ export function ShelfOutcomePrompt({ items }: { items: Item[] }) {
           );
         })}
       </ul>
-      {error && <p className="text-sm text-destructive">{error}</p>}
+      {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
       <p className="text-xs text-muted-foreground">
         Not medical advice. Stop and see a board-certified dermatologist if anything gets worse.
       </p>

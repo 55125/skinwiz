@@ -89,7 +89,12 @@ export function canScan(): boolean {
 export function BarcodeScanButton({ className }: { className?: string }) {
   const [open, setOpen] = useState(false);
   const [available, setAvailable] = useState(false);
-  const close = useCallback(() => setOpen(false), []);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  // Focus goes back to the scan button when the full-screen scanner closes.
+  const close = useCallback(() => {
+    setOpen(false);
+    buttonRef.current?.focus();
+  }, []);
   // Decided after mount: the server can't know whether there's a camera.
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => setAvailable(canScan()), []);
@@ -97,6 +102,7 @@ export function BarcodeScanButton({ className }: { className?: string }) {
   return (
     <>
       <button
+        ref={buttonRef}
         type="button"
         onClick={() => setOpen(true)}
         aria-label="Scan a barcode"
@@ -116,6 +122,9 @@ export function BarcodeScanButton({ className }: { className?: string }) {
 function ScannerOverlay({ onClose }: { onClose: () => void }) {
   const router = useRouter();
   const videoRef = useRef<HTMLVideoElement>(null);
+  const closeRef = useRef<HTMLButtonElement>(null);
+  // The dialog covers the page, so focus moves into it (its only control is Close).
+  useEffect(() => closeRef.current?.focus(), []);
   const [status, setStatus] = useState<"starting" | "scanning" | "denied" | "error">("starting");
 
   useEffect(() => {
@@ -183,6 +192,7 @@ function ScannerOverlay({ onClose }: { onClose: () => void }) {
       <div className="flex items-center justify-between px-4 py-3">
         <p className="text-sm font-medium">Scan a product barcode</p>
         <button
+          ref={closeRef}
           type="button"
           onClick={onClose}
           aria-label="Close scanner"

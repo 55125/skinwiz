@@ -129,13 +129,12 @@ export function PatchTestChecklist({
         </ul>
       )}
 
-      <div className="flex flex-wrap gap-1.5" role="tablist" aria-label="Patch-test series">
+      <div className="flex flex-wrap gap-1.5" role="group" aria-label="Patch-test series">
         {[...PATCH_TEST_SERIES.map((s) => ({ id: s.id, label: s.name })), { id: SEARCH_TAB, label: "Search all allergens" }].map((t) => (
           <button
             key={t.id}
             type="button"
-            role="tab"
-            aria-selected={tab === t.id}
+            aria-pressed={tab === t.id}
             onClick={() => setTab(t.id)}
             className={cn(
               "rounded-full border px-3.5 py-1.5 text-sm font-medium transition-colors",

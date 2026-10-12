@@ -11,6 +11,7 @@ export function IngredientPreference({ id, initial }: { id: string; initial: "li
   const [pending, start] = useTransition();
 
   function toggle(kind: "like" | "dislike") {
+    if (pending) return;
     start(async () => {
       const res = await fetch("/api/profile", {
         method: "POST",
@@ -24,13 +25,13 @@ export function IngredientPreference({ id, initial }: { id: string; initial: "li
     });
   }
 
-  const base = "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-60";
+  const base = "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors aria-disabled:opacity-60";
   return (
     <div className="flex flex-wrap gap-2">
-      <button type="button" disabled={pending} aria-pressed={state === "like"} onClick={() => toggle("like")} className={cn(base, state === "like" ? "border-emerald-400 bg-emerald-50 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300" : "bg-card hover:bg-muted")}>
+      <button type="button" aria-disabled={pending || undefined} aria-pressed={state === "like"} onClick={() => toggle("like")} className={cn(base, state === "like" ? "border-emerald-400 bg-emerald-50 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300" : "bg-card hover:bg-muted")}>
         <ThumbsUp className="h-3.5 w-3.5" /> {state === "like" ? "You like this" : "I like this"}
       </button>
-      <button type="button" disabled={pending} aria-pressed={state === "dislike"} onClick={() => toggle("dislike")} className={cn(base, state === "dislike" ? "border-red-400 bg-red-50 text-red-800 dark:bg-red-950/40 dark:text-red-300" : "bg-card hover:bg-muted")}>
+      <button type="button" aria-disabled={pending || undefined} aria-pressed={state === "dislike"} onClick={() => toggle("dislike")} className={cn(base, state === "dislike" ? "border-red-400 bg-red-50 text-red-800 dark:bg-red-950/40 dark:text-red-300" : "bg-card hover:bg-muted")}>
         <ThumbsDown className="h-3.5 w-3.5" /> {state === "dislike" ? "You dislike this" : "I dislike this"}
       </button>
     </div>

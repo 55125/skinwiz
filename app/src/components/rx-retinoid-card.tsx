@@ -23,6 +23,7 @@ export function RxRetinoidCard({ regimenId, initialSlot }: { regimenId: number; 
   const [pending, start] = useTransition();
 
   function save(next: Slot | null) {
+    if (pending) return;
     start(async () => {
       setError(null);
       const res = await fetch("/api/regimens", {
@@ -64,11 +65,11 @@ export function RxRetinoidCard({ regimenId, initialSlot }: { regimenId: number; 
             <button
               key={o.id}
               type="button"
-              disabled={pending}
+              aria-disabled={pending || undefined}
               aria-pressed={on}
               onClick={() => !on && save(o.id)}
               className={cn(
-                "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-60",
+                "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors aria-disabled:opacity-60",
                 on ? "border-primary bg-primary text-primary-foreground" : "bg-card hover:bg-muted",
               )}
             >
@@ -79,15 +80,15 @@ export function RxRetinoidCard({ regimenId, initialSlot }: { regimenId: number; 
         {slot && (
           <button
             type="button"
-            disabled={pending}
+            aria-disabled={pending || undefined}
             onClick={() => save(null)}
-            className="ml-auto text-xs text-muted-foreground underline-offset-4 hover:text-foreground hover:underline disabled:opacity-60"
+            className="ml-auto text-xs text-muted-foreground underline-offset-4 hover:text-foreground hover:underline aria-disabled:opacity-60"
           >
             I don&apos;t use one
           </button>
         )}
       </div>
-      {error && <p className="text-xs text-red-600">{error}</p>}
+      {error && <p role="alert" className="text-xs text-red-600">{error}</p>}
     </section>
   );
 }

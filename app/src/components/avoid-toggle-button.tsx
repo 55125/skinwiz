@@ -13,6 +13,7 @@ export function AvoidToggleButton({ id, avoidIds, size = "sm" }: { id: string; a
   const [isPending, startTransition] = useTransition();
 
   function toggle() {
+    if (isPending) return;
     const next = on ? avoidIds.filter((x) => x !== id) : [...new Set([...avoidIds, id])];
     startTransition(async () => {
       const res = await fetch("/api/avoid", {
@@ -28,7 +29,7 @@ export function AvoidToggleButton({ id, avoidIds, size = "sm" }: { id: string; a
   }
 
   return (
-    <Button type="button" size={size} variant={on ? "default" : "outline"} onClick={toggle} disabled={isPending} className="shrink-0 rounded-full">
+    <Button type="button" size={size} variant={on ? "default" : "outline"} onClick={toggle} aria-disabled={isPending || undefined} className="shrink-0 rounded-full aria-disabled:opacity-50">
       {on ? <Check className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}
       {on ? "On my avoid list" : "Avoid"}
     </Button>

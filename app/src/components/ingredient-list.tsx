@@ -36,6 +36,9 @@ export function IngredientList({
             )}
           >
             {tidyIngredientName(item.rawName)}
+            {item.isActive && <span className="sr-only"> (active)</span>}
+            {likes.includes(item.ingredientId) && <span className="sr-only"> (you like this)</span>}
+            {dislikes.includes(item.ingredientId) && <span className="sr-only"> (you dislike this)</span>}
           </IngredientLink>
           {i < items.length - 1 && <span aria-hidden className="text-muted-foreground">,</span>}
         </li>

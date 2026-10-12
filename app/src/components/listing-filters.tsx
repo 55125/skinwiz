@@ -263,7 +263,7 @@ function Count({ count, children }: { count: number; children: React.ReactNode }
   return (
     <span className="flex justify-between gap-2">
       {children}
-      <span className="tabular-nums opacity-70">{count.toLocaleString()}</span>
+      <span className="tabular-nums">{count.toLocaleString()}</span>
     </span>
   );
 }

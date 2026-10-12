@@ -21,6 +21,7 @@ import { drugInactiveList, groupSplInactive, type SplInactiveCsvRow } from "./sp
 import { linkAllDailymedImages } from "@/lib/product-images/link";
 import { seedStarterRoutines } from "./starter-routines";
 import { resolveMerges, reviewedMergeRows, type FlaggedRow, type MergeRow } from "./product-merges";
+import { petCatalogRows } from "./seed-pets";
 
 const REPO_ROOT = path.resolve(process.cwd(), "..");
 // Four sources: the primary openFDA catalog, the DailyMed resolution pass
@@ -290,6 +291,7 @@ function addStarterRoutines() {
 }
 
 function reseed() {
+  db.delete(schema.petProducts).run();
   db.delete(schema.affiliateLinks).run();
   db.delete(schema.productBarcodes).run();
   db.delete(schema.productIngredients).run();
@@ -559,6 +561,7 @@ function reseed() {
   );
   insertLabelSections();
   insertRxLabelSections();
+  insertPetProducts();
   linkPackageImages();
   applyImageOverrides();
   reconcileOrphans();
@@ -691,6 +694,13 @@ function rxProducts(seenNdc: Set<string>): (typeof schema.products.$inferInsert)
   }
   console.log(`  ${out.length} prescription (reference-only) rows, ${classified} with a steroid potency class`);
   return out;
+}
+
+// Pet mode (db/seed-pets.ts): its own table, never in products.
+function insertPetProducts() {
+  const rows = petCatalogRows(path.join(REPO_ROOT, "tools/catalog_pipeline/output"));
+  const BATCH = 200;
+  for (let i = 0; i < rows.length; i += BATCH) db.insert(schema.petProducts).values(rows.slice(i, i + BATCH)).run();
 }
 
 type RxLabelRow = {

@@ -1109,3 +1109,68 @@ export const serverErrors = sqliteTable(
   },
   (table) => [index("server_errors_at_idx").on(table.at)],
 );
+
+// Pet mode (db/pet.ts, lib/pet-catalog.ts): dog and cat skin, ear and
+// flea/tick products. A table of their own, not rows in `products`, so no
+// human concern page, search, count, score, price lookup or the sitemap can
+// ever list one: none of those queries reads this table. Catalog data:
+// wiped and reloaded by every seed from tools/catalog_pipeline/output/
+// pet_catalog.csv (DailyMed animal labels), pet_epa_catalog.csv (EPA PPLS)
+// and pet_brand_catalog.csv (brand sites).
+export const petProducts = sqliteTable(
+  "pet_products",
+  {
+    // product NDC (dailymed_animal), "epa-<reg no>" (epa_pesticide) or the
+    // brand-site id (brand_direct)
+    id: text("id").primaryKey(),
+    // "dailymed_animal" | "epa_pesticide" | "brand_direct" | "third_party"
+    // (known only through the ingredient cross-match)
+    dataSource: text("data_source").notNull(),
+    brandName: text("brand_name").notNull(),
+    manufacturer: text("manufacturer"),
+    // ["dog", "cat", "horse"] as the label names them; ["pet"] = the label
+    // says "pets" and names no species.
+    species: text("species", { mode: "json" }).$type<string[]>().notNull(),
+    // The label itself says not for cats ("Do not use on cats").
+    notForCats: integer("not_for_cats", { mode: "boolean" }).notNull().default(false),
+    concernId: text("concern_id").notNull(), // first of concernIds: db/pet.ts PET_CONCERNS
+    concernIds: text("concern_ids", { mode: "json" }).$type<string[]>().notNull(),
+    // "fda_approved" | "fda_conditional" | "unapproved" | "epa_registered" |
+    // "brand_listing" (a brand's own page; grooming aids need no FDA or EPA
+    // filing) | "other_source" (a third_party row: its list came from
+    // another page, often a retailer's) -- shown instead of the human
+    // monograph range badges.
+    regulatoryStatus: text("regulatory_status").notNull(),
+    // Prescription animal drug: informational only, never "buy".
+    isRx: integer("is_rx", { mode: "boolean" }).notNull().default(false),
+    dosageForm: text("dosage_form"),
+    route: text("route"),
+    // Active ingredients as the label states them ("CHLORHEXIDINE
+    // GLUCONATE 2 g/100 mL"), and parsed: [{name, pct, display}]
+    activeIngredientText: text("active_ingredient_text"),
+    activesJson: text("actives_json", { mode: "json" }).$type<{ name: string; pct: number | null; display: string }[]>().notNull(),
+    // Full inactive (or, for grooming aids, full) ingredient list; null =
+    // not published (EPA labels never list inactives).
+    inactiveIngredientText: text("inactive_ingredient_text"),
+    // Set when an ingredient list the product's own label or page lacks was
+    // filled from another source (tools/catalog_pipeline/
+    // pet_ingredient_crossmatch.csv): that page's URL. The UI names it, so
+    // a cross-matched list never reads as the label's own.
+    ingredientSourceUrl: text("ingredient_source_url"),
+    marketingCategory: text("marketing_category"), // SPL approval code: NADA, ANADA, UNAPPROVED DRUG OTHER
+    applicationNumber: text("application_number"), // NADA141382
+    epaRegNo: text("epa_reg_no"),
+    // Other names the same EPA registration is sold under ("; "-joined).
+    alternateNames: text("alternate_names"),
+    splSetId: text("spl_set_id"),
+    sourceUrl: text("source_url"), // brand page or EPA label PDF
+    imageUrl: text("image_url"),
+    // Verbatim label text (DailyMed sections; EPA pests and signal word)
+    indications: text("indications"),
+    directions: text("directions"),
+    warnings: text("warnings"),
+    pests: text("pests"),
+    signalWord: text("signal_word"),
+  },
+  (table) => [index("pet_products_concern_idx").on(table.concernId)],
+);

@@ -738,7 +738,7 @@ export const CONTACT_ALLERGENS: ContactAllergen[] = [
     id: "corticosteroid-class-c",
     name: "Corticosteroids, class C (non-esterified)",
     section: "medicament",
-    terms: ["betamethasone", "dexamethasone", "desoximetasone"],
+    terms: ["betamethasone", "dexamethasone", "desoximetasone", "clocortolone"],
     unless: ["betamethasone valerate", "betamethasone dipropionate", "betamethasone 17-valerate", "betamethasone 17,21-dipropionate", "dexamethasone valerate"],
   },
   // Class D split per Coopman et al., 1989 and Baeck et al., 2011: D1 (C16-

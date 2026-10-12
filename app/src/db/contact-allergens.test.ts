@@ -45,6 +45,7 @@ const NAMES: [string, string[], string[]][] = [
   ["Betamethasone Sodium Phosphate", ["corticosteroid-class-c"], ["corticosteroid-class-d1"]],
   ["Halobetasol Propionate", ["corticosteroid-class-d1"], ["corticosteroid-class-d2"]],
   ["Alclometasone Dipropionate", ["corticosteroid-class-d1"], ["corticosteroid-class-d2"]],
+  ["Clocortolone Pivalate", ["corticosteroid-class-c"], ["corticosteroid-class-d1", "corticosteroid-class-d2"]],
   ["Diflorasone Diacetate", ["corticosteroid-class-d1"], ["corticosteroid-class-d2"]],
   ["Flurandrenolide", ["corticosteroid-class-b"], []],
   ["Clobetasol Propionate", ["corticosteroid-class-d1"], ["corticosteroid-class-d2"]],

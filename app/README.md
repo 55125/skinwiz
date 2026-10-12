@@ -138,7 +138,13 @@ accounts or passwords.
 recall sync + alerts, sends due check-ins, purges expired sign-in
 tokens, refreshes live prices (once a day, see below) and downloads a capped batch of DailyMed
 package photos (see "Package photos from DailyMed"). Idempotent and safe to call every hour (rows are claimed before
-sending; a second overlapping call gets 409). The anti-scrape proxy lets
+sending). It answers `202` at once and runs the jobs after the response,
+logging the result as a `[cron] report` line in the app's logs: the 08:00
+UTC run (prices, then photos and label scans) takes several minutes, longer
+than Railway's edge keeps a silent request open, and the cut connection
+made the curl cron service exit non-zero. A call while a run is in
+progress also gets `202` (`skipped`). `?wait=1` waits and returns the
+report, for manual runs. The anti-scrape proxy lets
 `/api/cron/*` through only when the bearer secret is correct. Outside
 production, `?now=2026-12-01T00:00:00Z` fakes the clock; `?jobs=checkins`
 limits what runs; `?forcePrices=1` runs the price refresh even if it

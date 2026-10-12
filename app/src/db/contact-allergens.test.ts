@@ -38,6 +38,8 @@ const NAMES: [string, string[], string[]][] = [
   ["Ethyl Cyanoacrylate", ["acrylate-monomers"], ["acrylate-polymers"]],
   ["Di-HEMA Trimethylhexyl Dicarbamate", ["acrylate-monomers"], ["acrylate-polymers"]],
   ["Hydrocortisone Acetate", ["corticosteroid-class-a"], ["corticosteroid-class-d2"]],
+  ["Lauramidopropyl Betaine", ["cocamidopropyl-betaine"], []],
+  ["Cocamidopropyl Hydroxysultaine", [], ["cocamidopropyl-betaine"]],
   ["Hydrocortisone Butyrate", ["corticosteroid-class-d2"], ["corticosteroid-class-a", "corticosteroid-class-d1"]],
   ["Methylchloroisothiazolinone", ["mci-mi", "methylisothiazolinone"], []],
   ["Gentamicin Sulfate", ["neomycin"], []],
@@ -45,6 +47,7 @@ const NAMES: [string, string[], string[]][] = [
   ["Betamethasone Sodium Phosphate", ["corticosteroid-class-c"], ["corticosteroid-class-d1"]],
   ["Halobetasol Propionate", ["corticosteroid-class-d1"], ["corticosteroid-class-d2"]],
   ["Alclometasone Dipropionate", ["corticosteroid-class-d1"], ["corticosteroid-class-d2"]],
+  ["Clocortolone Pivalate", ["corticosteroid-class-c"], ["corticosteroid-class-d1", "corticosteroid-class-d2"]],
   ["Diflorasone Diacetate", ["corticosteroid-class-d1"], ["corticosteroid-class-d2"]],
   ["Flurandrenolide", ["corticosteroid-class-b"], []],
   ["Clobetasol Propionate", ["corticosteroid-class-d1"], ["corticosteroid-class-d2"]],
@@ -52,6 +55,10 @@ const NAMES: [string, string[], string[]][] = [
   ["Methenamine", ["methenamine"], []],
   ["Quaternium-15 (Methenamine 3-Chloroallylochloride)", ["quaternium-15"], ["methenamine"]],
   ["MDM Hydantoin", ["mdm-hydantoin"], ["dmdm-hydantoin"]],
+  ["4,4-Dimethyloxazolidine", ["dimethyl-oxazolidine"], []],
+  ["7-Ethylbicyclooxazolidine", ["ethylbicyclooxazolidine"], ["dimethyl-oxazolidine"]],
+  ["Polyoxymethylene Urea", ["polyoxymethylene-urea"], []],
+  ["Tris(Hydroxymethyl)Nitromethane", ["tris-nitro"], []],
   ["DMDM Hydantoin", ["dmdm-hydantoin"], ["mdm-hydantoin"]],
   ["Myroxylon Pereirae (Balsam Peru) Resin", ["balsam-of-peru"], ["tolu-balsam"]],
   ["Myroxylon Balsamum Var. Pereirae Resin", ["balsam-of-peru"], ["tolu-balsam"]],
@@ -151,4 +158,26 @@ test("cross-reactor groups: old ids keep their meaning, tosylamide resin is out 
   assert.ok(hits.includes("acrylate-monomers") && hits.includes("acrylate-polymers"));
   const polymersOnly = allergensInList("Water, Glycerin, Methyl Methacrylate Crosspolymer, Acrylates Copolymer, Carbomer, Phenoxyethanol");
   assert.ok(!polymersOnly.includes("acrylate-monomers") && polymersOnly.includes("acrylate-polymers"));
+});
+
+test("an MI or MCI/MI positive ticks the isothiazolinone family by default; the new releasers join the releaser groups", async () => {
+  const { PATCH_TEST_FAMILY, allergenMembers } = await import("./contact-allergens");
+  assert.deepEqual(PATCH_TEST_FAMILY["methylisothiazolinone"], { id: "isothiazolinones", byDefault: true });
+  assert.deepEqual(PATCH_TEST_FAMILY["mci-mi"], { id: "isothiazolinones", byDefault: true });
+  for (const id of ["dimethyl-oxazolidine", "ethylbicyclooxazolidine", "polyoxymethylene-urea", "tris-nitro"]) {
+    assert.ok(allergenMembers("formaldehyde-releasers").includes(id), id);
+    assert.ok(allergenMembers("formaldehyde-and-releasers").includes(id), id);
+  }
+});
+
+test("botanical oils may hide behind an undisclosed fragrance; daisy counts as Compositae", async () => {
+  const { allergensInList, allergenFinding, concealableByFragrance } = await import("./contact-allergens");
+  for (const id of ["lavender-oil", "jasmine", "peppermint-oil", "bergamot", "tea-tree-oil", "rose-oil", "geranium-oil", "turpentine"]) assert.ok(concealableByFragrance(id), id);
+  assert.ok(allergensInList("Water, Rosa Damascena Flower Oil, Pelargonium Graveolens Oil, Pinus Palustris Turpentine").length >= 3);
+  assert.ok(!allergensInList("Water, Rosa Canina Fruit Extract, Rose Water").includes("rose-oil"));
+  assert.ok(!concealableByFragrance("compositae"));
+  const hits = allergensInList("Water, Glycerin, Fragrance");
+  assert.equal(allergenFinding(hits, "lavender-oil")?.level, "may-contain");
+  assert.equal(allergenFinding(hits, "compositae"), null);
+  assert.ok(allergensInList("Water, Bellis Perennis (Daisy) Flower Extract").includes("compositae"));
 });

@@ -339,6 +339,25 @@ export const CONTACT_ALLERGENS: ContactAllergen[] = [
     rare: true,
   },
   { id: "mdm-hydantoin", name: "MDM hydantoin", section: "formaldehyde", terms: ["mdm hydantoin", "monomethylol dimethyl hydantoin"], rare: true },
+  // Industrial-leaning releasers that also turn up in some personal-care
+  // products (de Groot et al., Contact Dermatitis 2010; Goossens & Aerts, 2022).
+  { id: "dimethyl-oxazolidine", name: "Dimethyl oxazolidine", section: "formaldehyde", terms: ["dimethyl oxazolidine", "dimethyloxazolidine", "4,4-dimethyloxazolidine"], rare: true },
+  {
+    id: "ethylbicyclooxazolidine",
+    name: "7-Ethylbicyclooxazolidine",
+    section: "formaldehyde",
+    terms: ["7-ethylbicyclooxazolidine", "ethylbicyclooxazolidine", "5-ethyl-3,7-dioxa-1-azabicyclo"],
+    rare: true,
+  },
+  { id: "polyoxymethylene-urea", name: "Polyoxymethylene urea", section: "formaldehyde", terms: ["polyoxymethylene urea"], rare: true },
+  {
+    id: "tris-nitro",
+    name: "Tris(hydroxymethyl)nitromethane",
+    section: "formaldehyde",
+    terms: ["tris(hydroxymethyl)nitromethane", "tris hydroxymethyl nitromethane", "trishydroxymethylnitromethane"],
+    note: "Mostly a metalworking-fluid biocide; a weak, infrequent sensitizer.",
+    rare: true,
+  },
   {
     id: "hydroxyethyl-triazine",
     name: "Hexahydro-1,3,5-tris(2-hydroxyethyl)triazine",
@@ -464,8 +483,8 @@ export const CONTACT_ALLERGENS: ContactAllergen[] = [
     id: "cocamidopropyl-betaine",
     name: "Cocamidopropyl betaine (CAPB)",
     section: "surfactant",
-    terms: ["cocamidopropyl betaine", "cocoamidopropyl betaine", "cocamidopropylbetaine", "capb", "coco betaine", "coco-betaine"],
-    note: "The real sensitizers are often manufacturing residues, amidoamine and dimethylaminopropylamine, which aren't listed.",
+    terms: ["cocamidopropyl betaine", "cocoamidopropyl betaine", "cocamidopropylbetaine", "capb", "coco betaine", "coco-betaine", "lauramidopropyl betaine", "lapb"],
+    note: "The real sensitizers are often manufacturing residues, amidoamine and dimethylaminopropylamine, which aren't listed, so a positive to either one means avoiding CAPB. Lauramidopropyl betaine, a close relative with the same residues, is flagged too. Cocamidopropyl hydroxysultaine is not: cross-reaction with CAPB isn't established. More common in people with atopic dermatitis.",
   },
   { id: "decyl-glucoside", name: "Decyl glucoside", section: "surfactant", terms: ["decyl glucoside"] },
   { id: "lauryl-glucoside", name: "Lauryl glucoside", section: "surfactant", terms: ["lauryl glucoside", "lauryl polyglucose"], aka: ["Lauryl polyglucose"] },
@@ -610,12 +629,15 @@ export const CONTACT_ALLERGENS: ContactAllergen[] = [
     terms: [
       "chamomile", "chamomilla", "matricaria", "anthemis nobilis", "chamaemelum", "arnica", "feverfew", "chrysanthemum parthenium", "tanacetum", "calendula",
       "achillea millefolium", "yarrow", "artemisia", "mugwort", "taraxacum", "dandelion", "sesquiterpene lactone",
-      "centaurea cyanus", "cornflower", "echinacea", "arctium lappa", "burdock", "helichrysum", "inula", "elecampane", "cynara scolymus", "artichoke",
+      "centaurea cyanus", "cornflower", "bellis perennis", "daisy flower", "echinacea", "arctium lappa", "burdock", "helichrysum", "inula", "elecampane", "cynara scolymus", "artichoke",
     ],
     aka: ["Asteraceae", "sesquiterpene lactone mix"],
-    note: "The patch-test marker is sesquiterpene lactone mix. Bisabolol, though chamomile-derived, is listed separately. Refined sunflower and safflower oils, also from this family, carry almost none of the allergen and aren't flagged.",
+    note: "The patch-test marker is sesquiterpene lactone mix. Bisabolol, though chamomile-derived, is listed separately. Daisy (Bellis perennis) extract is included as a precaution: a negative sesquiterpene lactone mix doesn't rule it out. Refined sunflower and safflower oils, also from this family, carry almost none of the allergen and aren't flagged.",
   },
   { id: "propolis", name: "Propolis", section: "botanical", terms: ["propolis", "bee glue"] },
+  { id: "rose-oil", name: "Rose oil", section: "botanical", terms: ["rosa damascena", "rosa centifolia", "rose oil", "rose absolute", "rose otto"], note: OXIDIZES },
+  { id: "geranium-oil", name: "Geranium oil", section: "botanical", terms: ["pelargonium graveolens", "geranium oil", "geranium essential oil"], note: OXIDIZES },
+  { id: "turpentine", name: "Turpentine", section: "botanical", terms: ["turpentine", "terebinthina"], note: "Distilled from pine resin, and a source of oxidized terpenes. Related to colophony." },
   { id: "tea-tree-oil", name: "Tea tree oil", section: "botanical", terms: ["melaleuca alternifolia", "tea tree"], note: OXIDIZES },
   {
     id: "lichen",
@@ -738,7 +760,7 @@ export const CONTACT_ALLERGENS: ContactAllergen[] = [
     id: "corticosteroid-class-c",
     name: "Corticosteroids, class C (non-esterified)",
     section: "medicament",
-    terms: ["betamethasone", "dexamethasone", "desoximetasone"],
+    terms: ["betamethasone", "dexamethasone", "desoximetasone", "clocortolone"],
     unless: ["betamethasone valerate", "betamethasone dipropionate", "betamethasone 17-valerate", "betamethasone 17,21-dipropionate", "dexamethasone valerate"],
   },
   // Class D split per Coopman et al., 1989 and Baeck et al., 2011: D1 (C16-
@@ -1096,9 +1118,22 @@ export function groupsContaining(allergenId: string): AllergenGroup[] {
   return ALLERGEN_GROUPS.filter((g) => g.members.includes(allergenId) && g.id !== "named-fragrance-allergens");
 }
 
-// An undisclosed "fragrance"/"parfum" can be hiding any fragrance allergen.
+// Metals reach skin as unlabelled trace contaminants of pigments and raw
+// materials, and cosmetic makers needn't report them, so an ingredient list
+// can't show a product is free of them (Ahlström et al., Curr Allergy Asthma
+// Rep, 2026; Bocca et al., Regul Toxicol Pharmacol, 2014).
+export const METALS_NOT_ON_LABELS = new Set(["nickel", "cobalt", "chromium", "gold"]);
+
+// Essential oils are complex mixtures: only the named fragrance allergens must
+// be itemized, and only above thresholds, so a botanical oil can sit entirely
+// inside "parfum" (Sabroe et al., Contact Dermatitis, 2016; Verallo-Rowell et
+// al., Curr Allergy Asthma Rep, 2016).
+const OILS_HIDDEN_IN_FRAGRANCE = new Set(["lavender-oil", "jasmine", "peppermint-oil", "bergamot", "tea-tree-oil", "rose-oil", "geranium-oil", "turpentine"]);
+
+// An undisclosed "fragrance"/"parfum" can be hiding any fragrance allergen,
+// and the essential oils above.
 export function concealableByFragrance(allergenId: string): boolean {
-  return allergenId !== "fragrance" && BY_ID.get(allergenId)?.section === "fragrance";
+  return allergenId !== "fragrance" && (BY_ID.get(allergenId)?.section === "fragrance" || OILS_HIDDEN_IN_FRAGRANCE.has(allergenId));
 }
 
 // A positive to one of these usually means avoiding the whole family:
@@ -1111,8 +1146,8 @@ export const PATCH_TEST_FAMILY: Record<string, { id: string; byDefault: boolean 
   "decyl-glucoside": { id: "glucosides", byDefault: true },
   "lauryl-glucoside": { id: "glucosides", byDefault: true },
   "coco-glucoside": { id: "glucosides", byDefault: true },
-  methylisothiazolinone: { id: "isothiazolinones", byDefault: false },
-  "mci-mi": { id: "isothiazolinones", byDefault: false },
+  methylisothiazolinone: { id: "isothiazolinones", byDefault: true },
+  "mci-mi": { id: "isothiazolinones", byDefault: true },
   "balsam-of-peru": { id: "balsam-of-peru-related", byDefault: false },
   oakmoss: { id: "oakmoss-treemoss", byDefault: false },
   lichen: { id: "oakmoss-treemoss", byDefault: false },

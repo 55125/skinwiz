@@ -1,0 +1,394 @@
+[
+  {
+    "ingredient": "permethrin (pyrethroid)",
+    "species": {"cat": "supported", "dog": "considered_safe"},
+    "threshold": "NPIC: \"Cats that have been exposed by accident to products with high (45-65%) levels of permethrin may seem anxious and can't walk normally. They may also have muscle tremors and seizures and they may die from the exposure.\" VCA (cats): \"any exposure may be fatal\"",
+    "safe_exceptions": "No source in my family calls any permethrin product safe for cats. Dogs: VCA \"The use of pyrethrins or pyrethroids is generally safe in dogs\".",
+    "effect": "Cats metabolise pyrethroids slowly; tremors, seizures and death after a dog product is applied to the cat or licked/groomed off a treated dog.",
+    "sources": [
+      {"title": "NPIC Permethrin General Fact Sheet", "url": "https://npic.orst.edu/factsheets/PermGen.html"},
+      {"title": "VCA: Imidacloprid, Permethrin and Pyriproxyfen (\"DO NOT USE in: Cats (permethrin is toxic to cats and any exposure may be fatal)\")", "url": "https://vcahospitals.com/know-your-pet/imidacloprid-permethrin-and-pyriproxyfen"},
+      {"title": "VCA: Household Hazards - Toxic Hazards for Cats", "url": "https://vcahospitals.com/know-your-pet/household-hazards-toxic-hazards-for-cats"},
+      {"title": "VCA: Pyrethrin/Pyrethroid Poisoning in Cats", "url": "https://vcahospitals.com/know-your-pet/pyrethrinpyrethroid-poisoning-in-cats"},
+      {"title": "VCA: Safe Flea & Tick Prevention for Kittens", "url": "https://vcahospitals.com/pediatric/kitten/health-wellness/safe-flea-and-tick-prevention-for-cats"},
+      {"title": "Cornell University Hospital for Animals pharmacy: Small Animal Toxins (\"Permethrin: Toxic to cats\")", "url": "https://www.vet.cornell.edu/hospitals/pharmacy/consumer-clinical-care-guidelines-animals/small-animal-toxins"},
+      {"title": "EPA Evaluation of Pet Spot-on Products: Analysis and Plans for Reducing Harmful Effects", "url": "https://www.epa.gov/pets/epa-evaluation-pet-spot-products-analysis-and-plans-reducing-harmful-effects"}
+    ],
+    "notes": "Supported by regulator (NPIC, EPA generally), a vet school (Cornell) and VCA. The EPA spot-on review says \"cats can be harmed by dog products because they are more sensitive to certain pesticides\" and that label warnings against dog products on cats \"are not working well enough\", but it does not name permethrin. VCA covers licking it off a treated dog: \"Poisoning occurs when dog flea products are directly applied on cats or cats lick these medications off dogs\". Several VCA toxicology articles are co-authored by Pet Poison Helpline toxicologists (Schmid, Brutlag), so they are not fully independent of the Pet Poison Helpline reviewer."
+  },
+  {
+    "ingredient": "other pyrethroids: cyphenothrin, deltamethrin, d-phenothrin, lambda-cyhalothrin (and pyrethroids as a class)",
+    "species": {"cat": "supported", "dog": "considered_safe"},
+    "threshold": "VCA (cats): \"Life-threatening signs may be seen in cats with even a small exposure to products containing pyrethroids.\" No numeric threshold.",
+    "safe_exceptions": "VCA (cats): \"Flea and tick shampoos or collars specifically labeled for cats are safe to use.\" VCA lists the Seresto collar (flumethrin + imidacloprid; the page does not name flumethrin) among products appropriate for kittens.",
+    "effect": "The same feline sensitivity as permethrin: neurological signs (tremors, seizures) and possible death.",
+    "sources": [
+      {"title": "VCA: Pyrethrin/Pyrethroid Poisoning in Cats", "url": "https://vcahospitals.com/know-your-pet/pyrethrinpyrethroid-poisoning-in-cats"},
+      {"title": "VCA: Pyrethrin/Pyrethroid Poisoning in Dogs", "url": "https://vcahospitals.com/know-your-pet/pyrethrin-pyrethroid-poisoning-in-dogs"},
+      {"title": "VCA: Fipronil with Cyphenothrin (should NOT BE USED in cats)", "url": "https://vcahospitals.com/know-your-pet/fipronil-with-cyphenothrin"},
+      {"title": "VCA: Deltamethrin/Deltamethrin Combination Products Topical (\"DO NOT USE in: Cats and aquatic species\")", "url": "https://vcahospitals.com/know-your-pet/deltamethrindeltamethrin-combination-products-topical"},
+      {"title": "EPA news release 06/09/2005: Certain Hartz Flea and Tick Drops for Cats and Kittens to be Relabeled or Cancelled", "url": "https://www.epa.gov/archive/epapages/newsroom_archive/newsreleases/76d010e9e2b81c53852570ce0070dc20.html"},
+      {"title": "VCA: Safe Flea & Tick Prevention for Kittens", "url": "https://vcahospitals.com/pediatric/kitten/health-wellness/safe-flea-and-tick-prevention-for-cats"}
+    ],
+    "notes": "Cyphenothrin and deltamethrin: VCA drug monographs contraindicate them in cats. d-phenothrin: the EPA 2005 release on Hartz cat drops reports \"hair loss, salivation, tremors and numerous deaths\" and restricted use on cats under 6 lb, cats over 13 years and kittens under 5 months. The release I opened does not name the active ingredient, so I cannot cite it for phenothrin specifically. Lambda-cyhalothrin: not_found in my family. Answer to 'is it true even when labeled for cats?': VCA says cat-labeled pyrethrin/pyrethroid shampoos and collars are safe, so a warning keyed only on the ingredient would contradict VCA for cat-labeled products. Key the warning to dog-labeled or high-concentration spot-ons, or to products not labeled for cats."
+  },
+  {
+    "ingredient": "pyrethrins (natural)",
+    "species": {"cat": "considered_safe", "dog": "considered_safe"},
+    "threshold": "VCA: \"Topical flea and tick spot-on medications often contain high concentrations of pyrethrin or pyrethroids\" (dog products, the danger to cats); lower concentrations appear in household sprays and shampoos. No numeric threshold.",
+    "safe_exceptions": "VCA (cats): \"Flea and tick shampoos or collars specifically labeled for cats are safe to use.\"",
+    "effect": "Cats are sensitive. Danger comes from high-concentration dog spot-ons or contact with a recently treated dog; cat-labeled products are considered safe.",
+    "sources": [
+      {"title": "VCA: Pyrethrin/Pyrethroid Poisoning in Cats", "url": "https://vcahospitals.com/know-your-pet/pyrethrinpyrethroid-poisoning-in-cats"},
+      {"title": "VCA: Pyrethrin/Pyrethroid Poisoning in Dogs", "url": "https://vcahospitals.com/know-your-pet/pyrethrin-pyrethroid-poisoning-in-dogs"},
+      {"title": "NPIC Pyrethrins General Fact Sheet", "url": "https://npic.orst.edu/factsheets/pyrethrins.html"}
+    ],
+    "notes": "Cat status is mixed. VCA says cats \"are also very sensitive to pyrethrins and pyrethroids\" (toxic), but also that cat-labeled shampoos and collars are safe. Suggest: warn on pyrethrins in dog-labeled products for cats, and do not warn on cat-labeled pyrethrin products. The NPIC pyrethrins fact sheet says nothing cat-specific; dogs are mentioned only at \"extremely large\" fed doses."
+  },
+  {
+    "ingredient": "etofenprox",
+    "species": {"cat": "considered_safe", "dog": "not_found"},
+    "threshold": null,
+    "safe_exceptions": "VCA: fipronil with etofenprox is labeled \"for cats and kittens 12 weeks of age and older\"; it should be \"USED WITH CAUTION\" in pregnant, nursing or organ-dysfunction cats, and \"NOT BE USED\" in rabbits or small mammals.",
+    "effect": "Sold as a cat flea/tick product. Not flagged as toxic to cats.",
+    "sources": [
+      {"title": "VCA: Fipronil with Etofenprox", "url": "https://vcahospitals.com/know-your-pet/fipronil-with-etofenprox"}
+    ],
+    "notes": "A search snippet claimed the VCA page says etofenprox has \"low mammalian toxicity\", but the page I fetched did not confirm that wording, so it is not used here."
+  },
+  {
+    "ingredient": "tea tree / melaleuca oil",
+    "species": {"cat": "supported", "dog": "supported"},
+    "threshold": "VCA (cats): \"Some essential oils, such as tea tree oil, can cause poisoning from ingestion or topical exposure to a single drop of a concentrated product.\" VCA OTC toxins (cats): \"100% tea tree oil is extremely toxic when ingested or applied to the skin.\" Tufts: \"particularly in their 100 percent concentrated form.\"",
+    "safe_exceptions": "Tufts: \"it is never safe to use on cats\", while some dogs can be treated with it (\"Never apply essential oils to a dog without the advice and direction of a veterinarian\"). No source gives a safe dilution.",
+    "effect": "Topical or oral exposure causes depression, hypothermia, possible liver injury (cats) and nervous-system signs. Cats are worse off because they lack liver enzymes; cats can be poisoned by grooming a treated dog.",
+    "sources": [
+      {"title": "Cornell University Hospital for Animals: Small Animal Toxins (\"Highly toxic both orally and topically to dogs and especially to cats\")", "url": "https://www.vet.cornell.edu/hospitals/pharmacy/consumer-clinical-care-guidelines-animals/small-animal-toxins"},
+      {"title": "Tufts Now: Are essential oils dangerous to pets? (Foster Hospital for Small Animals ECC clinicians)", "url": "https://now.tufts.edu/2018/12/21/are-essential-oils-dangerous-pets"},
+      {"title": "VCA: Household Hazards - Toxic Hazards for Cats", "url": "https://vcahospitals.com/know-your-pet/household-hazards-toxic-hazards-for-cats"},
+      {"title": "VCA: Common Over-the-Counter Toxins in Cats", "url": "https://vcahospitals.com/know-your-pet/common-over-the-counter-toxins-in-cats"},
+      {"title": "VCA: Essential Oil and Liquid Potpourri Poisoning in Dogs", "url": "https://vcahospitals.com/know-your-pet/essential-oil-and-liquid-potpourri-poisoning-in-dogs"},
+      {"title": "VCA: Essential Oil and Liquid Potpourri Poisoning in Cats", "url": "https://vcahospitals.com/know-your-pet/essential-oil-and-liquid-potpourri-poisoning-in-cats"}
+    ],
+    "notes": "Two vet schools (Cornell, Tufts) plus VCA. The concentration language centres on concentrated/100% oil; no source gives a % cut-off below which it is safe. For dogs, Tufts implies vet-directed use can be acceptable, so a dog warning should be worded as a caution rather than a contraindication."
+  },
+  {
+    "ingredient": "other essential oils: cinnamon, citrus (incl. d-limonene), pennyroyal, peppermint, pine, sweet birch, wintergreen, ylang-ylang, clove, eucalyptus",
+    "species": {"cat": "supported", "dog": "supported"},
+    "threshold": "VCA: \"only a few licks or a small amount on the skin could be harmful, depending on the ingredients and how the pet is exposed.\" No numeric threshold.",
+    "safe_exceptions": "EPA (d-limonene): registered pet flea/tick products are eligible for reregistration with label limits (\"prohibition against use on weanling kittens and a caution against use of undiluted product\").",
+    "effect": "Ingestion or skin exposure causes drooling, ataxia, tremors, oral/skin burns and breathing difficulty; pennyroyal affects the liver.",
+    "sources": [
+      {"title": "VCA: Essential Oil and Liquid Potpourri Poisoning in Cats", "url": "https://vcahospitals.com/know-your-pet/essential-oil-and-liquid-potpourri-poisoning-in-cats"},
+      {"title": "VCA: Essential Oil and Liquid Potpourri Poisoning in Dogs", "url": "https://vcahospitals.com/know-your-pet/essential-oil-and-liquid-potpourri-poisoning-in-dogs"},
+      {"title": "VCA: Household Items Toxic to Kittens", "url": "https://vcahospitals.com/pediatric/kitten/health-wellness/household-items-toxic-to-kittens"},
+      {"title": "VCA: Steer clear of essential oils", "url": "https://vcahospitals.com/resources/lifestyle-cat/hazards-safety/steer-clear-of-essential-oils"},
+      {"title": "EPA R.E.D. Facts: Limonene (EPA-738-F-94-030, Sept 1994)", "url": "https://www3.epa.gov/pesticides/chem_search/reg_actions/reregistration/fs_PC-079701_1-Sep-94.pdf"},
+      {"title": "Tufts Now: Are essential oils dangerous to pets?", "url": "https://now.tufts.edu/2018/12/21/are-essential-oils-dangerous-pets"}
+    ],
+    "notes": "Per oil (VCA unless noted). CATS: cinnamon, citrus, pennyroyal, peppermint, pine, sweet birch, wintergreen, ylang-ylang (all three VCA cat pages); clove and eucalyptus only on the VCA kittens page. DOGS: cinnamon, citrus, pennyroyal (liver), peppermint, pine, sweet birch, wintergreen (salicylates), ylang-ylang; clove and eucalyptus are not_found for dogs. d-limonene (EPA RED): \"Adverse reactions have been reported in a small percentage of animals, especially cats... Kittens and young cats seem to be most sensitive.\" Tufts gives a general statement only: \"Pets are most often poisoned when essential oils come into contact with the skin.\" Nearly all of the per-oil evidence is VCA alone (authored by Pet Poison Helpline toxicologists), so independence is weak. Related: NPIC neem oil fact sheet reports adverse reactions in cats treated for fleas, including deaths (\"Some of the cats died\"; most recovered in 1-5 days): https://npic.orst.edu/factsheets/neemgen.html"
+  },
+  {
+    "ingredient": "methyl salicylate / wintergreen oil / sweet birch oil",
+    "species": {"cat": "supported", "dog": "supported"},
+    "threshold": null,
+    "safe_exceptions": null,
+    "effect": "Salicylate poisoning; cats are more sensitive than dogs (vomiting, diarrhea, anorexia, fever).",
+    "sources": [
+      {"title": "VCA: Aspirin Poisoning in Cats (salicylate sources include \"wintergreen oil... pain creams\"; \"Cats are especially sensitive to aspirin and salicylates\")", "url": "https://vcahospitals.com/know-your-pet/aspirin-poisoning-in-cats"},
+      {"title": "VCA: Essential Oil and Liquid Potpourri Poisoning in Cats", "url": "https://vcahospitals.com/know-your-pet/essential-oil-and-liquid-potpourri-poisoning-in-cats"},
+      {"title": "VCA: Essential Oil and Liquid Potpourri Poisoning in Dogs", "url": "https://vcahospitals.com/know-your-pet/essential-oil-and-liquid-potpourri-poisoning-in-dogs"},
+      {"title": "VCA: Personal Care Products and Your Pet (muscle rubs contain salicylates)", "url": "https://vcahospitals.com/know-your-pet/personal-care-products-and-your-pet"}
+    ],
+    "notes": "VCA only; no regulator or vet school in my family addresses it. For dogs, wintergreen and sweet birch are on the VCA dog essential-oil list; the effect described there is milder (mainly GI)."
+  },
+  {
+    "ingredient": "minoxidil (topical)",
+    "species": {"cat": "supported", "dog": "not_found"},
+    "threshold": null,
+    "safe_exceptions": null,
+    "effect": "Cats: signs of heart failure with cardiovascular and respiratory signs after topical hair-growth products.",
+    "sources": [
+      {"title": "VCA: Household Hazards - Toxic Hazards for Cats", "url": "https://vcahospitals.com/know-your-pet/household-hazards-toxic-hazards-for-cats"}
+    ],
+    "notes": "VCA quote: \"Exposure to topical hair growth products with minoxidil (such as Rogaine®), can result in signs of heart failure in cats\". Only one source in my family. The University of Illinois case reports turned up in search are journal articles, which are excluded for me. Dogs not_found."
+  },
+  {
+    "ingredient": "5-fluorouracil (topical)",
+    "species": {"cat": "supported", "dog": "supported"},
+    "threshold": "FDA lists \"Fluorouracil Cream USP, 5%\" among the products. No toxic dose given: FDA dogs \"All the dogs died or were euthanized.\"",
+    "safe_exceptions": null,
+    "effect": "Vomiting, tremors, seizures, breathing difficulty and diarrhea within 30 min; death in 6-12 h. Exposure by licking the owner's treated skin or chewing the tube.",
+    "sources": [
+      {"title": "FDA CVM Drug Safety Communication: Fluorouracil Products Used on People's Skin Can Cause Serious Reactions in Pets", "url": "https://www.fda.gov/animal-veterinary/cvm-updates/cvm-drug-safety-communication-fluorouracil-products-used-peoples-skin-can-cause-serious-reactions"},
+      {"title": "FDA Consumer Update: Fluorouracil and Pet Safety", "url": "https://www.fda.gov/consumers/consumer-updates/fluorouracil-and-pet-safety"},
+      {"title": "FDA: What Veterinarians, Health Care Providers, and Pharmacists Should Know to Prevent Pet Exposure to Prescription Topical Fluorouracil", "url": "https://www.fda.gov/animal-veterinary/resources-you/what-veterinarians-health-care-providers-and-pharmacists-should-know-prevent-pet-exposure"}
+    ],
+    "notes": "Dogs are strongly supported by FDA case reports. For cats FDA has no cases but says they \"are also expected to be extremely sensitive to topical fluorouracil\" and \"the prognosis for cats ingesting fluorouracil is grave\"; I marked cat supported on that explicit FDA expectation, but it is predictive rather than case-based. FDA asked manufacturers to add pet warnings to the label."
+  },
+  {
+    "ingredient": "calcipotriene / calcipotriol (and tacalcitol, calcitriol topical)",
+    "species": {"cat": "supported", "dog": "supported"},
+    "threshold": null,
+    "safe_exceptions": null,
+    "effect": "Vitamin D toxicosis: hypercalcemia and kidney failure from licking cream off the owner's skin or chewing the tube.",
+    "sources": [
+      {"title": "VCA: Vitamin D Poisoning in Dogs", "url": "https://vcahospitals.com/know-your-pet/vitamin-d-poisoning-in-dogs"},
+      {"title": "VCA: Vitamin D Poisoning in Cats", "url": "https://vcahospitals.com/know-your-pet/vitamin-d-poisoning-in-cats"},
+      {"title": "Texas A&M CVMBS Pet Talk: Human Medicines Can Be Poisonous to Pets (Dr. Dorothy Black)", "url": "https://vetmed.tamu.edu/news/pet-talk/human-medicines-can-be-poison-to-pets/"}
+    ],
+    "notes": "VCA: \"Many topical psoriasis medications contain potent amounts of vitamin D (calcipotriene, tacalcitol, or calcitriol) and poisoning can occur when pets lick the cream off someone's skin or directly from the product tube.\" Same wording in the cat article (\"when cats lick\"). Texas A&M names vitamin D analogs for psoriasis (\"If pets lick the product off the skin, kidney failure could occur\") without naming a species, so it supports \"pets\" generally. FDA's Dangers for Pets page links a \"Vitamin D Toxicity in Dogs\" article that I did not open."
+  },
+  {
+    "ingredient": "diclofenac (topical) and topical NSAIDs generally",
+    "species": {"cat": "supported", "dog": "not_found"},
+    "threshold": null,
+    "safe_exceptions": null,
+    "effect": "NSAID poisoning in cats (narrow safety margin) from licking it off the owner's skin, grooming it off fur, or chewing the tube.",
+    "sources": [
+      {"title": "VCA: Common Over-the-Counter Toxins in Cats", "url": "https://vcahospitals.com/know-your-pet/common-over-the-counter-toxins-in-cats"},
+      {"title": "VCA: Household Hazards - Toxic Hazards for Cats (NSAIDs \"some of the deadliest for cats\")", "url": "https://vcahospitals.com/know-your-pet/household-hazards-toxic-hazards-for-cats"}
+    ],
+    "notes": "VCA quote: \"topical ointments and creams containing NSAIDs (e.g., Voltaran®) can also cause poisoning if your pet chews on the container, licks them off your skin, or if they are transferred to your pet's fur and your cat ingests them when grooming.\" No FDA communication on diclofenac specifically was found; FDA's topical NSAID warning is about flurbiprofen (see the next entry). Dogs: not_found topically in my family."
+  },
+  {
+    "ingredient": "flurbiprofen (topical NSAID)",
+    "species": {"cat": "supported", "dog": "not_found"},
+    "threshold": "FDA: \"Even very small exposure to flurbiprofen can be potentially life-threatening to pets\"",
+    "safe_exceptions": null,
+    "effect": "Cats in two households became ill (kidney failure) or died after owners applied compounded flurbiprofen creams to their own skin.",
+    "sources": [
+      {"title": "FDA Consumer Advice on Pet Exposure to Prescription Topical Pain Medications Containing Flurbiprofen", "url": "https://www.fda.gov/animal-veterinary/animal-health-literacy/fda-consumer-advice-pet-exposure-prescription-topical-pain-medications-containing-flurbiprofen"}
+    ],
+    "notes": "FDA's cases are cats only. It warns \"pets\" in general, but no dog case or dog-specific statement, so dog is not_found. The products also contained cyclobenzaprine, baclofen, gabapentin, lidocaine or prilocaine."
+  },
+  {
+    "ingredient": "zinc oxide",
+    "species": {"cat": "supported", "dog": "supported"},
+    "threshold": "VCA: \"A one-time ingestion of zinc oxide cream typically only causes stomach upset. However, repeated ingestion of these ointments over days to weeks can cause poisoning, especially with more concentrated products.\" No % given.",
+    "safe_exceptions": "Single ingestion: typically only stomach upset (VCA).",
+    "effect": "GI irritation; with repeated ingestion, hemolytic anemia (red-cell damage).",
+    "sources": [
+      {"title": "VCA: Zinc Poisoning in Pets", "url": "https://vcahospitals.com/know-your-pet/zinc-poisoning-toxicity-in-pets"},
+      {"title": "VCA: Personal Care Products and Your Pet (sunscreen and calamine)", "url": "https://vcahospitals.com/know-your-pet/personal-care-products-and-your-pet"}
+    ],
+    "notes": "VCA only. Personal Care Products: calamine zinc oxide \"can cause uncomfortable GI issues in dogs and cats\" and anemia; sunscreen zinc oxide \"can damage pets' red blood cells\". No source gives a numeric concentration threshold; the zinc article says it does not address licking it off skin. Suggest a caution-level warning (repeated licking of high-zinc ointments) rather than a hard contraindication."
+  },
+  {
+    "ingredient": "xylitol",
+    "species": {"cat": "not_found", "dog": "supported"},
+    "threshold": null,
+    "safe_exceptions": "FDA: \"Cats appear to be spared, at least in part, by their disdain for sweets.\" VCA: \"Cats, ferrets, and horses do not appear to be at risk.\"",
+    "effect": "Dogs: insulin surge leading to hypoglycemia, seizures and liver failure; route is ingestion (toothpaste, mouthwash, personal-care products).",
+    "sources": [
+      {"title": "FDA Consumer Update: Paws Off Xylitol; It's Dangerous for Dogs", "url": "https://www.fda.gov/consumers/consumer-updates/paws-xylitol-its-dangerous-dogs"},
+      {"title": "VCA: Xylitol Poisoning in Dogs", "url": "https://vcahospitals.com/know-your-pet/xylitol-toxicity-in-dogs"},
+      {"title": "Cornell University Hospital for Animals: Small Animal Toxins (\"Can be toxic to dogs\")", "url": "https://www.vet.cornell.edu/hospitals/pharmacy/consumer-clinical-care-guidelines-animals/small-animal-toxins"},
+      {"title": "VCA: Personal Care Products and Your Pet (toothpaste xylitol)", "url": "https://vcahospitals.com/know-your-pet/personal-care-products-and-your-pet"}
+    ],
+    "notes": "Oral ingestion route only, which is relevant for pet dental and lickable products. Cat: arguably considered_safe (VCA says cats are not at risk but adds that xylitol \"should also be avoided in cats\" per the search summary); I left it not_found because no source calls it toxic to cats. No mg/kg threshold on the pages I opened."
+  },
+  {
+    "ingredient": "phenols / phenolic compounds / coal tar",
+    "species": {"cat": "supported", "dog": "considered_safe"},
+    "threshold": "VCA (coal tar): \"Adverse effects are more likely with coal tar concentrations greater than 3%.\"",
+    "safe_exceptions": "Coal tar shampoos are used in dogs; contraindicated in nursing dogs and puppies under 8 weeks (VCA).",
+    "effect": "Coal tar is contraindicated in cats.",
+    "sources": [
+      {"title": "VCA: Coal Tar and Coal Tar Combinations Topical", "url": "https://vcahospitals.com/know-your-pet/coal-tar-and-coal-tar-combinations-topical"},
+      {"title": "VCA: Salicylic Acid Topical (not in cats if the combination contains coal tar)", "url": "https://vcahospitals.com/know-your-pet/salicylic-acid-topical"}
+    ],
+    "notes": "Coal tar in cats is \"DO NOT USE\" (VCA, Alison Hamilton DVM). Phenol disinfectants: a search snippet attributed \"Phenol-based disinfectants are toxic to cats\" to the VCA 'Caring for Your Sick Cat' page, but I did not open it, so it is not counted. Phenols beyond coal tar: not_found."
+  },
+  {
+    "ingredient": "benzocaine",
+    "species": {"cat": "not_found", "dog": "not_found"},
+    "threshold": null, "safe_exceptions": null,
+    "effect": "Not addressed for animals by my sources.",
+    "sources": [],
+    "notes": "No FDA/EPA/NPIC/vet-school/VCA page found on benzocaine methemoglobinemia in cats. FDA's benzocaine warning concerns humans (infants)."
+  },
+  {
+    "ingredient": "lidocaine (topical)",
+    "species": {"cat": "considered_safe", "dog": "considered_safe"},
+    "threshold": null,
+    "safe_exceptions": "VCA: used topically in \"cats, dogs, and other animals\"; use with caution in \"Pets with a small body size\" and \"Pets that need a large area treated\"; \"Do not allow your pet to groom or lick the application site for at least 30 minutes\".",
+    "effect": "Veterinary topical anesthetic; systemic toxicity rare.",
+    "sources": [
+      {"title": "VCA: Lidocaine/Lidocaine Combinations Topical", "url": "https://vcahospitals.com/know-your-pet/lidocainelidocaine-combinations-topical"}
+    ],
+    "notes": "Not flagged as toxic to cats in my family."
+  },
+  {
+    "ingredient": "DEET",
+    "species": {"cat": "supported", "dog": "supported"},
+    "threshold": null,
+    "safe_exceptions": null,
+    "effect": "Vomiting, tremors, excitation, ataxia, seizures; also an eye and inhalation irritant.",
+    "sources": [
+      {"title": "NPIC DEET Technical Fact Sheet", "url": "http://npic.orst.edu/factsheets/archive/DEETtech.html"},
+      {"title": "VCA: True or False: DEET is dangerous for mosquitos AND your pet", "url": "https://vcahospitals.com/shop/home/articles/true-or-false-deet-is-dangerous-for-mosquitos-and-your-pet"},
+      {"title": "Cornell University Hospital for Animals: Small Animal Toxins (\"Absorbed through the skin in dogs\")", "url": "https://www.vet.cornell.edu/hospitals/pharmacy/consumer-clinical-care-guidelines-animals/small-animal-toxins"}
+    ],
+    "notes": "NPIC: \"Clinical signs in dogs and cats may include vomiting, tremors, excitation, ataxia, and seizures\" but \"Reports of DEET toxicosis in animals are rare.\" VCA: \"Cats and dogs exposed to DEET can develop... tremors and seizures.\" Cornell confirms dermal absorption in dogs. A regulator, a vet school and VCA."
+  },
+  {
+    "ingredient": "salicylic acid (topical)",
+    "species": {"cat": "considered_safe", "dog": "considered_safe"},
+    "threshold": null,
+    "safe_exceptions": "VCA: veterinary salicylic acid topicals (Solva-Ker, BioSeb, Cerasoothe SA) are used in \"cats, dogs, and other animals\"; not in cats \"if using a combination product that contains coal tar.\"",
+    "effect": "Local irritation only, at veterinary concentrations.",
+    "sources": [
+      {"title": "VCA: Salicylic Acid Topical", "url": "https://vcahospitals.com/know-your-pet/salicylic-acid-topical"},
+      {"title": "VCA: Aspirin Poisoning in Cats", "url": "https://vcahospitals.com/know-your-pet/aspirin-poisoning-in-cats"}
+    ],
+    "notes": "Caveat: VCA 'Aspirin Poisoning in Cats' lists \"wart removers\" and \"hair and skin care products\" (human salicylate products) as sources of salicylate poisoning in cats. So veterinary salicylic acid shampoos are OK, but human high-strength keratolytics licked off are a concern."
+  },
+  {
+    "ingredient": "hydrogen peroxide",
+    "species": {"cat": "supported", "dog": "considered_safe"},
+    "threshold": null,
+    "safe_exceptions": "Dogs: VCA describes oral 3% hydrogen peroxide as a veterinarian-directed emetic for dogs.",
+    "effect": "Cats: injury to mouth, throat and stomach when used as an emetic.",
+    "sources": [
+      {"title": "VCA: Hydrogen Peroxide 3% Oral (\"DO NOT USE hydrogen peroxide 3% oral in: Cats, rabbits, and rodents\")", "url": "https://vcahospitals.com/know-your-pet/hydrogen-peroxide-3-oral"},
+      {"title": "VCA: Household Hazards - Toxic Hazards for Cats", "url": "https://vcahospitals.com/know-your-pet/household-hazards-toxic-hazards-for-cats"}
+    ],
+    "notes": "Covers oral and emetic use only. Topical/skin use on cats: not_found."
+  },
+  {
+    "ingredient": "benzoyl peroxide",
+    "species": {"cat": "considered_safe", "dog": "considered_safe"},
+    "threshold": "VCA: veterinary products are 2% and 5%; human formulations are 2.5-10%.",
+    "safe_exceptions": "VCA: \"Benzoyl peroxide topical products are used in cats and dogs.\"",
+    "effect": "Drying and irritation; bleaches fabric and coat.",
+    "sources": [
+      {"title": "VCA: Benzoyl Peroxide Topical", "url": "https://vcahospitals.com/know-your-pet/benzoyl-peroxide-topical"}
+    ],
+    "notes": "No cat-specific contraindication found."
+  },
+  {
+    "ingredient": "selenium sulfide",
+    "species": {"cat": "supported", "dog": "considered_safe"},
+    "threshold": null,
+    "safe_exceptions": "Used for seborrhea in dogs (VCA).",
+    "effect": "Cats: high likelihood of adverse reactions through grooming.",
+    "sources": [
+      {"title": "VCA: Selenium Sulfide Topical (\"DO NOT USE selenium sulfide topical in: Cats (they have a high likelihood of adverse reactions through grooming)\")", "url": "https://vcahospitals.com/know-your-pet/selenium-sulfide-topical"}
+    ],
+    "notes": "VCA only (Alison Hamilton DVM)."
+  },
+  {
+    "ingredient": "lime sulfur",
+    "species": {"cat": "considered_safe", "dog": "considered_safe"},
+    "threshold": "Must be diluted before use (VCA).",
+    "safe_exceptions": "VCA: used in \"dogs, cats, puppies, kittens, and horses\".",
+    "effect": "Nausea and oral ulcers if ingested, \"particularly in cats\"; rare ear-tip hair loss in cats.",
+    "sources": [
+      {"title": "VCA: Lime Sulfur Topical", "url": "https://vcahospitals.com/know-your-pet/lime-sulfur-topical"}
+    ],
+    "notes": "Considered safe when diluted and kept from being licked; not a contraindication."
+  },
+  {
+    "ingredient": "amitraz",
+    "species": {"cat": "supported", "dog": "supported"},
+    "threshold": "VCA: \"Amitraz should not be used in puppies less than 4 months old.\" Small-breed, debilitated or geriatric dogs: \"a half dose should be considered\".",
+    "safe_exceptions": "VCA (cats): \"Although cats have been successfully treated with very dilute amitraz solutions, use in cats with caution.\"",
+    "effect": "Sedation, ataxia, bradycardia, hyperglycemia, hypothermia; toxic if swallowed (especially collars).",
+    "sources": [
+      {"title": "VCA: Amitraz", "url": "https://vcahospitals.com/know-your-pet/amitraz"}
+    ],
+    "notes": "Cat: VCA says \"Amitraz is toxic to cats and rabbits at certain doses.\" Dog: supported for ingestion (\"toxic if swallowed, especially in the form of a collar\") and as a caution in small breeds. Chihuahuas are not named; small breeds generally are. EPA's spot-on review notes \"small breed dogs were affected more than larger breeds for some products\" without naming amitraz. VCA only, so weak."
+  },
+  {
+    "ingredient": "organophosphates (tetrachlorvinphos)",
+    "species": {"cat": "not_found", "dog": "not_found"},
+    "threshold": null, "safe_exceptions": null,
+    "effect": "Not established for pets by my sources.",
+    "sources": [
+      {"title": "EPA: Tetrachlorvinphos (TCVP)", "url": "https://www.epa.gov/ingredients-used-pesticide-products/tetrachlorvinphos-tcvp"}
+    ],
+    "notes": "The EPA TCVP page I saw was a search summary only (not opened). Its concern is human (child) exposure from collars and dusts; pet dust/powder uses were cancelled because human risk estimates exceeded EPA's level of concern. No pet-toxicity statement. Not counted as support."
+  },
+  {
+    "ingredient": "ivermectin / macrocyclic lactones in MDR1 (ABCB1) dogs, topical",
+    "species": {"cat": "not_found", "dog": "considered_safe"},
+    "threshold": "WSU (search summary, not confirmed on the page): mange-level ivermectin doses (300-600 mcg/kg) cause neurotoxicity in MDR1 homozygous dogs.",
+    "safe_exceptions": "WSU MDR1 in Dogs: selamectin (Revolution), moxidectin products, milbemycin and ivermectin (Heartgard): \"The FDA determined ... is safe for dogs with the MDR1 mutation when used at label doses.\"",
+    "effect": "Label-dose topical heartworm/flea products are safe in MDR1 dogs; high (off-label) doses are neurotoxic.",
+    "sources": [
+      {"title": "WSU College of Veterinary Medicine: MDR1 in Dogs (problem medications)", "url": "https://waddl.vetmed.wsu.edu/mdr1-in-dogs/"}
+    ],
+    "notes": "Do not warn on label-dose topical selamectin or moxidectin for MDR1 breeds. The WSU cat page (from search, not opened) says oral ingestion of topical selamectin or moxidectin is expected to be neurotoxic in MDR1-mutant cats, so cat is not_found."
+  },
+  {
+    "ingredient": "alpha-lipoic acid",
+    "species": {"cat": "supported", "dog": "supported"},
+    "threshold": "Cornell: \"Dose dependent toxicity in dogs and cats. Cats are very sensitive.\"",
+    "safe_exceptions": null,
+    "effect": "Hypoglycemia, seizures, coma and liver injury (cats); ingestion route.",
+    "sources": [
+      {"title": "Cornell University Hospital for Animals: Small Animal Toxins", "url": "https://www.vet.cornell.edu/hospitals/pharmacy/consumer-clinical-care-guidelines-animals/small-animal-toxins"},
+      {"title": "VCA: Household Hazards - Toxic Hazards for Cats", "url": "https://vcahospitals.com/know-your-pet/household-hazards-toxic-hazards-for-cats"}
+    ],
+    "notes": "Ingestion only; no source addresses topical ALA."
+  },
+  {
+    "ingredient": "nicotine",
+    "species": {"cat": "supported", "dog": "supported"},
+    "threshold": null, "safe_exceptions": null,
+    "effect": "Vomiting, agitation, arrhythmia, tremors, seizures, death; signs within 15-30 min of ingesting e-liquid.",
+    "sources": [
+      {"title": "VCA: E-cigarettes and Pet Safety", "url": "https://vcahospitals.com/know-your-pet/e-cigarettes-and-pet-safety"}
+    ],
+    "notes": "Ingestion route (chewing cartridges, patches, gum); the source says \"pets\", not a specific species. Topical/grooming-product route not addressed. Unlikely to be relevant to skin products."
+  },
+  {
+    "ingredient": "retinoids (topical tretinoin)",
+    "species": {"cat": "not_found", "dog": "not_found"},
+    "threshold": null, "safe_exceptions": null, "effect": "Not addressed.", "sources": [],
+    "notes": "No source in my family flags topical retinoids for pets."
+  },
+  {
+    "ingredient": "hydrocortisone (human-strength topical)",
+    "species": {"cat": "not_found", "dog": "not_found"},
+    "threshold": null, "safe_exceptions": null,
+    "effect": "Mild: GI signs, panting, thirst and urination if ingested.",
+    "sources": [
+      {"title": "VCA: Personal Care Products and Your Pet", "url": "https://vcahospitals.com/know-your-pet/personal-care-products-and-your-pet"}
+    ],
+    "notes": "Mentioned only as causing mild signs; not called toxic. Does not meet the bar."
+  },
+  {
+    "ingredient": "octisalate (salicylate sunscreen filter)",
+    "species": {"cat": "supported", "dog": "not_found"},
+    "threshold": "VCA: \"low amounts of octisalate\" in sunscreens.",
+    "safe_exceptions": null,
+    "effect": "Salicylate toxicity in cats.",
+    "sources": [
+      {"title": "VCA: Personal Care Products and Your Pet", "url": "https://vcahospitals.com/know-your-pet/personal-care-products-and-your-pet"}
+    ],
+    "notes": "Extra find. VCA: \"Human sunscreens may also contain low amounts of octisalate, a salicylate that is particularly harmful to cats.\" Relevant if any pet sunscreen uses it. VCA only."
+  },
+  {
+    "ingredient": "neem oil",
+    "species": {"cat": "supported", "dog": "not_found"},
+    "threshold": null, "safe_exceptions": null,
+    "effect": "Cats treated for fleas: sluggishness, salivation, ataxia, tremors, convulsions; some died.",
+    "sources": [
+      {"title": "NPIC Neem Oil General Fact Sheet", "url": "https://npic.orst.edu/factsheets/neemgen.html"}
+    ],
+    "notes": "Extra find, relevant to 'natural' flea shampoos. NPIC: \"Some of the cats died. However, most of them recovered within 1 to 5 days.\""
+  },
+  {
+    "ingredient": "dog-only flea/tick products on cats; adult products on kittens/puppies (general rule)",
+    "species": {"cat": "supported", "dog": "not_found"},
+    "threshold": null, "safe_exceptions": null,
+    "effect": "Label-misuse rule rather than a single ingredient.",
+    "sources": [
+      {"title": "NPIC Pets and Pesticide Use Fact Sheet", "url": "https://npic.orst.edu/factsheets/petspest.html"},
+      {"title": "EPA Evaluation of Pet Spot-on Products", "url": "https://www.epa.gov/pets/epa-evaluation-pet-spot-products-analysis-and-plans-reducing-harmful-effects"}
+    ],
+    "notes": "Extra find. NPIC: \"Products labeled for use on 'dogs only' should never be used on cats or other animals\" and \"Products designed for adult cats or dogs should never be used on kittens or puppies unless the label states...\". Also: separate pets after treatment to prevent licking. Good basis for a label-based warning (dog-only product shown in Cats view)."
+  }
+]

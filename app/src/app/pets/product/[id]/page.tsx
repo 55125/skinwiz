@@ -96,13 +96,21 @@ export default async function PetProductPage({
                   {w.rule.name}: dangerous for {w.species.map((s) => SPECIES_WORD[s]).join(" and ")}.
                 </span>{" "}
                 {w.rule.risk}{" "}
-                <a href={w.rule.source.url} target="_blank" rel="noopener noreferrer" className="text-xs underline underline-offset-4">
-                  {w.rule.source.label}
-                </a>
+<span className="text-xs">
+                  Agreed by {w.rule.agreement} of 3 source groups:{" "}
+                  {w.rule.sources.map((src, i) => (
+                    <span key={src.url}>
+                      {i > 0 && ", "}
+                      <a href={src.url} target="_blank" rel="noopener noreferrer" className="underline underline-offset-4">
+                        {src.label}
+                      </a>
+                    </span>
+                  ))}
+                </span>
               </li>
             ))}
           </ul>
-          <p className="text-xs text-red-900/80 dark:text-red-200/80">Our species list is awaiting review by a veterinarian. If your pet was exposed, call your vet or an animal poison control line.</p>
+          <p className="text-xs text-red-900/80 dark:text-red-200/80">Each warning is backed by at least two independent groups of sources (veterinary references, poison control centers, regulators and vet schools), and the list is still awaiting review by a veterinarian. If your pet was exposed, call your vet or an animal poison control line.</p>
         </section>
       )}
 

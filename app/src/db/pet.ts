@@ -79,14 +79,28 @@ export function forSpecies(species: string[], want: PetSpeciesFilter, notForCats
 }
 
 // ---------------------------------------------------------------------------
-// Species toxicity. NEEDS VETERINARY REVIEW: drafted from the sources in the
-// "Pet mode: data sources and v1 scope" plan (MSD Veterinary Manual, ASPCA
-// and ASPCA Pro, cats.com) and not yet checked by a veterinarian. Thresholds
-// and wording must be reviewed before pet mode leaves its feature flag
-// (lib/feature-flags.ts FEATURE_PET_MODE). To add before launch, per the
-// plan: phenols and coal tar in cats, benzocaine in cats, pyrethrin and DEET
-// guidance.
+// Species toxicity, checked by consensus (2026-10-12): three independent
+// reviews, each limited to one family of sources, and a rule is here only
+// where at least two families say the ingredient is dangerous for that
+// species. The families are
+//   vet references: MSD/Merck Veterinary Manual and peer-reviewed papers
+//   poison control: ASPCA Animal Poison Control and Pet Poison Helpline
+//   regulators & vet schools: FDA, EPA/NPIC, Cornell, Tufts and VCA
+// `agreement` counts the families that support the rule's weakest species,
+// and `sources` cites one page each. Where a family says the ingredient is
+// fine as labelled (pyrethrins in cat products, lidocaine and salicylic
+// acid in vet products), the rule only fires for a species the product
+// isn't labelled for (onlyWhenNotLabeledFor). Thresholds appear only where
+// the sources give them. Left out for lack of agreement: etofenprox,
+// natural pyrethrins, hydrocortisone, benzoyl peroxide, lime sulfur,
+// tretinoin, topical ivermectin, camphor, menthol, neem; hydrogen peroxide
+// and nicotine are oral risks outside skin care. Several poison-control
+// toxicologists also write MSD and VCA pages, so the families overlap.
+// STILL NEEDS VETERINARY REVIEW before pet mode leaves its feature flag
+// (lib/feature-flags.ts FEATURE_PET_MODE).
 // ---------------------------------------------------------------------------
+
+type Source = { label: string; url: string };
 
 export type ToxicityRule = {
   id: string;
@@ -101,12 +115,18 @@ export type ToxicityRule = {
   // Only at or above this percent, when the strength is known; an unknown
   // strength still flags (couldn't check is never "clear").
   minPct?: number;
-  source: { label: string; url: string };
+  agreement: 2 | 3; // source families (of 3) that support it
+  sources: Source[];
 };
 
-const MSD_OILS = { label: "MSD Veterinary Manual", url: "https://www.msdvetmanual.com/toxicology/toxicoses-from-household-hazards/toxicoses-from-essential-oils-in-animals" };
-const ASPCA_PRO = { label: "ASPCA Pro", url: "https://www.aspcapro.org/resource/topical-creams-and-pets-dangerous-combination" };
-const ASPCA = { label: "ASPCA", url: "https://www.aspca.org/news/what-pet-toxins-are-hiding-your-diaper-bag" };
+const MSD_OILS: Source = { label: "MSD Veterinary Manual", url: "https://www.merckvetmanual.com/toxicology/toxicoses-from-household-hazards/toxicoses-from-essential-oils-in-animals" };
+const MSD_TOPICAL: Source = { label: "MSD Veterinary Manual", url: "https://www.merckvetmanual.com/toxicology/toxicosis-from-human-topical-agents/toxicosis-in-animals-from-human-topical-agents" };
+const MSD_ECTO: Source = { label: "MSD Veterinary Manual", url: "https://www.merckvetmanual.com/pharmacology/ectoparasiticides/ectoparasiticides-used-in-small-animals" };
+const PPH_OILS_CATS: Source = { label: "Pet Poison Helpline", url: "https://www.petpoisonhelpline.com/uncategorized/essential-oils-cats/" };
+const ASPCA_CREAMS: Source = { label: "ASPCA Pro", url: "https://www.aspcapro.org/resource/topical-creams-and-pets-dangerous-combination" };
+const ASPCA_ANESTHETICS: Source = { label: "ASPCA Animal Poison Control", url: "https://www.aspcapro.org/sites/default/files/toxbrief_0900.pdf" };
+const VCA_OILS_CATS: Source = { label: "VCA Animal Hospitals", url: "https://vcahospitals.com/know-your-pet/essential-oil-and-liquid-potpourri-poisoning-in-cats" };
+const CORNELL: Source = { label: "Cornell University Hospital for Animals", url: "https://www.vet.cornell.edu/hospitals/pharmacy/consumer-clinical-care-guidelines-animals/small-animal-toxins" };
 
 export const PET_TOXICITY: ToxicityRule[] = [
   {
@@ -115,74 +135,208 @@ export const PET_TOXICITY: ToxicityRule[] = [
     pattern: /\b(permethrin|cypermethrin|cyphenothrin|deltamethrin|d-?phenothrin|phenothrin|lambda-?cyhalothrin)\b/i,
     toxicFor: ["cat"],
     onlyWhenNotLabeledFor: true,
-    risk: "Tremors and seizures in cats, even from grooming or sleeping next to a recently treated dog.",
-    source: { label: "cats.com", url: "https://cats.com/permethrin-toxicosis-in-cats" },
+    risk: "Tremors and seizures in cats. Dog spot-ons hold 45-65% permethrin; cats are poisoned even by grooming or sleeping next to a treated dog.",
+    agreement: 3,
+    sources: [
+      MSD_ECTO,
+      { label: "ASPCA Animal Poison Control", url: "https://www.aspcapro.org/sites/default/files/d-veccs_april00_0.pdf" },
+      { label: "National Pesticide Information Center", url: "https://npic.orst.edu/factsheets/PermGen.html" },
+    ],
   },
   {
     id: "essential-oils",
-    name: "Tea tree (melaleuca) and other essential oils",
-    pattern: /\b(tea tree|melaleuca|cajuput|pennyroyal|eucalyptus oil|peppermint oil|cinnamon (?:bark |leaf )?oil|clove (?:bud |leaf )?oil|pine oil|ylang[- ]ylang|d-?limonene|citrus oil)\b/i,
+    name: "Tea tree (melaleuca), pennyroyal, cinnamon or pine oil",
+    pattern: /\b(tea tree|melaleuca|pennyroyal|cinnamon (?:bark |leaf )?oil|cassia oil|pine oil)\b/i,
     toxicFor: ["cat", "dog"],
-    risk: "Liver injury, weakness and seizures; cats are most sensitive, and the risk rises with concentration.",
-    source: MSD_OILS,
+    risk: "Weakness, tremors, low body temperature and liver injury, from skin contact or licking. Cats are most sensitive, and concentrated oil is the main danger.",
+    agreement: 3,
+    sources: [MSD_OILS, { label: "Pet Poison Helpline", url: "https://www.petpoisonhelpline.com/poison/tea-tree-oil/" }, CORNELL],
+  },
+  {
+    id: "essential-oils-cats",
+    name: "Eucalyptus, peppermint, clove, ylang-ylang or citrus oil (d-limonene)",
+    pattern: /\b(eucalyptus oil|peppermint oil|clove (?:bud |leaf )?oil|ylang[- ]ylang|d-?limonene|citrus oil|orange (?:peel )?oil|lemon oil|bergamot oil)\b/i,
+    toxicFor: ["cat"],
+    risk: "Drooling, wobbliness, tremors and breathing trouble in cats, which can't break these oils down.",
+    agreement: 2,
+    sources: [PPH_OILS_CATS, VCA_OILS_CATS],
   },
   {
     id: "methyl-salicylate",
     name: "Wintergreen and birch oil (methyl salicylate)",
     pattern: /\b(methyl salicylate|wintergreen|sweet birch|birch (?:bark |leaf )?oil|betula lenta)\b/i,
-    toxicFor: ["cat"],
-    risk: "Aspirin-like poisoning: cats can't clear salicylates.",
-    source: MSD_OILS,
+    toxicFor: ["cat", "dog"],
+    risk: "Aspirin-like poisoning (oil of wintergreen is 98% methyl salicylate); cats can't clear salicylates.",
+    agreement: 3,
+    sources: [MSD_OILS, PPH_OILS_CATS, VCA_OILS_CATS],
   },
   {
     id: "minoxidil",
     name: "Minoxidil",
     pattern: /\bminoxidil\b/i,
     toxicFor: ["cat", "dog"],
-    risk: "Dangerously low blood pressure and heart arrhythmia; a lick of a human hair-regrowth product can kill a cat.",
-    source: ASPCA_PRO,
+    risk: "Dangerously low blood pressure and heart failure; a lick of a human hair-regrowth product can kill a cat.",
+    agreement: 2,
+    sources: [MSD_TOPICAL, { label: "Pet Poison Helpline", url: "https://www.petpoisonhelpline.com/uncategorized/warning-minoxidil/" }],
   },
   {
     id: "fluorouracil",
     name: "5-Fluorouracil",
     pattern: /\b(fluorouracil|5-?fu)\b/i,
     toxicFor: ["cat", "dog"],
-    risk: "Seizures and bone marrow suppression, often fatal.",
-    source: ASPCA_PRO,
+    risk: "Seizures and bone marrow failure, often fatal; doses as small as 5 mg/kg have killed dogs.",
+    agreement: 3,
+    sources: [
+      MSD_TOPICAL,
+      { label: "Pet Poison Helpline", url: "https://www.petpoisonhelpline.com/poison/5-fluorouracil/" },
+      { label: "FDA", url: "https://www.fda.gov/animal-veterinary/cvm-updates/cvm-drug-safety-communication-fluorouracil-products-used-peoples-skin-can-cause-serious-reactions" },
+    ],
   },
   {
     id: "calcipotriene",
     name: "Calcipotriene",
     pattern: /\b(calcipotriene|calcipotriol)\b/i,
     toxicFor: ["cat", "dog"],
-    risk: "High blood calcium and kidney damage.",
-    source: ASPCA_PRO,
+    risk: "Dangerously high blood calcium and kidney failure, from licking a small amount of psoriasis cream.",
+    agreement: 2,
+    sources: [{ label: "Pet Poison Helpline", url: "https://www.petpoisonhelpline.com/poison/calcipotriene/" }, { label: "VCA Animal Hospitals", url: "https://vcahospitals.com/know-your-pet/vitamin-d-poisoning-in-cats" }],
   },
   {
-    id: "diclofenac",
-    name: "Diclofenac",
-    pattern: /\bdiclofenac\b/i,
-    toxicFor: ["cat", "dog"],
-    risk: "Stomach ulcers and kidney injury; cats more than dogs.",
-    source: ASPCA_PRO,
+    id: "topical-nsaids",
+    name: "Diclofenac and flurbiprofen (topical pain relievers)",
+    pattern: /\b(diclofenac|flurbiprofen)\b/i,
+    toxicFor: ["cat"],
+    risk: "Kidney failure and liver injury in cats, even from licking an owner's skin after it was applied.",
+    agreement: 3,
+    sources: [
+      MSD_TOPICAL,
+      ASPCA_CREAMS,
+      { label: "FDA", url: "https://www.fda.gov/animal-veterinary/animal-health-literacy/fda-consumer-advice-pet-exposure-prescription-topical-pain-medications-containing-flurbiprofen" },
+    ],
   },
   {
     id: "zinc-oxide",
     name: "Zinc oxide (concentrated)",
     pattern: /\bzinc oxide\b/i,
-    toxicFor: ["dog"],
-    // Threshold is a placeholder for the vet: diaper creams run 10-40%.
+    toxicFor: ["dog", "cat"],
+    // Placeholder for the vet: no source gives a threshold. MSD notes
+    // ointments run 10-40%, and a one-time lick mostly upsets the stomach.
     minPct: 10,
-    risk: "Vomiting, and bloody vomit from concentrated creams if licked or eaten.",
-    source: ASPCA,
+    risk: "Vomiting from a one-time lick of a concentrated cream; repeated licking can cause zinc poisoning.",
+    agreement: 2,
+    sources: [{ label: "ASPCA Pro", url: "https://www.aspcapro.org/resource/sunscreen-and-zinc-oxide-ingestion-pets" }, { label: "VCA Animal Hospitals", url: "https://vcahospitals.com/know-your-pet/zinc-poisoning-toxicity-in-pets" }],
   },
   {
     id: "xylitol",
     name: "Xylitol",
     pattern: /\bxylitol\b/i,
     toxicFor: ["dog"],
-    risk: "Low blood sugar and liver failure in dogs.",
-    source: ASPCA,
+    risk: "Low blood sugar and liver failure in dogs if swallowed (above about 0.1 g per kg).",
+    agreement: 3,
+    sources: [
+      { label: "MSD Veterinary Manual", url: "https://www.merckvetmanual.com/toxicology/food-hazards/xylitol-toxicosis-in-dogs" },
+      { label: "Pet Poison Helpline", url: "https://www.petpoisonhelpline.com/poison/xylitol/" },
+      { label: "FDA", url: "https://www.fda.gov/consumers/consumer-updates/paws-xylitol-its-dangerous-dogs" },
+    ],
+  },
+  {
+    id: "phenols-coal-tar",
+    name: "Phenol and coal tar",
+    pattern: /\b(phenol|cresol|coal tar)\b/i,
+    toxicFor: ["cat"],
+    risk: "Cats can't clear phenols: liver and kidney damage and collapse.",
+    agreement: 3,
+    sources: [
+      { label: "MSD Veterinary Manual", url: "https://www.merckvetmanual.com/pharmacology/antiseptics-and-disinfectants/phenols-and-related-compounds-as-antiseptics-and-disinfectants-for-use-with-animals" },
+      PPH_OILS_CATS,
+      { label: "VCA Animal Hospitals", url: "https://vcahospitals.com/know-your-pet/coal-tar-and-coal-tar-combinations-topical" },
+    ],
+  },
+  {
+    id: "local-anesthetics",
+    name: "Benzocaine and lidocaine",
+    pattern: /\b(benzocaine|lidocaine)\b/i,
+    toxicFor: ["cat", "dog"],
+    // VCA lists lidocaine as fine in vet products used as labelled.
+    onlyWhenNotLabeledFor: true,
+    risk: "Benzocaine can destroy the blood's ability to carry oxygen (methemoglobinemia), especially in cats; licked lidocaine causes vomiting, tremors and heart effects.",
+    agreement: 2,
+    sources: [{ label: "Davis et al., JAVMA (PubMed)", url: "https://pubmed.ncbi.nlm.nih.gov/8214904/" }, ASPCA_ANESTHETICS],
+  },
+  {
+    id: "deet",
+    name: "DEET (insect repellent)",
+    pattern: /\b(deet|diethyltoluamide|diethyl-m-toluamide)\b/i,
+    toxicFor: ["cat", "dog"],
+    // The sources are about human repellents; Bravecto's FDA-approved
+    // spot-ons list DEET as a solvent, evaluated at the labelled dose.
+    onlyWhenNotLabeledFor: true,
+    risk: "Tremors, seizures and vomiting; human repellents aren't for pets.",
+    agreement: 3,
+    sources: [
+      MSD_ECTO,
+      { label: "ASPCA Pro", url: "https://www.aspcapro.org/resource/dont-deet-dog" },
+      { label: "National Pesticide Information Center", url: "http://npic.orst.edu/factsheets/archive/DEETtech.html" },
+    ],
+  },
+  {
+    id: "salicylic-acid",
+    name: "Salicylic acid",
+    pattern: /\bsalicylic acid\b/i,
+    toxicFor: ["cat", "dog"],
+    // VCA lists vet salicylic acid products as fine when used as labelled.
+    onlyWhenNotLabeledFor: true,
+    risk: "Salicylate (aspirin-like) poisoning if licked off; cats are far more sensitive. Human acne products hold 1-5%.",
+    agreement: 2,
+    sources: [MSD_TOPICAL, { label: "Pet Poison Helpline", url: "https://www.petpoisonhelpline.com/uncategorized/cats-and-aspirin/" }],
+  },
+  {
+    id: "selenium-sulfide",
+    name: "Selenium sulfide",
+    pattern: /\bselenium (?:di)?sulfide\b/i,
+    toxicFor: ["cat"],
+    onlyWhenNotLabeledFor: true,
+    risk: "Not for cats: a dog and human dandruff ingredient that is irritating and toxic to cats.",
+    agreement: 2,
+    sources: [
+      { label: "Carlotti, WSAVA (VIN)", url: "https://www.vin.com/apputil/content/defaultadv1.aspx?id=3852175&pid=11181" },
+      { label: "VCA Animal Hospitals", url: "https://vcahospitals.com/know-your-pet/selenium-sulfide-topical" },
+    ],
+  },
+  {
+    id: "amitraz",
+    name: "Amitraz",
+    pattern: /\bamitraz\b/i,
+    toxicFor: ["cat"],
+    risk: "Sedation, slow heart rate and low blood sugar; never use on cats. Small, young and diabetic dogs are also at risk.",
+    agreement: 3,
+    sources: [
+      { label: "MSD Veterinary Manual", url: "https://www.merckvetmanual.com/toxicology/insecticide-and-acaricide-organic-toxicity/triazapentadiene-amitraz-toxicosis-in-animals" },
+      { label: "Pet Poison Helpline", url: "https://www.petpoisonhelpline.com/poison/amitraz/" },
+      { label: "VCA Animal Hospitals", url: "https://vcahospitals.com/know-your-pet/amitraz" },
+    ],
+  },
+  {
+    id: "organophosphates",
+    name: "Organophosphate insecticides",
+    pattern: /\b(tetrachlorvinphos|chlorpyrifos|diazinon|malathion|phosmet|dichlorvos|coumaphos|propetamphos)\b/i,
+    toxicFor: ["cat"],
+    onlyWhenNotLabeledFor: true,
+    risk: "Cats are especially sensitive: drooling, tremors, breathing trouble.",
+    agreement: 2,
+    sources: [
+      { label: "MSD Veterinary Manual", url: "https://www.merckvetmanual.com/toxicology/insecticide-and-acaricide-organic-toxicity/organophosphate-toxicosis-in-animals" },
+      { label: "Pet Poison Helpline", url: "https://www.petpoisonhelpline.com/poison/organophosphate/" },
+    ],
+  },
+  {
+    id: "alpha-lipoic-acid",
+    name: "Alpha-lipoic acid",
+    pattern: /\b(alpha[- ]lipoic|thioctic) acid\b/i,
+    toxicFor: ["cat", "dog"],
+    risk: "Low blood sugar, seizures and liver injury if swallowed; cats are about ten times more sensitive than people.",
+    agreement: 2,
+    sources: [{ label: "Pet Poison Helpline", url: "https://www.petpoisonhelpline.com/uncategorized/warning-alpha-lipoic-acid-ala/" }, CORNELL],
   },
 ];
 
@@ -211,7 +365,9 @@ export function petWarnings(p: {
       if (pcts.length > 0 && pcts.every((v) => v != null && v < rule.minPct!)) continue;
       if (pcts.length === 0 && !rule.pattern.test(p.activeIngredientText ?? "")) continue;
     }
-    const species = rule.toxicFor.filter((s) => !(rule.onlyWhenNotLabeledFor && p.species.includes(s)));
+    // A "pet" label names no species, so it counts as labelled for both.
+    const labeledFor = (s: string) => p.species.includes(s) || p.species.includes("pet");
+    const species = rule.toxicFor.filter((s) => !(rule.onlyWhenNotLabeledFor && labeledFor(s)));
     if (species.length) out.push({ rule, species });
   }
   return out;

@@ -101,3 +101,22 @@ test("cross-matched ingredients fill only empty fields, and only outside sources
     ["LABEL LIST", null],
   ]);
 });
+
+test("consensus rules: label-dependent ones skip a species the product is labeled for", () => {
+  const ids = (o: Partial<Parameters<typeof catCaution>[0]>) => petWarnings(product(o)).map((w) => [w.rule.id, w.species.join("+")].join(":"));
+  assert.deepEqual(ids({ species: ["cat", "dog"], activeIngredientText: "Lidocaine 2.5%" }), []);
+  assert.deepEqual(ids({ activeIngredientText: "Salicylic Acid 2%" }), ["salicylic-acid:cat"]);
+  assert.deepEqual(ids({ species: ["cat", "dog"], activeIngredientText: "PHENOL 0.4%" }), ["phenols-coal-tar:cat"]);
+  assert.deepEqual(ids({ species: ["cat", "dog"], inactiveIngredientText: "Water, Eucalyptus Oil" }), ["essential-oils-cats:cat"]);
+  assert.deepEqual(ids({ species: ["cat", "dog"], inactiveIngredientText: "glycofurol, diethyltoluamide, acetone" }), []);
+  assert.deepEqual(ids({ activeIngredientText: "DEET 7%" }), ["deet:cat"]);
+  assert.deepEqual(ids({ species: ["pet"], activeIngredientText: "Salicylic Acid 2%" }), []);
+});
+
+test("every toxicity rule cites one source per agreeing family, at least two", async () => {
+  const { PET_TOXICITY } = await import("./pet");
+  for (const r of PET_TOXICITY) {
+    assert.ok(r.agreement >= 2, r.id);
+    assert.equal(r.sources.length, r.agreement, r.id);
+  }
+});

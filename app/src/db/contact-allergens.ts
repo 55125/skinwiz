@@ -635,6 +635,9 @@ export const CONTACT_ALLERGENS: ContactAllergen[] = [
     note: "The patch-test marker is sesquiterpene lactone mix. Bisabolol, though chamomile-derived, is listed separately. Daisy (Bellis perennis) extract is included as a precaution: a negative sesquiterpene lactone mix doesn't rule it out. Refined sunflower and safflower oils, also from this family, carry almost none of the allergen and aren't flagged.",
   },
   { id: "propolis", name: "Propolis", section: "botanical", terms: ["propolis", "bee glue"] },
+  { id: "rose-oil", name: "Rose oil", section: "botanical", terms: ["rosa damascena", "rosa centifolia", "rose oil", "rose absolute", "rose otto"], note: OXIDIZES },
+  { id: "geranium-oil", name: "Geranium oil", section: "botanical", terms: ["pelargonium graveolens", "geranium oil", "geranium essential oil"], note: OXIDIZES },
+  { id: "turpentine", name: "Turpentine", section: "botanical", terms: ["turpentine", "terebinthina"], note: "Distilled from pine resin, and a source of oxidized terpenes. Related to colophony." },
   { id: "tea-tree-oil", name: "Tea tree oil", section: "botanical", terms: ["melaleuca alternifolia", "tea tree"], note: OXIDIZES },
   {
     id: "lichen",
@@ -1125,7 +1128,7 @@ export const METALS_NOT_ON_LABELS = new Set(["nickel", "cobalt", "chromium", "go
 // be itemized, and only above thresholds, so a botanical oil can sit entirely
 // inside "parfum" (Sabroe et al., Contact Dermatitis, 2016; Verallo-Rowell et
 // al., Curr Allergy Asthma Rep, 2016).
-const OILS_HIDDEN_IN_FRAGRANCE = new Set(["lavender-oil", "jasmine", "peppermint-oil", "bergamot", "tea-tree-oil"]);
+const OILS_HIDDEN_IN_FRAGRANCE = new Set(["lavender-oil", "jasmine", "peppermint-oil", "bergamot", "tea-tree-oil", "rose-oil", "geranium-oil", "turpentine"]);
 
 // An undisclosed "fragrance"/"parfum" can be hiding any fragrance allergen,
 // and the essential oils above.

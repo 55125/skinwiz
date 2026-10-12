@@ -172,7 +172,9 @@ test("an MI or MCI/MI positive ticks the isothiazolinone family by default; the 
 
 test("botanical oils may hide behind an undisclosed fragrance; daisy counts as Compositae", async () => {
   const { allergensInList, allergenFinding, concealableByFragrance } = await import("./contact-allergens");
-  for (const id of ["lavender-oil", "jasmine", "peppermint-oil", "bergamot", "tea-tree-oil"]) assert.ok(concealableByFragrance(id), id);
+  for (const id of ["lavender-oil", "jasmine", "peppermint-oil", "bergamot", "tea-tree-oil", "rose-oil", "geranium-oil", "turpentine"]) assert.ok(concealableByFragrance(id), id);
+  assert.ok(allergensInList("Water, Rosa Damascena Flower Oil, Pelargonium Graveolens Oil, Pinus Palustris Turpentine").length >= 3);
+  assert.ok(!allergensInList("Water, Rosa Canina Fruit Extract, Rose Water").includes("rose-oil"));
   assert.ok(!concealableByFragrance("compositae"));
   const hits = allergensInList("Water, Glycerin, Fragrance");
   assert.equal(allergenFinding(hits, "lavender-oil")?.level, "may-contain");

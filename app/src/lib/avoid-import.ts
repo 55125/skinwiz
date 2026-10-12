@@ -44,6 +44,8 @@ export const IMPORT_CODES: readonly string[] = [
   "ester-anesthetics", "hydrocortisone-type-steroids", "budesonide-type-steroids", "halogenated-steroids",
   // 2026-10-12: more formaldehyde releasers
   "dimethyl-oxazolidine", "ethylbicyclooxazolidine", "polyoxymethylene-urea", "tris-nitro",
+  // 2026-10-12: more essential oils that can hide behind "fragrance"
+  "rose-oil", "geranium-oil", "turpentine",
 ];
 
 const CODE_INDEX = new Map(IMPORT_CODES.map((id, i) => [id, i]));

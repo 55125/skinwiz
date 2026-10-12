@@ -629,10 +629,10 @@ export const CONTACT_ALLERGENS: ContactAllergen[] = [
     terms: [
       "chamomile", "chamomilla", "matricaria", "anthemis nobilis", "chamaemelum", "arnica", "feverfew", "chrysanthemum parthenium", "tanacetum", "calendula",
       "achillea millefolium", "yarrow", "artemisia", "mugwort", "taraxacum", "dandelion", "sesquiterpene lactone",
-      "centaurea cyanus", "cornflower", "echinacea", "arctium lappa", "burdock", "helichrysum", "inula", "elecampane", "cynara scolymus", "artichoke",
+      "centaurea cyanus", "cornflower", "bellis perennis", "daisy flower", "echinacea", "arctium lappa", "burdock", "helichrysum", "inula", "elecampane", "cynara scolymus", "artichoke",
     ],
     aka: ["Asteraceae", "sesquiterpene lactone mix"],
-    note: "The patch-test marker is sesquiterpene lactone mix. Bisabolol, though chamomile-derived, is listed separately. Refined sunflower and safflower oils, also from this family, carry almost none of the allergen and aren't flagged.",
+    note: "The patch-test marker is sesquiterpene lactone mix. Bisabolol, though chamomile-derived, is listed separately. Daisy (Bellis perennis) extract is included as a precaution: a negative sesquiterpene lactone mix doesn't rule it out. Refined sunflower and safflower oils, also from this family, carry almost none of the allergen and aren't flagged.",
   },
   { id: "propolis", name: "Propolis", section: "botanical", terms: ["propolis", "bee glue"] },
   { id: "tea-tree-oil", name: "Tea tree oil", section: "botanical", terms: ["melaleuca alternifolia", "tea tree"], note: OXIDIZES },
@@ -1115,9 +1115,16 @@ export function groupsContaining(allergenId: string): AllergenGroup[] {
   return ALLERGEN_GROUPS.filter((g) => g.members.includes(allergenId) && g.id !== "named-fragrance-allergens");
 }
 
-// An undisclosed "fragrance"/"parfum" can be hiding any fragrance allergen.
+// Essential oils are complex mixtures: only the named fragrance allergens must
+// be itemized, and only above thresholds, so a botanical oil can sit entirely
+// inside "parfum" (Sabroe et al., Contact Dermatitis, 2016; Verallo-Rowell et
+// al., Curr Allergy Asthma Rep, 2016).
+const OILS_HIDDEN_IN_FRAGRANCE = new Set(["lavender-oil", "jasmine", "peppermint-oil", "bergamot", "tea-tree-oil"]);
+
+// An undisclosed "fragrance"/"parfum" can be hiding any fragrance allergen,
+// and the essential oils above.
 export function concealableByFragrance(allergenId: string): boolean {
-  return allergenId !== "fragrance" && BY_ID.get(allergenId)?.section === "fragrance";
+  return allergenId !== "fragrance" && (BY_ID.get(allergenId)?.section === "fragrance" || OILS_HIDDEN_IN_FRAGRANCE.has(allergenId));
 }
 
 // A positive to one of these usually means avoiding the whole family:

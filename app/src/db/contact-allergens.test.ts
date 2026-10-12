@@ -169,3 +169,13 @@ test("an MI or MCI/MI positive ticks the isothiazolinone family by default; the 
     assert.ok(allergenMembers("formaldehyde-and-releasers").includes(id), id);
   }
 });
+
+test("botanical oils may hide behind an undisclosed fragrance; daisy counts as Compositae", async () => {
+  const { allergensInList, allergenFinding, concealableByFragrance } = await import("./contact-allergens");
+  for (const id of ["lavender-oil", "jasmine", "peppermint-oil", "bergamot", "tea-tree-oil"]) assert.ok(concealableByFragrance(id), id);
+  assert.ok(!concealableByFragrance("compositae"));
+  const hits = allergensInList("Water, Glycerin, Fragrance");
+  assert.equal(allergenFinding(hits, "lavender-oil")?.level, "may-contain");
+  assert.equal(allergenFinding(hits, "compositae"), null);
+  assert.ok(allergensInList("Water, Bellis Perennis (Daisy) Flower Extract").includes("compositae"));
+});

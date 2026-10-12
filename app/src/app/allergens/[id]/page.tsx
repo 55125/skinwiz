@@ -115,7 +115,7 @@ export default async function AllergenPage({ params }: { params: Promise<{ id: s
 
       {hideable && (
         <p className="rounded-2xl border border-amber-300 bg-amber-50 p-4 text-sm leading-relaxed text-amber-900 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
-          A fragrance allergen doesn&apos;t have to be named when it&apos;s part of a blend listed as
+          A fragrance allergen, or an essential oil such as lavender, jasmine, peppermint, bergamot or tea tree, doesn&apos;t have to be named when it&apos;s part of a blend listed as
           &ldquo;fragrance&rdquo; or &ldquo;parfum,&rdquo; so products with an undisclosed fragrance are left out of
           the &ldquo;free of&rdquo; results below.
         </p>

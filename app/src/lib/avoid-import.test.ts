@@ -44,7 +44,7 @@ test("round trip, every id at once and one at a time", () => {
     assert.deepEqual([...one.avoidIds, ...one.notOnLabel], [id]);
   }
   const code = encodeImportCode(IMPORT_CODES);
-  assert.ok(code.length <= 30, `full code is ${code.length} chars`);
+  assert.ok(code.length <= 32, `full code is ${code.length} chars`);
 });
 
 test("unknown ids are dropped on encode and counted on decode", () => {

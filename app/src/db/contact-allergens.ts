@@ -339,6 +339,25 @@ export const CONTACT_ALLERGENS: ContactAllergen[] = [
     rare: true,
   },
   { id: "mdm-hydantoin", name: "MDM hydantoin", section: "formaldehyde", terms: ["mdm hydantoin", "monomethylol dimethyl hydantoin"], rare: true },
+  // Industrial-leaning releasers that also turn up in some personal-care
+  // products (de Groot et al., Contact Dermatitis 2010; Goossens & Aerts, 2022).
+  { id: "dimethyl-oxazolidine", name: "Dimethyl oxazolidine", section: "formaldehyde", terms: ["dimethyl oxazolidine", "dimethyloxazolidine", "4,4-dimethyloxazolidine"], rare: true },
+  {
+    id: "ethylbicyclooxazolidine",
+    name: "7-Ethylbicyclooxazolidine",
+    section: "formaldehyde",
+    terms: ["7-ethylbicyclooxazolidine", "ethylbicyclooxazolidine", "5-ethyl-3,7-dioxa-1-azabicyclo"],
+    rare: true,
+  },
+  { id: "polyoxymethylene-urea", name: "Polyoxymethylene urea", section: "formaldehyde", terms: ["polyoxymethylene urea"], rare: true },
+  {
+    id: "tris-nitro",
+    name: "Tris(hydroxymethyl)nitromethane",
+    section: "formaldehyde",
+    terms: ["tris(hydroxymethyl)nitromethane", "tris hydroxymethyl nitromethane", "trishydroxymethylnitromethane"],
+    note: "Mostly a metalworking-fluid biocide; a weak, infrequent sensitizer.",
+    rare: true,
+  },
   {
     id: "hydroxyethyl-triazine",
     name: "Hexahydro-1,3,5-tris(2-hydroxyethyl)triazine",
@@ -1111,8 +1130,8 @@ export const PATCH_TEST_FAMILY: Record<string, { id: string; byDefault: boolean 
   "decyl-glucoside": { id: "glucosides", byDefault: true },
   "lauryl-glucoside": { id: "glucosides", byDefault: true },
   "coco-glucoside": { id: "glucosides", byDefault: true },
-  methylisothiazolinone: { id: "isothiazolinones", byDefault: false },
-  "mci-mi": { id: "isothiazolinones", byDefault: false },
+  methylisothiazolinone: { id: "isothiazolinones", byDefault: true },
+  "mci-mi": { id: "isothiazolinones", byDefault: true },
   "balsam-of-peru": { id: "balsam-of-peru-related", byDefault: false },
   oakmoss: { id: "oakmoss-treemoss", byDefault: false },
   lichen: { id: "oakmoss-treemoss", byDefault: false },

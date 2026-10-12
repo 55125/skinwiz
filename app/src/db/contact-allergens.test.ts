@@ -53,6 +53,10 @@ const NAMES: [string, string[], string[]][] = [
   ["Methenamine", ["methenamine"], []],
   ["Quaternium-15 (Methenamine 3-Chloroallylochloride)", ["quaternium-15"], ["methenamine"]],
   ["MDM Hydantoin", ["mdm-hydantoin"], ["dmdm-hydantoin"]],
+  ["4,4-Dimethyloxazolidine", ["dimethyl-oxazolidine"], []],
+  ["7-Ethylbicyclooxazolidine", ["ethylbicyclooxazolidine"], ["dimethyl-oxazolidine"]],
+  ["Polyoxymethylene Urea", ["polyoxymethylene-urea"], []],
+  ["Tris(Hydroxymethyl)Nitromethane", ["tris-nitro"], []],
   ["DMDM Hydantoin", ["dmdm-hydantoin"], ["mdm-hydantoin"]],
   ["Myroxylon Pereirae (Balsam Peru) Resin", ["balsam-of-peru"], ["tolu-balsam"]],
   ["Myroxylon Balsamum Var. Pereirae Resin", ["balsam-of-peru"], ["tolu-balsam"]],
@@ -152,4 +156,14 @@ test("cross-reactor groups: old ids keep their meaning, tosylamide resin is out 
   assert.ok(hits.includes("acrylate-monomers") && hits.includes("acrylate-polymers"));
   const polymersOnly = allergensInList("Water, Glycerin, Methyl Methacrylate Crosspolymer, Acrylates Copolymer, Carbomer, Phenoxyethanol");
   assert.ok(!polymersOnly.includes("acrylate-monomers") && polymersOnly.includes("acrylate-polymers"));
+});
+
+test("an MI or MCI/MI positive ticks the isothiazolinone family by default; the new releasers join the releaser groups", async () => {
+  const { PATCH_TEST_FAMILY, allergenMembers } = await import("./contact-allergens");
+  assert.deepEqual(PATCH_TEST_FAMILY["methylisothiazolinone"], { id: "isothiazolinones", byDefault: true });
+  assert.deepEqual(PATCH_TEST_FAMILY["mci-mi"], { id: "isothiazolinones", byDefault: true });
+  for (const id of ["dimethyl-oxazolidine", "ethylbicyclooxazolidine", "polyoxymethylene-urea", "tris-nitro"]) {
+    assert.ok(allergenMembers("formaldehyde-releasers").includes(id), id);
+    assert.ok(allergenMembers("formaldehyde-and-releasers").includes(id), id);
+  }
 });

@@ -42,6 +42,8 @@ export const IMPORT_CODES: readonly string[] = [
   "corticosteroid-class-d1", "corticosteroid-class-d2", "acrylate-monomers", "acrylate-polymers", "methenamine", "mdm-hydantoin",
   "tolu-balsam", "benzoin", "cinnamon", "clove", "other-ester-caines", "balsam-of-peru-related", "oakmoss-treemoss",
   "ester-anesthetics", "hydrocortisone-type-steroids", "budesonide-type-steroids", "halogenated-steroids",
+  // 2026-10-12: more formaldehyde releasers
+  "dimethyl-oxazolidine", "ethylbicyclooxazolidine", "polyoxymethylene-urea", "tris-nitro",
 ];
 
 const CODE_INDEX = new Map(IMPORT_CODES.map((id, i) => [id, i]));

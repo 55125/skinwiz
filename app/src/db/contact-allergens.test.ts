@@ -38,6 +38,8 @@ const NAMES: [string, string[], string[]][] = [
   ["Ethyl Cyanoacrylate", ["acrylate-monomers"], ["acrylate-polymers"]],
   ["Di-HEMA Trimethylhexyl Dicarbamate", ["acrylate-monomers"], ["acrylate-polymers"]],
   ["Hydrocortisone Acetate", ["corticosteroid-class-a"], ["corticosteroid-class-d2"]],
+  ["Lauramidopropyl Betaine", ["cocamidopropyl-betaine"], []],
+  ["Cocamidopropyl Hydroxysultaine", [], ["cocamidopropyl-betaine"]],
   ["Hydrocortisone Butyrate", ["corticosteroid-class-d2"], ["corticosteroid-class-a", "corticosteroid-class-d1"]],
   ["Methylchloroisothiazolinone", ["mci-mi", "methylisothiazolinone"], []],
   ["Gentamicin Sulfate", ["neomycin"], []],

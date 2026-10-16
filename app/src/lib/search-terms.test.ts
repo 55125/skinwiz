@@ -25,6 +25,11 @@ test("brand spellings people type find the real names", () => {
   assert.deepEqual(alts("l’oréal night")[0], ["l'oréal", "loréal", "l'oreal", "loreal"]);
 });
 
+test("Cantabria Labs misspellings from the search log", () => {
+  assert.deepEqual(alts("cantabaria"), [["cantabria"]]);
+  assert.deepEqual(alts("cantabarai"), [["cantabria"]]);
+});
+
 test("short words only match at the start of a word", () => {
   const [spf] = parseSearch("spf").terms;
   assert.equal(spf.wordStart, true);

@@ -66,6 +66,9 @@ const SYNONYMS: Record<string, string[]> = {
   regenerate: ["regenerist", "regenerat"],
   regenerating: ["regenerist", "regenerating"],
   loreal: ["l'oreal", "loreal"],
+  // Cantabria Labs (Heliocare, Endocare), misspelled twice in the 2026-10-16 log.
+  cantabaria: ["cantabria"],
+  cantabarai: ["cantabria"],
 };
 
 // Topic words: they set a hint and are not matched against products.

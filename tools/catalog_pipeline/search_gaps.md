@@ -79,3 +79,39 @@ which also appears in its image file names. Fixes made to the brands' published 
   728db7d9-3f38-4006-8024-018f0d9c96da and solution 0ce77e6b-c4cf-49e2-8fd9-183286c26f8a;
   CVS men's foam f6320d33-92b1-44ef-97d8-56e78e83d417; Target up&up men's solution
   545e3e21-6333-4d85-8754-b7a6201234b7.
+
+## Pass 2026-10-16
+
+Zero-result searches in the admin dashboard as of 2026-10-16: rogaine, olay regenerates,
+cantabaria, k18, cantabarai. The panel counts every search since launch, so it still shows
+rogaine and olay regenerates, which were fixed after the last pass (the 13 minoxidil rows from
+claude/hair-loss-concern and the Regenerist alias).
+
+### Added
+
+Nothing. The two Cantabria Labs misspellings (cantabaria, cantabarai) now map to the brand in
+`lib/search-terms.ts`, but none of its products can be added to the catalog yet:
+
+- **Cantabria Labs USA's site** (cantabrialabs.com/us/products/, allowed by robots.txt) sells
+  two products, Heliocare and Heliocare Advanced Niacin B3. Both are oral dietary supplements,
+  which this catalog leaves out.
+- **Heliocare sunscreens** (360 Gel Oil-Free, Water Gel, Fluid Cream, Mineral Tolerance Fluid
+  and the rest): DailyMed and openFDA have no label for any of them. A sunscreen sold in the
+  US is an OTC drug and has to be listed, so these aren't sold in the US by Cantabria. The
+  only Cantabria listing is NDC 82040-3161 (Industrial Farmaceutica Cantabria SA, titanium
+  dioxide / zinc oxide cream, "drug for further processing"), which is a bulk ingredient, not
+  a retail product. Listing an imported sunscreen as a cosmetic would misstate what it is.
+- **Endocare** (Tensage, Radiance C, Renewal Retinol and the rest): listed only on Cantabria's
+  global site, which is not a US product page; the US site doesn't sell them. Open Beauty
+  Facts has no Endocare entries. Its four Cantabria entries are Spanish/Moroccan Heliocare
+  packs, and none of them includes an ingredient list.
+- **heliocare.com**, Heliocare's older US domain, returns a WordPress error page (HTTP 500)
+  for every page, robots.txt included.
+
+Recheck if Cantabria Labs USA adds topical products to its US site, or if a Heliocare SPL shows
+up on DailyMed.
+
+### Still missing
+
+- **Cantabria Labs / Heliocare / Endocare**: see above.
+- **K18** (1/0): hair care, out of scope.

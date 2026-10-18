@@ -1,0 +1,9 @@
+# One line per slide, in slide order. Blank lines and lines starting with # are ignored.
+# Optional: "caption text || spoken text" when the voice needs a different spelling.
+Shopping for someone with eczema? Here's a five-step checklist.
+One: ask for their list. If they've been patch tested, ask for the results sheet or their avoid list.
+Two: read the label, not the front. "Gentle" and "hypoallergenic" are not guarantees. The ingredient list is.
+Three: if fragrance is on their list, skip anything that lists "fragrance" or "parfum."
+Four: in the store, scan the barcode, then check the product against their avoid list.
+Five: when unsure, ask their dermatologist or a pharmacist. Facial swelling, blistering, trouble breathing, or a spreading rash with fever needs urgent care.
+Save their avoid list once, and find fragrance-free picks, free at activelyskin.com. || Save their avoid list once, and find fragrance-free picks, free at Actively Skin dot com.

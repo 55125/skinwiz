@@ -1,0 +1,31 @@
+<!doctype html><html><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Geist:wght@400;500;600&display=block" rel="stylesheet">
+<style>
+:root{--d:0s;--bg:oklch(0.955 0.01 92);--ink:oklch(0.22 0.02 250);--muted:oklch(0.48 0.015 250);--teal:oklch(0.46 0.085 188);--line:oklch(0.82 0.015 90)}
+*{margin:0;box-sizing:border-box}
+html,body{width:1080px;height:1920px;background:var(--bg);font-family:Geist,sans-serif;color:var(--ink);overflow:hidden}
+body{background:radial-gradient(120% 70% at 50% 38%,oklch(0.985 0.006 92) 0%,var(--bg) 60%,oklch(0.93 0.014 92) 100%)}
+.wrap{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 120px 180px;text-align:center}
+.logo{display:flex;align-items:center;gap:26px;margin-bottom:96px}.logo img{width:112px;height:112px}.logo span{font-family:Fraunces,serif;font-weight:600;font-size:76px;letter-spacing:-1px}
+h1{font-family:Fraunces,serif;font-weight:600;font-size:96px;letter-spacing:-2px;line-height:1.02;white-space:nowrap}
+.sub{margin-top:30px;font-size:40px;line-height:1.35;color:var(--muted);max-width:720px;text-wrap:balance}
+.rule{width:120px;height:3px;background:var(--teal);border-radius:2px;margin:84px 0 64px;transform-origin:center}
+.free{font-size:30px;font-weight:600;letter-spacing:10px;color:var(--teal);text-transform:uppercase;padding-left:10px}
+.url{margin-top:18px;font-size:92px;font-weight:600;letter-spacing:-2px}
+.url span{color:var(--teal)}
+.by{margin-top:34px;font-size:32px;color:var(--muted);display:flex;align-items:center;gap:14px}
+.by i{width:30px;height:30px;border-radius:50%;background:var(--teal);display:inline-flex;align-items:center;justify-content:center}
+.disc{position:absolute;bottom:250px;left:0;right:0;text-align:center;font-size:26px;color:var(--muted);opacity:.8}
+.a{opacity:0;animation:rise .9s cubic-bezier(.2,.7,.2,1) forwards}
+@keyframes rise{from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:none}}
+@keyframes grow{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+.rule{animation:grow .8s cubic-bezier(.2,.7,.2,1) calc(.55s + var(--d)) both}
+</style></head><body><div class="wrap">
+<div class="logo a" style="animation-delay:0s"><img src="icon.png"><span>Actively Skin</span></div>
+<h1 class="a" style="animation-delay:.15s">Check before you buy.</h1>
+<p class="sub a" id="sub" style="animation-delay:.3s"></p>
+<div class="rule"></div>
+<div class="free a" style="animation-delay:calc(.7s + var(--d))">Free at</div>
+<div class="url a" style="animation-delay:calc(.8s + var(--d))">activelyskin<span>.com</span></div>
+<div class="by a" style="animation-delay:calc(1.05s + var(--d))"><i><svg width="18" height="18" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></i>Built by a board-certified dermatologist</div>
+</div><div class="disc a" style="animation-delay:calc(1.2s + var(--d))">Education, not medical advice.</div><script>const q=new URLSearchParams(location.search);document.getElementById("sub").textContent=q.get("sub");document.documentElement.style.setProperty("--d",(q.get("d")||0)+"s")</script></body></html>

@@ -1,0 +1,92 @@
+<!doctype html><html><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=Geist:wght@400;500;600;700&display=block" rel="stylesheet">
+<style>
+:root{--bg:#EFEBE3;--ink:#1B1F27;--muted:#6B7079;--teal:#0E6B66;--teal2:#138A82;--in:#ECECEF;--red:#D2483E}
+*{margin:0;box-sizing:border-box}
+html,body{width:1080px;height:1920px;overflow:hidden;font-family:Geist,"Noto Color Emoji",sans-serif;color:var(--ink)}
+body{background:radial-gradient(110% 60% at 50% 40%,#F7F4EE 0%,#EFEBE3 55%,#E6E0D5 100%)}
+.top{position:absolute;top:190px;left:0;right:0;text-align:center}
+.kick{font-size:28px;font-weight:600;letter-spacing:6px;color:var(--teal);text-transform:uppercase}
+.kick b{display:inline-block;margin-left:14px;padding:4px 16px;border-radius:999px;background:var(--teal);color:#fff;letter-spacing:3px;font-size:24px;vertical-align:3px}
+.ttl{margin-top:14px;font-family:Fraunces,serif;font-weight:600;font-size:68px;letter-spacing:-1.5px}
+.phone{position:absolute;left:80px;right:80px;top:380px;height:1180px;border-radius:64px;background:#fff;
+ box-shadow:0 2px 0 rgba(0,0,0,.03),0 30px 80px -20px rgba(40,30,10,.25),0 0 0 10px #1B1F27;overflow:hidden}
+.hdr{height:250px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding-bottom:22px;
+ background:rgba(248,248,250,.96);border-bottom:1px solid #E4E4E8;position:relative}
+.back{position:absolute;left:44px;top:110px;font-size:56px;color:var(--teal);font-weight:400}
+.av{width:92px;height:92px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:36px;letter-spacing:1px}
+.nm{margin-top:12px;font-size:32px;font-weight:600}
+.nm small{display:block;text-align:center;font-size:24px;font-weight:400;color:var(--muted);margin-top:2px}
+.body{position:absolute;top:250px;bottom:120px;left:0;right:0;padding:30px 36px;display:flex;flex-direction:column;gap:14px}
+.stamp{text-align:center;font-size:22px;color:var(--muted);margin:6px 0 10px}
+.stamp b{font-weight:600}
+.m{max-width:72%;padding:22px 30px;border-radius:44px;font-size:46px;line-height:1.22;position:relative}
+.it{align-self:flex-start;background:var(--in);border-bottom-left-radius:14px}
+.me{align-self:flex-end;background:linear-gradient(180deg,var(--teal2),var(--teal));color:#fff;border-bottom-right-radius:14px}
+.emo{background:none;font-size:150px;padding:0;line-height:1}
+.dl{align-self:flex-end;font-size:22px;color:var(--muted);margin-top:-6px;margin-right:12px}
+.bar{position:absolute;bottom:0;left:0;right:0;height:120px;display:flex;align-items:center;gap:20px;padding:0 30px;border-top:1px solid #EEE;background:#fff}
+.bar .f{flex:1;height:72px;border:2px solid #E2E2E6;border-radius:36px;display:flex;align-items:center;padding:0 28px;font-size:30px;color:#A3A6AD}
+.bar .s{width:64px;height:64px;border-radius:50%;background:var(--teal);opacity:.35}
+.toast{position:absolute;left:50%;top:560px;transform:translateX(-50%);background:rgba(27,31,39,.94);color:#fff;font-size:36px;font-weight:600;
+ padding:24px 40px;border-radius:999px;white-space:nowrap;display:flex;align-items:center;gap:16px;box-shadow:0 20px 50px -10px rgba(0,0,0,.4)}
+.toast i{width:44px;height:44px;border-radius:50%;border:5px solid #FF6B5E;position:relative;display:inline-block}
+.toast i:after{content:"";position:absolute;left:50%;top:50%;width:40px;height:5px;background:#FF6B5E;transform:translate(-50%,-50%) rotate(-45deg)}
+.dim{position:absolute;inset:0;background:rgba(255,255,255,.55)}
+/* scan */
+.cam{position:absolute;inset:0;background:radial-gradient(80% 60% at 50% 45%,#3A3B40,#16171A)}
+.cam h3{position:absolute;top:70px;width:100%;text-align:center;color:#fff;font-size:34px;font-weight:600}
+.bottle{position:absolute;left:50%;top:190px;transform:translateX(-50%)}
+.br{position:absolute;width:70px;height:70px;border-color:#fff;border-style:solid}
+.laser{position:absolute;left:250px;right:250px;height:6px;background:#FF5A4E;box-shadow:0 0 24px 6px rgba(255,90,78,.6);border-radius:3px}
+.sheet{position:absolute;left:24px;right:24px;bottom:24px;background:#fff;border-radius:44px;padding:44px 44px 40px;box-shadow:0 -10px 60px rgba(0,0,0,.35)}
+.sheet .row{display:flex;gap:28px;align-items:center}
+.x{width:104px;height:104px;border-radius:50%;background:var(--red);display:flex;align-items:center;justify-content:center;flex:none}
+.sheet h4{font-size:50px;font-weight:700;letter-spacing:-.5px}
+.sheet p{font-size:32px;color:var(--muted);margin-top:6px}
+.sheet .tag{display:inline-block;margin-top:30px;padding:12px 22px;border-radius:999px;background:#FBE9E7;color:var(--red);font-weight:600;font-size:28px}
+</style></head><body>
+<div class="top"><div class="kick" id="kick"></div><div class="ttl" id="ttl"></div></div>
+<div class="phone" id="phone"></div>
+<script>
+const E=(t,c,h)=>{const e=document.createElement(t);if(c)e.className=c;if(h!=null)e.innerHTML=h;return e};
+const ease=x=>1-Math.pow(1-Math.min(1,Math.max(0,x)),3);
+const spring=x=>{x=Math.min(1,Math.max(0,x));return 1-Math.exp(-7*x)*Math.cos(9*x)};
+const isEmoji=s=>/^[\p{Extended_Pictographic}️\s]+$/u.test(s);
+function render(s){
+ document.getElementById('kick').innerHTML=`${s.series}<b>PART ${s.part}</b>`;
+ document.getElementById('ttl').textContent=s.title;
+ const ph=document.getElementById('phone');ph.innerHTML='';const L=s.local;
+ if(s.kind==='scan'){
+  const cam=E('div','cam');cam.appendChild(E('h3',null,'Scan a barcode'));
+  cam.insertAdjacentHTML('beforeend',`<svg class="bottle" width="360" height="700" viewBox="0 0 360 700">
+   <rect x="120" y="0" width="120" height="70" rx="16" fill="#C9CACF"/><rect x="100" y="60" width="160" height="40" rx="10" fill="#B4B5BA"/>
+   <rect x="20" y="95" width="320" height="600" rx="80" fill="#EEEAE2"/><rect x="20" y="95" width="60" height="600" rx="30" fill="#fff" opacity=".35"/>
+   <text x="180" y="250" text-anchor="middle" font-family="Geist" font-weight="700" font-size="40" letter-spacing="8" fill="#8E9097">SHAMPOO</text>
+   <rect x="70" y="440" width="220" height="140" rx="8" fill="#fff"/>
+   ${Array.from({length:34},(_,i)=>`<rect x="${84+i*5.8}" y="452" width="${[2,3,2,4,2,3][i%6]}" height="105" fill="#1B1F27"/>`).join('')}
+  </svg>`);
+  const by=630,bx=[250,670],sz=70;
+  [[bx[0],by-40,'8px 0 0 8px'],[bx[1],by-40,'8px 8px 0 0'],[bx[0],by+150,'0 0 8px 8px'],[bx[1],by+150,'0 8px 8px 0']].forEach(([x,y,w],i)=>{
+   const b=E('div','br');b.style.left=x+'px';b.style.top=y+'px';b.style.borderWidth=['8px 0 0 8px','8px 8px 0 0','0 0 8px 8px','0 8px 8px 0'][i];
+   b.style.borderRadius=['18px 0 0 0','0 18px 0 0','0 0 0 18px','0 0 18px 0'][i];b.style.borderColor=s.result?'#FF5A4E':'#fff';cam.appendChild(b)});
+  if(!s.result){const l=E('div','laser');l.style.top=(by-20+170*(0.5+0.5*Math.sin(L*5)))+'px';cam.appendChild(l)}
+  else{const sh=E('div','sheet');const k=ease(L/0.4);sh.style.transform=`translateY(${(1-k)*110}%)`;
+   sh.innerHTML=`<div class="row"><div class="x"><svg width="52" height="52" viewBox="0 0 24 24"><path d="M5 5l14 14M19 5L5 19" stroke="#fff" stroke-width="3.4" stroke-linecap="round"/></svg></div>
+   <div><h4>On your avoid list</h4><p>Lists: ${s.flagged||'Fragrance (Parfum)'}</p></div></div><span class="tag">Skip this one</span>`;cam.appendChild(sh)}
+  ph.appendChild(cam);return}
+ const c=s.contact;const h=E('div','hdr');h.appendChild(E('div','back','‹'));
+ const av=E('div','av',c.initials);av.style.background=`linear-gradient(160deg,${c.color2},${c.color})`;h.appendChild(av);
+ h.appendChild(E('div','nm',`${c.name}<small>${c.sub}</small>`));ph.appendChild(h);
+ const b=E('div','body');b.appendChild(E('div','stamp','<b>Today</b> 11:47 PM'));
+ let lastMe=-1;s.msgs.forEach((m,i)=>{if(m[0]==='me')lastMe=i});
+ s.msgs.forEach((m,i)=>{const emo=isEmoji(m[1]);const el=E('div','m '+m[0]+(emo?' emo':''),m[1]);
+  if(i===s.newIndex){const k=spring(L/0.45);el.style.transform=`scale(${0.6+0.4*k})`;el.style.opacity=Math.min(1,L/0.12);
+   el.style.transformOrigin=m[0]==='me'?'100% 100%':'0% 100%'}
+  b.appendChild(el);if(i===lastMe&&i===s.msgs.length-1)b.appendChild(E('div','dl','Delivered'))});
+ ph.appendChild(b);
+ const bar=E('div','bar');bar.innerHTML='<div class="f">Text message</div><div class="s"></div>';ph.appendChild(bar);
+ if(s.toast){const dm=E('div','dim');dm.style.opacity=ease(L/0.3);ph.appendChild(dm);
+  const t=E('div','toast',`<i></i>${s.toast}`);const k=spring(L/0.5);t.style.transform=`translateX(-50%) translateY(${(1-k)*-60}px) scale(${0.9+0.1*k})`;t.style.opacity=Math.min(1,L/0.15);ph.appendChild(t)}
+}
+</script></body></html>

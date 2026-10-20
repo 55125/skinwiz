@@ -1,0 +1,188 @@
+{
+  "series": "Breaking up with ingredients",
+  "part": 3,
+  "title": "Breaking up with a preservative",
+  "fps": 30,
+  "width": 1080,
+  "height": 1920,
+  "total_seconds": 18.8,
+  "audio": "part3-audio.wav",
+  "notes": [
+    "Each beat's sound (a ding for a text, a thunk for a block, a beep or buzz for a scan) starts at the beat's start.",
+    "Speech in a text beat starts about 0.19 s in, after the ding; the end card's narration starts 0.2 s in.",
+    "kind 'end' is the 4 s HTML end card (marketing/endcard/endcard.mp4), with its last frame held if the narration runs longer."
+  ],
+  "beats": [
+    {
+      "beat": 1,
+      "start": 0.0,
+      "duration": 3.3,
+      "frames": 99,
+      "kind": "me",
+      "contact": {
+        "name": "Methylisothiazolinone",
+        "subtitle": "preservative · on your avoid list",
+        "initials": "MI",
+        "colour": "#c95c54"
+      },
+      "messages": [
+        {
+          "from": "me",
+          "text": "My patch test came back. We're done."
+        }
+      ],
+      "toast": null,
+      "new_message": {
+        "from": "me",
+        "text": "My patch test came back. We're done."
+      },
+      "spoken": "My patch test came back. We're done.",
+      "speaker": "me (Kokoro af_heart)"
+    },
+    {
+      "beat": 2,
+      "start": 3.3,
+      "duration": 2.8,
+      "frames": 84,
+      "kind": "it",
+      "contact": {
+        "name": "Methylisothiazolinone",
+        "subtitle": "preservative · on your avoid list",
+        "initials": "MI",
+        "colour": "#c95c54"
+      },
+      "messages": [
+        {
+          "from": "me",
+          "text": "My patch test came back. We're done."
+        },
+        {
+          "from": "it",
+          "text": "lol. you can't even spell me."
+        }
+      ],
+      "toast": null,
+      "new_message": {
+        "from": "it",
+        "text": "lol. you can't even spell me."
+      },
+      "spoken": "Ha. You can't even spell me.",
+      "speaker": "Methylisothiazolinone (Chatterbox, am_echo)"
+    },
+    {
+      "beat": 3,
+      "start": 6.1,
+      "duration": 4.2667,
+      "frames": 128,
+      "kind": "me",
+      "contact": {
+        "name": "Methylisothiazolinone",
+        "subtitle": "preservative · on your avoid list",
+        "initials": "MI",
+        "colour": "#c95c54"
+      },
+      "messages": [
+        {
+          "from": "me",
+          "text": "My patch test came back. We're done."
+        },
+        {
+          "from": "it",
+          "text": "lol. you can't even spell me."
+        },
+        {
+          "from": "me",
+          "text": "Methylisothiazolinone. Saved to my avoid list."
+        }
+      ],
+      "toast": null,
+      "new_message": {
+        "from": "me",
+        "text": "Methylisothiazolinone. Saved to my avoid list."
+      },
+      "spoken": "Methylisothiazolinone. Saved to my avoid list.",
+      "speaker": "me (Kokoro af_heart)"
+    },
+    {
+      "beat": 4,
+      "start": 10.3667,
+      "duration": 2.7667,
+      "frames": 83,
+      "kind": "it",
+      "contact": {
+        "name": "Methylisothiazolinone",
+        "subtitle": "preservative · on your avoid list",
+        "initials": "MI",
+        "colour": "#c95c54"
+      },
+      "messages": [
+        {
+          "from": "me",
+          "text": "My patch test came back. We're done."
+        },
+        {
+          "from": "it",
+          "text": "lol. you can't even spell me."
+        },
+        {
+          "from": "me",
+          "text": "Methylisothiazolinone. Saved to my avoid list."
+        },
+        {
+          "from": "it",
+          "text": "...that's actually kind of hot."
+        }
+      ],
+      "toast": null,
+      "new_message": {
+        "from": "it",
+        "text": "...that's actually kind of hot."
+      },
+      "spoken": "That's... actually kind of hot.",
+      "speaker": "Methylisothiazolinone (Chatterbox, am_echo)"
+    },
+    {
+      "beat": 5,
+      "start": 13.1333,
+      "duration": 0.7,
+      "frames": 21,
+      "kind": "toast",
+      "contact": {
+        "name": "Methylisothiazolinone",
+        "subtitle": "preservative · on your avoid list",
+        "initials": "MI",
+        "colour": "#c95c54"
+      },
+      "messages": [
+        {
+          "from": "me",
+          "text": "My patch test came back. We're done."
+        },
+        {
+          "from": "it",
+          "text": "lol. you can't even spell me."
+        },
+        {
+          "from": "me",
+          "text": "Methylisothiazolinone. Saved to my avoid list."
+        },
+        {
+          "from": "it",
+          "text": "...that's actually kind of hot."
+        }
+      ],
+      "toast": "Methylisothiazolinone blocked",
+      "new_message": null,
+      "spoken": null,
+      "speaker": null
+    },
+    {
+      "beat": 6,
+      "start": 13.8333,
+      "duration": 4.9667,
+      "frames": 149,
+      "kind": "end",
+      "spoken": "Check before you buy. Free at Actively Skin dot com."
+    }
+  ]
+}

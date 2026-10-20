@@ -95,12 +95,19 @@ def build(beats, out, work, scroll=None, loudness=-14):
     moved linearly across all beats flagged scroll=True."""
     os.makedirs(work, exist_ok=True)
     for b in beats:
+        if b.get("min_seconds"):
+            b["audio"] = np.pad(b["audio"], (0, max(0, int(SR * b["min_seconds"]) - len(b["audio"]))))
         b["frames"] = math.ceil(len(b["audio"]) / SR * FPS)
         b["audio"] = np.pad(b["audio"], (0, round(b["frames"] / FPS * SR) - len(b["audio"])))
     scroll_total = sum(b["frames"] for b in beats if b.get("scroll")) or 1
     done, segs = 0, []
     for i, b in enumerate(beats, 1):
         seg = os.path.join(work, f"beat-{i:02d}.mp4")
+        if b.get("video"):
+            subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", b["video"], "-an",
+                            "-vf", f"fps={FPS},scale={W}:{H},tpad=stop_mode=clone:stop_duration=60,format=yuv420p",
+                            "-frames:v", str(b["frames"]), "-c:v", "libx264", "-preset", "medium", "-crf", "20", seg], check=True)
+            segs.append(seg); print(f"beat {i}: {b['frames'] / FPS:.2f}s (clip)", flush=True); continue
         cmd = ["ffmpeg", "-y", "-loglevel", "error", "-f", "lavfi", "-i", f"color=c=black:s={W}x{H}:r={FPS}",
                "-loop", "1", "-framerate", str(FPS), "-i", b["png"]]
         if scroll and b.get("scroll"):
@@ -129,3 +136,4 @@ def build(beats, out, work, scroll=None, loudness=-14):
                     "-map", "0:v", "-map", "1:a", "-c:v", "copy", "-af", f"loudnorm=I={loudness}:TP=-1.5:LRA=11",
                     "-c:a", "aac", "-b:a", "192k", "-ar", "48000", "-movflags", "+faststart", "-shortest", out], check=True)
     print("wrote", out, f"({len(audio) / SR:.2f}s)")
+

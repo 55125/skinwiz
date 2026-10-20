@@ -65,6 +65,7 @@ PARTS = {
 }
 
 ROOT = os.path.abspath(os.path.join(HERE, ".."))
+ENDCARD = os.path.join(ROOT, "endcard", "endcard.mp4")   # approved HTML end card (branch: marketing/endcard/)
 WORK = os.path.join(ROOT, "work", "series-breakup")
 CACHE, REFS = os.path.join(WORK, "cbx-cache"), os.path.join(WORK, "cbx-refs")
 for p in (CACHE, REFS): os.makedirs(p, exist_ok=True)
@@ -147,16 +148,43 @@ def build_part(n, voiced):
         elif kind == "scan":
             chatui.scan(SERIES, n, title, b[1], png)
             audio = np.concatenate([buzz(), silence(1.2)]) if b[1] else np.concatenate([silence(0.25), beep(), silence(0.45)])
-            beats.append({"png": png, "audio": audio}); continue
+            beats.append({"png": png, "audio": audio, "state": {"kind": "scan", "result": b[1],
+                          "flagged": ["Fragrance (Parfum)"] if b[1] else []}}); continue
         elif kind == "end":
-            png = end_card(png, sub=b[1])
             audio = np.concatenate([silence(0.2), say(b[2], NARRATOR), silence(0.7)])
-            beats.append({"png": png, "audio": audio}); continue
-        chatui.chat(SERIES, n, title, contact, msgs, toast=b[1] if kind == "toast" else None, path=png)
-        beats.append({"png": png, "audio": audio})
+            beats.append({"video": ENDCARD, "min_seconds": 4.0, "audio": audio,
+                          "state": {"kind": "end", "spoken": b[2]}}); continue
+        toast = b[1] if kind == "toast" else None
+        chatui.chat(SERIES, n, title, contact, msgs, toast=toast, path=png)
+        state = {"kind": kind, "contact": {"name": contact[0], "subtitle": contact[1],
+                 "initials": contact[3], "colour": "#%02x%02x%02x" % contact[2]},
+                 "messages": [{"from": w, "text": t} for w, t in msgs], "toast": toast,
+                 "new_message": None if kind == "toast" else {"from": msgs[-1][0], "text": msgs[-1][1]},
+                 "spoken": b[2] if kind in ("me", "it") or (kind == "toast" and b[2]) else None,
+                 "speaker": {"me": "me (Kokoro af_heart)", "it": f"{contact[0]} (Chatterbox, {CHARACTERS.get(b[3], '') if kind == 'it' else ''})"}.get(kind)}
+        beats.append({"png": png, "audio": audio, "state": state})
     out = os.path.join(ROOT, "out", f"breakup-part-{n}.mp4")
     build(beats, out, work)
+    export_timeline(n, title, beats, out)
     return out
+
+def export_timeline(n, title, beats, mp4):
+    """partN-audio.wav (the final normalised track, 48 kHz) and partN-timeline.json (beat timing + screen state)."""
+    tl = os.path.join(ROOT, "out", "series-breakup-timeline"); os.makedirs(tl, exist_ok=True)
+    subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", mp4, "-vn", "-c:a", "pcm_s16le",
+                    os.path.join(tl, f"part{n}-audio.wav")], check=True)
+    t, rows = 0.0, []
+    for i, b in enumerate(beats, 1):
+        d = b["frames"] / FPS
+        rows.append({"beat": i, "start": round(t, 4), "duration": round(d, 4), "frames": b["frames"], **b["state"]})
+        t += d
+    meta = {"series": SERIES, "part": n, "title": title, "fps": FPS, "width": W, "height": H,
+            "total_seconds": round(t, 4), "audio": f"part{n}-audio.wav",
+            "notes": ["Each beat's sound (a ding for a text, a thunk for a block, a beep or buzz for a scan) starts at the beat's start.",
+                      "Speech in a text beat starts about 0.19 s in, after the ding; the end card's narration starts 0.2 s in.",
+                      "kind 'end' is the 4 s HTML end card (marketing/endcard/endcard.mp4), with its last frame held if the narration runs longer."],
+            "beats": rows}
+    json.dump(meta, open(os.path.join(tl, f"part{n}-timeline.json"), "w"), indent=2, ensure_ascii=False)
 
 parts = [int(a) for a in sys.argv[1:]] or sorted(PARTS)
 lines = {(b[2], b[3]) for n in parts for b in PARTS[n][1] if b[0] == "it"}

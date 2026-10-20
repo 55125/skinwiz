@@ -84,8 +84,8 @@ the Kokoro male voices (about 86 Hz median pitch; am_echo about 101, am_michael 
 - "me" is Kokoro af_heart and the narrator is Kokoro af_bella.
 - The ingredient characters are **Chatterbox**, which runs in its own venv,
   `venv-chatterbox` (CPU torch 2.6, about 1.9 GB plus about 3 GB of weights). Its batch helper is `reels/cbx_say.py`.
-- Each character is cloned from its own Kokoro sample: Fragrance/Parfum = am_puck,
-  Linalool = am_michael, Limonene = af_sarah, Methylisothiazolinone = am_echo.
+- Each character is cloned from a Kokoro sample. In Parts 1 and 2 every texter is the same ex (am_puck),
+  and Methylisothiazolinone is am_echo.
   Exaggeration is 0.7 and cfg is 0.3.
 - Chatterbox takes about 30 to 37 s of compute per second of audio here, plus about 25 s to load.
   Lines are cached in `work/series-breakup/cbx-cache`, so changing a single line only re-renders that line.

@@ -31,6 +31,23 @@ musculoskeletal pain relief, not dermatology), **Antibacterial**
 borderline in-scope, cut for this pass, revisit if a "cuts & wounds"
 concern is wanted later).
 
+## Oral care, 2026-10-21
+
+Fluoride toothpastes and rinses (anticavity monograph, 21 CFR 355), sensitivity
+toothpastes and gum-care rinses carry a Drug Facts "Purpose" line like the
+skin categories, so they come through this same script under the `oral-care`
+niche (purposes "Anticavity", "Antigingivitis", "Antisensitivity"). To add or
+refresh them without re-pulling the other seven niches:
+
+```bash
+python3 build_acne_sun_catalog.py --niches oral-care
+```
+
+`--niches` fetches only the named niches and swaps their rows into the
+existing `acne_sun_catalog.csv` / `acne_sun_unmatched.csv`, leaving every
+other row as it was. The DailyMed passes (inactive lists, package info,
+photos) read this CSV, so they pick the new rows up on their next run.
+
 ## Why two openFDA endpoints, not one
 
 `/drug/label.json` is the only endpoint with a `purpose` field — the actual

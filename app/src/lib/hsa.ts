@@ -21,6 +21,9 @@
 //   excludes hair transplants as cosmetic, and plan administrators generally
 //   treat hair regrowth products the same way unless there's a Letter of
 //   Medical Necessity -- "usually eligible" would mislead.
+// - Oral care (fluoride, sensitivity and gum-care toothpastes and rinses): no
+//   tag, though they're OTC drugs. Pub. 502 excludes toothpaste and other
+//   toiletries, and administrators generally follow that.
 // - Cosmetics (brand-direct, Open Beauty Facts): no tag. Items used for
 //   appearance or general health generally aren't medical care (IRS Pub. 502).
 // - Homeopathic products (NDC marketing category "UNAPPROVED HOMEOPATHIC"):
@@ -93,6 +96,7 @@ export type HsaStatus =
         | "homeopathic"
         | "antiperspirant"
         | "hair-loss"
+        | "oral-care"
         | "makeup-with-spf"
         | "sunscreen-unconfirmed"
         | "sunscreen-sunburn-only";
@@ -123,6 +127,7 @@ export function hsaStatus(p: HsaInput): HsaStatus {
     return { eligible: false, reason: "antiperspirant" };
   }
   if (p.concernId === "hair-loss" || p.activeIds.includes("minoxidil")) return { eligible: false, reason: "hair-loss" };
+  if (p.concernId === "oral-care") return { eligible: false, reason: "oral-care" };
   if (!isSunscreen(p)) return { eligible: true, reason: "otc-drug" };
   // Makeup with SPF (foundation, lipstick, BB cream) is listed as an OTC drug
   // but plans generally treat it as a cosmetic.

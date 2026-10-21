@@ -912,7 +912,7 @@ export function getTopProducts(limit = 8) {
         sql`${products.freeFromFlags} IS NOT NULL`,
         sql`${products.imageUrl} IS NOT NULL`,
         sql`LENGTH(${products.brandName}) <= 60`,
-        sql`${products.concernId} NOT IN ('dandruff-seb-derm', 'excessive-sweating', 'antifungal')`,
+        sql`${products.concernId} NOT IN ('dandruff-seb-derm', 'excessive-sweating', 'antifungal', 'oral-care')`,
         ...SHOWCASE_SKIP.map((w) => sql`LOWER(${products.brandName}) NOT LIKE ${`%${w.replace(/[\\%_]/g, (c) => `\\${c}`)}%`} ESCAPE '\\'`),
       ),
     )

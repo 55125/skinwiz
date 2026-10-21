@@ -24,6 +24,8 @@ test("OTC drug rows are tagged; cosmetic sources never are", () => {
   );
   // Minoxidil is an OTC drug, but plans treat hair regrowth as cosmetic.
   assert.equal(hsaStatus(p({ dataSource: "dailymed", concernId: "hair-loss", activeIds: ["minoxidil"], brandName: "Rogaine" })).reason, "hair-loss");
+  // Fluoride toothpaste is an OTC drug, but Pub. 502 excludes toiletries.
+  assert.equal(hsaStatus(p({ concernId: "oral-care", activeIds: ["sodium-fluoride"], brandName: "Cavity Protection Toothpaste" })).reason, "oral-care");
   // A cosmetic "SPF" moisturizer from a non-FDA source: still no tag.
   assert.equal(hsaStatus(p({ dataSource: "brand_direct", concernId: "sun-protection", brandName: "Daily Lotion SPF 30" })).reason, "not-a-drug");
 });

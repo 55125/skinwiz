@@ -195,5 +195,35 @@
     "sourceName": "American Academy of Dermatology",
     "sourceTitle": "How to fade dark spots in darker skin tones",
     "sourceUrl": "https://www.aad.org/public/everyday-care/skin-care-secrets/routine/fade-dark-spots"
+  },
+  {
+    "title": "Everyday hair care",
+    "concernId": "hair-care",
+    "steps": [
+      "Choose products labeled for your hair type",
+      "Wash as often as your hair gets dirty or oily: daily for straight hair with an oily scalp, less often for dry, curly, textured or thick hair",
+      "Apply shampoo to the scalp rather than the whole length of your hair",
+      "Use conditioner after washing: on the ends for fine or straight hair, full length for dry or curly hair",
+      "Detangle gently with a wide-tooth comb and pat hair dry instead of rubbing",
+      "Limit blow-drying and hot tools, use low or medium heat, and apply a heat protectant"
+    ],
+    "notes": "If a shampoo or conditioner has caused an itchy or red scalp, face, neck or eyelids, check its ingredient list against your avoid list before buying the next one.",
+    "sourceName": "American Academy of Dermatology",
+    "sourceTitle": "Tips for healthy hair",
+    "sourceUrl": "https://www.aad.org/public/everyday-care/hair-scalp-care/hair/healthy-hair-tips"
+  },
+  {
+    "title": "Everyday oral care",
+    "concernId": "oral-care",
+    "steps": [
+      "Brush twice a day with a fluoride toothpaste, for at least two minutes each time",
+      "After something acidic (soda, citrus, sour candy), wait an hour before brushing",
+      "Floss once a day",
+      "Replace your toothbrush every 3 to 4 months, or sooner if the bristles are worn"
+    ],
+    "notes": "If you get a rash around the mouth or dry, peeling lips, check your toothpaste's flavorings and other ingredients against your avoid list, and ask your dermatologist whether to try a different toothpaste.",
+    "sourceName": "Mayo Clinic",
+    "sourceTitle": "Brushing your teeth: How often and when?",
+    "sourceUrl": "https://www.mayoclinic.org/healthy-lifestyle/adult-health/expert-answers/brushing-your-teeth/faq-20058193"
   }
 ]

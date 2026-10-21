@@ -42,3 +42,12 @@ test("a vitamin C derivative or alpha arbutin isn't also the plainer active", ()
   assert.deepEqual(matchActiveIds("Arbutin 2%"), ["arbutin"]);
   assert.deepEqual(matchActiveIds("Bis-Ethylhexyloxyphenol Methoxyphenyl Triazine"), ["bemotrizinol"]);
 });
+
+test("oral-care actives: each fluoride source is its own active", () => {
+  assert.deepEqual(matchActiveIds("SODIUM MONOFLUOROPHOSPHATE"), ["sodium-monofluorophosphate"]);
+  assert.deepEqual(matchActiveIds("POTASSIUM NITRATE;SODIUM FLUORIDE"), ["sodium-fluoride", "potassium-nitrate"]);
+  assert.deepEqual(matchActiveIds("STANNOUS FLUORIDE"), ["stannous-fluoride"]);
+  assert.deepEqual(matchActiveIds("EUCALYPTOL;MENTHOL;METHYL SALICYLATE;THYMOL"), ["menthol", "eucalyptol", "methyl-salicylate", "thymol"]);
+  // Methyl salicylate isn't salicylic acid.
+  assert.ok(!matchActiveIds("METHYL SALICYLATE").includes("salicylic-acid"));
+});

@@ -134,6 +134,11 @@ test("an SPF product moved to Sun Protection stays listed where its source filed
   assert.deepEqual(productNiches("acne", "brightening-texture", ["benzoyl-peroxide"]), ["acne"]);
 });
 
+test("an oral-care product is listed only under Oral Care", () => {
+  // Listerine: menthol is also an itch-relief active.
+  assert.deepEqual(productNiches("oral-care", "oral-care", ["eucalyptol", "menthol", "methyl-salicylate", "thymol"]), ["oral-care"]);
+});
+
 test("each single-niche labeled drug active adds its niche", () => {
   // ChapStick SPF: petrolatum + avobenzone.
   assert.deepEqual(productNiches("sunscreen", "skin-protectant", ["petrolatum", "avobenzone"]), ["sunscreen", "skin-protectant"]);

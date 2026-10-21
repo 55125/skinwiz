@@ -37,6 +37,9 @@ const CATALOG_CSVS = [
   CURATED_CSV,
   path.join(REPO_ROOT, "tools/catalog_pipeline/output/acne_sun_catalog.csv"),
   path.join(REPO_ROOT, "tools/catalog_pipeline/output/dailymed_resolved_catalog.csv"),
+  // Before cosmetic_catalog.csv: a shampoo that pass filed under Dry Skin
+  // for its panthenol is listed under Hair Care.
+  path.join(REPO_ROOT, "tools/catalog_pipeline/output/hair_care_catalog.csv"),
   path.join(REPO_ROOT, "tools/catalog_pipeline/output/cosmetic_catalog.csv"),
   path.join(REPO_ROOT, "tools/catalog_pipeline/output/brand_direct_catalog.csv"),
 ];
@@ -82,6 +85,8 @@ type CatalogRow = {
     | "skin-protectant"
     | "antiperspirant"
     | "hair-loss"
+    | "hair-care"
+    | "oral-care"
     | "brightening-texture";
   brand_name: string;
   manufacturer_name: string;
@@ -406,8 +411,10 @@ function reseed() {
       const activeIds = [...labeledActiveIds, ...new Set(listedFilters)];
 
       // Curated rows were each reviewed by hand, so one with no tracked
-      // active (a hydrocolloid patch, a plain lotion) still lists.
-      if (activeIds.length === 0 && csvPath !== CURATED_CSV) {
+      // active (a hydrocolloid patch, a plain lotion) still lists. Hair care
+      // rows are there for their ingredient list (the avoid list), not an
+      // active, so they list without one too.
+      if (activeIds.length === 0 && csvPath !== CURATED_CSV && row.niche !== "hair-care") {
         skippedNoActive++;
         continue;
       }

@@ -633,6 +633,15 @@ function termMatches(col: SQLWrapper, term: SearchTerm, foldAccentsToo = false):
 
 const SEARCH_COLUMNS = [products.brandName, products.manufacturer, products.activeIngredientText, products.dosageForm];
 
+function termWhere(t: SearchTerm): SQL {
+  const columns = SEARCH_COLUMNS.map((c) => termMatches(c, t, true));
+  if (t.inConcern) {
+    const forms = t.inConcern.forms.map((f) => sql`${products.dosageForm} LIKE ${`%${f}%`}`);
+    columns.push(sql`(${products.concernId} = ${t.inConcern.concernId} AND (${sql.join(forms, sql` OR `)}))`);
+  }
+  return sql`(${sql.join(columns, sql` OR `)})`;
+}
+
 function buildSearchWhere(terms: SearchTerm[], filters: SearchFilters) {
   // Every word has to match somewhere: the product name, the brand, the
   // raw ingredient text (so "niacinamide" finds products that contain it),
@@ -641,7 +650,7 @@ function buildSearchWhere(terms: SearchTerm[], filters: SearchFilters) {
   const clauses = [
     LISTED_OTC,
     notDuplicate(),
-    ...(terms.length ? terms.map((t) => sql`(${sql.join(SEARCH_COLUMNS.map((c) => termMatches(c, t, true)), sql` OR `)})`) : [sql`0`]),
+    ...(terms.length ? terms.map(termWhere) : [sql`0`]),
     ...freeFromWhereClauses(filters.freeFromIds ?? []),
   ];
   if (filters.concernId) clauses.push(inConcern(filters.concernId));
@@ -918,7 +927,7 @@ export function getTopProducts(limit = 8) {
         sql`${products.freeFromFlags} IS NOT NULL`,
         sql`${products.imageUrl} IS NOT NULL`,
         sql`LENGTH(${products.brandName}) <= 60`,
-        sql`${products.concernId} NOT IN ('dandruff-seb-derm', 'excessive-sweating', 'antifungal')`,
+        sql`${products.concernId} NOT IN ('dandruff-seb-derm', 'excessive-sweating', 'antifungal', 'oral-care')`,
         ...SHOWCASE_SKIP.map((w) => sql`LOWER(${products.brandName}) NOT LIKE ${`%${w.replace(/[\\%_]/g, (c) => `\\${c}`)}%`} ESCAPE '\\'`),
       ),
     )

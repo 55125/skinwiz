@@ -25,6 +25,17 @@ test("brand spellings people type find the real names", () => {
   assert.deepEqual(alts("l’oréal night")[0], ["l'oréal", "loréal", "l'oreal", "loreal"]);
 });
 
+test("toothpaste and mouthwash match the FDA dosage forms", () => {
+  assert.ok(alts("colgate optic white toothpaste")[3].includes("dentifrice"));
+  assert.ok(alts("listerine mouthwash")[1].includes("rinse"));
+});
+
+test("toothpaste also matches a plain paste or gel, but only under Oral Care", () => {
+  const [, toothpaste] = parseSearch("sensodyne toothpaste").terms;
+  assert.deepEqual(toothpaste.inConcern, { concernId: "oral-care", forms: ["paste", "gel"] });
+  assert.equal(parseSearch("zinc paste").terms[1].inConcern, undefined);
+});
+
 test("Cantabria Labs misspellings from the search log", () => {
   assert.deepEqual(alts("cantabaria"), [["cantabria"]]);
   assert.deepEqual(alts("cantabarai"), [["cantabria"]]);

@@ -172,8 +172,11 @@ const ACTIVE_CATEGORIES = new Map(ACTIVE_DEFINITIONS.map((a) => [a.id, a.categor
  *   dandruff) don't say which one applies, so they add nothing.
  * Only OTC drug actives count: a cosmetic ingredient an FDA label lists among
  * its actives (niacinamide, ginseng) doesn't make a product brightening care.
+ * Oral-care products are listed only under Oral Care.
  */
 export function productNiches(niche: Concern, sourceNiche: Concern, labeledActiveIds: string[]): Concern[] {
+  // A mouth rinse's menthol doesn't make it itch relief.
+  if (niche === "oral-care") return [niche];
   const out = new Set<Concern>([niche]);
   if (niche === "sunscreen") out.add(sourceNiche);
   for (const id of labeledActiveIds.filter(isDrugActive)) {

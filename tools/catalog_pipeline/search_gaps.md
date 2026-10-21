@@ -60,7 +60,7 @@ which also appears in its image file names. Fixes made to the brands' published 
 - **Olay Regenerist** ("olay regenerates" 2/0, "olay regen" 1/16): a spelling miss, not a
   catalog gap. `lib/search-terms.ts` now maps regenerates/regenerating to Regenerist, so it
   finds the 16 Regenerist products. No rows added.
-- **K18** (1/0): hair care, out of scope.
+- **K18** (1/0): hair care. Out of scope at the time; in scope since 2026-10-21 (Hair Care concern), as a `cosmetic` row with niche `hair-care`.
 - **Rogaine / minoxidil** (3/0): no rows added here. Michael chose a Hair Thinning & Loss
   concern as its own PR (branch claude/hair-loss-concern), which adds these rows. The DailyMed data a follow-up would need is below. All are
   OTC drug SPLs, so they'd be `drug` rows in `curated_products.csv` (product NDC as the id).
@@ -114,4 +114,11 @@ up on DailyMed.
 ### Still missing
 
 - **Cantabria Labs / Heliocare / Endocare**: see above.
-- **K18** (1/0): hair care, out of scope.
+- **K18** (1/0): hair care. Out of scope at the time; in scope since 2026-10-21 (Hair Care concern), as a `cosmetic` row with niche `hair-care`.
+
+## 2026-10-21: hair care and oral care in scope
+
+Michael moved hair care and oral care into scope ("k18", "colgate optic white toothpaste").
+New niches: `hair-care` (cosmetics, curated rows) and `oral-care` (OTC anticavity,
+antigingivitis and antisensitivity drugs from openFDA:
+`python3 build_acne_sun_catalog.py --niches oral-care`).

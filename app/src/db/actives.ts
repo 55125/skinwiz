@@ -27,6 +27,8 @@ export type Concern =
   | "skin-protectant"
   | "antiperspirant"
   | "hair-loss"
+  | "hair-care"
+  | "oral-care"
   | "brightening-texture";
 
 // Maps each niche key (used throughout tools/catalog_pipeline and this
@@ -52,6 +54,20 @@ export const CONCERN_DEFINITIONS: { niche: Concern; id: string; name: string; de
     id: "brightening-texture",
     name: "Brightening & Texture",
     description: "Cosmetic ingredients and products for the look of skin tone, texture, and pores. None of these ingredients has OTC monograph status; a claim to change pigment production or treat a condition would make a product a drug.",
+  },
+  {
+    niche: "hair-care",
+    id: "hair-care",
+    name: "Hair Care",
+    description:
+      "Shampoos, conditioners and hair treatments, listed with their full ingredient lists so you can check them against your avoid list. These are cosmetics; medicated dandruff shampoos and minoxidil have their own pages.",
+  },
+  {
+    niche: "oral-care",
+    id: "oral-care",
+    name: "Oral Care",
+    description:
+      "OTC fluoride toothpastes, sensitivity toothpastes and gum-care rinses, with their full ingredient lists, so you can check flavorings and other ingredients against your avoid list.",
   },
 ];
 
@@ -854,6 +870,78 @@ export const ACTIVE_DEFINITIONS: ActiveDefinition[] = [
     summary:
       "The only FDA-approved OTC active for hereditary hair loss on the top of the scalp, sold under approved applications (Rogaine and its generics), not a monograph. It works only while it is used.",
     typicalConcentrationText: "OTC topical minoxidil is 2% (solution, labeled for women) or 5% (solution for men; foam for men and for women). Oral minoxidil is prescription-only.",
+  },
+
+  // --- Oral care (OTC anticavity, sensitivity and gum-care drugs) ---
+  // Fluoride toothpastes and rinses are OTC drugs under the anticavity
+  // monograph (21 CFR 355); sensitivity and gum-care actives are marketed
+  // OTC with a Drug Facts panel. Listerine-style rinses list four essential
+  // oils as actives; menthol, the fourth, is already tracked under Itch
+  // Relief, and productNiches keeps oral-care rows out of other concerns.
+  {
+    id: "sodium-fluoride",
+    canonicalName: "Sodium Fluoride",
+    categories: ["oral-care"],
+    synonyms: ["sodium fluoride"],
+    summary: "An FDA OTC monograph anticavity active (21 CFR part 355), the fluoride in most US toothpastes and fluoride rinses.",
+    typicalConcentrationText: "Common US labels: about 0.24% in toothpaste (0.15% w/v fluoride ion) and 0.05% in daily fluoride rinses.",
+  },
+  {
+    id: "sodium-monofluorophosphate",
+    canonicalName: "Sodium Monofluorophosphate",
+    categories: ["oral-care"],
+    synonyms: ["sodium monofluorophosphate", "sodium monofluorophospate"],
+    summary: "An FDA OTC monograph anticavity active (21 CFR part 355), a fluoride source used in many Colgate and store-brand toothpastes.",
+    typicalConcentrationText: "Common US labels: about 0.76% in toothpaste (0.15% w/v fluoride ion).",
+  },
+  {
+    id: "stannous-fluoride",
+    canonicalName: "Stannous Fluoride",
+    categories: ["oral-care"],
+    synonyms: ["stannous fluoride"],
+    summary:
+      "An FDA OTC monograph anticavity active (21 CFR part 355). Some stannous fluoride toothpastes are also labeled for gingivitis and tooth sensitivity.",
+    typicalConcentrationText: "Common US labels: about 0.45% in toothpaste (0.16% w/v fluoride ion).",
+  },
+  {
+    id: "potassium-nitrate",
+    canonicalName: "Potassium Nitrate",
+    categories: ["oral-care"],
+    synonyms: ["potassium nitrate"],
+    summary: "The OTC tooth-desensitizing active in most sensitivity toothpastes, usually paired with a fluoride.",
+    typicalConcentrationText: "Common US labels: 5% in sensitivity toothpaste.",
+  },
+  {
+    id: "cetylpyridinium-chloride",
+    canonicalName: "Cetylpyridinium Chloride",
+    categories: ["oral-care"],
+    synonyms: ["cetylpyridinium chloride"],
+    summary: "An antiseptic active in OTC antigingivitis and antiplaque mouth rinses.",
+    typicalConcentrationText: "Common US labels: 0.07% in mouth rinses.",
+  },
+  {
+    id: "eucalyptol",
+    canonicalName: "Eucalyptol",
+    categories: ["oral-care"],
+    synonyms: ["eucalyptol"],
+    summary: "One of the four essential-oil actives in Listerine-style antigingivitis and antiplaque mouth rinses, with menthol, methyl salicylate and thymol.",
+    typicalConcentrationText: "Common US labels: about 0.09% in mouth rinses.",
+  },
+  {
+    id: "methyl-salicylate",
+    canonicalName: "Methyl Salicylate",
+    categories: ["oral-care"],
+    synonyms: ["methyl salicylate"],
+    summary: "One of the four essential-oil actives in Listerine-style antigingivitis and antiplaque mouth rinses. Topical pain rubs also use it at much higher strengths; those aren't in this catalog.",
+    typicalConcentrationText: "Common US labels: about 0.06% in mouth rinses.",
+  },
+  {
+    id: "thymol",
+    canonicalName: "Thymol",
+    categories: ["oral-care"],
+    synonyms: ["thymol"],
+    summary: "One of the four essential-oil actives in Listerine-style antigingivitis and antiplaque mouth rinses.",
+    typicalConcentrationText: "Common US labels: about 0.06% in mouth rinses.",
   },
 
   // --- Brightening & texture (cosmetic ingredients, NOT FDA drug actives) ---

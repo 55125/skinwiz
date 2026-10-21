@@ -134,6 +134,16 @@ export const ACTIVE_USES: Record<string, string> = {
   // --- Hair loss ---
   minoxidil: "Regrowing hair and slowing hereditary thinning on the top of the scalp.",
 
+  // --- Oral care ---
+  "sodium-fluoride": "Helping protect against cavities.",
+  "sodium-monofluorophosphate": "Helping protect against cavities.",
+  "stannous-fluoride": "Helping protect against cavities; some labels add gingivitis and tooth sensitivity.",
+  "potassium-nitrate": "Building protection against tooth sensitivity to hot, cold, sweets or touch.",
+  "cetylpyridinium-chloride": "Helping prevent and reduce plaque and gingivitis, in mouth rinses.",
+  eucalyptol: "Helping prevent and reduce plaque and gingivitis, in mouth rinses.",
+  "methyl-salicylate": "Helping prevent and reduce plaque and gingivitis, in mouth rinses.",
+  thymol: "Helping prevent and reduce plaque and gingivitis, in mouth rinses.",
+
   // --- Brightening & texture (cosmetic) ---
   niacinamide: "The look of uneven tone, dark spots, enlarged pores and oiliness; supporting the skin barrier.",
   "vitamin-c": VITAMIN_C,

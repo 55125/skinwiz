@@ -41,7 +41,9 @@ export type StepType =
   | "scalp"
   | "body-powder"
   | "antiperspirant"
-  | "scalp-leave-on";
+  | "scalp-leave-on"
+  | "hair"
+  | "oral";
 
 export type ActiveGuidance = {
   activeId: string;
@@ -994,6 +996,28 @@ export const FORMULATION_GUIDANCE: Record<StepType, FormulationGuidance> = {
       "Follow the label on timing; clinical-strength products direct bedtime application.",
     ],
     layering: "A body step outside the face sequence; it does not interact with the face routine.",
+    reviewed: false,
+  },
+  hair: {
+    stepType: "hair",
+    label: "Hair product",
+    order: 107,
+    howToApply: [
+      "Use it as the label directs; most masks and treatments go on clean, damp hair from mid-length to ends.",
+      "Rinse-out products: rinse thoroughly. Leave-in products: keep them off the face and scalp unless the label says otherwise.",
+    ],
+    layering: "A hair step outside the face sequence; it does not interact with the face routine.",
+    reviewed: false,
+  },
+  oral: {
+    stepType: "oral",
+    label: "Toothpaste or rinse",
+    order: 130,
+    howToApply: [
+      "Toothpaste: brush for two minutes, then spit; don't swallow it.",
+      "Mouth rinse: swish the amount and for the time the label directs, then spit.",
+    ],
+    layering: "Separate from the skin routine. If you get a rash around the mouth or dry, peeling lips, check its ingredients against your avoid list.",
     reviewed: false,
   },
 };

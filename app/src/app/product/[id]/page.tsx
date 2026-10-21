@@ -28,7 +28,7 @@ import {
 import { DERM_PANEL_LAUNCHED, getScoresForProducts } from "@/lib/scoring";
 import { getVideoSearchLinks } from "@/lib/video-links";
 import { dataSourceBadge } from "@/lib/data-source";
-import { FREE_FROM_CHECKS, getFreeFromCheck, ingredientFailsCheck } from "@/db/ingredient-flags";
+import { checkShownFor, FREE_FROM_CHECKS, getFreeFromCheck, ingredientFailsCheck, shownFreeFromFlags } from "@/db/ingredient-flags";
 import { findSafeSwaps, findSimilarProductsCached } from "@/lib/similar";
 import { findDupesCached } from "@/lib/dupes";
 import { DupeEmpty, DupeExplainer, DupeRows } from "@/components/dupe-list";
@@ -264,8 +264,9 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
   );
   const showPregnancy = FEATURES.PREGNANCY_MODE && (profile.pregnant || profile.breastfeeding);
   const pregnancyFound = showPregnancy ? productPregnancyFindings(product, ingredientRows) : [];
+  const shownFlags = shownFreeFromFlags(product.freeFromFlags ?? [], product.concernId);
   const flaggedSkin = product.freeFromFlags
-    ? FREE_FROM_CHECKS.filter((c) => c.category === "skin" && !product.freeFromFlags!.includes(c.id)).map((c) => ({
+    ? FREE_FROM_CHECKS.filter((c) => c.category === "skin" && checkShownFor(c.id, product.concernId) && !product.freeFromFlags!.includes(c.id)).map((c) => ({
         check: c,
         hits: listedIngredients.filter((r) => ingredientFailsCheck(c, r.rawName)),
       }))
@@ -694,7 +695,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
             />
           )}
 
-          {product.freeFromFlags && product.freeFromFlags.length > 0 && (
+          {shownFlags.length > 0 && (
             <div>
               <h2 className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                 Ingredient-based filters this matches
@@ -704,18 +705,18 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
                   summary is only the toggle: links inside a summary are
                   nested interactive controls (axe nested-interactive). */}
               <div className="flex flex-wrap gap-1.5">
-                {product.freeFromFlags.slice(0, 6).map((id) => (
+                {shownFlags.slice(0, 6).map((id) => (
                   <FreeFromLink key={id} id={id} />
                 ))}
               </div>
-              {product.freeFromFlags.length > 6 && (
+              {shownFlags.length > 6 && (
                 <details className="group/ff mt-1.5">
                   <summary className="w-fit cursor-pointer list-none text-xs font-medium text-brand [&::-webkit-details-marker]:hidden">
-                    <span className="group-open/ff:hidden">Show all {product.freeFromFlags.length} →</span>
+                    <span className="group-open/ff:hidden">Show all {shownFlags.length} →</span>
                     <span className="hidden group-open/ff:inline">Show fewer</span>
                   </summary>
                   <div className="mt-1.5 flex flex-wrap gap-1.5">
-                    {product.freeFromFlags.slice(6).map((id) => (
+                    {shownFlags.slice(6).map((id) => (
                       <FreeFromLink key={id} id={id} />
                     ))}
                   </div>

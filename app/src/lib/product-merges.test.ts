@@ -146,8 +146,8 @@ test("/same groups and the sitemap show the canonical only", async () => {
   }
   assert.equal(idx.getEquivalenceGroupForProduct(DUP)?.members.find((m) => m.ids.includes(DUP))?.id, CANON);
   assert.equal(idx.isHsaEligible(DUP), false);
-  const { default: sitemap } = await import("@/app/sitemap");
-  const urls = sitemap().map((e) => e.url);
+  const { sitemapPart } = await import("./sitemap");
+  const urls = sitemapPart("products").map((e) => e.url);
   assert.ok(urls.some((u) => u.endsWith(`/product/${CANON}`)));
   assert.ok(!urls.some((u) => u.endsWith(`/product/${DUP}`)), "sitemap lists the duplicate");
   noDup(q.canonicalProductIds(), "canonicalProductIds");

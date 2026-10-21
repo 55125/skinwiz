@@ -2,6 +2,7 @@ import { and, inArray, sql } from "drizzle-orm";
 import { db } from "@/db/client";
 import { products } from "@/db/schema";
 import { avoidConflicts } from "@/lib/avoid-shared";
+import { listsIngredient } from "@/lib/avoid-ingredients";
 import { LISTED_OTC, browseProducts } from "@/lib/queries";
 import { ttlCache } from "@/lib/ttl-cache";
 
@@ -137,7 +138,7 @@ export function findSafeSwaps(
 ): (typeof products.$inferSelect)[] {
   if (avoidIds.length === 0) return [];
   const clear = (p: typeof products.$inferSelect) => {
-    const found = avoidConflicts(p, avoidIds);
+    const found = avoidConflicts(p, avoidIds, listsIngredient);
     return !!found && found.conflicts.length === 0 && found.possible.length === 0;
   };
   const kind = productKind(product);

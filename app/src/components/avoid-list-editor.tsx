@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Check, Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,6 +21,7 @@ import {
 import { PatchTestPaste } from "@/components/patch-test-paste";
 import { getNotOnLabel } from "@/db/patch-test-series";
 import { PatchTestSeriesPicker } from "@/components/patch-test-checklist";
+import { avoidedIngredientId, avoidedIngredientName } from "@/lib/avoid-shared";
 import { cn } from "@/lib/utils";
 
 // Every tick saves itself (debounced), so "saved in this browser" is true the
@@ -49,11 +51,14 @@ function postNotOnLabel(ids: string[]) {
 export function AvoidListEditor({
   initialIds,
   initialNotOnLabel = [],
+  ingredientNames = {},
   pasteOpen,
   seriesOpen,
 }: {
   initialIds: string[];
   initialNotOnLabel?: string[];
+  /** Page names for the "ing:" ids on the list (added from ingredient pages). */
+  ingredientNames?: Record<string, string>;
   pasteOpen?: boolean;
   seriesOpen?: boolean;
 }) {
@@ -169,6 +174,8 @@ export function AvoidListEditor({
         </section>
       )}
 
+      <IngredientList ids={ids} names={ingredientNames} toggle={toggle} />
+
       <AllergenPicker ids={ids} toggle={toggle} />
 
       {groups.map((group) => (
@@ -200,6 +207,46 @@ export function AvoidListEditor({
         )}
       </div>
     </div>
+  );
+}
+
+// Any other ingredient, added with the button on its page. Taken off here;
+// there's no search for them on this page, the ingredient pages are it.
+function IngredientList({ ids, names, toggle }: { ids: Set<string>; names: Record<string, string>; toggle: (id: string) => void }) {
+  const picked = [...ids].filter((id) => avoidedIngredientId(id));
+  return (
+    <section className="space-y-2" aria-labelledby="avoid-ingredients-h">
+      <h2 id="avoid-ingredients-h" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+        Other ingredients
+      </h2>
+      <p className="text-sm text-muted-foreground">
+        Avoid anything else, iron oxides or coconut oil say, with the &ldquo;Add to avoid list&rdquo; button on its{" "}
+        <Link href="/ingredients" className="font-medium text-brand hover:underline">
+          ingredient page
+        </Link>
+        .
+      </p>
+      {picked.length > 0 && (
+        <ul className="flex flex-wrap gap-1.5" aria-label="Avoided ingredients">
+          {picked.map((id) => {
+            const name = names[id] ?? avoidedIngredientName(id);
+            return (
+              <li key={id}>
+                <button
+                  type="button"
+                  onClick={() => toggle(id)}
+                  aria-label={`Remove ${name}`}
+                  className="inline-flex items-center gap-1 rounded-full border border-primary bg-primary px-3 py-1 text-xs font-medium text-primary-foreground"
+                >
+                  {name}
+                  <X className="h-3 w-3" aria-hidden />
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </section>
   );
 }
 

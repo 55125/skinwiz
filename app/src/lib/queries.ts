@@ -20,6 +20,7 @@ import { isAllowedManualLinkUrl } from "@/lib/manual-links";
 import { concernIdToNiche } from "@/db/actives";
 import { getFreeFromCheck } from "@/db/ingredient-flags";
 import { allergenBlockers, resolveAllergenId } from "@/db/contact-allergens";
+import { avoidedIngredientId } from "@/lib/avoid-shared";
 import { hsaEligibleIdsJson } from "@/lib/otc-index";
 import { displayablePrice, parsePackageDescription, unitPrice } from "@/lib/equivalence";
 import { getDisplayQuotesFor, getKrogerImages } from "@/lib/prices/store";
@@ -63,8 +64,12 @@ export const LISTED_OTC: SQL = and(OTC_ONLY, LISTED)!;
 // product must have been assessed and contain none of the allergen's
 // blockers -- its group members, plus an undisclosed fragrance when one of
 // them is a fragrance allergen.
+// An avoided ingredient ("ing:iron-oxides") excludes the products that list
+// it, like the pregnancy filter below.
 function freeFromWhereClauses(freeFromIds: string[]): SQL[] {
   return freeFromIds.map((id) => {
+    const ingredient = avoidedIngredientId(id);
+    if (ingredient) return excludesIngredientsClause([ingredient]);
     const allergenId = getFreeFromCheck(id) ? undefined : resolveAllergenId(id);
     if (!allergenId) return jsonArrayContains(products.freeFromFlags, id);
     const blockers = allergenBlockers(allergenId);

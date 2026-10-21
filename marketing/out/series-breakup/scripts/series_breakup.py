@@ -21,7 +21,7 @@ CTA = "Check before you buy. Free at Actively Skin dot com."
 
 # Beat kinds:
 #   ("contact", name, subtitle, colour, initials, [already-visible messages])  switch chat, no time
-#   ("me", bubble, spoken)             ("it", bubble, spoken, character)
+#   ("me", bubble, spoken)             "|" in spoken = dramatic pause             ("it", bubble, spoken, character)
 #   ("emoji", "🍋")                     incoming emoji, no voice
 #   ("toast", "X blocked", spoken-by-me or None)
 #   ("scan", False|True)               barcode-scan screen: scanning, then the red X
@@ -57,8 +57,8 @@ PARTS = {
     3: ("Breaking up with a preservative", [
         ("contact", "Methylisothiazolinone", "preservative · on your avoid list", (201, 92, 84), "MI", []),
         ("me", "My patch test came back. We're done.", "My patch test came back. We're done."),
-        ("it", "lol. you can't even pronounce me.", "Ha. You can't even pronounce me.", "mi"),
-        ("me", "Methyl… iso… thia… zoli… whatever. You're on my avoid list.", "Methyl... iso... thia... zoli... whatever. You're on my avoid list."),
+        ("it", "LOL. you can't even pronounce me.", "Lol. You can't even pronounce me.", "mi"),
+        ("me", "I pronounce you... blocked.", "I pronounce you...|blocked."),
         ("it", "...that's actually kind of hot.", "That's... actually kind of hot.", "mi"),
         ("toast", "Methylisothiazolinone blocked", None),
         ("note", ["We can't pronounce it either.", "That's why it's on the list."],
@@ -140,7 +140,9 @@ def build_part(n, voiced):
             contact, msgs = b[1:5], list(b[5]); continue
         if kind == "me":
             msgs.append(("me", b[1]))
-            audio = np.concatenate([blip(1480), silence(0.1), say(b[2], ME), silence(0.35)])
+            # "|" in the spoken text marks a dramatic pause
+            speech = [x for part in b[2].split("|") for x in (say(part.strip(), ME), silence(0.6))][:-1]
+            audio = np.concatenate([blip(1480), silence(0.1), *speech, silence(0.35)])
         elif kind == "it":
             msgs.append(("it", b[1]))
             audio = np.concatenate([blip(990), silence(0.1), load_trimmed(voiced[(b[2], b[3])]), silence(0.35)])
@@ -168,7 +170,7 @@ def build_part(n, voiced):
                  "initials": contact[3], "colour": "#%02x%02x%02x" % contact[2]},
                  "messages": [{"from": w, "text": t} for w, t in msgs], "toast": toast,
                  "new_message": None if kind == "toast" else {"from": msgs[-1][0], "text": msgs[-1][1]},
-                 "spoken": b[2] if kind in ("me", "it") or (kind == "toast" and b[2]) else None,
+                 "spoken": b[2].replace("|", " ") if kind in ("me", "it") or (kind == "toast" and b[2]) else None,
                  "speaker": {"me": "me (Kokoro af_heart)", "it": f"{contact[0]} (Chatterbox, {CHARACTERS.get(b[3], '') if kind == 'it' else ''})"}.get(kind)}
         beats.append({"png": png, "audio": audio, "state": state})
     out = os.path.join(ROOT, "out", f"breakup-part-{n}.mp4")

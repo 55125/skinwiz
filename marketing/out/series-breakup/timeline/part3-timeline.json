@@ -5,7 +5,7 @@
   "fps": 30,
   "width": 1080,
   "height": 1920,
-  "total_seconds": 24.3,
+  "total_seconds": 23.1667,
   "audio": "part3-audio.wav",
   "notes": [
     "Each beat's sound (a ding for a text, a thunk for a block, a beep or buzz for a scan) starts at the beat's start.",
@@ -43,8 +43,8 @@
     {
       "beat": 2,
       "start": 3.3,
-      "duration": 2.3667,
-      "frames": 71,
+      "duration": 2.4667,
+      "frames": 74,
       "kind": "it",
       "contact": {
         "name": "Methylisothiazolinone",
@@ -59,22 +59,22 @@
         },
         {
           "from": "it",
-          "text": "lol. you can't even pronounce me."
+          "text": "LOL. you can't even pronounce me."
         }
       ],
       "toast": null,
       "new_message": {
         "from": "it",
-        "text": "lol. you can't even pronounce me."
+        "text": "LOL. you can't even pronounce me."
       },
-      "spoken": "Ha. You can't even pronounce me.",
+      "spoken": "Lol. You can't even pronounce me.",
       "speaker": "Methylisothiazolinone (Chatterbox, am_echo)"
     },
     {
       "beat": 3,
-      "start": 5.6667,
-      "duration": 5.4,
-      "frames": 162,
+      "start": 5.7667,
+      "duration": 4.1667,
+      "frames": 125,
       "kind": "me",
       "contact": {
         "name": "Methylisothiazolinone",
@@ -89,24 +89,24 @@
         },
         {
           "from": "it",
-          "text": "lol. you can't even pronounce me."
+          "text": "LOL. you can't even pronounce me."
         },
         {
           "from": "me",
-          "text": "Methyl… iso… thia… zoli… whatever. You're on my avoid list."
+          "text": "I pronounce you... blocked."
         }
       ],
       "toast": null,
       "new_message": {
         "from": "me",
-        "text": "Methyl… iso… thia… zoli… whatever. You're on my avoid list."
+        "text": "I pronounce you... blocked."
       },
-      "spoken": "Methyl... iso... thia... zoli... whatever. You're on my avoid list.",
+      "spoken": "I pronounce you... blocked.",
       "speaker": "me (Kokoro af_heart)"
     },
     {
       "beat": 4,
-      "start": 11.0667,
+      "start": 9.9333,
       "duration": 2.7667,
       "frames": 83,
       "kind": "it",
@@ -123,11 +123,11 @@
         },
         {
           "from": "it",
-          "text": "lol. you can't even pronounce me."
+          "text": "LOL. you can't even pronounce me."
         },
         {
           "from": "me",
-          "text": "Methyl… iso… thia… zoli… whatever. You're on my avoid list."
+          "text": "I pronounce you... blocked."
         },
         {
           "from": "it",
@@ -144,7 +144,7 @@
     },
     {
       "beat": 5,
-      "start": 13.8333,
+      "start": 12.7,
       "duration": 0.7,
       "frames": 21,
       "kind": "toast",
@@ -161,11 +161,11 @@
         },
         {
           "from": "it",
-          "text": "lol. you can't even pronounce me."
+          "text": "LOL. you can't even pronounce me."
         },
         {
           "from": "me",
-          "text": "Methyl… iso… thia… zoli… whatever. You're on my avoid list."
+          "text": "I pronounce you... blocked."
         },
         {
           "from": "it",
@@ -179,7 +179,7 @@
     },
     {
       "beat": 6,
-      "start": 14.5333,
+      "start": 13.4,
       "duration": 4.8,
       "frames": 144,
       "kind": "note",
@@ -204,11 +204,11 @@
           },
           {
             "from": "it",
-            "text": "lol. you can't even pronounce me."
+            "text": "LOL. you can't even pronounce me."
           },
           {
             "from": "me",
-            "text": "Methyl… iso… thia… zoli… whatever. You're on my avoid list."
+            "text": "I pronounce you... blocked."
           },
           {
             "from": "it",
@@ -223,7 +223,7 @@
     },
     {
       "beat": 7,
-      "start": 19.3333,
+      "start": 18.2,
       "duration": 4.9667,
       "frames": 149,
       "kind": "end",

@@ -4,7 +4,7 @@ import "./globals.css";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { siteUrl } from "@/lib/site-url";
-import { SITE_NAME } from "@/lib/brand";
+import { SITE_DESCRIPTION, SITE_NAME } from "@/lib/brand";
 import { AnalyticsBeacon } from "@/components/analytics-beacon";
 import { ServiceWorker } from "@/components/service-worker";
 
@@ -25,9 +25,6 @@ const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
 });
-
-const SITE_DESCRIPTION =
-  "Find OTC skincare products by active ingredient, matched against FDA label data rather than guessed from an ingredient list. User Scores build as people log their results, and a verified dermatologist panel is in the works.";
 
 // metadataBase lets every page give relative canonical/OpenGraph URLs; the
 // title template appends the brand so pages set only their own title.

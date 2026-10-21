@@ -24,7 +24,7 @@ import { JsonLd } from "@/components/json-ld";
 import { siteUrl } from "@/lib/site-url";
 import { countProducts, getAllActives, getConcerns, getTopProducts, getTopActives } from "@/lib/queries";
 import { getTopRoutines } from "@/lib/routines";
-import { SITE_NAME } from "@/lib/brand";
+import { SITE_DESCRIPTION, SITE_NAME } from "@/lib/brand";
 import { DERM_PANEL_LAUNCHED } from "@/lib/scoring";
 import { CONTACT_ALLERGENS } from "@/db/contact-allergens";
 import { ttlCache } from "@/lib/ttl-cache";
@@ -94,7 +94,15 @@ export default function Home() {
                 "query-input": "required name=search_term_string",
               },
             },
-            { "@type": "Organization", "@id": `${base}/#organization`, name: SITE_NAME, url: base },
+            {
+              "@type": "Organization",
+              "@id": `${base}/#organization`,
+              name: SITE_NAME,
+              url: base,
+              logo: `${base}/apple-icon.png`,
+              description: SITE_DESCRIPTION,
+              sameAs: ["https://www.instagram.com/activelyskin/"],
+            },
           ],
         }}
       />

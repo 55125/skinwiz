@@ -2,7 +2,8 @@ import Link from "next/link";
 import { ChevronDown } from "lucide-react";
 import { FilterChip } from "@/components/filter-chip";
 import { FREE_FROM_CHECKS } from "@/db/ingredient-flags";
-import { readAvoidIds } from "@/lib/avoid";
+import { avoidedIngredientName, readAvoidIds } from "@/lib/avoid";
+import { avoidedIngredientId } from "@/lib/avoid-shared";
 import { CONTACT_ALLERGENS, FEATURED_ALLERGEN_IDS, allergenLabel } from "@/db/contact-allergens";
 import { SENSITIVE_SKIN_FREE } from "@/lib/profile-shared";
 
@@ -51,6 +52,9 @@ export async function FreeFromFilters({
   // plus whatever else is already selected so an active filter stays visible.
   const allergenIds = [...new Set([...FEATURED_ALLERGEN_IDS, ...selected.filter((id) => allergenLabel(id))])];
   const skin = FREE_FROM_CHECKS.filter((c) => c.category === "skin");
+  // Ingredients added from their own pages: the visitor's, plus any selected
+  // through a shared link.
+  const ingredientIds = [...new Set([...avoidIds, ...selected].filter((id) => avoidedIngredientId(id)))];
 
   return (
     <div className="space-y-4 rounded-2xl border bg-card p-4">
@@ -91,6 +95,15 @@ export async function FreeFromFilters({
             All {CONTACT_ALLERGENS.length} allergens →
           </Link>
       </FilterGroup>
+      {ingredientIds.length > 0 && (
+        <FilterGroup title="Ingredients you avoid" checks={ingredientIds.map((id) => ({ id }))} selected={selected} defaultOpen={true}>
+          {ingredientIds.map((id) => (
+            <FilterChip key={id} href={hrefToggling(id)} selected={selected.includes(id)} showCheck>
+              No {avoidedIngredientName(id)}
+            </FilterChip>
+          ))}
+        </FilterGroup>
+      )}
       <FilterGroup
         title="Skin type & lifestyle"
         checks={skin}

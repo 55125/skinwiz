@@ -9,11 +9,11 @@ import { ProductGrid } from "@/components/product-grid";
 import { IngredientLink } from "@/components/ingredient-link";
 import { FREE_FROM_CHECKS, computeFreeFromFlags, ingredientFailsCheck, type FreeFromCheck } from "@/db/ingredient-flags";
 import { CONTACT_ALLERGENS, allergensInIngredient, allergensInList, getAllergen, groupsContaining } from "@/db/contact-allergens";
-import { avoidConflicts, type AvoidableProduct } from "@/lib/avoid-shared";
+import type { AvoidableProduct } from "@/lib/avoid-shared";
 import { canonicalSlug, ingredientKey, slugFor, splitIngredientList } from "@/db/ingredient-parse";
 import { getIngredient, MIN_PUBLIC_PRODUCTS } from "@/lib/queries";
 import { findSimilarProductsCached } from "@/lib/similar";
-import { readAvoidIds, avoidedIngredientName } from "@/lib/avoid";
+import { readAvoidIds, avoidConflicts, avoidedIngredientName } from "@/lib/avoid";
 import { cn } from "@/lib/utils";
 
 const MAX_CHARS = 6000;
@@ -72,7 +72,7 @@ export default async function CheckPage({ searchParams }: { searchParams: Promis
     return a ? [{ allergen: a, names: items.filter((i) => allergensInIngredient(i.raw).includes(id)) }] : [];
   });
   const flaggedNames = new Set([...results.flatMap((r) => r.hits), ...allergenRows.flatMap((r) => r.names)].map((i) => i.raw));
-  const found = enough ? avoidConflicts({ freeFromFlags: computeFreeFromFlags(text) ?? [], allergenHits }, avoidIds) : null;
+  const found = enough ? avoidConflicts({ freeFromFlags: computeFreeFromFlags(text) ?? [], allergenHits, ingredientIds: items.map((i) => i.slug) }, avoidIds) : null;
   // Patch-test results name the mix ("Fragrance mix I"), labels name the
   // chemicals: say which mixes the allergens found here belong to.
   const mixes = new Map<string, { id: string; name: string; members: string[] }>();

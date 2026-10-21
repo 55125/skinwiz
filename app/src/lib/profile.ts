@@ -5,7 +5,8 @@ import { eq, sql } from "drizzle-orm";
 import { personProfiles } from "@/db/schema";
 import { personForSession } from "@/lib/identity";
 import { readDeviceSessionId } from "@/lib/session";
-import { avoidedIngredientName, type AvoidableProduct } from "@/lib/avoid-shared";
+import type { AvoidableProduct } from "@/lib/avoid-shared";
+import { avoidedIngredientName } from "@/lib/avoid";
 import {
   PROFILE_COOKIE,
   PROFILE_COOKIE_MAX_AGE,

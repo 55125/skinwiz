@@ -30,7 +30,7 @@ const productsCached = ttlCache(getProductsForIngredient);
 const topBrandsCached = ttlCache(getIngredientTopBrands);
 const ewgCached = ttlCache(getIngredientEwgSummary);
 import { checksFailedByIngredient } from "@/db/ingredient-flags";
-import { allergenMembers, allergensInIngredient, getAllergen, groupsContaining, type ContactAllergen } from "@/db/contact-allergens";
+import { allergenLabel, allergenMembers, allergensInIngredient, getAllergen, groupsContaining, type ContactAllergen } from "@/db/contact-allergens";
 import { MONOGRAPH_RANGES, formatRange } from "@/db/monograph-ranges";
 import { RETINOIDS } from "@/lib/retinoids";
 import { activeUse } from "@/db/active-uses";
@@ -38,6 +38,8 @@ import { formatPct } from "@/db/strength";
 import { readAvoidIds } from "@/lib/avoid";
 import { readProfile } from "@/lib/profile";
 import { IngredientPreference } from "@/components/ingredient-preference";
+import { IngredientAvoidButton } from "@/components/ingredient-avoid-button";
+import { avoidedIngredientName } from "@/lib/avoid-shared";
 import { pubchemLinkText } from "@/lib/pubchem";
 import { canonicalSlug } from "@/db/ingredient-parse";
 import { ewgHazardBadge } from "@/lib/ewg";
@@ -117,6 +119,20 @@ export default async function IngredientPage({
     .filter((a): a is ContactAllergen => !!a);
   const avoidedAllergens = new Set(avoidIds.flatMap(allergenMembers));
   const allergensAvoided = allergens.filter((a) => avoidedAllergens.has(a.id));
+  // What "Add to avoid list" puts on the list: the ingredient's own contact
+  // allergen when it is one, else the free-from check it breaks. Ingredients
+  // that are neither can't go on the list, so they get no button.
+  const avoidAllergen = allergens.find((a) => a.id === id) ?? allergens[0];
+  const avoidTarget = avoidAllergen?.id ?? failedChecks[0]?.id;
+  const avoidAdds = avoidAllergen
+    ? avoidAllergen.id !== id ? avoidAllergen.name : undefined
+    : failedChecks[0] && avoidedIngredientName(failedChecks[0].id);
+  // Already covered by another entry (an allergen family, or a check), which
+  // the button can't take off by itself.
+  const coveringIds = avoidIds.filter(
+    (a) => a !== avoidTarget && (allergenMembers(a).some((m) => allergens.some((x) => x.id === m)) || onAvoidList.some((c) => c.id === a)),
+  );
+  const coveredBy = coveringIds.length > 0 ? coveringIds.map((a) => allergenLabel(a) ?? avoidedIngredientName(a)).join(" and ") : undefined;
   const profile = await readProfile();
   const preference = profile.likes.includes(id) ? "like" : profile.dislikes.includes(id) ? "dislike" : null;
 
@@ -145,18 +161,28 @@ export default async function IngredientPage({
         All ingredients
       </Link>
 
-      <header className="space-y-3">
-        <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-brand">
-          <FlaskConical className="h-3.5 w-3.5" />
-          {active ? "Tracked active ingredient" : "Ingredient"}
-        </p>
-        <h1 className="text-3xl font-semibold leading-tight sm:text-5xl">{ingredient.name}</h1>
-        {ingredient.aliases.length > 0 && (
-          <p className="max-w-3xl text-muted-foreground">
-            <span className="font-medium text-foreground">Also listed as:</span> {ingredient.aliases.join(" · ")}
+      {/* Phones stack the avoid button under the name, full width; from md up it sits top right. */}
+      <header className="grid gap-x-8 gap-y-3 md:grid-cols-[minmax(0,1fr)_auto]">
+        <div className="space-y-3">
+          <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-brand">
+            <FlaskConical className="h-3.5 w-3.5" />
+            {active ? "Tracked active ingredient" : "Ingredient"}
           </p>
+          <h1 className="break-words text-3xl font-semibold leading-tight sm:text-5xl">{ingredient.name}</h1>
+        </div>
+        {avoidTarget && (
+          <div className="md:row-span-2 md:pt-6">
+            <IngredientAvoidButton id={avoidTarget} avoidIds={avoidIds} adds={avoidAdds} coveredBy={coveredBy} />
+          </div>
         )}
-        <IngredientPreference id={id} initial={preference} />
+        <div className="space-y-3">
+          {ingredient.aliases.length > 0 && (
+            <p className="max-w-3xl text-muted-foreground">
+              <span className="font-medium text-foreground">Also listed as:</span> {ingredient.aliases.join(" · ")}
+            </p>
+          )}
+          <IngredientPreference id={id} initial={preference} />
+        </div>
       </header>
 
       <dl className="grid grid-cols-3 gap-3">

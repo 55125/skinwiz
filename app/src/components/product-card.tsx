@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { DualScoreBadges } from "@/components/score-badge";
 import type { ProductScores } from "@/lib/scoring";
 import { dataSourceBadge } from "@/lib/data-source";
-import { getFreeFromCheck } from "@/db/ingredient-flags";
+import { getFreeFromCheck, shownFreeFromFlags } from "@/db/ingredient-flags";
 import type { EwgScore } from "@/lib/queries";
 import { ewgHazardBadge } from "@/lib/ewg";
 import { avoidVerdict, avoidedIngredientName } from "@/lib/avoid";
@@ -74,7 +74,7 @@ export function ProductCard({
         ? product.activeIds.map(activeName).join(" · ")
         : product.activeIngredientText && firstIngredients(product.activeIngredientText));
   const form = dosageFormLabel(product.dosageForm);
-  const freeFromFlags = product.freeFromFlags ?? [];
+  const freeFromFlags = shownFreeFromFlags(product.freeFromFlags ?? [], product.concernId);
 
   // At most two badges, the most personal first: the avoid-list verdict,
   // the profile match, then HSA/FSA, EWG and one free-from flag. Every

@@ -156,7 +156,7 @@ export function recentHeavyVisitors(): HeavyVisitor[] {
 export type Verdict = { action: "allow" } | { action: "block"; status: number; reason: string; retryAfter?: number };
 
 type Window = { start: number; count: number };
-type Client = { minute: Window; hour: Window; apiMinute: Window; routerMinute: Window; bannedUntil: number };
+type Client = { minute: Window; hour: Window; apiMinute: Window; routerMinute: Window; bannedUntil: number; seen: number };
 
 const clients = new Map<string, Client>();
 const MAX_CLIENTS = 50_000;
@@ -180,7 +180,20 @@ export const LIMITS = {
   banMs: 15 * 60_000,
   // strikes (limit breaches) before a ban
   strikes: 3,
+  // Site-wide cap for floods spread over thousands of IPs (one or two hits
+  // each, so the per-IP limits never trip). Counts listing-page loads that
+  // are an IP's very first request; past this many a minute, further ones are
+  // turned away until the minute is up. Real visitors mostly reach /browse
+  // from another page (a client-side router fetch, never counted), and anyone
+  // already on the site is unaffected. Before the Oct 21 2026 flood these ran
+  // ~35 a minute; the flood that took the site down ran at ~550.
+  surge: { firstVisitListingLoadsPerMinute: 150, retryAfterSec: 120 },
 };
+
+// Listing pages: every product under a filter, the cheapest way to copy the catalog.
+const LISTING_PATH = /^\/(browse|search)(\/|$)|^\/concern\//;
+const surgeWindow: Window = { start: 0, count: 0 };
+let surgeLoggedAt = 0;
 
 const strikes = new Map<string, number>();
 
@@ -263,9 +276,10 @@ export function judge(req: RequestInfo): Verdict {
 
   let c = clients.get(ip);
   if (!c) {
-    c = { minute: { start: now, count: 0 }, hour: { start: now, count: 0 }, apiMinute: { start: now, count: 0 }, routerMinute: { start: now, count: 0 }, bannedUntil: 0 };
+    c = { minute: { start: now, count: 0 }, hour: { start: now, count: 0 }, apiMinute: { start: now, count: 0 }, routerMinute: { start: now, count: 0 }, bannedUntil: 0, seen: 0 };
     clients.set(ip, c);
   }
+  const firstRequest = c.seen++ === 0;
   if (c.bannedUntil > now) {
     return { action: "block", status: 429, reason: "temporarily blocked", retryAfter: Math.ceil((c.bannedUntil - now) / 1000) };
   }
@@ -283,6 +297,19 @@ export function judge(req: RequestInfo): Verdict {
   const L = review
     ? { ...LIMITS.review, automatedPagesPerMinute: LIMITS.review.pagesPerMinute, automatedDetailPagesPerHour: LIMITS.review.detailPagesPerHour }
     : LIMITS;
+  if (firstRequest && !isApi && !isRouterFetch && LISTING_PATH.test(path) && req.method === "GET") {
+    const n = bump(surgeWindow, now, 60_000);
+    if (n > LIMITS.surge.firstVisitListingLoadsPerMinute) {
+      // forget this IP so a real person retrying later is judged afresh
+      clients.delete(ip);
+      if (now - surgeLoggedAt > 60_000) {
+        surgeLoggedAt = now;
+        noteHeavy(ip, ua, 0, `listing surge (${n} first-visit loads this minute), refusing more`, now);
+      }
+      return { action: "block", status: 503, reason: "surge", retryAfter: LIMITS.surge.retryAfterSec };
+    }
+  }
+
   let over: boolean;
   if (isRouterFetch) {
     over = bump(c.routerMinute, now, 60_000) > L.routerFetchesPerMinute;

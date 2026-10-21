@@ -52,3 +52,17 @@ test("an IP passing the heavy-visitor mark shows up in the list", () => {
   }
   assert.ok(recentHeavyVisitors().some((h) => h.ip === a && h.detailPagesThisHour === LIMITS.heavyDetailPagesPerHour));
 });
+
+test("a flood of first-visit listing loads from many IPs is cut off; visitors already on the site are not", () => {
+  const regular = ip();
+  const at = 50_000_000;
+  const browse = (who: string, t: number) => judge({ pathname: "/browse", method: "GET", headers: new Headers({ "user-agent": CHROME }), ip: who, now: t });
+  assert.equal(judge({ pathname: "/", method: "GET", headers: new Headers({ "user-agent": CHROME }), ip: regular, now: at }).action, "allow");
+  for (let i = 0; i < LIMITS.surge.firstVisitListingLoadsPerMinute; i++) assert.equal(browse(ip(), at + i).action, "allow", `load ${i}`);
+  const v = browse(ip(), at + 500);
+  assert.equal(v.action, "block");
+  assert.equal(v.action === "block" && v.status, 503);
+  assert.equal(browse(regular, at + 600).action, "allow");
+  // a new minute starts a fresh count
+  assert.equal(browse(ip(), at + 61_000).action, "allow");
+});

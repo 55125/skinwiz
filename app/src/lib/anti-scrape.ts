@@ -156,7 +156,7 @@ export function recentHeavyVisitors(): HeavyVisitor[] {
 export type Verdict = { action: "allow" } | { action: "block"; status: number; reason: string; retryAfter?: number };
 
 type Window = { start: number; count: number };
-type Client = { minute: Window; hour: Window; apiMinute: Window; routerMinute: Window; bannedUntil: number };
+type Client = { minute: Window; hour: Window; apiMinute: Window; routerMinute: Window; bannedUntil: number; seen: number };
 
 const clients = new Map<string, Client>();
 const MAX_CLIENTS = 50_000;
@@ -180,7 +180,20 @@ export const LIMITS = {
   banMs: 15 * 60_000,
   // strikes (limit breaches) before a ban
   strikes: 3,
+  // Site-wide cap for floods spread over thousands of IPs (one or two hits
+  // each, so the per-IP limits never trip). Counts listing-page loads that
+  // are an IP's very first request; past this many a minute, further ones are
+  // turned away until the minute is up. Real visitors mostly reach /browse
+  // from another page (a client-side router fetch, never counted), and anyone
+  // already on the site is unaffected. Before the Oct 21 2026 flood these ran
+  // ~35 a minute; the flood that took the site down ran at ~550.
+  surge: { firstVisitListingLoadsPerMinute: 150, retryAfterSec: 120 },
 };
+
+// Listing pages: every product under a filter, the cheapest way to copy the catalog.
+const LISTING_PATH = /^\/(browse|search)(\/|$)|^\/concern\//;
+const surgeWindow: Window = { start: 0, count: 0 };
+let surgeLoggedAt = 0;
 
 const strikes = new Map<string, number>();
 
@@ -201,13 +214,33 @@ function sweep(now: number) {
   strikes.clear();
 }
 
+// Cloudflare's published edge ranges (cloudflare.com/ips, Oct 2026). With the
+// domain proxied through Cloudflare, Railway sees one of these as the client
+// and the visitor's own address is in CF-Connecting-IP. That header is only
+// believed from these ranges: the *.up.railway.app hosts reach us directly,
+// where anyone could send it.
+const CLOUDFLARE = new BlockList();
+for (const r of [
+  "173.245.48.0/20", "103.21.244.0/22", "103.22.200.0/22", "103.31.4.0/22", "141.101.64.0/18", "108.162.192.0/18",
+  "190.93.240.0/20", "188.114.96.0/20", "197.234.240.0/22", "198.41.128.0/17", "162.158.0.0/15", "104.16.0.0/13",
+  "104.24.0.0/14", "172.64.0.0/13", "131.0.72.0/22",
+]) CLOUDFLARE.addSubnet(r.split("/")[0], Number(r.split("/")[1]), "ipv4");
+for (const r of ["2400:cb00::/32", "2606:4700::/32", "2803:f800::/32", "2405:b500::/32", "2405:8100::/32", "2a06:98c0::/29", "2c0f:f248::/32"]) {
+  CLOUDFLARE.addSubnet(r.split("/")[0], Number(r.split("/")[1]), "ipv6");
+}
+
+function fromCloudflare(ip: string): boolean {
+  const family = isIP(ip);
+  return family !== 0 && CLOUDFLARE.check(ip, family === 6 ? "ipv6" : "ipv4");
+}
+
 export function clientIp(headers: Headers): string | null {
-  const real = headers.get("x-real-ip");
-  if (real) return real.trim();
+  const real = headers.get("x-real-ip")?.trim();
   // the last hop is the one our own proxy appended; earlier ones are client-supplied
-  const fwd = headers.get("x-forwarded-for");
-  if (fwd) return fwd.split(",").pop()!.trim();
-  return null;
+  const peer = real || headers.get("x-forwarded-for")?.split(",").pop()!.trim() || null;
+  const cf = headers.get("cf-connecting-ip")?.trim();
+  if (peer && cf && isIP(cf) && fromCloudflare(peer)) return cf;
+  return peer;
 }
 
 export type RequestInfo = {
@@ -263,9 +296,10 @@ export function judge(req: RequestInfo): Verdict {
 
   let c = clients.get(ip);
   if (!c) {
-    c = { minute: { start: now, count: 0 }, hour: { start: now, count: 0 }, apiMinute: { start: now, count: 0 }, routerMinute: { start: now, count: 0 }, bannedUntil: 0 };
+    c = { minute: { start: now, count: 0 }, hour: { start: now, count: 0 }, apiMinute: { start: now, count: 0 }, routerMinute: { start: now, count: 0 }, bannedUntil: 0, seen: 0 };
     clients.set(ip, c);
   }
+  const firstRequest = c.seen++ === 0;
   if (c.bannedUntil > now) {
     return { action: "block", status: 429, reason: "temporarily blocked", retryAfter: Math.ceil((c.bannedUntil - now) / 1000) };
   }
@@ -283,6 +317,19 @@ export function judge(req: RequestInfo): Verdict {
   const L = review
     ? { ...LIMITS.review, automatedPagesPerMinute: LIMITS.review.pagesPerMinute, automatedDetailPagesPerHour: LIMITS.review.detailPagesPerHour }
     : LIMITS;
+  if (firstRequest && !isApi && !isRouterFetch && LISTING_PATH.test(path) && req.method === "GET") {
+    const n = bump(surgeWindow, now, 60_000);
+    if (n > LIMITS.surge.firstVisitListingLoadsPerMinute) {
+      // forget this IP so a real person retrying later is judged afresh
+      clients.delete(ip);
+      if (now - surgeLoggedAt > 60_000) {
+        surgeLoggedAt = now;
+        noteHeavy(ip, ua, 0, `listing surge (${n} first-visit loads this minute), refusing more`, now);
+      }
+      return { action: "block", status: 503, reason: "surge", retryAfter: LIMITS.surge.retryAfterSec };
+    }
+  }
+
   let over: boolean;
   if (isRouterFetch) {
     over = bump(c.routerMinute, now, 60_000) > L.routerFetchesPerMinute;

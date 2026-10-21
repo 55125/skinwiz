@@ -57,7 +57,11 @@ export async function proxy(request: NextRequest) {
     reviewMode: openForReview(),
   });
   if (verdict.action === "allow") return NextResponse.next();
-  return new NextResponse("Automated access is not permitted. See /robots.txt.", {
+  const body =
+    verdict.status === 503
+      ? "The site is very busy right now. Please try again in a couple of minutes."
+      : "Automated access is not permitted. See /robots.txt.";
+  return new NextResponse(body, {
     status: verdict.status,
     headers: {
       "Content-Type": "text/plain; charset=utf-8",

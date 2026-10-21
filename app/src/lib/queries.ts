@@ -37,6 +37,7 @@ import { productBrand } from "@/lib/product-brand";
 import { originIdsJson } from "@/lib/origin";
 import { ORIGINS, type OriginId } from "@/lib/origin-shared";
 import { discontinuedIdsJson, importIdsJson, inStockIdsJson, popularIdsJson } from "@/lib/availability";
+import { ttlCache } from "@/lib/ttl-cache";
 
 // Prescription rows (products.isRx) are reference/handout data and must never
 // reach a consumer listing, search, count, score, equivalence list or the
@@ -284,11 +285,16 @@ export function browseWhere(filters: BrowseFilters): SQL | undefined {
 }
 
 /** Each region's count under every other filter, for the "Brand from" chips. */
-export function browseOriginCounts(filters: BrowseFilters): Map<OriginId, number> {
-  return countByOrigin(browseWhere({ ...filters, origin: undefined }));
-}
+// The listing reads below are catalog-only (no per-visitor data), and /browse
+// and the concern pages are what bulk crawlers hammer: cached per filter set
+// (lib/ttl-cache.ts) so a flood of identical hits costs one query, not one each.
+export const browseOriginCounts = ttlCache(
+  (filters: BrowseFilters): Map<OriginId, number> => countByOrigin(browseWhere({ ...filters, origin: undefined })),
+);
 
-export function browseProducts(filters: BrowseFilters, page: number, sort?: "name") {
+export const browseProducts = ttlCache(browseProductsUncached);
+
+function browseProductsUncached(filters: BrowseFilters, page: number, sort?: "name") {
   const offset = (page - 1) * PAGE_SIZE;
   const whereClause = browseWhere(filters);
 

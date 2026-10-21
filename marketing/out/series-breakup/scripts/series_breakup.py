@@ -61,8 +61,8 @@ PARTS = {
         ("me", "I pronounce you... blocked.", "I pronounce you...|blocked."),
         ("it", "...that's actually kind of hot.", "That's... actually kind of hot.", "mi"),
         ("toast", "Methylisothiazolinone blocked", None),
-        ("note", ["We can't pronounce it either.", "That's why it's on the list."],
-         "We can't pronounce it either. That's why it's on the list."),
+        ("note", ["We can't pronounce it either.", "That's why it's on the avoid list."],
+         "We can't pronounce it either. That's why it's on the avoid list."),
         ("end", "Save your avoid list once, then check any product against it.", CTA),
     ]),
 }

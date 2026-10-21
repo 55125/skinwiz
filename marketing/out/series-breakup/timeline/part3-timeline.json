@@ -5,7 +5,7 @@
   "fps": 30,
   "width": 1080,
   "height": 1920,
-  "total_seconds": 23.1667,
+  "total_seconds": 23.6,
   "audio": "part3-audio.wav",
   "notes": [
     "Each beat's sound (a ding for a text, a thunk for a block, a beep or buzz for a scan) starts at the beat's start.",
@@ -180,14 +180,14 @@
     {
       "beat": 6,
       "start": 13.4,
-      "duration": 4.8,
-      "frames": 144,
+      "duration": 5.2333,
+      "frames": 157,
       "kind": "note",
       "lines": [
         "We can't pronounce it either.",
-        "That's why it's on the list."
+        "That's why it's on the avoid list."
       ],
-      "spoken": "We can't pronounce it either. That's why it's on the list.",
+      "spoken": "We can't pronounce it either. That's why it's on the avoid list.",
       "speaker": "narrator (Kokoro af_bella, 0.95x)",
       "after": {
         "kind": "toast",
@@ -223,7 +223,7 @@
     },
     {
       "beat": 7,
-      "start": 18.2,
+      "start": 18.6333,
       "duration": 4.9667,
       "frames": 149,
       "kind": "end",

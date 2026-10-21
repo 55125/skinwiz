@@ -29,6 +29,7 @@ from __future__ import annotations
 
 import csv
 import json
+import re
 import sys
 import time
 import urllib.parse
@@ -44,6 +45,16 @@ CATEGORIES = [
     "en:hair-care",
     "en:hair-styling-products",
     "en:hair-oils",
+    # Checked live 2026-10-21: the six above all return results, but styling
+    # (7) and oils (10) are thin. en:hair-products is the parent tag
+    # (2,451); the subcategories below are ones it actually uses. Dyes stay
+    # in: PPD is a classic patch-test allergen.
+    "en:hair-products",
+    "en:2-in-1-shampoos",
+    "en:hair-sprays",
+    "en:hair-gel",
+    "en:dry-shampoos",
+    "en:hair-dyes",
 ]
 
 ENGLISH_MARKETS = {"en:united-states", "en:canada", "en:united-kingdom", "en:ireland", "en:australia", "en:new-zealand"}
@@ -59,26 +70,51 @@ FIELDNAMES = [
 ]
 
 
-def fetch_category(tag: str) -> list[dict]:
+# OBF serves at most 10 pages of 100 to an anonymous client (page 11 is a
+# 401), so a tag with more than 1,000 products is fetched in English slices
+# instead: products with English text, plus each English-speaking market.
+# Those are the only products english_ingredients keeps anyway.
+MAX_RESULTS = 1000
+ENGLISH_SLICES = [{"languages_tags": "en:english"}] + [{"countries_tags": c} for c in sorted(ENGLISH_MARKETS)]
+
+
+def fetch_pages(filters: dict) -> tuple[list[dict], int]:
     products: list[dict] = []
     page = 1
+    count = 0
     while True:
         params = {
-            "categories_tags": tag,
+            **filters,
             "page": page,
             "page_size": PAGE_SIZE,
             "fields": "code,product_name,brands,ingredients_text,ingredients_text_en,completeness,image_front_url,lang,countries_tags",
         }
         data = _get(f"{OBF_BASE}?{urllib.parse.urlencode(params)}")
+        count = data.get("count", 0)
         batch = data.get("products", [])
         if not batch:
             break
         products.extend(batch)
-        if page * PAGE_SIZE >= data.get("count", 0):
+        if page * PAGE_SIZE >= min(count, MAX_RESULTS):
             break
         page += 1
         time.sleep(SLEEP)
-    return products
+    return products, count
+
+
+def fetch_category(tag: str) -> list[dict]:
+    products, count = fetch_pages({"categories_tags": tag})
+    if count <= MAX_RESULTS:
+        return products
+    by_code = {p.get("code"): p for p in products}
+    for extra in ENGLISH_SLICES:
+        print(f"  {tag}: {count} > {MAX_RESULTS}, slice {extra}", file=sys.stderr)
+        sliced, sliced_count = fetch_pages({"categories_tags": tag, **extra})
+        if sliced_count > MAX_RESULTS:
+            print(f"  warning: slice {extra} has {sliced_count}, only {MAX_RESULTS} fetched", file=sys.stderr)
+        for p in sliced:
+            by_code.setdefault(p.get("code"), p)
+    return list(by_code.values())
 
 
 def english_ingredients(p: dict) -> str | None:
@@ -92,9 +128,21 @@ def english_ingredients(p: dict) -> str | None:
     return None
 
 
+# Body washes and shower gels that OBF files under hair categories. A combined
+# "hair & body" wash or "3in1 shower, shampoo" stays: its name says hair.
+BODY_ONLY = re.compile(r"body wash|shower gel|gel douche|duschgel|douchegel", re.I)
+SAYS_HAIR = re.compile(r"shampoo|shampoing|hair|cabello|haar|cheveux|conditioner", re.I)
+
+
+def is_body_only(name: str) -> bool:
+    return bool(BODY_ONLY.search(name)) and not SAYS_HAIR.search(name)
+
+
 def to_row(p: dict) -> dict | None:
     ingredients = english_ingredients(p)
     if not ingredients:
+        return None
+    if is_body_only(p.get("product_name") or ""):
         return None
     if is_junk({**p, "ingredients_text": ingredients}):
         return None

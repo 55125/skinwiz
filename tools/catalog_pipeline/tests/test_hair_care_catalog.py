@@ -43,6 +43,12 @@ class HairCareRows(unittest.TestCase):
     def test_junk_is_dropped(self):
         self.assertIsNone(to_row(obf(lang="en", product_name="TEST shampoo")))
 
+    def test_body_wash_without_hair_is_dropped(self):
+        self.assertIsNone(to_row(obf(lang="en", product_name="Method Men Juniper Sage Body Wash")))
+        self.assertIsNone(to_row(obf(lang="en", product_name="Sensitive Shower Gel Soothing")))
+        self.assertIsNotNone(to_row(obf(lang="en", product_name="Invigorating Body, Face & Hair Wash")))
+        self.assertIsNotNone(to_row(obf(lang="en", product_name="3in1 Shower, Shampoo & Conditioner")))
+
 
 if __name__ == "__main__":
     unittest.main()

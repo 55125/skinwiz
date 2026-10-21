@@ -5,11 +5,12 @@
   "fps": 30,
   "width": 1080,
   "height": 1920,
-  "total_seconds": 18.8,
+  "total_seconds": 24.3,
   "audio": "part3-audio.wav",
   "notes": [
     "Each beat's sound (a ding for a text, a thunk for a block, a beep or buzz for a scan) starts at the beat's start.",
-    "Speech in a text beat starts about 0.19 s in, after the ding; the end card's narration starts 0.2 s in.",
+    "Speech in a text beat starts about 0.19 s in, after the ding; the end card's narration starts 0.2 s in; a note beat's narration starts 0.25 s in and ends with 0.6 s of silence.",
+    "kind 'note' is a narrator aside: show its 'lines' on screen; 'after' is the screen state it follows.",
     "kind 'end' is the 4 s HTML end card (marketing/endcard/endcard.mp4), with its last frame held if the narration runs longer."
   ],
   "beats": [
@@ -42,8 +43,8 @@
     {
       "beat": 2,
       "start": 3.3,
-      "duration": 2.8,
-      "frames": 84,
+      "duration": 2.3667,
+      "frames": 71,
       "kind": "it",
       "contact": {
         "name": "Methylisothiazolinone",
@@ -58,22 +59,22 @@
         },
         {
           "from": "it",
-          "text": "lol. you can't even spell me."
+          "text": "lol. you can't even pronounce me."
         }
       ],
       "toast": null,
       "new_message": {
         "from": "it",
-        "text": "lol. you can't even spell me."
+        "text": "lol. you can't even pronounce me."
       },
-      "spoken": "Ha. You can't even spell me.",
+      "spoken": "Ha. You can't even pronounce me.",
       "speaker": "Methylisothiazolinone (Chatterbox, am_echo)"
     },
     {
       "beat": 3,
-      "start": 6.1,
-      "duration": 4.2667,
-      "frames": 128,
+      "start": 5.6667,
+      "duration": 5.4,
+      "frames": 162,
       "kind": "me",
       "contact": {
         "name": "Methylisothiazolinone",
@@ -88,24 +89,24 @@
         },
         {
           "from": "it",
-          "text": "lol. you can't even spell me."
+          "text": "lol. you can't even pronounce me."
         },
         {
           "from": "me",
-          "text": "Methylisothiazolinone. Saved to my avoid list."
+          "text": "Methyl… iso… thia… zoli… whatever. You're on my avoid list."
         }
       ],
       "toast": null,
       "new_message": {
         "from": "me",
-        "text": "Methylisothiazolinone. Saved to my avoid list."
+        "text": "Methyl… iso… thia… zoli… whatever. You're on my avoid list."
       },
-      "spoken": "Methylisothiazolinone. Saved to my avoid list.",
+      "spoken": "Methyl... iso... thia... zoli... whatever. You're on my avoid list.",
       "speaker": "me (Kokoro af_heart)"
     },
     {
       "beat": 4,
-      "start": 10.3667,
+      "start": 11.0667,
       "duration": 2.7667,
       "frames": 83,
       "kind": "it",
@@ -122,11 +123,11 @@
         },
         {
           "from": "it",
-          "text": "lol. you can't even spell me."
+          "text": "lol. you can't even pronounce me."
         },
         {
           "from": "me",
-          "text": "Methylisothiazolinone. Saved to my avoid list."
+          "text": "Methyl… iso… thia… zoli… whatever. You're on my avoid list."
         },
         {
           "from": "it",
@@ -143,7 +144,7 @@
     },
     {
       "beat": 5,
-      "start": 13.1333,
+      "start": 13.8333,
       "duration": 0.7,
       "frames": 21,
       "kind": "toast",
@@ -160,11 +161,11 @@
         },
         {
           "from": "it",
-          "text": "lol. you can't even spell me."
+          "text": "lol. you can't even pronounce me."
         },
         {
           "from": "me",
-          "text": "Methylisothiazolinone. Saved to my avoid list."
+          "text": "Methyl… iso… thia… zoli… whatever. You're on my avoid list."
         },
         {
           "from": "it",
@@ -178,7 +179,51 @@
     },
     {
       "beat": 6,
-      "start": 13.8333,
+      "start": 14.5333,
+      "duration": 4.8,
+      "frames": 144,
+      "kind": "note",
+      "lines": [
+        "We can't pronounce it either.",
+        "That's why it's on the list."
+      ],
+      "spoken": "We can't pronounce it either. That's why it's on the list.",
+      "speaker": "narrator (Kokoro af_bella, 0.95x)",
+      "after": {
+        "kind": "toast",
+        "contact": {
+          "name": "Methylisothiazolinone",
+          "subtitle": "preservative · on your avoid list",
+          "initials": "MI",
+          "colour": "#c95c54"
+        },
+        "messages": [
+          {
+            "from": "me",
+            "text": "My patch test came back. We're done."
+          },
+          {
+            "from": "it",
+            "text": "lol. you can't even pronounce me."
+          },
+          {
+            "from": "me",
+            "text": "Methyl… iso… thia… zoli… whatever. You're on my avoid list."
+          },
+          {
+            "from": "it",
+            "text": "...that's actually kind of hot."
+          }
+        ],
+        "toast": "Methylisothiazolinone blocked",
+        "new_message": null,
+        "spoken": null,
+        "speaker": null
+      }
+    },
+    {
+      "beat": 7,
+      "start": 19.3333,
       "duration": 4.9667,
       "frames": 149,
       "kind": "end",

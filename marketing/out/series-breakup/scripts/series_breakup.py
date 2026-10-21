@@ -25,6 +25,7 @@ CTA = "Check before you buy. Free at Actively Skin dot com."
 #   ("emoji", "🍋")                     incoming emoji, no voice
 #   ("toast", "X blocked", spoken-by-me or None)
 #   ("scan", False|True)               barcode-scan screen: scanning, then the red X
+#   ("note", [line, line], spoken)    narrator aside on screen (Kokoro, wry and a touch slower)
 #   ("end", subtitle, spoken)
 PARTS = {
     1: ("New number, who dis", [
@@ -56,10 +57,12 @@ PARTS = {
     3: ("Breaking up with a preservative", [
         ("contact", "Methylisothiazolinone", "preservative · on your avoid list", (201, 92, 84), "MI", []),
         ("me", "My patch test came back. We're done.", "My patch test came back. We're done."),
-        ("it", "lol. you can't even spell me.", "Ha. You can't even spell me.", "mi"),
-        ("me", "Methylisothiazolinone. Saved to my avoid list.", "Methylisothiazolinone. Saved to my avoid list."),
+        ("it", "lol. you can't even pronounce me.", "Ha. You can't even pronounce me.", "mi"),
+        ("me", "Methyl… iso… thia… zoli… whatever. You're on my avoid list.", "Methyl... iso... thia... zoli... whatever. You're on my avoid list."),
         ("it", "...that's actually kind of hot.", "That's... actually kind of hot.", "mi"),
         ("toast", "Methylisothiazolinone blocked", None),
+        ("note", ["We can't pronounce it either.", "That's why it's on the list."],
+         "We can't pronounce it either. That's why it's on the list."),
         ("end", "Save your avoid list once, then check any product against it.", CTA),
     ]),
 }
@@ -150,6 +153,11 @@ def build_part(n, voiced):
             audio = np.concatenate([buzz(), silence(1.2)]) if b[1] else np.concatenate([silence(0.25), beep(), silence(0.45)])
             beats.append({"png": png, "audio": audio, "state": {"kind": "scan", "result": b[1],
                           "flagged": ["Fragrance (Parfum)"] if b[1] else []}}); continue
+        elif kind == "note":
+            audio = np.concatenate([silence(0.25), say(b[2], NARRATOR, 0.95), silence(0.6)])
+            beats.append({"png": beats[-1]["png"], "audio": audio,
+                          "state": {"kind": "note", "lines": b[1], "spoken": b[2], "speaker": "narrator (Kokoro af_bella, 0.95x)",
+                                    "after": beats[-1]["state"]}}); continue
         elif kind == "end":
             audio = np.concatenate([silence(0.2), say(b[2], NARRATOR), silence(0.7)])
             beats.append({"video": ENDCARD, "min_seconds": 4.0, "audio": audio,
@@ -181,7 +189,8 @@ def export_timeline(n, title, beats, mp4):
     meta = {"series": SERIES, "part": n, "title": title, "fps": FPS, "width": W, "height": H,
             "total_seconds": round(t, 4), "audio": f"part{n}-audio.wav",
             "notes": ["Each beat's sound (a ding for a text, a thunk for a block, a beep or buzz for a scan) starts at the beat's start.",
-                      "Speech in a text beat starts about 0.19 s in, after the ding; the end card's narration starts 0.2 s in.",
+                      "Speech in a text beat starts about 0.19 s in, after the ding; the end card's narration starts 0.2 s in; a note beat's narration starts 0.25 s in and ends with 0.6 s of silence.",
+                      "kind 'note' is a narrator aside: show its 'lines' on screen; 'after' is the screen state it follows.",
                       "kind 'end' is the 4 s HTML end card (marketing/endcard/endcard.mp4), with its last frame held if the narration runs longer."],
             "beats": rows}
     json.dump(meta, open(os.path.join(tl, f"part{n}-timeline.json"), "w"), indent=2, ensure_ascii=False)

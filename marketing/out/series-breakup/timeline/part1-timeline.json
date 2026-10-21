@@ -5,11 +5,12 @@
   "fps": 30,
   "width": 1080,
   "height": 1920,
-  "total_seconds": 20.6667,
+  "total_seconds": 23.6667,
   "audio": "part1-audio.wav",
   "notes": [
     "Each beat's sound (a ding for a text, a thunk for a block, a beep or buzz for a scan) starts at the beat's start.",
-    "Speech in a text beat starts about 0.19 s in, after the ding; the end card's narration starts 0.2 s in.",
+    "Speech in a text beat starts about 0.19 s in, after the ding; the end card's narration starts 0.2 s in; a note beat's narration starts 0.25 s in and ends with 0.6 s of silence.",
+    "kind 'note' is a narrator aside: show its 'lines' on screen; 'after' is the screen state it follows.",
     "kind 'end' is the 4 s HTML end card (marketing/endcard/endcard.mp4), with its last frame held if the narration runs longer."
   ],
   "beats": [
@@ -227,10 +228,53 @@
     {
       "beat": 9,
       "start": 12.8333,
-      "duration": 7.8333,
-      "frames": 235,
+      "duration": 5.8667,
+      "frames": 176,
+      "kind": "note",
+      "lines": [
+        "Fragrance goes by many names.",
+        "Your avoid list should know all of them."
+      ],
+      "spoken": "Fragrance goes by many names. Your avoid list should know all of them.",
+      "speaker": "narrator (Kokoro af_bella, 0.95x)",
+      "after": {
+        "kind": "it",
+        "contact": {
+          "name": "Limonene",
+          "subtitle": "new number",
+          "initials": "Lm",
+          "colour": "#deb01e"
+        },
+        "messages": [
+          {
+            "from": "it",
+            "text": "🍋"
+          },
+          {
+            "from": "me",
+            "text": "I read the WHOLE ingredient list now."
+          },
+          {
+            "from": "it",
+            "text": "...who taught you that."
+          }
+        ],
+        "toast": null,
+        "new_message": {
+          "from": "it",
+          "text": "...who taught you that."
+        },
+        "spoken": "Who taught you that.",
+        "speaker": "Limonene (Chatterbox, am_puck)"
+      }
+    },
+    {
+      "beat": 10,
+      "start": 18.7,
+      "duration": 4.9667,
+      "frames": 149,
       "kind": "end",
-      "spoken": "Fragrance can go by many names on a label. Check before you buy. Free at Actively Skin dot com."
+      "spoken": "Check before you buy. Free at Actively Skin dot com."
     }
   ]
 }

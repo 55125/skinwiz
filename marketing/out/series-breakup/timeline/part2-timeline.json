@@ -5,11 +5,12 @@
   "fps": 30,
   "width": 1080,
   "height": 1920,
-  "total_seconds": 19.0667,
+  "total_seconds": 24.6333,
   "audio": "part2-audio.wav",
   "notes": [
     "Each beat's sound (a ding for a text, a thunk for a block, a beep or buzz for a scan) starts at the beat's start.",
-    "Speech in a text beat starts about 0.19 s in, after the ding; the end card's narration starts 0.2 s in.",
+    "Speech in a text beat starts about 0.19 s in, after the ding; the end card's narration starts 0.2 s in; a note beat's narration starts 0.25 s in and ends with 0.6 s of silence.",
+    "kind 'note' is a narrator aside: show its 'lines' on screen; 'after' is the screen state it follows.",
     "kind 'end' is the 4 s HTML end card (marketing/endcard/endcard.mp4), with its last frame held if the narration runs longer."
   ],
   "beats": [
@@ -206,6 +207,57 @@
     {
       "beat": 8,
       "start": 14.1,
+      "duration": 5.5667,
+      "frames": 167,
+      "kind": "note",
+      "lines": [
+        "Fragrance gets around.",
+        "Check the label before it comes home."
+      ],
+      "spoken": "Fragrance gets around. Check the label before it comes home.",
+      "speaker": "narrator (Kokoro af_bella, 0.95x)",
+      "after": {
+        "kind": "it",
+        "contact": {
+          "name": "Fragrance",
+          "subtitle": "ex · won't take the hint",
+          "initials": "Fr",
+          "colour": "#be6ea0"
+        },
+        "messages": [
+          {
+            "from": "me",
+            "text": "It's over."
+          },
+          {
+            "from": "it",
+            "text": "lol ok. see u in ur shampoo tmrw 😘"
+          },
+          {
+            "from": "it",
+            "text": "and ur laundry detergent"
+          },
+          {
+            "from": "it",
+            "text": "and that candle ur aunt got u"
+          },
+          {
+            "from": "it",
+            "text": "...ok that's just rude."
+          }
+        ],
+        "toast": null,
+        "new_message": {
+          "from": "it",
+          "text": "...ok that's just rude."
+        },
+        "spoken": "Okay. That's just rude.",
+        "speaker": "Fragrance (Chatterbox, am_puck)"
+      }
+    },
+    {
+      "beat": 9,
+      "start": 19.6667,
       "duration": 4.9667,
       "frames": 149,
       "kind": "end",

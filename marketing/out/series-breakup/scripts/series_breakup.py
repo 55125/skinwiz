@@ -41,7 +41,9 @@ PARTS = {
         ("emoji", "🍋"),
         ("me", "I read the WHOLE ingredient list now.", "I read the whole ingredient list now."),
         ("it", "...who taught you that.", "Who taught you that.", "fragrance"),
-        ("end", "Fragrance can go by many names on a label.", "Fragrance can go by many names on a label. " + CTA),
+        ("note", ["Fragrance goes by many names.", "Your avoid list should know all of them."],
+         "Fragrance goes by many names. Your avoid list should know all of them."),
+        ("end", "Fragrance can go by many names on a label.", CTA),
     ]),
     2: ("Won't take the hint", [
         ("contact", "Fragrance", "ex · won't take the hint", (190, 110, 160), "Fr", []),
@@ -52,6 +54,8 @@ PARTS = {
         ("scan", False),
         ("scan", True),
         ("it", "...ok that's just rude.", "Okay. That's just rude.", "fragrance"),
+        ("note", ["Fragrance gets around.", "Check the label before it comes home."],
+         "Fragrance gets around. Check the label before it comes home."),
         ("end", "Save your avoid list once, then check any product against it.", CTA),
     ]),
     3: ("Breaking up with a preservative", [

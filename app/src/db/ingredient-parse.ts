@@ -1,5 +1,6 @@
 import { ACTIVE_DEFINITIONS } from "./actives";
 import typoAliases from "./ingredient-aliases.json";
+import synonymGroups from "./ingredient-synonyms.json";
 import uniiLabelNames from "./unii-label-names.json";
 
 // Turns the free-text ingredient lists in the catalog CSVs (FDA "Inactive
@@ -8,9 +9,10 @@ import uniiLabelNames from "./unii-label-names.json";
 // page. Purely deterministic -- no guessing about what an unfamiliar name
 // "probably means": two spellings only merge when the normalization rules
 // below (or a tracked active's own synonym list) say they're the same string.
-// The one exception is ingredient-aliases.json: label misspellings folded into
-// their correct spelling by an offline, precision-first review pass (see
-// canonicalSlug) and committed, so the seed itself stays deterministic.
+// The exceptions are ingredient-aliases.json, label misspellings folded into
+// their correct spelling by an offline, precision-first review pass, and
+// ingredient-synonyms.json, other names for the same substance (see
+// canonicalSlug); both are committed, so the seed itself stays deterministic.
 
 export type ParsedIngredient = { raw: string; slug: string; key: string };
 
@@ -244,7 +246,7 @@ export function parseIngredientNames(names: string[], uniis: string[] = []): Par
 
 const KEEP_UPPER = new Set([
   "PEG", "PPG", "EDTA", "BHT", "BHA", "DMDM", "PVP", "VP", "PCA", "MEA", "DEA", "TEA", "CI", "SD", "MIPA", "UV",
-  "HCL", "PABA", "MCT", "AHA", "PHA", "SPF", "II", "III", "IV", "NP", "AP", "EOP", "AS", "AG", "HP", "EG",
+  "HCL", "PABA", "MCT", "FD&C", "D&C", "AHA", "PHA", "SPF", "II", "III", "IV", "NP", "AP", "EOP", "AS", "AG", "HP", "EG",
 ]);
 
 function fixAcronyms(s: string): string {
@@ -291,16 +293,25 @@ const ALIAS_CONTENT_STOPLIST = new Set([
 const FIXED_ALIASES: Record<string, string[]> = {
   water: ["Aqua", "Eau"],
   fragrance: ["Parfum", "Perfume"],
+  "iron-oxides": ["CI 77491 (red)", "CI 77492 (yellow)", "CI 77499 (black)", "Ferric Oxide", "Ferrosoferric Oxide"],
 };
 
 const alnum = (s: string) => fold(s).replace(/[^a-z0-9]/g, "");
 
-export function aliasesFor(slug: string, name: string, variants: Map<string, number>, limit = 8): string[] {
+export function aliasesFor(
+  slug: string,
+  name: string,
+  variants: Map<string, number>,
+  limit = 8,
+  // spellings of the names folded in by sameSubstance ("Shea Butter",
+  // "FD&C Yellow No. 5"): their numbers are part of the name, not a code
+  otherNames: Map<string, number> = new Map(),
+): string[] {
   if (FIXED_ALIASES[slug]) return FIXED_ALIASES[slug];
   const score = new Map<string, { label: string; n: number }>();
-  const add = (label: string, n: number) => {
+  const add = (label: string, n: number, digitsOk = false) => {
     const cleaned = label.replace(/\s+/g, " ").replace(/^[\s*.,:;-]+|[\s.,:;-]+$/g, "");
-    if (cleaned.length < 3 || /\d/.test(cleaned) || !/[a-z]/i.test(cleaned)) return;
+    if (cleaned.length < 3 || (!digitsOk && /\d/.test(cleaned)) || !/[a-z]/i.test(cleaned)) return;
     if (ALIAS_CONTENT_STOPLIST.has(cleaned.toLowerCase())) return;
     const k = fold(cleaned);
     const cur = score.get(k);
@@ -313,6 +324,7 @@ export function aliasesFor(slug: string, name: string, variants: Map<string, num
     for (const m of raw.matchAll(/[([]([^)\]]+)[)\]]/g)) contents.set(m[1], (contents.get(m[1]) ?? 0) + n);
   }
   for (const [c, n] of contents) if (n >= 5 && c.length <= 30) add(c, n);
+  for (const [raw, n] of otherNames) add(raw.replace(/\([^)]*\)|\[[^\]]*\]/g, " "), n, true);
   const own = alnum(name);
   const singles = new Set([...score.values()].filter((v) => !v.label.includes("/")).map((v) => alnum(v.label)));
   return [...score.entries()]
@@ -326,6 +338,53 @@ export function aliasesFor(slug: string, name: string, variants: Map<string, num
 }
 
 const TYPO_ALIASES: Record<string, string> = typoAliases;
+
+// Other names for one and the same substance, not misspellings: an INCI name
+// and its common or FDA registry name ("Butyrospermum Parkii Butter" / "Shea
+// Butter", "Cetearyl Alcohol" / "Cetostearyl Alcohol"), a colorant's CI
+// number ("CI 77891" for titanium dioxide), plurals, hydrates and "organic"
+// prefixes. ingredient-synonyms.json maps each page to the slugs folded into
+// it; the pairs come from the SPL rows' UNII codes (two names, one FDA
+// substance code) and were each reviewed by hand. Botanicals that differ by
+// plant part, polymers that differ by grade (carbomers, laureth-n) and
+// mixtures (tocopherols, light mineral oil) stay apart. The label's own
+// wording stays on each product's ingredient line.
+const SYNONYM_SLUGS = new Map<string, string>();
+for (const [page, others] of Object.entries(synonymGroups as Record<string, string[]>)) {
+  for (const other of others) SYNONYM_SLUGS.set(other, page);
+}
+// Iron oxides: the INCI name covers the red, yellow and black pigments, so
+// "Ferric Oxide Red", "Ferrosoferric Oxide", "CI 77491", "Iron Oxides CI
+// 77499" and "CI 77491/CI 77492/CI 77499" all share its page. Iron compounds that are
+// something else (Ferric Ferrocyanide is Prussian blue, Iron Titanium Oxide a
+// different pigment) and a bare "Iron" are left alone.
+const IRON_OXIDE_CI = /^(?:iron-oxides?-)?(?:(?:c-?i|c1)-?7749[129]-?)+(?:iron-oxides?)?(?:-f-i-l)?$/;
+
+// Certified color additives: "FD&C Yellow No. 5", "Yellow 5", "CI 19140
+// Yellow 5" and "Yellow 5 (CI 19140)" are one dye, under the shorter
+// cosmetic-label name. A lake (the dye fixed on an aluminum or calcium base)
+// keeps a page of its own, whatever base it names.
+const CERTIFIED_COLOR =
+  /^(?:ci-?\d{5}-)?(?:(?:ext-)?(?:fd-and-c|d-and-c)-)?(red|yellow|blue|green|orange|violet)-(?:no-)?(\d+)(-(?:aluminum-|calcium-|al-|ca-)?lake)?(?:-ci-?\d{5})?$/;
+// A pigment's name with its own CI number run on ("CI 77891 / Titanium
+// Dioxide", "Mica CI 77019"). Another number means a second pigment in the
+// same entry, so that one stays apart.
+const PIGMENT_CI: Record<string, string> = {
+  "titanium-dioxide": "77891", mica: "77019", carmine: "75470", "bismuth-oxychloride": "77163",
+  ultramarines: "77007", "manganese-violet": "77742", "ferric-ferrocyanide": "77510", "tin-oxide": "77861",
+  "chromium-oxide-greens": "77288", "chromium-hydroxide-green": "77289",
+};
+const NAMED_PIGMENT = new RegExp(`^(?:ci-?(\\d{5})-)?(${Object.keys(PIGMENT_CI).join("|")})(?:-ci-?(\\d{5}))?$`);
+
+export function sameSubstance(slug: string): string {
+  if (IRON_OXIDE_CI.test(slug)) return "iron-oxides";
+  const color = CERTIFIED_COLOR.exec(slug);
+  if (color) return `${color[1]}-${color[2]}${color[3] ? "-lake" : ""}`;
+  const pigment = NAMED_PIGMENT.exec(slug);
+  if (pigment && [pigment[1], pigment[3]].every((ci) => !ci || ci === PIGMENT_CI[pigment[2]])) return pigment[2];
+  return SYNONYM_SLUGS.get(slug) ?? slug;
+}
+
 const ACTIVE_IDS = new Set(ACTIVE_DEFINITIONS.map((a) => a.id));
 
 // The slug a tracked active's other names would get as plain ingredients
@@ -339,10 +398,27 @@ for (const a of ACTIVE_DEFINITIONS) {
   }
 }
 
-// A misspelled label's slug -> the slug of its correct spelling. Tracked
+// A misspelled label's slug -> the slug of its correct spelling, and another
+// name for the same substance -> its shared page (sameSubstance). Tracked
 // actives are never treated as misspellings of anything.
 export function canonicalSlug(slug: string): string {
   if (ACTIVE_IDS.has(slug)) return slug;
-  const spelled = TYPO_ALIASES[slug] ?? slug;
+  const spelled = sameSubstance(spellingSlug(slug));
   return ACTIVE_NAME_SLUGS.get(spelled) ?? spelled;
+}
+
+// a brand's formula code run onto the name: "Phenoxyethanol <ILN45635>"
+const withoutCode = (slug: string) => slug.replace(/-iln\d+$/, "");
+
+function spellingSlug(slug: string): string {
+  const bare = withoutCode(slug);
+  return TYPO_ALIASES[bare] ?? bare;
+}
+
+// A correctly spelled other name for a substance ("Shea Butter"), as opposed
+// to a misspelling, so the seed can show it under "also listed as".
+export function isOtherName(slug: string): boolean {
+  if (ACTIVE_IDS.has(slug) || TYPO_ALIASES[withoutCode(slug)]) return false;
+  const bare = withoutCode(slug);
+  return sameSubstance(bare) !== bare;
 }

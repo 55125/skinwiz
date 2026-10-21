@@ -1,7 +1,7 @@
 // The bot filter's review mode (OPEN_FOR_REVIEW): `npm test`.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { judge, LIMITS, recentHeavyVisitors } from "./anti-scrape";
+import { clientIp, judge, LIMITS, recentHeavyVisitors } from "./anti-scrape";
 
 const CHROME = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0 Safari/537.36";
 let n = 0;
@@ -65,4 +65,13 @@ test("a flood of first-visit listing loads from many IPs is cut off; visitors al
   assert.equal(browse(regular, at + 600).action, "allow");
   // a new minute starts a fresh count
   assert.equal(browse(ip(), at + 61_000).action, "allow");
+});
+
+test("the visitor IP comes from CF-Connecting-IP only when the request arrives from Cloudflare", () => {
+  const h = (realIp: string) => new Headers({ "x-real-ip": realIp, "cf-connecting-ip": "203.0.113.7" });
+  assert.equal(clientIp(h("172.70.1.2")), "203.0.113.7");
+  assert.equal(clientIp(h("2606:4700::1")), "203.0.113.7");
+  // straight to the origin: a forged header is ignored
+  assert.equal(clientIp(h("198.51.100.9")), "198.51.100.9");
+  assert.equal(clientIp(new Headers({ "x-forwarded-for": "1.1.1.1, 198.51.100.9" })), "198.51.100.9");
 });

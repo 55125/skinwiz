@@ -5,41 +5,42 @@
 *{margin:0;box-sizing:border-box}
 html,body{width:1080px;height:1920px;overflow:hidden;font-family:Geist,"Noto Color Emoji",sans-serif;color:var(--ink)}
 body{background:radial-gradient(110% 60% at 50% 40%,#F7F4EE 0%,#EFEBE3 55%,#E6E0D5 100%)}
-.top{position:absolute;top:190px;left:0;right:0;text-align:center}
+.top{display:none}
 .kick{font-size:28px;font-weight:600;letter-spacing:6px;color:var(--teal);text-transform:uppercase}
 .kick b{display:inline-block;margin-left:14px;padding:4px 16px;border-radius:999px;background:var(--teal);color:#fff;letter-spacing:3px;font-size:24px;vertical-align:3px}
 .ttl{margin-top:14px;font-family:Fraunces,serif;font-weight:600;font-size:68px;letter-spacing:-1.5px}
-.phone{position:absolute;left:80px;right:80px;top:380px;height:1180px;border-radius:64px;background:#fff;
- box-shadow:0 2px 0 rgba(0,0,0,.03),0 30px 80px -20px rgba(40,30,10,.25),0 0 0 10px #1B1F27;overflow:hidden}
-.hdr{height:250px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding-bottom:22px;
+.phone{position:absolute;inset:0;background:#fff;overflow:hidden}
+.sb{position:absolute;top:0;left:0;right:0;height:110px;display:flex;align-items:center;justify-content:space-between;padding:22px 64px 0;font-size:36px;font-weight:600;z-index:5}
+.sb .r{display:flex;gap:14px;align-items:center}.sb svg{fill:currentColor}
+.hdr{height:430px;padding-top:110px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding-bottom:22px;
  background:rgba(248,248,250,.96);border-bottom:1px solid #E4E4E8;position:relative}
-.back{position:absolute;left:44px;top:110px;font-size:56px;color:var(--teal);font-weight:400}
-.av{width:92px;height:92px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:36px;letter-spacing:1px}
-.nm{margin-top:12px;font-size:32px;font-weight:600}
-.nm small{display:block;text-align:center;font-size:24px;font-weight:400;color:var(--muted);margin-top:2px}
-.body{position:absolute;top:250px;bottom:120px;left:0;right:0;padding:30px 36px;display:flex;flex-direction:column;gap:14px}
-.stamp{text-align:center;font-size:22px;color:var(--muted);margin:6px 0 10px}
+.back{position:absolute;left:50px;top:220px;font-size:80px;color:var(--teal);font-weight:400}
+.av{width:150px;height:150px;font-size:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:36px;letter-spacing:1px}
+.nm{margin-top:16px;font-size:44px;font-weight:600}
+.nm small{display:block;text-align:center;font-size:32px;font-weight:400;color:var(--muted);margin-top:4px}
+.body{position:absolute;top:430px;bottom:180px;left:0;right:0;padding:40px 44px;display:flex;flex-direction:column;gap:20px}
+.stamp{text-align:center;font-size:30px;color:var(--muted);margin:6px 0 10px}
 .stamp b{font-weight:600}
-.m{max-width:72%;padding:22px 30px;border-radius:44px;font-size:46px;line-height:1.22;position:relative}
+.m{max-width:76%;padding:26px 36px;border-radius:52px;font-size:56px;line-height:1.22;position:relative}
 .it{align-self:flex-start;background:var(--in);border-bottom-left-radius:14px}
 .me{align-self:flex-end;background:linear-gradient(180deg,var(--teal2),var(--teal));color:#fff;border-bottom-right-radius:14px}
-.emo{background:none;font-size:150px;padding:0;line-height:1}
-.dl{align-self:flex-end;font-size:22px;color:var(--muted);margin-top:-6px;margin-right:12px}
-.bar{position:absolute;bottom:0;left:0;right:0;height:120px;display:flex;align-items:center;gap:20px;padding:0 30px;border-top:1px solid #EEE;background:#fff}
-.bar .f{flex:1;height:72px;border:2px solid #E2E2E6;border-radius:36px;display:flex;align-items:center;padding:0 28px;font-size:30px;color:#A3A6AD}
-.bar .s{width:64px;height:64px;border-radius:50%;background:var(--teal);opacity:.35}
-.toast{position:absolute;left:50%;top:560px;transform:translateX(-50%);background:rgba(27,31,39,.94);color:#fff;font-size:36px;font-weight:600;
- padding:24px 40px;border-radius:999px;white-space:nowrap;display:flex;align-items:center;gap:16px;box-shadow:0 20px 50px -10px rgba(0,0,0,.4)}
+.emo{background:none;font-size:190px;padding:0;line-height:1}
+.dl{align-self:flex-end;font-size:28px;color:var(--muted);margin-top:-6px;margin-right:12px}
+.bar{position:absolute;bottom:0;left:0;right:0;height:180px;padding-bottom:40px !important;display:flex;align-items:center;gap:20px;padding:0 30px;border-top:1px solid #EEE;background:#fff}
+.bar .f{flex:1;height:96px;border:2px solid #E2E2E6;border-radius:48px;display:flex;align-items:center;padding:0 36px;font-size:40px;color:#A3A6AD}
+.bar .s{width:84px;height:84px;border-radius:50%;background:var(--teal);opacity:.35}
+.toast{position:absolute;left:50%;top:820px;transform:translateX(-50%);background:rgba(27,31,39,.94);color:#fff;font-size:48px;font-weight:600;
+ padding:32px 54px;border-radius:999px;white-space:nowrap;display:flex;align-items:center;gap:16px;box-shadow:0 20px 50px -10px rgba(0,0,0,.4)}
 .toast i{width:44px;height:44px;border-radius:50%;border:5px solid #FF6B5E;position:relative;display:inline-block}
 .toast i:after{content:"";position:absolute;left:50%;top:50%;width:40px;height:5px;background:#FF6B5E;transform:translate(-50%,-50%) rotate(-45deg)}
 .dim{position:absolute;inset:0;background:rgba(255,255,255,.55)}
 /* scan */
 .cam{position:absolute;inset:0;background:radial-gradient(80% 60% at 50% 45%,#3A3B40,#16171A)}
-.cam h3{position:absolute;top:70px;width:100%;text-align:center;color:#fff;font-size:34px;font-weight:600}
-.bottle{position:absolute;left:50%;top:190px;transform:translateX(-50%)}
+.cam h3{position:absolute;top:170px;width:100%;text-align:center;color:#fff;font-size:44px;font-weight:600}
+.bottle{position:absolute;left:50%;top:330px;transform:translateX(-50%) scale(1.25);transform-origin:50% 0}
 .br{position:absolute;width:70px;height:70px;border-color:#fff;border-style:solid}
-.laser{position:absolute;left:250px;right:250px;height:6px;background:#FF5A4E;box-shadow:0 0 24px 6px rgba(255,90,78,.6);border-radius:3px}
-.sheet{position:absolute;left:24px;right:24px;bottom:24px;background:#fff;border-radius:44px;padding:44px 44px 40px;box-shadow:0 -10px 60px rgba(0,0,0,.35)}
+.laser{position:absolute;left:300px;right:300px;height:6px;background:#FF5A4E;box-shadow:0 0 24px 6px rgba(255,90,78,.6);border-radius:3px}
+.sheet{position:absolute;left:40px;right:40px;bottom:420px;background:#fff;border-radius:44px;padding:44px 44px 40px;box-shadow:0 -10px 60px rgba(0,0,0,.35)}
 .sheet .row{display:flex;gap:28px;align-items:center}
 .x{width:104px;height:104px;border-radius:50%;background:var(--red);display:flex;align-items:center;justify-content:center;flex:none}
 .sheet h4{font-size:50px;font-weight:700;letter-spacing:-.5px}
@@ -56,7 +57,7 @@ const isEmoji=s=>/^[\p{Extended_Pictographic}️\s]+$/u.test(s);
 function render(s){
  document.getElementById('kick').innerHTML=`${s.series}<b>PART ${s.part}</b>`;
  document.getElementById('ttl').textContent=s.title;
- const ph=document.getElementById('phone');ph.innerHTML='';const L=s.local;
+ const ph=document.getElementById('phone');ph.innerHTML='';const L=s.local;const sb=E('div','sb','<span>11:47</span><span class="r"><svg width="44" height="28" viewBox="0 0 44 28"><rect x="0" y="18" width="7" height="10" rx="2"/><rect x="11" y="12" width="7" height="16" rx="2"/><rect x="22" y="6" width="7" height="22" rx="2"/><rect x="33" y="0" width="7" height="28" rx="2"/></svg><svg width="64" height="30" viewBox="0 0 64 30"><rect x="1" y="1" width="54" height="28" rx="8" fill="none" stroke="currentColor" stroke-width="2" opacity=".4"/><rect x="5" y="5" width="38" height="20" rx="5"/><rect x="58" y="10" width="4" height="10" rx="2" opacity=".4"/></svg></span>');if(s.kind==='scan')sb.style.color='#fff';ph.appendChild(sb);
  if(s.kind==='scan'){
   const cam=E('div','cam');cam.appendChild(E('h3',null,'Scan a barcode'));
   cam.insertAdjacentHTML('beforeend',`<svg class="bottle" width="360" height="700" viewBox="0 0 360 700">
@@ -66,11 +67,11 @@ function render(s){
    <rect x="70" y="440" width="220" height="140" rx="8" fill="#fff"/>
    ${Array.from({length:34},(_,i)=>`<rect x="${84+i*5.8}" y="452" width="${[2,3,2,4,2,3][i%6]}" height="105" fill="#1B1F27"/>`).join('')}
   </svg>`);
-  const by=630,bx=[250,670],sz=70;
-  [[bx[0],by-40,'8px 0 0 8px'],[bx[1],by-40,'8px 8px 0 0'],[bx[0],by+150,'0 0 8px 8px'],[bx[1],by+150,'0 8px 8px 0']].forEach(([x,y,w],i)=>{
+  const by=900,bx=[300,720],sz=70;
+  [[bx[0],by-40,'8px 0 0 8px'],[bx[1],by-40,'8px 8px 0 0'],[bx[0],by+190,'0 0 8px 8px'],[bx[1],by+190,'0 8px 8px 0']].forEach(([x,y,w],i)=>{
    const b=E('div','br');b.style.left=x+'px';b.style.top=y+'px';b.style.borderWidth=['8px 0 0 8px','8px 8px 0 0','0 0 8px 8px','0 8px 8px 0'][i];
    b.style.borderRadius=['18px 0 0 0','0 18px 0 0','0 0 0 18px','0 0 18px 0'][i];b.style.borderColor=s.result?'#FF5A4E':'#fff';cam.appendChild(b)});
-  if(!s.result){const l=E('div','laser');l.style.top=(by-20+170*(0.5+0.5*Math.sin(L*5)))+'px';cam.appendChild(l)}
+  if(!s.result){const l=E('div','laser');l.style.top=(by-20+190*(0.5+0.5*Math.sin(L*5)))+'px';cam.appendChild(l)}
   else{const sh=E('div','sheet');const k=ease(L/0.4);sh.style.transform=`translateY(${(1-k)*110}%)`;
    sh.innerHTML=`<div class="row"><div class="x"><svg width="52" height="52" viewBox="0 0 24 24"><path d="M5 5l14 14M19 5L5 19" stroke="#fff" stroke-width="3.4" stroke-linecap="round"/></svg></div>
    <div><h4>On your avoid list</h4><p>Lists: ${s.flagged||'Fragrance (Parfum)'}</p></div></div><span class="tag">Skip this one</span>`;cam.appendChild(sh)}

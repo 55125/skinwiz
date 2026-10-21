@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { ChevronDown, Menu, Search, UserRound, X } from "lucide-react";
+import { ChevronDown, Menu, PawPrint, Search, UserRound, X } from "lucide-react";
 import { SearchBar } from "@/components/search-bar";
 import { cn } from "@/lib/utils";
 import { INGREDIENT_ITEMS, MY_SKIN_ITEMS, isActive, type NavItem } from "@/lib/nav";
@@ -236,10 +236,37 @@ function MobileMenu({ pathname, concerns, showSearch }: { pathname: string; conc
   );
 }
 
+// The People / Pets switch beside the logo, on every page, when the
+// flag-gated pet catalog is on (lib/feature-flags.ts PET_MODE). Pet mode is
+// one mode for both species; its pages filter Dogs / Cats / All themselves.
+export function ModeSwitch() {
+  const pathname = usePathname();
+  const pets = isActive(pathname, "/pets");
+  const item = (href: string, active: boolean, children: React.ReactNode) => (
+    <Link
+      href={href}
+      aria-current={active ? "page" : undefined}
+      className={cn(
+        "inline-flex items-center gap-1 rounded-full px-2.5 py-1 transition-colors",
+        active ? "bg-brand-soft font-medium text-brand-foreground" : "text-muted-foreground hover:text-foreground",
+      )}
+    >
+      {children}
+    </Link>
+  );
+  return (
+    <div role="navigation" aria-label="People or pets" className="flex shrink-0 rounded-full border bg-card p-0.5 text-xs sm:text-sm">
+      {item("/", !pets, "People")}
+      {item("/pets", pets, <><PawPrint className="h-3.5 w-3.5" /> Pets</>)}
+    </div>
+  );
+}
+
 export function SiteNav({ concerns }: { concerns: Concern[] }) {
   const pathname = usePathname();
-  // Home and Search already have a big search box of their own.
-  const showSearch = pathname !== "/" && pathname !== "/search";
+  // Home and Search already have a big search box of their own; pet pages
+  // have their own pet search (the header one searches the people catalog).
+  const showSearch = pathname !== "/" && pathname !== "/search" && !isActive(pathname, "/pets");
   const pill = (href: string, label: string, active: boolean, extra?: string) => (
     <Link
       href={href}

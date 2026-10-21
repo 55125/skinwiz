@@ -1,0 +1,956 @@
+[
+ {
+  "ingredient": "permethrin",
+  "species": {
+   "cat": "supported",
+   "dog": "not_found"
+  },
+  "threshold": "\"permethrin products formulated for dogs can contain up to 65% of permethrin\" / \"Many topical spot-on products for dogs contain high concentrations (44%–65%) of permethrin\"",
+  "safe_exceptions": "\"The low concentration products (sprays, foggers) approved for use on cats or in household premise sprays generally contain 0.05–0.1% permethrin\" (Gwaltney-Brant); \"low concentration products approved for cats contain 0.05-0.1% of permethrin and do not seem to cause the signs\" (Wismer; PMC4663799); \"Some permethrin-containing products are approved for cats but contain smaller concentrations (usually <1% permethrin).\" (Clinician's Brief)",
+  "effect": "Tremors, fasciculations, hyperesthesia, seizures, hyperthermia; death in ~10.5% of VPIS cases. Cats lack efficient glucuronidation.",
+  "sources": [
+   {
+    "title": "Ectoparasiticides Used in Small Animals (MSD/Merck Veterinary Manual, M.W. Dryden, Apr 2024)",
+    "url": "https://www.merckvetmanual.com/pharmacology/ectoparasiticides/ectoparasiticides-used-in-small-animals"
+   },
+   {
+    "title": "Mange in Dogs and Cats (MSD/Merck Veterinary Manual)",
+    "url": "https://www.merckvetmanual.com/integumentary-system/mange/mange-in-dogs-and-cats"
+   },
+   {
+    "title": "Plant-Derived Insecticide Toxicosis in Animals (MSD/Merck Veterinary Manual, R.C. Gupta)",
+    "url": "https://www.merckvetmanual.com/toxicology/insecticide-and-acaricide-organic-toxicity/plant-derived-insecticide-toxicosis-in-animals"
+   },
+   {
+    "title": "Gwaltney-Brant S. Common hazards for cats (Proceedings), dvm360",
+    "url": "https://www.dvm360.com/view/common-hazards-cats-proceedings"
+   },
+   {
+    "title": "Wismer T. Flea control and insecticides (Proceedings), dvm360",
+    "url": "https://www.dvm360.com/view/flea-control-and-insecticides-proceedings"
+   },
+   {
+    "title": "Sobczak BR. Managing Exposure to Permethrin, Clinician's Brief",
+    "url": "https://www.cliniciansbrief.com/article/managing-exposure-permethrin"
+   },
+   {
+    "title": "Intravenous lipid emulsion and dexmedetomidine for treatment of feline permethrin intoxication: a report from 4 cases (PMC4663799)",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4663799/"
+   },
+   {
+    "title": "Sutton NM, Bates N, Campbell A. Clinical effects and outcome of feline permethrin spot-on poisonings reported to the VPIS, London. J Feline Med Surg 2007;9(4):335-9",
+    "url": "https://pubmed.ncbi.nlm.nih.gov/17627861/"
+   },
+   {
+    "title": "Boland LA, Angles JM. Feline permethrin toxicity: retrospective study of 42 cases. J Feline Med Surg 2010;12(2):61-71",
+    "url": "https://pubmed.ncbi.nlm.nih.gov/19897392/"
+   },
+   {
+    "title": "Linnett PJ. Permethrin toxicosis in cats. Aust Vet J 2008;86(1-2):32-5",
+    "url": "https://pubmed.ncbi.nlm.nih.gov/18271821/"
+   }
+  ],
+  "notes": "MSD: 'Some pyrethroids, such as permethrin, can be highly toxic to cats'; MSD Mange: permethrin and amitraz 'contraindicated in cats'. VPIS: 'Permethrin-based spot-on preparations are contraindicated in cats'. Secondary exposure from grooming/contact with recently treated dogs is documented (Linnett 2008; Clinician's Brief: 'Even close contact between treated dogs and cats can result in toxicity'). On cat-labeled products: sources say low-concentration (0.05-0.1%, <1%) cat-approved products do not seem to cause signs, so a cat label at low % is the documented exception; no source sets a precise cutoff between. Dogs: no source in my family flags permethrin as toxic to dogs at label use."
+ },
+ {
+  "ingredient": "other synthetic pyrethroids (cypermethrin, cyphenothrin, deltamethrin, d-phenothrin, lambda-cyhalothrin)",
+  "species": {
+   "cat": "supported",
+   "dog": "not_found"
+  },
+  "threshold": null,
+  "safe_exceptions": "Flumethrin and etofenprox are named exceptions (see separate entries).",
+  "effect": "Same neurotoxic syndrome as permethrin; type II (alpha-cyano: cypermethrin, deltamethrin, cyphenothrin, cyhalothrin) more toxic than type I.",
+  "sources": [
+   {
+    "title": "Plant-Derived Insecticide Toxicosis in Animals (MSD/Merck Veterinary Manual, R.C. Gupta)",
+    "url": "https://www.merckvetmanual.com/toxicology/insecticide-and-acaricide-organic-toxicity/plant-derived-insecticide-toxicosis-in-animals"
+   },
+   {
+    "title": "Ectoparasiticides Used in Small Animals (MSD/Merck Veterinary Manual, M.W. Dryden, Apr 2024)",
+    "url": "https://www.merckvetmanual.com/pharmacology/ectoparasiticides/ectoparasiticides-used-in-small-animals"
+   },
+   {
+    "title": "Pucheu-Haston C. The Flea-Infested Pet: Overview of Current Products, Today's Veterinary Practice",
+    "url": "https://todaysveterinarypractice.com/practical-parasitologythe-flea-infested-pet-overview-current-products/"
+   },
+   {
+    "title": "Wismer T. Flea control and insecticides (Proceedings), dvm360",
+    "url": "https://www.dvm360.com/view/flea-control-and-insecticides-proceedings"
+   },
+   {
+    "title": "Sobczak BR. Managing Exposure to Permethrin, Clinician's Brief",
+    "url": "https://www.cliniciansbrief.com/article/managing-exposure-permethrin"
+   }
+  ],
+  "notes": "Class-level support for cats: MSD 'Among pets, cats appear to be more sensitive to pyrethroid toxicity'; MSD ecto 'Synthetic pyrethroids ... are less well tolerated in cats'; Today's Vet Practice (Pucheu-Haston) 'most pyrethroids are extremely toxic to cats'. Ingredient-specific: cyphenothrin - Wismer: 'Signs and treatment are the same as for permethrin' (cats); phenothrin and cypermethrin named as concentrated ingredients of canine spot-ons (Clinician's Brief). I found no family source naming deltamethrin or lambda-cyhalothrin specifically as toxic to cats beyond the class statements (MSD lists deltamethrin and cyhalothrin as type II, more toxic than type I). No dog-specific warning at label use."
+ },
+ {
+  "ingredient": "pyrethrins (natural)",
+  "species": {
+   "cat": "considered_safe",
+   "dog": "considered_safe"
+  },
+  "threshold": null,
+  "safe_exceptions": "\"Natural pyrethrum is extracted from chrysanthemum flowers and is notable for its rapid but brief action and relative lack of toxicity in dogs and cats.\" (MSD) / \"Pyrethrin is derived from the chrysanthemum plant. It is generally very safe when applied properly, even in young cats.\" (Today's Veterinary Practice)",
+  "effect": "Low toxicity when used as labeled; overdose can cause typical pyrethroid signs.",
+  "sources": [
+   {
+    "title": "Ectoparasiticides Used in Small Animals (MSD/Merck Veterinary Manual, M.W. Dryden, Apr 2024)",
+    "url": "https://www.merckvetmanual.com/pharmacology/ectoparasiticides/ectoparasiticides-used-in-small-animals"
+   },
+   {
+    "title": "Plant-Derived Insecticide Toxicosis in Animals (MSD/Merck Veterinary Manual, R.C. Gupta)",
+    "url": "https://www.merckvetmanual.com/toxicology/insecticide-and-acaricide-organic-toxicity/plant-derived-insecticide-toxicosis-in-animals"
+   },
+   {
+    "title": "Pucheu-Haston C. The Flea-Infested Pet: Overview of Current Products, Today's Veterinary Practice",
+    "url": "https://todaysveterinarypractice.com/practical-parasitologythe-flea-infested-pet-overview-current-products/"
+   }
+  ],
+  "notes": "MSD: plant-derived insecticides 'have traditionally been considered safe for use on animals'. MSD notes synergists (piperonyl butoxide) 'potentiate toxicity in mammals'. No family source flags natural pyrethrins as cat-contraindicated."
+ },
+ {
+  "ingredient": "etofenprox",
+  "species": {
+   "cat": "considered_safe",
+   "dog": "not_found"
+  },
+  "threshold": "\"Spot-on formulations containing 40-55% etofenprox have been approved for use on cats.\" (Gwaltney-Brant, dvm360)",
+  "safe_exceptions": "\"Notable exceptions include flumethrin and etofenprox, which appear to be well tolerated by most cats.\" (Today's Veterinary Practice)",
+  "effect": "Usually well tolerated; when toxicosis occurs in cats, signs are milder and shorter than permethrin.",
+  "sources": [
+   {
+    "title": "Pucheu-Haston C. The Flea-Infested Pet: Overview of Current Products, Today's Veterinary Practice",
+    "url": "https://todaysveterinarypractice.com/practical-parasitologythe-flea-infested-pet-overview-current-products/"
+   },
+   {
+    "title": "Gwaltney-Brant S. Common hazards for cats (Proceedings), dvm360",
+    "url": "https://www.dvm360.com/view/common-hazards-cats-proceedings"
+   }
+  ],
+  "notes": "Gwaltney-Brant: 'Usually the signs from etofenprox toxicosis in cats are much milder and do not last as long as permethrin toxicosis'. Flumethrin is likewise named as tolerated by most cats (also MSD: used with imidacloprid in cat collars)."
+ },
+ {
+  "ingredient": "tea tree / melaleuca oil",
+  "species": {
+   "cat": "supported",
+   "dog": "supported"
+  },
+  "threshold": "Khan 2014 studied 100% TTO; amounts 0.1 to 85 mL. No family source gives a numeric safe %.",
+  "safe_exceptions": "Review (Antibiotics 2026): \"Notably, diluted formulations have shown acceptable safety profiles in controlled studies.\" (no % given)",
+  "effect": "CNS depression, paresis, ataxia, tremors, hypothermia, hepatotoxicity; deaths reported; worse in younger, smaller cats.",
+  "sources": [
+   {
+    "title": "Toxicoses From Essential Oils in Animals (MSD/Merck Veterinary Manual, K. Benson, Mar 2025)",
+    "url": "https://www.merckvetmanual.com/toxicology/toxicoses-from-household-hazards/toxicoses-from-essential-oils-in-animals"
+   },
+   {
+    "title": "Khan SA, McLean MK, Slater MR. Concentrated tea tree oil toxicosis in dogs and cats: 443 cases (2002-2012). JAVMA 2014;244(1):95-9",
+    "url": "https://pubmed.ncbi.nlm.nih.gov/24344857/"
+   },
+   {
+    "title": "Villar D et al. Toxicity of melaleuca oil and related essential oils applied topically on dogs and cats. Vet Hum Toxicol 1994;36(2):139-42",
+    "url": "https://pubmed.ncbi.nlm.nih.gov/8197716/"
+   },
+   {
+    "title": "Poppenga RH. Herbal and Other Natural Products Pose Intoxication Risks to Pets (ACVC 2001 proceedings, VIN)",
+    "url": "https://www.vin.com/VINDBPub/SearchPB/Proceedings/PR05000/PR00396.htm"
+   },
+   {
+    "title": "Wismer T. Flea control and insecticides (Proceedings), dvm360",
+    "url": "https://www.dvm360.com/view/flea-control-and-insecticides-proceedings"
+   },
+   {
+    "title": "Essential Oils for Flea and Tick Control in Companion Animals: A Critical Review of Efficacy, Safety, Resistance Mitigation and IPM. Antibiotics (Basel) 2026;15(3):312 (PMC13024315)",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC13024315/"
+   }
+  ],
+  "notes": "MSD: 'Tea tree oil has been the most commonly reported intoxicant in pets'; listed as potentially hepatotoxic. Khan 2014: cutaneous route in 50%, cutaneous+oral 30%; 'Intentional or accidental use of 100% TTO in dogs or cats caused serious signs ... Younger cats and those with lighter body weight were at greater risk'. Villar 1994: dermal application to dogs and cats 'at inappropriate high doses'. Concentration consensus in my family: undiluted/concentrated oil is the documented hazard; low-% safety is asserted only generally. Note: Khan/Genovese authors are ASPCA APCC staff but these are peer-reviewed JAVMA/JVECC papers."
+ },
+ {
+  "ingredient": "essential oils (class, concentrated)",
+  "species": {
+   "cat": "supported",
+   "dog": "supported"
+  },
+  "threshold": null,
+  "safe_exceptions": "MSD advises 'Use diluted rather than concentrated oils.'",
+  "effect": "Rapid absorption via skin, GI, lungs; vomiting, drooling, ataxia, tremors, seizures, liver/kidney failure.",
+  "sources": [
+   {
+    "title": "Toxicoses From Essential Oils in Animals (MSD/Merck Veterinary Manual, K. Benson, Mar 2025)",
+    "url": "https://www.merckvetmanual.com/toxicology/toxicoses-from-household-hazards/toxicoses-from-essential-oils-in-animals"
+   },
+   {
+    "title": "Genovese AG, McLean MK, Khan SA. Adverse reactions from essential oil-containing natural flea products exempted from EPA regulations in dogs and cats. J Vet Emerg Crit Care 2012;22(4):470-5",
+    "url": "https://pubmed.ncbi.nlm.nih.gov/22805458/"
+   },
+   {
+    "title": "Wismer T. Flea control and insecticides (Proceedings), dvm360",
+    "url": "https://www.dvm360.com/view/flea-control-and-insecticides-proceedings"
+   },
+   {
+    "title": "Essential Oils for Flea and Tick Control in Companion Animals: A Critical Review of Efficacy, Safety, Resistance Mitigation and IPM. Antibiotics (Basel) 2026;15(3):312 (PMC13024315)",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC13024315/"
+   }
+  ],
+  "notes": "MSD: 'Concentrated essential oils should never be directly applied to pets'; 'cats are more sensitive because they are deficient in the enzyme glucuronyl transferase ... very sensitive to phenol and phenolic compounds'; 'Cats' natural grooming behavior places them at additional risk from both dermal and oral exposures'; dogs 'are still at risk'. Genovese 2012: EPA-exempt essential-oil flea products caused adverse effects in 92% of cats and 89% of dogs, 77% used per label; 1 cat died, 1 cat and 1 dog euthanized. Wismer: 'Cats appear to be more sensitive than dogs to any of the essential oils.'"
+ },
+ {
+  "ingredient": "pennyroyal oil",
+  "species": {
+   "cat": "not_found",
+   "dog": "supported"
+  },
+  "threshold": null,
+  "safe_exceptions": null,
+  "effect": "Hepatic necrosis, seizures, death.",
+  "sources": [
+   {
+    "title": "Sudekum M, Poppenga RH, et al. Pennyroyal oil toxicosis in a dog. JAVMA 1992;200(6):817-8",
+    "url": "https://pubmed.ncbi.nlm.nih.gov/1568929/"
+   },
+   {
+    "title": "Poppenga RH. Herbal and Other Natural Products Pose Intoxication Risks to Pets (ACVC 2001 proceedings, VIN)",
+    "url": "https://www.vin.com/VINDBPub/SearchPB/Proceedings/PR05000/PR00396.htm"
+   },
+   {
+    "title": "Wismer T. Flea control and insecticides (Proceedings), dvm360",
+    "url": "https://www.dvm360.com/view/flea-control-and-insecticides-proceedings"
+   },
+   {
+    "title": "Toxicoses From Essential Oils in Animals (MSD/Merck Veterinary Manual, K. Benson, Mar 2025)",
+    "url": "https://www.merckvetmanual.com/toxicology/toxicoses-from-household-hazards/toxicoses-from-essential-oils-in-animals"
+   }
+  ],
+  "notes": "Dog: Sudekum 1992 - dog treated for fleas with pennyroyal oil died within 48 h; Poppenga - dermally exposed dog developed seizures, died with massive hepatocellular necrosis. Wismer: 'Pennyroyal oil has been associated with hepatic necrosis.' MSD lists pennyroyal as potentially hepatotoxic and seizure-causing without naming species. Cat: no cat-specific statement found (only class-level cat sensitivity)."
+ },
+ {
+  "ingredient": "eucalyptus oil",
+  "species": {
+   "cat": "not_found",
+   "dog": "not_found"
+  },
+  "threshold": null,
+  "safe_exceptions": null,
+  "effect": "Seizures (MSD list, species not specified).",
+  "sources": [
+   {
+    "title": "Toxicoses From Essential Oils in Animals (MSD/Merck Veterinary Manual, K. Benson, Mar 2025)",
+    "url": "https://www.merckvetmanual.com/toxicology/toxicoses-from-household-hazards/toxicoses-from-essential-oils-in-animals"
+   }
+  ],
+  "notes": "MSD lists eucalyptus among essential oils that can cause seizures, species not named. Treat as class-level (cats more sensitive) only."
+ },
+ {
+  "ingredient": "peppermint oil",
+  "species": {
+   "cat": "not_found",
+   "dog": "not_found"
+  },
+  "threshold": null,
+  "safe_exceptions": null,
+  "effect": "Adverse effects from mixed-oil flea products.",
+  "sources": [
+   {
+    "title": "Genovese AG, McLean MK, Khan SA. Adverse reactions from essential oil-containing natural flea products exempted from EPA regulations in dogs and cats. J Vet Emerg Crit Care 2012;22(4):470-5",
+    "url": "https://pubmed.ncbi.nlm.nih.gov/22805458/"
+   },
+   {
+    "title": "Essential Oils for Flea and Tick Control in Companion Animals: A Critical Review of Efficacy, Safety, Resistance Mitigation and IPM. Antibiotics (Basel) 2026;15(3):312 (PMC13024315)",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC13024315/"
+   }
+  ],
+  "notes": "Only evidence: the 2026 review describes the Genovese 2012 products as containing 'peppermint, thyme, cinnamon, and clove oils' (mixtures; adverse effects in cats and dogs). No oil-specific attribution."
+ },
+ {
+  "ingredient": "cinnamon oil / cassia bark",
+  "species": {
+   "cat": "not_found",
+   "dog": "not_found"
+  },
+  "threshold": null,
+  "safe_exceptions": null,
+  "effect": "Potential hepatotoxicity.",
+  "sources": [
+   {
+    "title": "Toxicoses From Essential Oils in Animals (MSD/Merck Veterinary Manual, K. Benson, Mar 2025)",
+    "url": "https://www.merckvetmanual.com/toxicology/toxicoses-from-household-hazards/toxicoses-from-essential-oils-in-animals"
+   },
+   {
+    "title": "Essential Oils for Flea and Tick Control in Companion Animals: A Critical Review of Efficacy, Safety, Resistance Mitigation and IPM. Antibiotics (Basel) 2026;15(3):312 (PMC13024315)",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC13024315/"
+   }
+  ],
+  "notes": "MSD lists 'cassia bark' and 'cinnamon oil' as potentially hepatotoxic (species not named). Also an ingredient of the mixed-oil products in Genovese 2012 (per review)."
+ },
+ {
+  "ingredient": "clove oil (eugenol)",
+  "species": {
+   "cat": "not_found",
+   "dog": "not_found"
+  },
+  "threshold": null,
+  "safe_exceptions": null,
+  "effect": "Phenolic oil; adverse effects from mixed-oil flea products.",
+  "sources": [
+   {
+    "title": "Essential Oils for Flea and Tick Control in Companion Animals: A Critical Review of Efficacy, Safety, Resistance Mitigation and IPM. Antibiotics (Basel) 2026;15(3):312 (PMC13024315)",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC13024315/"
+   },
+   {
+    "title": "Toxicoses From Essential Oils in Animals (MSD/Merck Veterinary Manual, K. Benson, Mar 2025)",
+    "url": "https://www.merckvetmanual.com/toxicology/toxicoses-from-household-hazards/toxicoses-from-essential-oils-in-animals"
+   },
+   {
+    "title": "Veterinary toxicology alert: Oils used in 'scent training' can harm dogs (dvm360; Swenson, Davison, Buchweitz, MSU)",
+    "url": "https://www.dvm360.com/view/veterinary-toxicology-alert-oils-used-scent-training-can-harm-dogs"
+   }
+  ],
+  "notes": "Review: phenol-rich oils (thymol, carvacrol, eugenol named among phenolics) are a feline risk; clove was in Genovese 2012 mixtures. MSD: cats 'very sensitive to phenol and phenolic compounds, which some oils contain' (clove not named). dvm360 scent-training article names clove as a training scent but attributes the specific toxicity to birch oil."
+ },
+ {
+  "ingredient": "pine oil",
+  "species": {
+   "cat": "supported",
+   "dog": "not_found"
+  },
+  "threshold": null,
+  "safe_exceptions": null,
+  "effect": "Feline toxicity reported.",
+  "sources": [
+   {
+    "title": "Essential Oils for Flea and Tick Control in Companion Animals: A Critical Review of Efficacy, Safety, Resistance Mitigation and IPM. Antibiotics (Basel) 2026;15(3):312 (PMC13024315)",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC13024315/"
+   }
+  ],
+  "notes": "Review (Antibiotics 2026): 'documented occurrences of toxicity in cats after exposure to essential oils from Thymus, Origanum, Citrus, Melaleuca, and Pinus species'. Single secondary source; MSD Phenols notes pine tar contains phenol derivatives (OTC products up to 2.3% pine tar) but does not call it toxic to cats."
+ },
+ {
+  "ingredient": "ylang-ylang oil",
+  "species": {
+   "cat": "not_found",
+   "dog": "not_found"
+  },
+  "threshold": null,
+  "safe_exceptions": null,
+  "effect": null,
+  "sources": [],
+  "notes": "No family source found."
+ },
+ {
+  "ingredient": "citrus oil / d-limonene / linalool",
+  "species": {
+   "cat": "supported",
+   "dog": "not_found"
+  },
+  "threshold": null,
+  "safe_exceptions": "Wismer lists d-limonene among essential oils used for fleas; no safe concentration given.",
+  "effect": "Hypersalivation, tremors, ataxia, recumbency, coma, death in cats after citrus-oil dip.",
+  "sources": [
+   {
+    "title": "Poppenga RH. Herbal and Other Natural Products Pose Intoxication Risks to Pets (ACVC 2001 proceedings, VIN)",
+    "url": "https://www.vin.com/VINDBPub/SearchPB/Proceedings/PR05000/PR00396.htm"
+   },
+   {
+    "title": "Essential Oils for Flea and Tick Control in Companion Animals: A Critical Review of Efficacy, Safety, Resistance Mitigation and IPM. Antibiotics (Basel) 2026;15(3):312 (PMC13024315)",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC13024315/"
+   },
+   {
+    "title": "Wismer T. Flea control and insecticides (Proceedings), dvm360",
+    "url": "https://www.dvm360.com/view/flea-control-and-insecticides-proceedings"
+   }
+  ],
+  "notes": "Poppenga (VIN): 'Fatal adverse reactions have been reported in cats following the use of an \"organic\" citrus oil dip.' Review: Citrus among oils with documented cat toxicity. Wismer: undiluted application of these oils (d-limonene, melaleuca, pennyroyal, neem) 'can cause skin and oral irritation, lethargy, vomiting, salivation, ataxia and muscle tremors'; 'Cats appear to be more sensitive than dogs'. No dog-specific citrus toxicity statement found."
+ },
+ {
+  "ingredient": "wintergreen oil / sweet birch oil / methyl salicylate",
+  "species": {
+   "cat": "supported",
+   "dog": "supported"
+  },
+  "threshold": "\"Oil of wintergreen contains 98% methyl salicylate.\" (MSD); scent-training oils typically \"diluted to 25 percent or less\" (dvm360)",
+  "safe_exceptions": null,
+  "effect": "Salicylate (aspirin) toxicosis: GI ulceration, hyperthermia, tachypnea, acidosis, liver injury, seizures; birch: anemia, kidney failure, death.",
+  "sources": [
+   {
+    "title": "Toxicoses From Essential Oils in Animals (MSD/Merck Veterinary Manual, K. Benson, Mar 2025)",
+    "url": "https://www.merckvetmanual.com/toxicology/toxicoses-from-household-hazards/toxicoses-from-essential-oils-in-animals"
+   },
+   {
+    "title": "Toxicosis in Animals From Human Topical Agents (MSD/Merck Veterinary Manual, L. Stern, rev. Jun 2025)",
+    "url": "https://www.merckvetmanual.com/toxicology/toxicosis-from-human-topical-agents/toxicosis-in-animals-from-human-topical-agents"
+   },
+   {
+    "title": "Poppenga RH. Herbal and Other Natural Products Pose Intoxication Risks to Pets (ACVC 2001 proceedings, VIN)",
+    "url": "https://www.vin.com/VINDBPub/SearchPB/Proceedings/PR05000/PR00396.htm"
+   },
+   {
+    "title": "Veterinary toxicology alert: Oils used in 'scent training' can harm dogs (dvm360; Swenson, Davison, Buchweitz, MSU)",
+    "url": "https://www.dvm360.com/view/veterinary-toxicology-alert-oils-used-scent-training-can-harm-dogs"
+   },
+   {
+    "title": "Toxicoses From Human Analgesics in Animals (MSD/Merck Veterinary Manual)",
+    "url": "https://www.merckvetmanual.com/toxicology/toxicoses-from-human-analgesics/toxicoses-from-human-analgesics-in-animals"
+   }
+  ],
+  "notes": "Poppenga (in the wintergreen section): 'Salicylates are toxic to dogs and cats. Since cats metabolize salicylates much more slowly than other species they are more likely to be overdosed.' MSD EO: 'exposure to wintergreen and birch oils can produce aspirin toxicosis'; both on the seizure list. dvm360/MSU: 'a highly toxic concentration of methyl salicylate is present in birch oil'; dogs exposed by oral ingestion and dermal absorption. MSD analgesics: aspirin half-life in cats 37.5 h; 'Cats are very susceptible to aspirin'. Birch for cats is supported via methyl salicylate statements, not a birch-in-cat case."
+ },
+ {
+  "ingredient": "minoxidil",
+  "species": {
+   "cat": "supported",
+   "dog": "supported"
+  },
+  "threshold": "\"Clinical signs occurred in dogs and cats even with low exposure amounts, such as drops or licks.\" (Tater 2021)",
+  "safe_exceptions": null,
+  "effect": "Hypotension, tachycardia, hypothermia, pleural effusion, pulmonary edema, myocardial injury, death (12.9% of symptomatic cats in Tater 2021).",
+  "sources": [
+   {
+    "title": "Toxicosis in Animals From Human Topical Agents (MSD/Merck Veterinary Manual, L. Stern, rev. Jun 2025)",
+    "url": "https://www.merckvetmanual.com/toxicology/toxicosis-from-human-topical-agents/toxicosis-in-animals-from-human-topical-agents"
+   },
+   {
+    "title": "Tater KC, Gwaltney-Brant S, Wismer T. Topical minoxidil exposures and toxicoses in dogs and cats: 211 cases (2001-2019). JAAHA 2021;57(5):225-231",
+    "url": "https://pubmed.ncbi.nlm.nih.gov/34370845/"
+   },
+   {
+    "title": "Song JH et al. Successful management of suspected minoxidil toxicosis in a cat following accidental dermal exposure. Vet Med (Praha) 2022",
+    "url": "https://pubmed.ncbi.nlm.nih.gov/39100643/"
+   },
+   {
+    "title": "Johnson TE et al. Successful management of minoxidil 5% toxicosis in 2 cats from the same household. J Vet Emerg Crit Care 2023",
+    "url": "https://pubmed.ncbi.nlm.nih.gov/37222073/"
+   }
+  ],
+  "notes": "Tater 2021: cats most often exposed by licking owner's skin/pillowcase or being splashed; 8/62 symptomatic cats died. Song 2022: cat toxicosis after accidental dermal exposure. Johnson 2023: two cats after 5% minoxidil ingestion. MSD: 'Dogs or cats ingesting a substantial dose of minoxidil should be closely monitored in the hospital.' No numeric threshold."
+ },
+ {
+  "ingredient": "5-fluorouracil (topical)",
+  "species": {
+   "cat": "supported",
+   "dog": "supported"
+  },
+  "threshold": "Dogs: \"Toxic doses can be as little as 5 mg/kg, and doses ≥40 mg/kg are reported to be uniformly fatal.\" (Sayre 2012); \"minimum lethal dose is approximately 20 mg/kg\" (Brutlag); \"accidental ingestion of just 2 to 3 g of 5% 5-FU cream can be fatal\" in a small dog (dvm360)",
+  "safe_exceptions": null,
+  "effect": "Severe vomiting, bloody diarrhea, tremors, seizures, bone-marrow suppression; high mortality.",
+  "sources": [
+   {
+    "title": "Toxicosis in Animals From Human Topical Agents (MSD/Merck Veterinary Manual, L. Stern, rev. Jun 2025)",
+    "url": "https://www.merckvetmanual.com/toxicology/toxicosis-from-human-topical-agents/toxicosis-in-animals-from-human-topical-agents"
+   },
+   {
+    "title": "Poisonings from Human Prescription Drugs (MSD/Merck Veterinary Manual, pet-owner section)",
+    "url": "https://www.merckvetmanual.com/special-pet-topics/poisoning/poisonings-from-human-prescription-drugs"
+   },
+   {
+    "title": "Sayre RS, Barr JW, Bailey EM. Accidental and experimentally induced 5-fluorouracil toxicity in dogs. J Vet Emerg Crit Care 2012;22(5):545-9",
+    "url": "https://pubmed.ncbi.nlm.nih.gov/22817133/"
+   },
+   {
+    "title": "Brutlag AG. The Case: 5-Fluorouracil Toxicity (Clinician's Brief)",
+    "url": "https://www.cliniciansbrief.com/article/case-5-fluorouracil-toxicity"
+   },
+   {
+    "title": "Song RB, Glass EN, Kent M. 5-fluorouracil: Lifesaving for one species, deadly for others (dvm360)",
+    "url": "https://www.dvm360.com/view/5-fluorouracil-lifesaving-one-species-deadly-others"
+   }
+  ],
+  "notes": "dvm360 (Song, Glass, Kent): 'Ingestion of topical 5-FU is likely to be fatal in both dogs and cats'; exposure also by 'licking an owner who has applied the product'. MSD pet section: 'Dogs and cats begin showing signs within a few hours of ingesting 5-fluorouracil.' No feline mg/kg threshold found."
+ },
+ {
+  "ingredient": "calcipotriene / calcipotriol",
+  "species": {
+   "cat": "not_found",
+   "dog": "supported"
+  },
+  "threshold": "\"Accidental ingestion of 40–60 mcg/kg of calcipotriene has been associated with life-threatening hypercalcemia in dogs.\" (MSD); \"The minimum toxic dose of calcipotriene is 10 µg/kg ... the lethal dose is around 65 µg/kg\" (Talcott, dvm360). Product is 0.005% (50 mcg/g).",
+  "safe_exceptions": null,
+  "effect": "Hypercalcemia, hyperphosphatemia, soft-tissue mineralization, AKI, death.",
+  "sources": [
+   {
+    "title": "Toxicosis in Animals From Human Topical Agents (MSD/Merck Veterinary Manual, L. Stern, rev. Jun 2025)",
+    "url": "https://www.merckvetmanual.com/toxicology/toxicosis-from-human-topical-agents/toxicosis-in-animals-from-human-topical-agents"
+   },
+   {
+    "title": "Poisonings from Human Prescription Drugs (MSD/Merck Veterinary Manual, pet-owner section)",
+    "url": "https://www.merckvetmanual.com/special-pet-topics/poisoning/poisonings-from-human-prescription-drugs"
+   },
+   {
+    "title": "Talcott P. Rodenticides: The old and the new (Proceedings), dvm360",
+    "url": "https://www.dvm360.com/view/rodenticides-old-and-new-proceedings"
+   }
+  ],
+  "notes": "Dogs explicit in MSD. Talcott discusses it under dogs and cats but gives no cat-specific statement; no feline case found in my family. Cat left not_found."
+ },
+ {
+  "ingredient": "diclofenac (topical)",
+  "species": {
+   "cat": "supported",
+   "dog": "not_found"
+  },
+  "threshold": "\"The toxic threshold of diclofenac in cats is currently unknown.\" (Can Vet J 2026)",
+  "safe_exceptions": null,
+  "effect": "Cats: acute hepatocellular injury (one euthanized); topical NSAIDs generally: GI ulceration, AKI.",
+  "sources": [
+   {
+    "title": "Potential acute hepatic injury in 2 cats exposed to topical human diclofenac (Can Vet J 2026, PMC12990017)",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12990017/"
+   },
+   {
+    "title": "Toxicosis in Animals From Human Topical Agents (MSD/Merck Veterinary Manual, L. Stern, rev. Jun 2025)",
+    "url": "https://www.merckvetmanual.com/toxicology/toxicosis-from-human-topical-agents/toxicosis-in-animals-from-human-topical-agents"
+   }
+  ],
+  "notes": "Can Vet J 2026: 2 cats with acute liver injury after owner used 10% diclofenac cream for 3 months; exposure by holding and licking owner skin; diclofenac confirmed in serum. MSD (topical NSAIDs, no drug named): 'Cats are more sensitive to topical NSAID exposure than dogs and are more likely to develop toxicosis by licking cream off of human skin or grooming their fur after contact with human skin'. Dogs: MSD class statement implies dogs can be affected, but no diclofenac-specific dog source found."
+ },
+ {
+  "ingredient": "flurbiprofen (topical) and other topical NSAIDs",
+  "species": {
+   "cat": "supported",
+   "dog": "not_found"
+  },
+  "threshold": null,
+  "safe_exceptions": null,
+  "effect": "Gastric ulceration, duodenal perforation, azotemia/AKI.",
+  "sources": [
+   {
+    "title": "Yi EM, Leech E. Topical flurbiprofen toxicosis in a cat. J Vet Emerg Crit Care 2017;27(6):707-712",
+    "url": "https://pubmed.ncbi.nlm.nih.gov/28834579/"
+   },
+   {
+    "title": "Toxicosis in Animals From Human Topical Agents (MSD/Merck Veterinary Manual, L. Stern, rev. Jun 2025)",
+    "url": "https://www.merckvetmanual.com/toxicology/toxicosis-from-human-topical-agents/toxicosis-in-animals-from-human-topical-agents"
+   }
+  ],
+  "notes": "Yi & Leech 2017: cat exposed to owner's compounded 10% flurbiprofen cream - severe GI ulceration/perforation, azotemia; flurbiprofen confirmed in urine. MSD topical NSAID class statement (above). MSD analgesics: cats susceptible to ibuprofen at about half the dog dose."
+ },
+ {
+  "ingredient": "zinc oxide",
+  "species": {
+   "cat": "not_found",
+   "dog": "supported"
+  },
+  "threshold": "\"Most ointments contain 10% and 40% zinc oxide\" (MSD); case product was \"max strength\" 40% cream applied daily for a week (Ambar 2022)",
+  "safe_exceptions": "\"Acute ingestion of zinc oxide ointment or cream ... represents a low toxicity risk and rarely causes more than dose-dependent GI upset\" (MSD Zinc)",
+  "effect": "Acute: GI upset; chronic licking of cream applied to the pet: intravascular hemolysis.",
+  "sources": [
+   {
+    "title": "Toxicosis in Animals From Human Topical Agents (MSD/Merck Veterinary Manual, L. Stern, rev. Jun 2025)",
+    "url": "https://www.merckvetmanual.com/toxicology/toxicosis-from-human-topical-agents/toxicosis-in-animals-from-human-topical-agents"
+   },
+   {
+    "title": "Zinc Toxicosis in Animals (MSD/Merck Veterinary Manual, M. Carlino)",
+    "url": "https://www.merckvetmanual.com/toxicology/zinc-toxicosis/zinc-toxicosis-in-animals"
+   },
+   {
+    "title": "Ambar N, Tovar T. Suspected hemolytic anemia secondary to acute zinc toxicity after ingestion of 'max strength' (zinc oxide) diaper rash cream. J Vet Emerg Crit Care 2022;32(1):125-128",
+    "url": "https://pubmed.ncbi.nlm.nih.gov/34450683/"
+   }
+  ],
+  "notes": "MSD topical: 'intravascular hemolysis can develop with chronic ingestion, such as when a zinc oxide cream is applied topically to a pet and then ingested off the animal's skin over the course of days to weeks' (species-generic 'pet'). Ambar 2022: Maltese dog, hemolytic anemia after a week of 40% cream applied by owner. No cat-specific statement found. Risk is about repeated application + licking, not a single exposure; no % threshold stated beyond product strengths."
+ },
+ {
+  "ingredient": "xylitol",
+  "species": {
+   "cat": "considered_safe",
+   "dog": "supported"
+  },
+  "threshold": "\"Doses of xylitol greater than approximately 100 mg/kg (45 mg/lb) have been associated with hypoglycemia in dogs.\" \"Some dogs ingesting xylitol at doses > 500 mg/kg (227 mg/lb) may develop severe hepatic insufficiency or failure.\" (MSD)",
+  "safe_exceptions": "\"Dogs are the only domestic species in which xylitol toxicosis has been reported; cats are not at risk for hypoglycemia or liver injury from xylitol toxicosis.\" (MSD); Jerzsele 2018: 100-1,000 mg/kg PO in cats - \"xylitol did not induce toxic effects on cats\"",
+  "effect": "Dogs: hypoglycemia, acute hepatic failure, coagulopathy.",
+  "sources": [
+   {
+    "title": "Xylitol Toxicosis in Dogs (MSD/Merck Veterinary Manual)",
+    "url": "https://www.merckvetmanual.com/toxicology/food-hazards/xylitol-toxicosis-in-dogs"
+   },
+   {
+    "title": "Dunayer EK, Gwaltney-Brant SM. Acute hepatic failure and coagulopathy associated with xylitol ingestion in eight dogs. JAVMA 2006;229(7):1113-7",
+    "url": "https://pubmed.ncbi.nlm.nih.gov/17014359/"
+   },
+   {
+    "title": "Jerzsele A et al. Effects of p.o. administered xylitol in cats. J Vet Pharmacol Ther 2018;41(3):409-414",
+    "url": "https://pubmed.ncbi.nlm.nih.gov/29430681/"
+   }
+  ],
+  "notes": "MSD lists xylitol in toothpastes and oral hygiene products, cosmetics, sunscreens, hair care products. Toxicity is by ingestion; relevant for pet dental/oral products and licking."
+ },
+ {
+  "ingredient": "phenols / phenolic compounds / coal tar",
+  "species": {
+   "cat": "supported",
+   "dog": "not_found"
+  },
+  "threshold": null,
+  "safe_exceptions": "Chlorhexidine described as safe for cats in search-snippet context only (not counted). MSD: modern pine tar 'manufactured with increased purity to eliminate toxic phenol'.",
+  "effect": "Systemic toxicity/irritation; cats lack UDP-glucuronosyltransferase.",
+  "sources": [
+   {
+    "title": "Phenols and Related Compounds as Antiseptics and Disinfectants for Use With Animals (MSD/Merck Veterinary Manual, D.D. Addie)",
+    "url": "https://www.merckvetmanual.com/pharmacology/antiseptics-and-disinfectants/phenols-and-related-compounds-as-antiseptics-and-disinfectants-for-use-with-animals"
+   },
+   {
+    "title": "Coal-tar Poisoning (MSD/Merck Veterinary Manual, pet-owner section, G.D. Osweiler)",
+    "url": "https://www.merckvetmanual.com/special-pet-topics/poisoning/coal-tar-poisoning"
+   },
+   {
+    "title": "Toxicoses From Essential Oils in Animals (MSD/Merck Veterinary Manual, K. Benson, Mar 2025)",
+    "url": "https://www.merckvetmanual.com/toxicology/toxicoses-from-household-hazards/toxicoses-from-essential-oils-in-animals"
+   },
+   {
+    "title": "Carlotti D-N. Shampoo Therapy in Veterinary Dermatology (WSAVA 2004, VIN)",
+    "url": "https://www.vin.com/apputil/content/defaultadv1.aspx?id=3852175&pid=11181"
+   },
+   {
+    "title": "Rosenkrantz W. Topical and systemic therapy for seborrheic disorders: Parts 1 and 2 (Proceedings), dvm360",
+    "url": "https://www.dvm360.com/view/topical-and-systemic-therapy-seborrheic-disorders-parts-1-and-2-proceedings"
+   },
+   {
+    "title": "Stapleton S, Lee F. Time for topicals: A spot-on guide to treating dermatologic diseases (dvm360)",
+    "url": "https://www.dvm360.com/view/time-for-topicals-a-spot-on-guide-to-treating-dermatologic-diseases"
+   }
+  ],
+  "notes": "MSD Phenols: phenols and cresols are 'highly toxic to cats because cats are deficient in the enzyme UDP-glucuronosyl transferase'; 'phenol-based disinfectants are best avoided in feline environments'. MSD Coal tar: 'Cats are especially sensitive to both phenol and cresol.' Carlotti: coal tar 'contraindicated in the cat'. Rosenkrantz: 'Tar shampoos are contraindicated in the cat due to a much higher degree of irritancy and in some cases making cats systemically ill.' Stapleton & Lee: coal tar and selenium disulfide 'both can be toxic to cats'. MSD: hexachlorophene 'highly toxic and is therefore no longer in use'."
+ },
+ {
+  "ingredient": "benzocaine",
+  "species": {
+   "cat": "supported",
+   "dog": "supported"
+  },
+  "threshold": "Davis 1993: estimated 56 mg dose by 2-second spray to mucosa",
+  "safe_exceptions": null,
+  "effect": "Methemoglobinemia (respiratory distress, collapse).",
+  "sources": [
+   {
+    "title": "Wilkie DA, Kirby R. Methemoglobinemia associated with dermal application of benzocaine cream in a cat. JAVMA 1988;192(1):85-6",
+    "url": "https://pubmed.ncbi.nlm.nih.gov/3343188/"
+   },
+   {
+    "title": "Davis JA et al. Benzocaine-induced methemoglobinemia attributed to topical application of the anesthetic in several laboratory animal species. Am J Vet Res 1993;54(8):1322-6",
+    "url": "https://pubmed.ncbi.nlm.nih.gov/8214904/"
+   }
+  ],
+  "notes": "Wilkie & Kirby 1988: cat developed methemoglobinemia 15-20 min after dermal benzocaine cream; 'Benzocaine-induced methemoglobinemia has been reported in man, dogs, and cats.' Davis 1993: topical benzocaine spray caused MetHb in 38 cats and in dogs (dogs showed 'low response'). Dog support is weaker than cat."
+ },
+ {
+  "ingredient": "lidocaine",
+  "species": {
+   "cat": "supported",
+   "dog": "supported"
+  },
+  "threshold": null,
+  "safe_exceptions": null,
+  "effect": "Agitation, depression, arrhythmias, hypotension, methemoglobinemia, Heinz-body anemia.",
+  "sources": [
+   {
+    "title": "Toxicosis in Animals From Human Topical Agents (MSD/Merck Veterinary Manual, L. Stern, rev. Jun 2025)",
+    "url": "https://www.merckvetmanual.com/toxicology/toxicosis-from-human-topical-agents/toxicosis-in-animals-from-human-topical-agents"
+   }
+  ],
+  "notes": "MSD: 'Lidocaine is a local anesthetic found in creams, gels, and patches.' 'Cats are more sensitive to lidocaine toxicosis than are dogs.' Signs can occur <15 min after exposure. Dog listed as supported only by the comparative wording; no dose given."
+ },
+ {
+  "ingredient": "DEET",
+  "species": {
+   "cat": "supported",
+   "dog": "supported"
+  },
+  "threshold": null,
+  "safe_exceptions": null,
+  "effect": "Vomiting, tremors, ataxia, excitation; weakness, paralysis, liver disease, seizures.",
+  "sources": [
+   {
+    "title": "Ectoparasiticides Used in Small Animals (MSD/Merck Veterinary Manual, M.W. Dryden, Apr 2024)",
+    "url": "https://www.merckvetmanual.com/pharmacology/ectoparasiticides/ectoparasiticides-used-in-small-animals"
+   },
+   {
+    "title": "Dorman DC. Diethyltoluamide (DEET) insect repellent toxicosis. Vet Clin North Am Small Anim Pract 1990;20(2):387-91",
+    "url": "https://pubmed.ncbi.nlm.nih.gov/2180185/"
+   }
+  ],
+  "notes": "MSD: 'use of DEET in pets has caused weakness, paralysis, liver disease, and seizures. DEET should therefore not be administered to dogs or cats.' Dorman 1990: poisonings 'rarely encountered' in companion animals."
+ },
+ {
+  "ingredient": "salicylic acid (topical)",
+  "species": {
+   "cat": "supported",
+   "dog": "supported"
+  },
+  "threshold": null,
+  "safe_exceptions": null,
+  "effect": "Dose-dependent salicylate toxicosis: GI ulceration, hyperthermia, tachypnea, acidosis, liver injury.",
+  "sources": [
+   {
+    "title": "Toxicosis in Animals From Human Topical Agents (MSD/Merck Veterinary Manual, L. Stern, rev. Jun 2025)",
+    "url": "https://www.merckvetmanual.com/toxicology/toxicosis-from-human-topical-agents/toxicosis-in-animals-from-human-topical-agents"
+   },
+   {
+    "title": "Toxicoses From Human Analgesics in Animals (MSD/Merck Veterinary Manual)",
+    "url": "https://www.merckvetmanual.com/toxicology/toxicoses-from-human-analgesics/toxicoses-from-human-analgesics-in-animals"
+   },
+   {
+    "title": "Poppenga RH. Herbal and Other Natural Products Pose Intoxication Risks to Pets (ACVC 2001 proceedings, VIN)",
+    "url": "https://www.vin.com/VINDBPub/SearchPB/Proceedings/PR05000/PR00396.htm"
+   }
+  ],
+  "notes": "MSD topical: salicylates 'such as methyl salicylate and salicylic acid' in sunscreens, pain relievers, wart removers; signs 'dose dependent'. Cat sensitivity comes from salicylate/aspirin statements (MSD analgesics; Poppenga 'Salicylates are toxic to dogs and cats'). No family source specifically flags low-% salicylic acid keratolytic pet shampoos as toxic to cats; the concern is high-strength human products (wart removers). Recommend a lower-severity or concentration-gated warning."
+ },
+ {
+  "ingredient": "hydrogen peroxide",
+  "species": {
+   "cat": "supported",
+   "dog": "considered_safe"
+  },
+  "threshold": "\"Hydrogen peroxide (3% solution, 1–2 mL/kg, PO, up to 45 mL) ... can be used in dogs only\" (MSD)",
+  "safe_exceptions": "Dogs: emetic use acceptable per MSD; Obr 2017: \"hydrogen peroxide is considered a safe emetic agent in dogs\"",
+  "effect": "Cats: necroulcerative hemorrhagic gastritis after oral 3% H2O2.",
+  "sources": [
+   {
+    "title": "Principles of Toxicosis Treatment in Animals (MSD/Merck Veterinary Manual, R. Schmid)",
+    "url": "https://www.merckvetmanual.com/toxicology/toxicology-introduction/principles-of-toxicosis-treatment-in-animals"
+   },
+   {
+    "title": "Obr TD et al. Necroulcerative hemorrhagic gastritis in a cat secondary to the administration of 3% hydrogen peroxide as an emetic agent. J Vet Emerg Crit Care 2017;27(5):605-608",
+    "url": "https://pubmed.ncbi.nlm.nih.gov/28795786/"
+   }
+  ],
+  "notes": "Supported only for ORAL use as an emetic in cats: MSD 'For cats: Hydrogen peroxide, apomorphine, and ropinirole should not be used.' Obr 2017: 'its use in cats is not recommended'. No family source addresses H2O2 on skin for either species."
+ },
+ {
+  "ingredient": "benzoyl peroxide",
+  "species": {
+   "cat": "not_found",
+   "dog": "not_found"
+  },
+  "threshold": null,
+  "safe_exceptions": null,
+  "effect": "Irritation.",
+  "sources": [
+   {
+    "title": "Zabel S. Shampoo use in Veterinary Medicine (WSAVA 2011, VIN)",
+    "url": "https://www.vin.com/apputil/content/defaultadv1.aspx?id=5189551&pid=11343&print=1"
+   }
+  ],
+  "notes": "Zabel: 'A small percentage of dogs may be irritated by this product. This percentage is somewhat higher for cats.' Irritancy only; no toxicity claim found."
+ },
+ {
+  "ingredient": "selenium sulfide (selenium disulfide)",
+  "species": {
+   "cat": "supported",
+   "dog": "not_found"
+  },
+  "threshold": null,
+  "safe_exceptions": null,
+  "effect": "Irritation, systemic illness in cats.",
+  "sources": [
+   {
+    "title": "Carlotti D-N. Shampoo Therapy in Veterinary Dermatology (WSAVA 2004, VIN)",
+    "url": "https://www.vin.com/apputil/content/defaultadv1.aspx?id=3852175&pid=11181"
+   },
+   {
+    "title": "Rosenkrantz W. Topical and systemic therapy for seborrheic disorders: Parts 1 and 2 (Proceedings), dvm360",
+    "url": "https://www.dvm360.com/view/topical-and-systemic-therapy-seborrheic-disorders-parts-1-and-2-proceedings"
+   },
+   {
+    "title": "Stapleton S, Lee F. Time for topicals: A spot-on guide to treating dermatologic diseases (dvm360)",
+    "url": "https://www.dvm360.com/view/time-for-topicals-a-spot-on-guide-to-treating-dermatologic-diseases"
+   }
+  ],
+  "notes": "Carlotti: 'It is contraindicated in the cat.' Rosenkrantz: 'also contraindicated in the cat for the same reasons listed for tars'. Stapleton & Lee: 'both can be toxic to cats'."
+ },
+ {
+  "ingredient": "lime sulfur",
+  "species": {
+   "cat": "not_found",
+   "dog": "not_found"
+  },
+  "threshold": "Nix 2020: toxicosis from a 30% solution used instead of the recommended 3% (10-fold overdose)",
+  "safe_exceptions": "\"Lime sulfur is highly effective and safe for use in young animals\" (MSD Mange); \"For cats, 2% lime sulfur dips once to twice weekly have been used\" (Stapleton & Lee); weekly 2% dips 'considered safe' (MSD)",
+  "effect": "Overdose only: hypotension, bradycardia, hypothermia, chemical burns, acid-base derangement, AKI.",
+  "sources": [
+   {
+    "title": "Mange in Dogs and Cats (MSD/Merck Veterinary Manual)",
+    "url": "https://www.merckvetmanual.com/integumentary-system/mange/mange-in-dogs-and-cats"
+   },
+   {
+    "title": "Stapleton S, Lee F. Time for topicals: A spot-on guide to treating dermatologic diseases (dvm360)",
+    "url": "https://www.dvm360.com/view/time-for-topicals-a-spot-on-guide-to-treating-dermatologic-diseases"
+   },
+   {
+    "title": "Nix CE, Lee JA, Wismer T. Systemic lime sulfur toxicosis secondary to dermal exposure in two cats. J Vet Emerg Crit Care 2020;30(3):302-307",
+    "url": "https://pubmed.ncbi.nlm.nih.gov/32077228/"
+   }
+  ],
+  "notes": "Considered safe at label dilution in both species; Nix 2020 shows systemic toxicosis in cats only with a 10x concentration error. Not a species contraindication."
+ },
+ {
+  "ingredient": "amitraz",
+  "species": {
+   "cat": "supported",
+   "dog": "supported"
+  },
+  "threshold": "\"Tick collars for dogs contain 9% amitraz\" (MSD)",
+  "safe_exceptions": null,
+  "effect": "Sedation, bradycardia, hypothermia, hyperglycemia; collar ingestion common.",
+  "sources": [
+   {
+    "title": "Triazapentadiene (Amitraz) Toxicosis in Animals (MSD/Merck Veterinary Manual)",
+    "url": "https://www.merckvetmanual.com/toxicology/insecticide-and-acaricide-organic-toxicity/triazapentadiene-amitraz-toxicosis-in-animals"
+   },
+   {
+    "title": "Ectoparasiticides Used in Small Animals (MSD/Merck Veterinary Manual, M.W. Dryden, Apr 2024)",
+    "url": "https://www.merckvetmanual.com/pharmacology/ectoparasiticides/ectoparasiticides-used-in-small-animals"
+   },
+   {
+    "title": "Mange in Dogs and Cats (MSD/Merck Veterinary Manual)",
+    "url": "https://www.merckvetmanual.com/integumentary-system/mange/mange-in-dogs-and-cats"
+   }
+  ],
+  "notes": "MSD ecto: 'Amitraz should not be applied to cats in any formulation.' MSD amitraz: 'It is not recommended for use in horses, cats, and small-breed dogs such as Chihuahuas and Pomeranians' and 'should also not be used in diabetic animals because it adversely affects glucose and insulin concentrations even if it is used topically.' Dog = supported for small breeds (Chihuahua, Pomeranian) and diabetic dogs; labeled use in other dogs is accepted."
+ },
+ {
+  "ingredient": "organophosphates (e.g., tetrachlorvinphos, chlorpyrifos, dichlorvos, carbophenothion)",
+  "species": {
+   "cat": "supported",
+   "dog": "not_found"
+  },
+  "threshold": "\"A single application of a powder containing 1% of carbophenothion is lethal to cats.\" (MSD)",
+  "safe_exceptions": "Tetrachlorvinphos: \"low toxicity in dogs\" (MSD); Wismer: cats saturated with tetrachlorvinphos sprays showed depression/ataxia/salivation \"but this is due to the alcohol content\"",
+  "effect": "Cholinergic crisis (SLUDDE), intermediate syndrome, death.",
+  "sources": [
+   {
+    "title": "Organophosphate Toxicosis in Animals (MSD/Merck Veterinary Manual)",
+    "url": "https://www.merckvetmanual.com/toxicology/insecticide-and-acaricide-organic-toxicity/organophosphate-toxicosis-in-animals"
+   },
+   {
+    "title": "Ectoparasiticides Used in Small Animals (MSD/Merck Veterinary Manual, M.W. Dryden, Apr 2024)",
+    "url": "https://www.merckvetmanual.com/pharmacology/ectoparasiticides/ectoparasiticides-used-in-small-animals"
+   },
+   {
+    "title": "Wismer T. Flea control and insecticides (Proceedings), dvm360",
+    "url": "https://www.dvm360.com/view/flea-control-and-insecticides-proceedings"
+   }
+  ],
+  "notes": "MSD: 'Cats wearing dichlorvos-impregnated collars can develop signs of ataxia-depression syndrome, followed by death'; parathion LD50 cats 15 vs dogs 23-35 mg/kg; OPs have a 'low margin of safety'. Tetrachlorvinphos specifically: I found no family source calling it toxic to cats at label use; Wismer attributes the signs to the alcohol vehicle. Class = supported for cats; TCVP specifically = weak."
+ },
+ {
+  "ingredient": "ivermectin (topical, MDR1/ABCB1 dogs)",
+  "species": {
+   "cat": "not_found",
+   "dog": "not_found"
+  },
+  "threshold": "MSD: transient signs in homozygous MDR1 dogs at \"120–150 mcg/kg\"",
+  "safe_exceptions": "\"Selamectin use is safe in ivermectin-sensitive Collies.\" (MSD); moxidectin \"topical application is safe in avermectin-sensitive dogs, oral uptake should be prevented\" (MSD Mange)",
+  "effect": "CNS toxicity (mydriasis, ataxia, tremors, coma) in MDR1-mutant dogs.",
+  "sources": [
+   {
+    "title": "Antiparasitic Drugs for Integumentary Disease in Animals (MSD/Merck Veterinary Manual, M. Shipstone)",
+    "url": "https://www.merckvetmanual.com/pharmacology/systemic-pharmacotherapeutics-of-the-integumentary-system/antiparasitic-drugs-for-integumentary-disease-in-animals"
+   },
+   {
+    "title": "Mange in Dogs and Cats (MSD/Merck Veterinary Manual)",
+    "url": "https://www.merckvetmanual.com/integumentary-system/mange/mange-in-dogs-and-cats"
+   },
+   {
+    "title": "Safety of Anthelmintics in Animals (MSD/Merck Veterinary Manual)",
+    "url": "https://www.merckvetmanual.com/pharmacology/anthelmintics/safety-of-anthelmintics-in-animals"
+   },
+   {
+    "title": "Ectoparasiticides Used in Small Animals (MSD/Merck Veterinary Manual, M.W. Dryden, Apr 2024)",
+    "url": "https://www.merckvetmanual.com/pharmacology/ectoparasiticides/ectoparasiticides-used-in-small-animals"
+   }
+  ],
+  "notes": "Systemic ivermectin is contraindicated in Collies and other MDR1 breeds (MSD: 'Ivermectin is contraindicated in Collies and Collie crosses'). MSD mentions topical ivermectin only as an ear-mite product ('Direct applications to the external ear canal of cats using approved ivermectin ... formulations are also effective') and does not say topical ivermectin is dangerous to MDR1 dogs. Wismer: cats have shown signs at 200 mcg/kg (systemic). Topical-route support not found."
+ },
+ {
+  "ingredient": "alpha-lipoic acid",
+  "species": {
+   "cat": "not_found",
+   "dog": "not_found"
+  },
+  "threshold": "Cats: \"MTD was < 30 mg/kg\" (Hill 2004, oral)",
+  "safe_exceptions": null,
+  "effect": "Vomiting, hypoglycemia, ataxia, tremors, seizures, hepatic and renal damage.",
+  "sources": [
+   {
+    "title": "Toxicoses in Animals From Human Dietary and Herbal Supplements (MSD/Merck Veterinary Manual, D. Tauer)",
+    "url": "https://www.merckvetmanual.com/toxicology/toxicoses-from-dietary-and-herbal-supplements/toxicoses-in-animals-from-human-dietary-and-herbal-supplements"
+   },
+   {
+    "title": "Hill AS et al. Lipoic acid is 10 times more toxic in cats than reported in humans, dogs or rats. J Anim Physiol Anim Nutr 2004;88(3-4):150-6",
+    "url": "https://pubmed.ncbi.nlm.nih.gov/15059240/"
+   }
+  ],
+  "notes": "All evidence is ORAL supplement ingestion: MSD 'Cats are more susceptible to developing clinical signs at lower doses than dogs'; Hill 2004 'Lipoic acid is 10 times more toxic in cats'. No family source addresses topical/cosmetic ALA or licking it off skin, so not_found for the topical question."
+ },
+ {
+  "ingredient": "nicotine",
+  "species": {
+   "cat": "not_found",
+   "dog": "not_found"
+  },
+  "threshold": null,
+  "safe_exceptions": null,
+  "effect": "GI upset, lethargy, agitation; higher doses tremors, seizures, bradycardia.",
+  "sources": [
+   {
+    "title": "Toxicosis in Animals From Human Topical Agents (MSD/Merck Veterinary Manual, L. Stern, rev. Jun 2025)",
+    "url": "https://www.merckvetmanual.com/toxicology/toxicosis-from-human-topical-agents/toxicosis-in-animals-from-human-topical-agents"
+   }
+  ],
+  "notes": "MSD covers nicotine patches chewed/ingested by 'pets'; 'Severe clinical signs of nicotine toxicosis are possible but uncommon.' No species-specific or topical-product statement."
+ },
+ {
+  "ingredient": "tretinoin (topical retinoids)",
+  "species": {
+   "cat": "not_found",
+   "dog": "not_found"
+  },
+  "threshold": "\"Tretinoin (available in concentrations from 0.01% to 0.05%)\"",
+  "safe_exceptions": "\"Acute tretinoin toxicosis is rare and would be expected only with massive overdoses, which are unlikely with the ingestion of topical products.\" (MSD)",
+  "effect": "Vomiting and diarrhea.",
+  "sources": [
+   {
+    "title": "Toxicosis in Animals From Human Topical Agents (MSD/Merck Veterinary Manual, L. Stern, rev. Jun 2025)",
+    "url": "https://www.merckvetmanual.com/toxicology/toxicosis-from-human-topical-agents/toxicosis-in-animals-from-human-topical-agents"
+   }
+  ],
+  "notes": "MSD indicates low risk. Not flagged."
+ },
+ {
+  "ingredient": "hydrocortisone / topical corticosteroids",
+  "species": {
+   "cat": "not_found",
+   "dog": "not_found"
+  },
+  "threshold": null,
+  "safe_exceptions": "MSD: signs after ingestion \"can generally be managed at home and consist of mild vomiting and diarrhea, polyuria/polydipsia, and polyphagia\"",
+  "effect": "Mild GI upset, PU/PD; betamethasone effects may last 1-3 weeks.",
+  "sources": [
+   {
+    "title": "Toxicosis in Animals From Human Topical Agents (MSD/Merck Veterinary Manual, L. Stern, rev. Jun 2025)",
+    "url": "https://www.merckvetmanual.com/toxicology/toxicosis-from-human-topical-agents/toxicosis-in-animals-from-human-topical-agents"
+   }
+  ],
+  "notes": "Not flagged as dangerous by my family."
+ },
+ {
+  "ingredient": "benzalkonium chloride / quaternary ammonium compounds (additional)",
+  "species": {
+   "cat": "supported",
+   "dog": "not_found"
+  },
+  "threshold": "\"concentrations above 0.1% (or 1 g/l) are considered potentially caustic and corrosive\"; cat lesions \"in concentrations of 2% or lower\"",
+  "safe_exceptions": null,
+  "effect": "Oral ulceration, glossitis, stomatitis, vomiting after grooming contaminated paws.",
+  "sources": [
+   {
+    "title": "Rubini et al. A case of severe benzalkonium chloride intoxication in a cat. Acta Vet Scand 2024 (PMC11020912)",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC11020912/"
+   }
+  ],
+  "notes": "Single case report (kitten, 5% BAC mold remover, ingested by self-grooming); article: 'cats have been reported as more sensitive than dogs to QACs; indeed, oral ulcerations, stomatitis and pharyngitis can be observed in concentrations of 2% or lower.' Relevant to pet wipes/sprays with high QAC %; single source."
+ }
+]

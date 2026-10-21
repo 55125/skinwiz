@@ -350,3 +350,116 @@ row that would join two products the rules keep apart goes to `needs_owner`
 `reformulated` and `needs_owner` rows are never applied. Rerun the review
 after every `build_product_merges.py` run (the build rewrites the flagged
 file with empty decision columns).
+
+# Pet mode catalogs (2026-10-11)
+
+Dog and cat skin, ear and flea/tick products for the flag-gated `/pets`
+pages (app `FEATURE_PET_MODE`). Seeded into their own `pet_products` table,
+never `products`, so no human listing or search can show one. Rules live in
+`pet_parse.py` (tests: `tests/test_pet_parse.py`).
+
+| Script | Source | Output |
+|---|---|---|
+| `build_pet_catalog.py --zip dm_spl_release_animal.zip` | DailyMed animal SPL bulk zip (~1.2 GB, read in place, not committed) | `output/pet_catalog.csv`, `output/pet_catalog_summary.json` |
+| `build_pet_epa_catalog.py` | EPA PPLS API, one search per active + one detail per candidate (2 req/s, cached) | `output/pet_epa_catalog.csv` |
+| `build_pet_brand_catalog.py` | Brand sites that publish ingredients (robots.txt checked, Shopify `/products.json` or JSON-LD) | `output/pet_brand_catalog.csv` |
+
+First run, 2026-10-11 (DailyMed release of Sep 21, 2026): 3,601 animal
+labels, 1,659 skin or ear, 564 naming dogs or cats -> 603 products, 555 with
+a pet concern (the seed skips the rest: styptic powders, eye washes,
+anesthetics). EPA: 369 pet-looking registrations, 293 whose EPA site list
+treats dogs or cats. Brand sites: 333 products with published ingredients
+from 22 brands (robots.txt per brand in the script's docstring), 230 with a
+pet concern; photos only for those, as 800 px WebP. Blocked or without
+ingredient lists: Frontline (bot wall), Wondercide (403), Elanco's
+K9 Advantix/Advantage/Seresto pages (no strengths; EPA rows cover them),
+Burt's Bees, Hartz, Virbac, Vetoquinol. See `pet_catalog_summary.json` for
+the DailyMed breakdown.
+
+Known limits: species is parsed from label text (SPL has no species
+field), so a few labels with unusual wording may be misfiled; DailyMed
+package photos aren't linked for pet rows yet; EPA labels list no
+inactives; the species-toxicity list in `app/src/db/pet.ts` needs
+veterinary review.
+
+## Ingredient cross-match (pet_ingredient_crossmatch.csv)
+
+Hand-curated and committed, like `curated_products.csv`. It records
+ingredient lists that the three pet catalogs lack, each copied verbatim
+from another published source for the same product, checked 2026-10-11.
+One row per target and field. Columns: `target_id` (the pet_catalog NDC,
+or the `pet-<brand>-<sku>` id that `build_pet_brand_catalog.py` gives or
+would give the page), `brand`, `product_name`, `species`, `target_url`,
+`field` (`inactive_ingredient_text` | `ingredient_text` |
+`active_ingredient_text`), `value`, `source_url`, `source_type`
+(`dailymed` | `brand_document` | `manufacturer_document` | `third_party`),
+`match_evidence`, `checked_on`. An empty field means unknown: nothing is
+inferred or completed.
+
+Rules: a match must be the same brand, product name and variant, matched
+by NDC, package size, SKU/item number or EPA Reg. No. Sources are taken
+in order of preference: DailyMed, then the brand's own documents, then
+manufacturer documents (EPA PPLS and state label PDFs), then third
+parties. Search snippets are never used. Chewy, Petco, PetSmart, Amazon,
+Walmart and Target are never used.
+
+131 rows for 130 targets:
+- **pet_catalog.csv (85 of 152 rows lacking inactives).** 76 of them are
+  in the same DailyMed SPL, but in text `build_pet_catalog.py` doesn't
+  read: "Also contains:" lines (Dechra, GlenHaven), "Inactive ingredients
+  include..." in the DESCRIPTION section (Claro, Simplera, Bravecto,
+  NexGard Combo, Revolution Plus, Osurnia...), and "Each mL contains...
+  in a vehicle of..." composition sentences (stored as `ingredient_text`).
+  The other 9 are Kinetic EquiShield/Vetasan products, whose re-filed
+  Creative Science labels on DailyMed print the inactives. Fixing the
+  parser would make most of these rows redundant.
+- **Brand pages without lists (45 targets).** 33 match DailyMed labels
+  that already sit in pet_catalog.csv: Davis medicated, Curaseb, PetArmor
+  Hot Spot, Hydrocortisone and Ear Rinse, Vetoquinol BPO-3, Sebozole,
+  Universal and Ear Cleansing, and DOUXO S3. Those brand rows duplicate
+  DailyMed rows. 8 PetArmor flea/tick pages get actives with strengths
+  from EPA PPLS labels. 3 Vet's Best spot-ons get "Other ingredients"
+  from WA state label PDFs on WSU PICOL. 3 rows come from brand
+  documents (ZYMOX Ear Cleanser, Dechra TrizEDTA SDS).
+- **Burt's Bees for Pets and Hartz: none.** The brands publish no lists:
+  burtsbeespets.com has no product pages, and hartz.com shows ingredients
+  only as images.
+
+Retail sources: Michael approved them on 2026-10-11. So 39 more rows (37
+targets) from Jeffers Pet, Medi-Vet, Revival Animal Health, Giant/Stop &
+Shop and Homes Alive are in the main file, all with `source_type`
+`third_party`. Chewy, Petco, PetSmart, Amazon, Walmart and Target are
+still never used.
+
+Exclusions:
+- EPA products: inert ingredients are confidential, so none are filled.
+  Only actives with strengths are taken for brand pages that lacked them.
+- Elanco K9 Advantix/Advantage/Seresto and Hartz flea/tick products:
+  the EPA rows already cover them.
+- Rx spot-ons (Advantage Multi and its generics, Profender, Selarid,
+  Senergy, Milbemite): no source prints the inactives. Other-country
+  labels from a different company or under a different brand name were
+  not used.
+- Drugs.com/vet, Jeffers (for Rx) and similar aggregators: not used.
+- Ambiguous family pages (Dechra "MalAcetic", "TrizCHLOR"...): skipped.
+  So were pages whose variant couldn't be pinned down: Curaseb Medicated
+  Shampoo, PetArmor dog shampoo, the PetArmor Extend collar (the dog-only
+  label doesn't cover the cat collar sold on the same page), and Davis
+  Hypoallergenic (possible reformulation).
+
+How the seed uses it (`app/src/db/seed-pets.ts` `applyIngredientCrossmatch`):
+it fills only empty fields on rows already in the catalog and never
+overwrites, so 96 fields get filled. A list taken from the row's own DailyMed label
+counts as the label's. Any other source is stored as
+`ingredient_source_url`, and the product page says "matched from <site>".
+Targets in no catalog become rows of their own via
+`build_pet_crossmatch_catalog.py` -> `output/pet_crossmatch_catalog.csv`.
+These are seeded as data source `third_party`, with status "Ingredients
+from another source", and the page always names that source. The first run
+gave 37 rows: 24 Davis grooming, 10 Burt's Bees, plus Hartz, Dechra
+TrizEDTA and ZYMOX Ear Cleanser. Three kinds of target are left out:
+- targets matched to a DailyMed label or an EPA registration, because that
+  catalog row already lists the product;
+- targets with only an inactive list and no actives, because half a label
+  would read as the whole product;
+- duplicate formulas.

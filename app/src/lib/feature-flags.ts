@@ -10,6 +10,10 @@
 //                               regimen and shelf pages
 //   FEATURE_RX_CATALOG=on       prescription reference pages (/rx, /rx/[id]),
 //                               noindex; off = 404 (review/rx-handouts-review.html)
+//   FEATURE_PET_MODE=on         pet mode (/pets): dog and cat skin, ear and
+//                               flea/tick products and the species-toxicity
+//                               list, noindex; off = 404 and no nav link
+//                               (waiting on veterinary review of db/pet.ts)
 //   FEATURE_HANDOUTS=on         clinician sign-in, NPI verification, the
 //                               handout builder, dashboard, /h/[token] claim
 //                               links and clinician-issued regimens; off = 404
@@ -41,5 +45,8 @@ export const FEATURES = {
   },
   get HANDOUTS(): boolean {
     return envFlag("FEATURE_HANDOUTS");
+  },
+  get PET_MODE(): boolean {
+    return envFlag("FEATURE_PET_MODE");
   },
 };

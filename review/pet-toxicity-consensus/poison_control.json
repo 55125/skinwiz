@@ -1,0 +1,1202 @@
+[
+ {
+  "ingredient": "permethrin",
+  "species": {
+   "cat": "supported",
+   "dog": "considered_safe"
+  },
+  "threshold": "ASPCA (Richardson): dog-only spot-ons \"contain high concentrations (45-65%) of permethrin\"; ASPCA (Merola 2006): \"generally contain 45% or 65% permethrin in spot-ons and 3% or more permethrin in dips\"; PPH: \"High permethrin concentrations (40+%) can be toxic cats\"; PPH (Brutlag): \"products containing greater than a 5–10% concentration of pyrethrins may lead to systemic toxicity\" (cats)",
+  "safe_exceptions": "ASPCA: \"Products containing permethrin are safe for use in dogs but can cause severe tremors and seizures in cats.\" ASPCA (Merola 2006): \"when used appropriately (including low-concentration pyrethroid products) have a low risk of causing serious problems\"; PPH (Brutlag): \"The diluted amount found in premise sprays and topical flea sprays and shampoos is typically <1%. Toxicity from exposure to these products is highly unlikely.\"",
+  "effect": "Cats: tremors, hyperesthesia, ear/paw twitching, hyperthermia, seizures, can be fatal; signs up to 72 h. Exposure also by grooming/sleeping on a recently treated dog. Dogs: paresthesia (tingling, scratching), rarely systemic.",
+  "sources": [
+   {
+    "title": "ASPCA APCC (Jill A. Richardson, DVM): Permethrin Spot-On Toxicoses in Cats (JVECC 2000 reprint, PDF)",
+    "url": "https://www.aspcapro.org/sites/default/files/d-veccs_april00_0.pdf"
+   },
+   {
+    "title": "ASPCA APCC (Merola & Dunayer): The 10 most common toxicoses in cats (Veterinary Medicine, June 2006, PDF)",
+    "url": "https://www.aspcapro.org/sites/default/files/zl-vetm0606_339-342.pdf"
+   },
+   {
+    "title": "ASPCApro: Common Feline Toxic Exposures and Their Treatment",
+    "url": "https://www.aspcapro.org/resource/common-feline-toxic-exposures-and-their-treatment"
+   },
+   {
+    "title": "ASPCApro: Most Common Toxicologic Causes of Tremors in Cats",
+    "url": "https://www.aspcapro.org/resource/most-common-toxicologic-causes-tremors-cats"
+   },
+   {
+    "title": "ASPCA: Not All Pets Are the Same: Why Species Matters for Pet Toxins",
+    "url": "https://www.aspca.org/news/not-all-pets-are-same-why-species-matters-pet-toxins"
+   },
+   {
+    "title": "ASPCA: Feline Toxins to Steer Clear of This Kitten Season",
+    "url": "https://www.aspca.org/news/feline-toxins-steer-clear-kitten-season"
+   },
+   {
+    "title": "Pet Poison Helpline: Cats and Pyrethroids",
+    "url": "https://www.petpoisonhelpline.com/uncategorized/cats-and-pyrethroids/"
+   },
+   {
+    "title": "Pet Poison Helpline: Four things you should know about flea and tick topical solutions",
+    "url": "https://www.petpoisonhelpline.com/uncategorized/four-things-know-flea-tick-topical-solutions/"
+   },
+   {
+    "title": "Pet Poison Helpline: Common Flea and Tick Toxicity Questions and Answers",
+    "url": "https://www.petpoisonhelpline.com/uncategorized/common-flea-tick-toxicity-questions-answers/"
+   },
+   {
+    "title": "Pet Poison Helpline: Flea and Tick Medications",
+    "url": "https://www.petpoisonhelpline.com/poison/flea-and-tick-medication/"
+   },
+   {
+    "title": "Pet Poison Helpline (Ahna Brutlag, DVM): Topical Toxic Titans...and How to Treat Them! (WVC 2010 proceedings PDF)",
+    "url": "https://www.petpoisonhelpline.com/wp-content/uploads/2011/09/AB-WVC-Topical-Toxins-2010.pdf"
+   }
+  ],
+  "notes": "Cat-labeled products: no source in this family says a permethrin product labeled for cats is toxic, and none explicitly endorses permethrin in cats. ASPCA (Kitten Season) says cats are sensitive \"especially at concentrations found in dog topical products\". PPH notes EPA rules: products \"cannot have labeling for cats unless they are thoroughly tested on cats.\" ASPCA says permethrin is the #1 toxic cause of tremors in cats. Cross-species contact (cat licking or grooming a treated dog) is called out by ASPCA and PPH."
+ },
+ {
+  "ingredient": "other synthetic pyrethroids (cypermethrin, cyphenothrin, deltamethrin, d-phenothrin, lambda-cyhalothrin, bifenthrin, cyfluthrin)",
+  "species": {
+   "cat": "supported",
+   "dog": "considered_safe"
+  },
+  "threshold": "ASPCA (Merola 2006): phenothrin \"can cause a similar syndrome in cats when used at high concentrations\"; PPH (Brutlag): canine spot-ons \"typically ~40% concentration\"; >5–10% may cause systemic toxicity in cats",
+  "safe_exceptions": "ASPCA (Merola 2006): low-concentration pyrethroid products used appropriately \"have a low risk of causing serious problems\"; PPH: \"wide margin of safety for these chemicals with proper use\"; PPH: dogs \"rarely at risk for systemic toxicity\"",
+  "effect": "Same syndrome as permethrin in cats (tremors, seizures, drooling, death). Dogs: paresthesia; deltamethrin collar ingestion can cause ataxia, hind limb weakness, tremors, hyperthermia.",
+  "sources": [
+   {
+    "title": "Pet Poison Helpline: Cats and Pyrethroids",
+    "url": "https://www.petpoisonhelpline.com/uncategorized/cats-and-pyrethroids/"
+   },
+   {
+    "title": "Pet Poison Helpline: Pyrethrins & Pyrethroids",
+    "url": "https://www.petpoisonhelpline.com/poison/pyrethrin/"
+   },
+   {
+    "title": "Pet Poison Helpline (Ahna Brutlag, DVM): Topical Toxic Titans...and How to Treat Them! (WVC 2010 proceedings PDF)",
+    "url": "https://www.petpoisonhelpline.com/wp-content/uploads/2011/09/AB-WVC-Topical-Toxins-2010.pdf"
+   },
+   {
+    "title": "ASPCA APCC (Merola & Dunayer): The 10 most common toxicoses in cats (Veterinary Medicine, June 2006, PDF)",
+    "url": "https://www.aspcapro.org/sites/default/files/zl-vetm0606_339-342.pdf"
+   },
+   {
+    "title": "Pet Poison Helpline: Common Flea and Tick Toxicity Questions and Answers",
+    "url": "https://www.petpoisonhelpline.com/uncategorized/common-flea-tick-toxicity-questions-answers/"
+   },
+   {
+    "title": "Pet Poison Helpline: Flea and Tick Medications",
+    "url": "https://www.petpoisonhelpline.com/poison/flea-and-tick-medication/"
+   }
+  ],
+  "notes": "PPH Cats and Pyrethroids: \"Cats do not tolerate concentrated pyrethrins, permethrins, cypermethrins and all the other insecticides in this class!\" PPH lists bifenthrin, cypermethrin, cyfluthrin, cyhalothrin, deltamethrin, permethrin, resmethrin; Brutlag lists cyphenothrin, bifenthrin, cyhalothrin. d-Phenothrin is named only as \"phenothrin\" (ASPCA 2006). PPH's improper use includes using a product meant for one species on another. Deltamethrin is named (PPH Q&A) only for collar ingestion in pets generally, with no cat-specific skin statement. Lambda-cyhalothrin appears only as \"cyhalothrin\". PPH also loosely says \"Any active ingredient ending in -thrin is a Permethrin product.\""
+ },
+ {
+  "ingredient": "pyrethrins (natural, chrysanthemum-derived)",
+  "species": {
+   "cat": "considered_safe",
+   "dog": "considered_safe"
+  },
+  "threshold": "PPH (Brutlag): \"Cats are significantly more sensitive to pyrethrins than dogs. While a precise toxic dose for cats is not well established, products containing greater than a 5–10% concentration of pyrethrins may lead to systemic toxicity.\"",
+  "safe_exceptions": "ASPCA (Bough 2004): \"Pyrethrin is often found in sprays, mousse, shampoos, and dips designed for use on cats and dogs. When used as directed, pyrethrin is safe.\" ASPCA: \"It is important not to confuse natural pyrethrin with synthetic pyrethroids, such as permethrin, to which cats are very sensitive.\"",
+  "effect": "At label use: minor taste reaction (drooling, foaming), paw shaking, ear twitching. Concentrated products: systemic toxicity in cats (tremors, seizures).",
+  "sources": [
+   {
+    "title": "ASPCA APCC (Mindy G. Bough, CVT): Not Quite Nontoxic, Toxicology Brief (Veterinary Technician, Feb 2004, PDF)",
+    "url": "https://www.aspcapro.org/sites/default/files/w-vettech__0204.pdf"
+   },
+   {
+    "title": "Pet Poison Helpline (Ahna Brutlag, DVM): Topical Toxic Titans...and How to Treat Them! (WVC 2010 proceedings PDF)",
+    "url": "https://www.petpoisonhelpline.com/wp-content/uploads/2011/09/AB-WVC-Topical-Toxins-2010.pdf"
+   },
+   {
+    "title": "Pet Poison Helpline: Cats and Pyrethroids",
+    "url": "https://www.petpoisonhelpline.com/uncategorized/cats-and-pyrethroids/"
+   },
+   {
+    "title": "Pet Poison Helpline: Pyrethrins & Pyrethroids",
+    "url": "https://www.petpoisonhelpline.com/poison/pyrethrin/"
+   }
+  ],
+  "notes": "Marked considered_safe for label-dose products in both species. Concentrated pyrethrins ARE flagged for cats (PPH: \"Cats do not tolerate concentrated pyrethrins\"; >5–10%). Warning logic could key on concentration."
+ },
+ {
+  "ingredient": "etofenprox",
+  "species": {
+   "cat": "supported",
+   "dog": "not_found"
+  },
+  "threshold": "ASPCA (Merola 2006): \"Other pyrethroids, including phenothrin and etofenprox, can cause a similar syndrome in cats when used at high concentrations.\" No numeric threshold.",
+  "safe_exceptions": null,
+  "effect": "Permethrin-like tremor/seizure syndrome in cats at high concentrations.",
+  "sources": [
+   {
+    "title": "ASPCA APCC (Merola & Dunayer): The 10 most common toxicoses in cats (Veterinary Medicine, June 2006, PDF)",
+    "url": "https://www.aspcapro.org/sites/default/files/zl-vetm0606_339-342.pdf"
+   }
+  ],
+  "notes": "No source in this family says that etofenprox in cat-labeled products is safe, and none mentions it for dogs. The same ASPCA article gives general reassurance that low-concentration pyrethroid products used appropriately carry low risk. Only one source names it, so weak support."
+ },
+ {
+  "ingredient": "tea tree oil / melaleuca oil",
+  "species": {
+   "cat": "supported",
+   "dog": "supported"
+  },
+  "threshold": "PPH: \"Pet products including shampoos that contain less than 1-2% are generally considered non-toxic when used according to labeled directions. Higher concentrations of Tea tree oil is toxic to pets and even a few concentrated drops applied topically or ingested, can result in severe poisoning.\" ASPCA: \"concentrated forms of tea tree oil (melaleuca oil) may cause issues for your pets with only seven or eight drops\". PPH (Brutlag): \"cases of toxicity following dermal administration of less than 10 mL of 100% oil on both dogs and cats have been reported\". ASPCA Hepatotoxicant table: \"Usually associated with application of 100% oil to open wound, ear canal or oral ingestion\"",
+  "safe_exceptions": "PPH: shampoos <1-2% \"generally considered non-toxic when used according to labeled directions\"; PPH (Dogs): \"These toxicities are not caused by the very low concentrations of tea tree oil in the various shampoos made for dogs.\" PPH (Brutlag): \"Exposures to these diluted products do not typically lead to toxicity.\"",
+  "effect": "Absorbed through skin and by licking: weakness, ataxia, tremors, CNS depression, hypothermia, rear-limb paralysis, dermal irritation; liver failure (cat); death.",
+  "sources": [
+   {
+    "title": "Pet Poison Helpline: Tea Tree Oil",
+    "url": "https://www.petpoisonhelpline.com/poison/tea-tree-oil/"
+   },
+   {
+    "title": "Pet Poison Helpline: Can I Use Tea Tree Oil on My Dog?",
+    "url": "https://www.petpoisonhelpline.com/uncategorized/can-i-use-tea-tree-oil-on-my-dog/"
+   },
+   {
+    "title": "Pet Poison Helpline: Essential Oils and Dogs",
+    "url": "https://www.petpoisonhelpline.com/uncategorized/essential-oils-dogs/"
+   },
+   {
+    "title": "Pet Poison Helpline: Essential Oils and Cats",
+    "url": "https://www.petpoisonhelpline.com/uncategorized/essential-oils-cats/"
+   },
+   {
+    "title": "Pet Poison Helpline: Updates on Essential Oils",
+    "url": "https://www.petpoisonhelpline.com/uncategorized/updates-on-essential-oils/"
+   },
+   {
+    "title": "Pet Poison Helpline (Ahna Brutlag, DVM): Topical Toxic Titans...and How to Treat Them! (WVC 2010 proceedings PDF)",
+    "url": "https://www.petpoisonhelpline.com/wp-content/uploads/2011/09/AB-WVC-Topical-Toxins-2010.pdf"
+   },
+   {
+    "title": "ASPCA: The Essentials of Essential Oils Around Pets",
+    "url": "https://www.aspca.org/news/essentials-essential-oils-around-pets"
+   },
+   {
+    "title": "ASPCA: Using Flea Medications Safely: Top 5 Tips for Pet Parents",
+    "url": "https://www.aspca.org/news/using-flea-medications-safely-top-5-tips-pet-parents"
+   },
+   {
+    "title": "ASPCApro: Are Essential Oils Dangerous to Pets?",
+    "url": "https://www.aspcapro.org/resource/are-essential-oils-dangerous-pets"
+   },
+   {
+    "title": "ASPCA APCC: Hepatotoxicant Table (PDF)",
+    "url": "https://www.aspcapro.org/sites/default/files/resource/downloads/2020-2020-08/aspca-apcc-hepatoxicant-table.pdf"
+   }
+  ],
+  "notes": "Most common essential-oil toxicity in dogs, per PPH. ASPCA warns against tea tree oil as a flea remedy (\"can cause serious and potentially life threatening signs in pets\"). The concentration cutoff (<1-2% safe) comes from PPH only."
+ },
+ {
+  "ingredient": "concentrated essential oils (general)",
+  "species": {
+   "cat": "supported",
+   "dog": "supported"
+  },
+  "threshold": "ASPCA: \"In their concentrated form (100%), essential oils can absolutely be a danger for pets.\" ASPCApro: consumer products \"often contain 1-20% essential oils\". PPH: \"The higher the concentration of the essential oil (e.g. 15%, 100%), the greater the risk to the animal.\"",
+  "safe_exceptions": null,
+  "effect": "Dermal: ataxia, weakness, depression, hypothermia; oral: vomiting, diarrhea, CNS depression; aspiration risk; liver injury with some oils.",
+  "sources": [
+   {
+    "title": "Pet Poison Helpline: Updates on Essential Oils",
+    "url": "https://www.petpoisonhelpline.com/uncategorized/updates-on-essential-oils/"
+   },
+   {
+    "title": "Pet Poison Helpline: Essential Oils and Cats",
+    "url": "https://www.petpoisonhelpline.com/uncategorized/essential-oils-cats/"
+   },
+   {
+    "title": "Pet Poison Helpline: Essential Oils",
+    "url": "https://www.petpoisonhelpline.com/uncategorized/essential-oils/"
+   },
+   {
+    "title": "ASPCA: The Essentials of Essential Oils Around Pets",
+    "url": "https://www.aspca.org/news/essentials-essential-oils-around-pets"
+   },
+   {
+    "title": "ASPCApro: Are Essential Oils Dangerous to Pets?",
+    "url": "https://www.aspcapro.org/resource/are-essential-oils-dangerous-pets"
+   },
+   {
+    "title": "Pet Poison Helpline: Four things you should know about flea and tick topical solutions",
+    "url": "https://www.petpoisonhelpline.com/uncategorized/four-things-know-flea-tick-topical-solutions/"
+   }
+  ],
+  "notes": "PPH: \"Concentrated essential oils should never be directly applied to cats or dogs.\" Cats are at higher risk (missing liver enzyme, grooming). PPH also warns that \"natural\" flea products with peppermint, citrus (limonene, linalool), cinnamon or lemongrass oils can cause serious reactions in both dogs and cats \"even when the product is used according to label directions.\" Other oils on PPH's general list (no species named): bitter almond, boldo, hyssop, mustard, buchu, turpentine, sassafras, wormwood, tansy, thuja, mugwort, southernwood, cedar, sage, cypress, some juniper, tarragon."
+ },
+ {
+  "ingredient": "pennyroyal oil",
+  "species": {
+   "cat": "supported",
+   "dog": "supported"
+  },
+  "threshold": null,
+  "safe_exceptions": null,
+  "effect": "Liver necrosis/failure (vomiting, bloody diarrhea, death); oral or dermal.",
+  "sources": [
+   {
+    "title": "Pet Poison Helpline: Essential Oils and Dogs",
+    "url": "https://www.petpoisonhelpline.com/uncategorized/essential-oils-dogs/"
+   },
+   {
+    "title": "Pet Poison Helpline: Essential Oils and Cats",
+    "url": "https://www.petpoisonhelpline.com/uncategorized/essential-oils-cats/"
+   },
+   {
+    "title": "Pet Poison Helpline: Updates on Essential Oils",
+    "url": "https://www.petpoisonhelpline.com/uncategorized/updates-on-essential-oils/"
+   },
+   {
+    "title": "ASPCApro: Are Essential Oils Dangerous to Pets?",
+    "url": "https://www.aspcapro.org/resource/are-essential-oils-dangerous-pets"
+   },
+   {
+    "title": "ASPCA APCC: Hepatotoxicant Table (PDF)",
+    "url": "https://www.aspcapro.org/sites/default/files/resource/downloads/2020-2020-08/aspca-apcc-hepatoxicant-table.pdf"
+   }
+  ],
+  "notes": "PPH: \"Pennyroyal is a known toxin to dogs and all forms of it should be avoided in dogs\"; \"oral or dermal exposures can both result in toxicity.\" PPH lists it among oils known to poison cats. ASPCApro: liver injury reported with pennyroyal and melaleuca oils. The PPH pennyroyal toxin-library page body was empty when fetched, so it is not cited."
+ },
+ {
+  "ingredient": "eucalyptus oil",
+  "species": {
+   "cat": "supported",
+   "dog": "supported"
+  },
+  "threshold": "PPH: \"Small ingestions of a few leaves or low concentration eucalyptus oil by pet animals cause minor nausea. Pet exposure (oral or dermal) to highly concentrated eucalyptus essential oil can result in severe signs\"",
+  "safe_exceptions": "Low-concentration oil: minor nausea only (PPH).",
+  "effect": "Highly concentrated oil, oral or dermal: neurologic signs, rarely kidney impairment.",
+  "sources": [
+   {
+    "title": "Pet Poison Helpline: Eucalyptus",
+    "url": "https://www.petpoisonhelpline.com/poison/eucalyptus/"
+   },
+   {
+    "title": "Pet Poison Helpline: Essential Oils and Cats",
+    "url": "https://www.petpoisonhelpline.com/uncategorized/essential-oils-cats/"
+   },
+   {
+    "title": "Pet Poison Helpline: Updates on Essential Oils",
+    "url": "https://www.petpoisonhelpline.com/uncategorized/updates-on-essential-oils/"
+   }
+  ],
+  "notes": "Listed by PPH as known to poison both cats and dogs (Updates on Essential Oils)."
+ },
+ {
+  "ingredient": "peppermint oil",
+  "species": {
+   "cat": "supported",
+   "dog": "not_found"
+  },
+  "threshold": null,
+  "safe_exceptions": null,
+  "effect": "Cats: drooling, vomiting, tremors, ataxia, respiratory distress, liver failure (general essential-oil signs).",
+  "sources": [
+   {
+    "title": "Pet Poison Helpline: Essential Oils and Cats",
+    "url": "https://www.petpoisonhelpline.com/uncategorized/essential-oils-cats/"
+   },
+   {
+    "title": "Pet Poison Helpline: Updates on Essential Oils",
+    "url": "https://www.petpoisonhelpline.com/uncategorized/updates-on-essential-oils/"
+   },
+   {
+    "title": "Pet Poison Helpline: Four things you should know about flea and tick topical solutions",
+    "url": "https://www.petpoisonhelpline.com/uncategorized/four-things-know-flea-tick-topical-solutions/"
+   }
+  ],
+  "notes": "PPH lists peppermint oil as known to poison cats but leaves it off its dog list. The Four Things article says both dogs and cats can react to \"some of these ingredients\" (peppermint, citrus, cinnamon, lemongrass oils) in flea products without singling one out, so dog support is not explicit. Menthol ingestion in dogs causes GI upset (see menthol entry)."
+ },
+ {
+  "ingredient": "cinnamon oil",
+  "species": {
+   "cat": "supported",
+   "dog": "supported"
+  },
+  "threshold": null,
+  "safe_exceptions": null,
+  "effect": "Small amounts of essential oil: low blood sugar, liver disease, vomiting, diarrhea, heart-rate changes; skin/oral irritation and sensitization.",
+  "sources": [
+   {
+    "title": "Pet Poison Helpline: Essential Oils and Cats",
+    "url": "https://www.petpoisonhelpline.com/uncategorized/essential-oils-cats/"
+   },
+   {
+    "title": "Pet Poison Helpline: Updates on Essential Oils",
+    "url": "https://www.petpoisonhelpline.com/uncategorized/updates-on-essential-oils/"
+   },
+   {
+    "title": "Pet Poison Helpline: Nutmeg and Cinnamon Toxicity",
+    "url": "https://www.petpoisonhelpline.com/uncategorized/nutmeg-cinnamon-toxicity/"
+   },
+   {
+    "title": "Pet Poison Helpline: Four things you should know about flea and tick topical solutions",
+    "url": "https://www.petpoisonhelpline.com/uncategorized/four-things-know-flea-tick-topical-solutions/"
+   }
+  ],
+  "notes": "PPH: it takes \"only a small amount of the essential oil\" (vs >1 tsp powder). Listed by PPH as known to poison both cats and dogs."
+ },
+ {
+  "ingredient": "clove oil",
+  "species": {
+   "cat": "supported",
+   "dog": "not_found"
+  },
+  "threshold": null,
+  "safe_exceptions": null,
+  "effect": "General essential-oil toxicity in cats.",
+  "sources": [
+   {
+    "title": "Pet Poison Helpline: Essential Oils and Cats",
+    "url": "https://www.petpoisonhelpline.com/uncategorized/essential-oils-cats/"
+   },
+   {
+    "title": "Pet Poison Helpline: Updates on Essential Oils",
+    "url": "https://www.petpoisonhelpline.com/uncategorized/updates-on-essential-oils/"
+   },
+   {
+    "title": "Pet Poison Helpline: Essential Oils",
+    "url": "https://www.petpoisonhelpline.com/uncategorized/essential-oils/"
+   }
+  ],
+  "notes": "Clove is on PPH's cat list but not its dog list. PPH's general essential-oils article lists clove among oils that \"can cause poisoning\" without naming a species."
+ },
+ {
+  "ingredient": "pine oil",
+  "species": {
+   "cat": "supported",
+   "dog": "supported"
+  },
+  "threshold": null,
+  "safe_exceptions": "ASPCApro: \"Typically the concentrations of glycol ethers and pine oil found in household cleaners is low, limiting their toxicity to gastrointestinal upset.\"",
+  "effect": "Dermal or oral: GI irritation (bloody vomiting), drooling, weakness, ataxia, CNS effects, kidney/liver injury; cats especially sensitive.",
+  "sources": [
+   {
+    "title": "Pet Poison Helpline: Pine Oil",
+    "url": "https://www.petpoisonhelpline.com/poison/pine-oil/"
+   },
+   {
+    "title": "Pet Poison Helpline: Essential Oils and Dogs",
+    "url": "https://www.petpoisonhelpline.com/uncategorized/essential-oils-dogs/"
+   },
+   {
+    "title": "Pet Poison Helpline: Essential Oils and Cats",
+    "url": "https://www.petpoisonhelpline.com/uncategorized/essential-oils-cats/"
+   },
+   {
+    "title": "Pet Poison Helpline: Updates on Essential Oils",
+    "url": "https://www.petpoisonhelpline.com/uncategorized/updates-on-essential-oils/"
+   },
+   {
+    "title": "ASPCApro: Ingredients & Toxicities of Cleaning Products",
+    "url": "https://www.aspcapro.org/resource/ingredients-toxicities-cleaning-products"
+   }
+  ],
+  "notes": "PPH: \"Cats are especially sensitive to this product.\""
+ },
+ {
+  "ingredient": "ylang-ylang oil",
+  "species": {
+   "cat": "supported",
+   "dog": "not_found"
+  },
+  "threshold": null,
+  "safe_exceptions": null,
+  "effect": "General essential-oil toxicity in cats.",
+  "sources": [
+   {
+    "title": "Pet Poison Helpline: Essential Oils and Cats",
+    "url": "https://www.petpoisonhelpline.com/uncategorized/essential-oils-cats/"
+   },
+   {
+    "title": "Pet Poison Helpline: Updates on Essential Oils",
+    "url": "https://www.petpoisonhelpline.com/uncategorized/updates-on-essential-oils/"
+   }
+  ],
+  "notes": "On PPH's cat list only."
+ },
+ {
+  "ingredient": "d-limonene / citrus oils (orange, lemon, lime, bergamot, grapefruit, linalool)",
+  "species": {
+   "cat": "supported",
+   "dog": "not_found"
+  },
+  "threshold": null,
+  "safe_exceptions": "ASPCApro (cleaning products): \"short chain alcohols and d-limonene are likely to results in mild and self-limiting gastrointestinal upset\" (ingestion of household cleaners).",
+  "effect": "General essential-oil toxicity in cats; skin irritation, agitation or lethargy, vomiting, tremors in flea products.",
+  "sources": [
+   {
+    "title": "Pet Poison Helpline: Essential Oils and Cats",
+    "url": "https://www.petpoisonhelpline.com/uncategorized/essential-oils-cats/"
+   },
+   {
+    "title": "Pet Poison Helpline: Updates on Essential Oils",
+    "url": "https://www.petpoisonhelpline.com/uncategorized/updates-on-essential-oils/"
+   },
+   {
+    "title": "Pet Poison Helpline: Four things you should know about flea and tick topical solutions",
+    "url": "https://www.petpoisonhelpline.com/uncategorized/four-things-know-flea-tick-topical-solutions/"
+   },
+   {
+    "title": "Pet Poison Helpline: Essential Oils",
+    "url": "https://www.petpoisonhelpline.com/uncategorized/essential-oils/"
+   },
+   {
+    "title": "ASPCApro: Ingredients & Toxicities of Cleaning Products",
+    "url": "https://www.aspcapro.org/resource/ingredients-toxicities-cleaning-products"
+   }
+  ],
+  "notes": "PPH lists citrus oil (d-limonene) as known to poison cats; it is not on PPH's dog list. Dogs appear only in the grouped Four Things flea-product statement (not explicit per oil)."
+ },
+ {
+  "ingredient": "methyl salicylate / oil of wintergreen / sweet birch oil",
+  "species": {
+   "cat": "supported",
+   "dog": "supported"
+  },
+  "threshold": "PPH (Brutlag): \"1 mL of oil of wintergreen, which is 98% methyl salicylate is equivalent to 1,400 mg of aspirin\"; liniments contain \"concentrations up to 30%\"; \"Toxicity is possible in cats with acute oral ingestions greater than 30 mg/kg aspirin\"; dogs \"tolerate acute oral doses of ASA less than 75–100 mg/kg\"",
+  "safe_exceptions": "PPH (Brutlag): \"topical application of salicylate creams will result in systemic absorption. However, overdoses from topical exposure would not be expected unless large quantities were used chronically.\"",
+  "effect": "Salicylate (aspirin) toxicity: vomiting, GI ulcers, hyperthermia, acid-base disturbance, kidney/liver failure, seizures; cats much more sensitive.",
+  "sources": [
+   {
+    "title": "Pet Poison Helpline: Essential Oils and Cats",
+    "url": "https://www.petpoisonhelpline.com/uncategorized/essential-oils-cats/"
+   },
+   {
+    "title": "Pet Poison Helpline: Updates on Essential Oils",
+    "url": "https://www.petpoisonhelpline.com/uncategorized/updates-on-essential-oils/"
+   },
+   {
+    "title": "Pet Poison Helpline: Essential Oils and Dogs",
+    "url": "https://www.petpoisonhelpline.com/uncategorized/essential-oils-dogs/"
+   },
+   {
+    "title": "Pet Poison Helpline: Aspirin",
+    "url": "https://www.petpoisonhelpline.com/poison/aspirin/"
+   },
+   {
+    "title": "Pet Poison Helpline: Cats and Aspirin",
+    "url": "https://www.petpoisonhelpline.com/uncategorized/cats-and-aspirin/"
+   },
+   {
+    "title": "Pet Poison Helpline (Ahna Brutlag, DVM): Topical Toxic Titans...and How to Treat Them! (WVC 2010 proceedings PDF)",
+    "url": "https://www.petpoisonhelpline.com/wp-content/uploads/2011/09/AB-WVC-Topical-Toxins-2010.pdf"
+   }
+  ],
+  "notes": "Wintergreen and sweet birch are on PPH's lists for both cats and dogs. PPH Aspirin names oil of wintergreen and liniments (Bengay, HEET, Icy Hot) as aspirin sources. \"Cats are much more sensitive to aspirin poisoning than dogs.\""
+ },
+ {
+  "ingredient": "salicylic acid and other topical salicylates (incl. sunscreen octyl salicylate, homosalate, trolamine salicylate)",
+  "species": {
+   "cat": "supported",
+   "dog": "supported"
+  },
+  "threshold": "PPH (Brutlag): acne/skin products \"may contain 1–5% salicylate\"; cats: toxicity possible at acute oral ingestion >30 mg/kg aspirin-equivalent",
+  "safe_exceptions": "PPH (Brutlag): topical overdoses \"would not be expected unless large quantities were used chronically.\" ASPCApro: serious effects \"not commonly reported when sunscreens are ingested\".",
+  "effect": "Ingestion of salicylate-containing topicals: GI upset/ulcers, fever, breathing changes; rarely liver injury, seizures; ASPCA: hind limb weakness from sunscreen salicylates.",
+  "sources": [
+   {
+    "title": "Pet Poison Helpline: Aspirin",
+    "url": "https://www.petpoisonhelpline.com/poison/aspirin/"
+   },
+   {
+    "title": "Pet Poison Helpline: Cats and Aspirin",
+    "url": "https://www.petpoisonhelpline.com/uncategorized/cats-and-aspirin/"
+   },
+   {
+    "title": "Pet Poison Helpline (Ahna Brutlag, DVM): Topical Toxic Titans...and How to Treat Them! (WVC 2010 proceedings PDF)",
+    "url": "https://www.petpoisonhelpline.com/wp-content/uploads/2011/09/AB-WVC-Topical-Toxins-2010.pdf"
+   },
+   {
+    "title": "Pet Poison Helpline: Sunscreen Toxins",
+    "url": "https://www.petpoisonhelpline.com/uncategorized/sunscreen-toxins/"
+   },
+   {
+    "title": "ASPCApro: Sunscreen and Zinc Oxide Ingestion in Pets",
+    "url": "https://www.aspcapro.org/resource/sunscreen-and-zinc-oxide-ingestion-pets"
+   },
+   {
+    "title": "ASPCA: What Pet Toxins Are Hiding in Your Diaper Bag?",
+    "url": "https://www.aspca.org/news/what-pet-toxins-are-hiding-your-diaper-bag"
+   }
+  ],
+  "notes": "PPH Aspirin lists shampoos, acne/wart/callus medications, make-up and sunscreen as salicylate sources that cause severe poisoning in dogs and cats when ingested inappropriately; cats are much more sensitive. The risk comes from licking or ingesting. Low-percentage leave-on products carry low risk per Brutlag."
+ },
+ {
+  "ingredient": "minoxidil",
+  "species": {
+   "cat": "supported",
+   "dog": "supported"
+  },
+  "threshold": null,
+  "safe_exceptions": null,
+  "effect": "Low blood pressure, fast heart rate, arrhythmia, pulmonary edema, pleural effusion, hypothermia; cats can die.",
+  "sources": [
+   {
+    "title": "Pet Poison Helpline: Warning: Minoxidil",
+    "url": "https://www.petpoisonhelpline.com/uncategorized/warning-minoxidil/"
+   },
+   {
+    "title": "ASPCApro: Topical Creams and Pets: A Dangerous Combination",
+    "url": "https://www.aspcapro.org/resource/topical-creams-and-pets-dangerous-combination"
+   }
+  ],
+  "notes": "ASPCApro: \"Cats are more sensitive than dogs and even a single lick by a cat could be deadly.\" PPH: \"Cats are particularly sensitive to this medication, and any exposure can result in severe poisoning and potentially death. Dogs can develop clinical signs at very low amounts.\" PPH lists bathing to remove product, so dermal contact is relevant."
+ },
+ {
+  "ingredient": "5-fluorouracil (topical)",
+  "species": {
+   "cat": "supported",
+   "dog": "supported"
+  },
+  "threshold": "ASPCApro: \"The minimum lethal dose in dogs is 10.30 mg/kg\"; PPH (Brutlag): dogs \"minimum reported toxic dose following oral exposure is 6 mg/kg followed by a minimum reported lethal dose of 20 mg/kg\"; products \"0.5–5%\"",
+  "safe_exceptions": null,
+  "effect": "Rapid vomiting, refractory seizures/tremors, bone marrow suppression, death (ASPCA: 64% of dogs that ingest die or are euthanized).",
+  "sources": [
+   {
+    "title": "Pet Poison Helpline: 5-fluorouracil (5-FU)",
+    "url": "https://www.petpoisonhelpline.com/poison/5-fluorouracil/"
+   },
+   {
+    "title": "Pet Poison Helpline: 5-Fluorouracil Toxicosis in Cats and Dogs",
+    "url": "https://www.petpoisonhelpline.com/uncategorized/5-fluorouracil-toxicosis-in-cats-and-dogs/"
+   },
+   {
+    "title": "Pet Poison Helpline (Ahna Brutlag, DVM): Topical Toxic Titans...and How to Treat Them! (WVC 2010 proceedings PDF)",
+    "url": "https://www.petpoisonhelpline.com/wp-content/uploads/2011/09/AB-WVC-Topical-Toxins-2010.pdf"
+   },
+   {
+    "title": "ASPCA: Medication Spotlight: 5-Fluorouracil and Its Deadly Effects",
+    "url": "https://www.aspca.org/news/medication-spotlight-5-fluorouracil-and-its-deadly-effects"
+   },
+   {
+    "title": "ASPCApro: Five Treatment Elements for Fluorouracil Cream Exposure",
+    "url": "https://www.aspcapro.org/resource/five-treatment-elements-fluorouracil-cream-exposure"
+   },
+   {
+    "title": "ASPCApro: Topical Creams and Pets: A Dangerous Combination",
+    "url": "https://www.aspcapro.org/resource/topical-creams-and-pets-dangerous-combination"
+   },
+   {
+    "title": "ASPCApro: Top 10 Deadliest Pet Poisons",
+    "url": "https://www.aspcapro.org/resource/top-10-deadliest-pet-poisons"
+   }
+  ],
+  "notes": "PPH: \"Small amounts – even a lick for some pets\"; \"Cats are quite sensitive ... even a few licks of the product may cause life-threatening toxicity.\" ASPCA: exposures come from chewing the tube or \"licking the owner's skin after it was applied\". ASPCA (6 mg/kg toxic, 20 mg/kg lethal per PPH) and PPH (10.3 mg/kg lethal per ASPCA) give different dog lethal doses."
+ },
+ {
+  "ingredient": "calcipotriene / calcipotriol",
+  "species": {
+   "cat": "supported",
+   "dog": "supported"
+  },
+  "threshold": "PPH (Brutlag): \"The minimum acute toxic dose in dogs is 37 mcg/kg. This same dose has not been reported in cats but it is well established that they are more sensitive\"",
+  "safe_exceptions": null,
+  "effect": "Hypercalcemia/hyperphosphatemia, tissue mineralization, kidney failure, death.",
+  "sources": [
+   {
+    "title": "Pet Poison Helpline: Calcipotriene",
+    "url": "https://www.petpoisonhelpline.com/poison/calcipotriene/"
+   },
+   {
+    "title": "Pet Poison Helpline (Ahna Brutlag, DVM): Topical Toxic Titans...and How to Treat Them! (WVC 2010 proceedings PDF)",
+    "url": "https://www.petpoisonhelpline.com/wp-content/uploads/2011/09/AB-WVC-Topical-Toxins-2010.pdf"
+   },
+   {
+    "title": "ASPCApro: Topical Creams and Pets: A Dangerous Combination",
+    "url": "https://www.aspcapro.org/resource/topical-creams-and-pets-dangerous-combination"
+   }
+  ],
+  "notes": "PPH: \"Small ingestions – even a lick or taste – by companion animals can lead to severe, chronic disturbance in electrolytes, kidney failure, and death.\""
+ },
+ {
+  "ingredient": "diclofenac (topical)",
+  "species": {
+   "cat": "supported",
+   "dog": "supported"
+  },
+  "threshold": null,
+  "safe_exceptions": null,
+  "effect": "GI upset/ulceration, acute kidney injury; death possible.",
+  "sources": [
+   {
+    "title": "ASPCApro: Topical Creams and Pets: A Dangerous Combination",
+    "url": "https://www.aspcapro.org/resource/topical-creams-and-pets-dangerous-combination"
+   },
+   {
+    "title": "ASPCA: Topical Creams Can Pose Danger to Pets",
+    "url": "https://www.aspca.org/news/topical-creams-can-pose-danger-pets"
+   },
+   {
+    "title": "Pet Poison Helpline: NSAIDs",
+    "url": "https://www.petpoisonhelpline.com/poison/nsaids/"
+   }
+  ],
+  "notes": "ASPCApro: \"Cats are much more sensitive than dogs.\" ASPCA: \"a small exposure can even constitute a pet licking their owner's skin after recent application\". PPH lists diclofenac among human NSAIDs that \"can be extremely dangerous to pets\"."
+ },
+ {
+  "ingredient": "flurbiprofen and other NSAIDs in topical/compounded creams (ketoprofen, piroxicam)",
+  "species": {
+   "cat": "supported",
+   "dog": "supported"
+  },
+  "threshold": null,
+  "safe_exceptions": null,
+  "effect": "Lethargy, vomiting, anemia, acute kidney failure, death.",
+  "sources": [
+   {
+    "title": "ASPCA: Topical Creams Can Pose Danger to Pets",
+    "url": "https://www.aspca.org/news/topical-creams-can-pose-danger-pets"
+   },
+   {
+    "title": "ASPCApro: Topical Creams and Pets: A Dangerous Combination",
+    "url": "https://www.aspcapro.org/resource/topical-creams-and-pets-dangerous-combination"
+   },
+   {
+    "title": "Pet Poison Helpline: NSAIDs",
+    "url": "https://www.petpoisonhelpline.com/poison/nsaids/"
+   },
+   {
+    "title": "ASPCA APCC (Merola & Dunayer): The 10 most common toxicoses in cats (Veterinary Medicine, June 2006, PDF)",
+    "url": "https://www.aspcapro.org/sites/default/files/zl-vetm0606_339-342.pdf"
+   }
+  ],
+  "notes": "ASPCA names flurbiprofen with diclofenac: \"can be toxic to your pets... especially in cats\", including from licking the owner's skin. Ketoprofen and piroxicam are on the ASPCApro compounded-cream watch list. ASPCA 2006: \"cats have a low tolerance for NSAIDs\"."
+ },
+ {
+  "ingredient": "zinc oxide",
+  "species": {
+   "cat": "supported",
+   "dog": "supported"
+  },
+  "threshold": null,
+  "safe_exceptions": "ASPCApro: \"zinc oxide is not absorbed well from the gastrointestinal tract, so zinc toxicity is not common with ingestions of diaper creams and sunscreens.\" PPH (Brutlag): \"In acute ingestions, elemental zinc toxicity is highly unlikely.\"",
+  "effect": "Ingestion of ointment: vomiting (often self-decontaminating), greasy diarrhea, occasional allergic reaction (facial swelling, hives); bloody vomiting with high concentrations; rare zinc toxicosis (hemolysis) with large ingestions.",
+  "sources": [
+   {
+    "title": "ASPCApro: Vet Tech Corner: Zinc Oxide Ingestion",
+    "url": "https://www.aspcapro.org/resource/vet-tech-corner-zinc-oxide-ingestion"
+   },
+   {
+    "title": "ASPCApro: Sunscreen and Zinc Oxide Ingestion in Pets",
+    "url": "https://www.aspcapro.org/resource/sunscreen-and-zinc-oxide-ingestion-pets"
+   },
+   {
+    "title": "ASPCA: What Pet Toxins Are Hiding in Your Diaper Bag?",
+    "url": "https://www.aspca.org/news/what-pet-toxins-are-hiding-your-diaper-bag"
+   },
+   {
+    "title": "Pet Poison Helpline (Ahna Brutlag, DVM): Topical Toxic Titans...and How to Treat Them! (WVC 2010 proceedings PDF)",
+    "url": "https://www.petpoisonhelpline.com/wp-content/uploads/2011/09/AB-WVC-Topical-Toxins-2010.pdf"
+   },
+   {
+    "title": "Pet Poison Helpline: Zinc",
+    "url": "https://www.petpoisonhelpline.com/poison/zinc/"
+   },
+   {
+    "title": "Pet Poison Helpline: What Is Zinc Oxide and How Does It Affect Dogs?",
+    "url": "https://www.petpoisonhelpline.com/uncategorized/what-is-zinc-oxide-and-how-does-it-affect-dogs/"
+   },
+   {
+    "title": "Pet Poison Helpline: My Dog Ate Diaper Rash Ointment",
+    "url": "https://www.petpoisonhelpline.com/uncategorized/my-dog-ate-diaper-rash-ointment-will-they-be-okay/"
+   },
+   {
+    "title": "Pet Poison Helpline: Sunscreen Toxins",
+    "url": "https://www.petpoisonhelpline.com/uncategorized/sunscreen-toxins/"
+   }
+  ],
+  "notes": "No concentration threshold is given. Reported product strengths: ointments \"typically contain 10-40% zinc oxide\" (ASPCA), \"Concentrations vary from 5–40%\" (PPH). ASPCA: \"Products with high concentrations of zinc oxide can also cause bloody vomiting.\" Most exposures are dogs. PPH's Zinc page names diaper rash creams as a zinc-poisoning source for dogs, cats and birds. Low severity overall; PPH Sunscreen calls zinc oxide signs \"mild... typically self-limiting\"."
+ },
+ {
+  "ingredient": "xylitol",
+  "species": {
+   "cat": "not_found",
+   "dog": "supported"
+  },
+  "threshold": "ASPCA Hepatotoxicant table (dog doses): \"> 0.1 g/kg → hypoglycemia > 0.5 g/kg → acute hepatic necrosis\"",
+  "safe_exceptions": null,
+  "effect": "Insulin release causing hypoglycemia (within 10-15 min), seizures, acute liver failure.",
+  "sources": [
+   {
+    "title": "Pet Poison Helpline: Xylitol",
+    "url": "https://www.petpoisonhelpline.com/poison/xylitol/"
+   },
+   {
+    "title": "Pet Poison Helpline: Xylitol Dog Toxic Dose",
+    "url": "https://www.petpoisonhelpline.com/uncategorized/xylitol-dog-toxic-dose/"
+   },
+   {
+    "title": "ASPCA APCC: Hepatotoxicant Table (PDF)",
+    "url": "https://www.aspcapro.org/sites/default/files/resource/downloads/2020-2020-08/aspca-apcc-hepatoxicant-table.pdf"
+   },
+   {
+    "title": "ASPCA: Not All Pets Are the Same: Why Species Matters for Pet Toxins",
+    "url": "https://www.aspca.org/news/not-all-pets-are-same-why-species-matters-pet-toxins"
+   },
+   {
+    "title": "ASPCA: What Pet Toxins Are Hiding in Your Diaper Bag?",
+    "url": "https://www.aspca.org/news/what-pet-toxins-are-hiding-your-diaper-bag"
+   },
+   {
+    "title": "ASPCApro: Understanding and Treating Cough Drop Toxicity in Pets",
+    "url": "https://www.aspcapro.org/resource/understanding-and-treating-cough-drop-toxicity-pets"
+   }
+  ],
+  "notes": "Toxicity is by ingestion. PPH lists cosmetic/personal-care sources: toothpaste, oral rinses, deodorant, shaving cream, makeup, personal lubricants, \"some essential oil products\". No cat statement found. ASPCA species article frames it as a dog-specific toxin."
+ },
+ {
+  "ingredient": "phenols / phenolic compounds",
+  "species": {
+   "cat": "supported",
+   "dog": "not_found"
+  },
+  "threshold": null,
+  "safe_exceptions": null,
+  "effect": "Cats cannot metabolize phenols well; toxicity (route not detailed).",
+  "sources": [
+   {
+    "title": "Pet Poison Helpline: Essential Oils and Cats",
+    "url": "https://www.petpoisonhelpline.com/uncategorized/essential-oils-cats/"
+   },
+   {
+    "title": "ASPCApro: Feline Foster Care Guide (PDF)",
+    "url": "https://www.aspcapro.org/sites/default/files/aspcapro-feline-foster-care-guide.pdf"
+   }
+  ],
+  "notes": "PPH: \"Cats are also very sensitive to phenols and phenolic compounds, which can be found in some essential oils\", in a paragraph about oils being absorbed orally and through the skin. ASPCApro foster guide: \"Phenol-based products are known to be toxic to cats and should not be used. If unsure about a product, a good rule of thumb is to avoid if the name contains 'sol'\" (disinfectant context). Neither source states a dermal dose; weak support."
+ },
+ {
+  "ingredient": "coal tar",
+  "species": {
+   "cat": "not_found",
+   "dog": "not_found"
+  },
+  "threshold": null,
+  "safe_exceptions": null,
+  "effect": "Not addressed.",
+  "sources": [],
+  "notes": "No ASPCA or PPH page found addressing coal tar in dogs or cats."
+ },
+ {
+  "ingredient": "benzocaine",
+  "species": {
+   "cat": "supported",
+   "dog": "supported"
+  },
+  "threshold": "ASPCA (Welch): methemoglobinemia in cats after \"a one-second application (8.1 mg) of a benzocaine-containing topical anesthetic (Cetacaine) to the larynx\"",
+  "safe_exceptions": null,
+  "effect": "Cats: methemoglobinemia, Heinz body anemia, cyanosis, vomiting, dyspnea. Dogs: GI upset; methemoglobinemia at high doses; numbing/aspiration risk.",
+  "sources": [
+   {
+    "title": "ASPCA APCC (Sharon L. Welch, DVM): Local anesthetic toxicosis (Veterinary Medicine, Sept 2000, PDF)",
+    "url": "https://www.aspcapro.org/sites/default/files/toxbrief_0900.pdf"
+   },
+   {
+    "title": "ASPCApro: Understanding and Treating Cough Drop Toxicity in Pets",
+    "url": "https://www.aspcapro.org/resource/understanding-and-treating-cough-drop-toxicity-pets"
+   },
+   {
+    "title": "ASPCApro: Topical Creams and Pets: A Dangerous Combination",
+    "url": "https://www.aspcapro.org/resource/topical-creams-and-pets-dangerous-combination"
+   },
+   {
+    "title": "Pet Poison Helpline: What Is Zinc Oxide and How Does It Affect Dogs?",
+    "url": "https://www.petpoisonhelpline.com/uncategorized/what-is-zinc-oxide-and-how-does-it-affect-dogs/"
+   }
+  ],
+  "notes": "ASPCA: \"Avoid the topical use of any benzocaine-containing product, including Cetacaine, in cats, ferrets, or other exotic animals because of their susceptibility to methemoglobinemia.\" Dog support is weaker. ASPCApro (cough drops): \"animals can metabolize it into compounds that cause methemoglobinemia at high doses\"; PPH: teething gels with benzocaine can cause vomiting, fatigue and difficulty breathing in dogs that eat them."
+ },
+ {
+  "ingredient": "lidocaine (and other local anesthetics: dibucaine, tetracaine, bupivacaine)",
+  "species": {
+   "cat": "supported",
+   "dog": "supported"
+  },
+  "threshold": null,
+  "safe_exceptions": null,
+  "effect": "Vomiting, depression, tremors, seizures, bradycardia/arrhythmia, hypotension; cats sensitive to CNS effects.",
+  "sources": [
+   {
+    "title": "ASPCA APCC (Sharon L. Welch, DVM): Local anesthetic toxicosis (Veterinary Medicine, Sept 2000, PDF)",
+    "url": "https://www.aspcapro.org/sites/default/files/toxbrief_0900.pdf"
+   },
+   {
+    "title": "ASPCApro: Topical Creams and Pets: A Dangerous Combination",
+    "url": "https://www.aspcapro.org/resource/topical-creams-and-pets-dangerous-combination"
+   }
+  ],
+  "notes": "ASPCA (Welch): \"Topical local anesthetic preparations can be hazardous if ingested or inappropriately applied to animals\"; \"Cats are sensitive to the CNS effects of lidocaine\"; APCC saw lidocaine/dibucaine toxicosis in cats and dogs. Dibucaine (OTC 0.5-1% creams) \"is about 10 times more toxic than lidocaine\". Lidocaine is on the ASPCApro compounded-cream watch list (licking owner's skin)."
+ },
+ {
+  "ingredient": "DEET",
+  "species": {
+   "cat": "supported",
+   "dog": "supported"
+  },
+  "threshold": "ASPCApro: \"With a high (80% or more DEET) concentration product, you may see ataxia, disorientation, tremors and seizures. Rarely, you can see CNS signs with a large exposure to a lower concentration product.\"",
+  "safe_exceptions": null,
+  "effect": "GI upset common; eye/airway irritation; tremors and seizures with high-concentration products. Dermal exposure treated by bathing.",
+  "sources": [
+   {
+    "title": "ASPCApro: Don't DEET That Dog!",
+    "url": "https://www.aspcapro.org/resource/dont-deet-dog"
+   },
+   {
+    "title": "ASPCApro: Most Common Toxicologic Causes of Tremors in Cats",
+    "url": "https://www.aspcapro.org/resource/most-common-toxicologic-causes-tremors-cats"
+   }
+  ],
+  "notes": "Owners apply DEET products to pets (ASPCApro). DEET is #10 on ASPCA's list of toxicologic causes of tremors in cats. \"The higher the concentration, the more risk to the pet.\""
+ },
+ {
+  "ingredient": "hydrogen peroxide",
+  "species": {
+   "cat": "supported",
+   "dog": "considered_safe"
+  },
+  "threshold": "ASPCA Tox Cards (dogs, as emetic): \"Hydrogen peroxide (3%)... Administer 1 ml/lb (2.2 ml/kg), up to a maximum of 45 mls.\" ASPCApro: ingestion of \"10% and higher\" can cause hemorrhagic gastritis, burns, gas embolization",
+  "safe_exceptions": "Dogs: 3% is an accepted emetic at controlled dose (ASPCA Tox Cards; PPH).",
+  "effect": "Cats: necrotizing/hemorrhagic gastritis, esophageal ulceration, GI bleeding, possibly fatal (oral).",
+  "sources": [
+   {
+    "title": "ASPCA Poison Control: Tox Cards (PDF, 2025)",
+    "url": "https://www.aspcapro.org/sites/default/files/2025-09/aspca-poison-control-tox-cards.pdf"
+   },
+   {
+    "title": "Pet Poison Helpline: Hydrogen Peroxide to Induce Vomiting in Cats",
+    "url": "https://www.petpoisonhelpline.com/uncategorized/hydrogen-peroxide-to-induce-vomiting-in-cats/"
+   },
+   {
+    "title": "Pet Poison Helpline: \"Can I Use Peroxide on Cats?\" Five At-Home First Aid Myths",
+    "url": "https://www.petpoisonhelpline.com/uncategorized/can-i-use-peroxide-on-cats-five-at-home-first-aid-myths/"
+   },
+   {
+    "title": "ASPCApro: Ingredients & Toxicities of Cleaning Products",
+    "url": "https://www.aspcapro.org/resource/ingredients-toxicities-cleaning-products"
+   }
+  ],
+  "notes": "Covers ORAL use only. ASPCA: \"Hydrogen peroxide is contraindicated in cats, due to the potential for severe, necrotizing gastritis.\" PPH: \"using hydrogen peroxide on cats is never safe\" (as emetic). No source in this family addresses peroxide applied to skin."
+ },
+ {
+  "ingredient": "amitraz",
+  "species": {
+   "cat": "supported",
+   "dog": "not_found"
+  },
+  "threshold": null,
+  "safe_exceptions": null,
+  "effect": "Overdose: lethargy, seizures, slow heart rate, CNS/cardiovascular depression; collar ingestion: incoordination, hyperglycemia, hypothermia.",
+  "sources": [
+   {
+    "title": "Pet Poison Helpline: Amitraz",
+    "url": "https://www.petpoisonhelpline.com/poison/amitraz/"
+   },
+   {
+    "title": "Pet Poison Helpline: Flea Collar",
+    "url": "https://www.petpoisonhelpline.com/poison/flea-collar/"
+   },
+   {
+    "title": "ASPCA Poison Control: Tox Cards (PDF, 2025)",
+    "url": "https://www.aspcapro.org/sites/default/files/2025-09/aspca-poison-control-tox-cards.pdf"
+   }
+  ],
+  "notes": "PPH: \"Amitraz should NOT be used on cats.\" For dogs, sources cover overdose and collar ingestion (atipamezole reversal per ASPCA Tox Cards) but give no label-use or small-breed/Chihuahua warning, so dog is not_found. No concentration threshold found on any opened page."
+ },
+ {
+  "ingredient": "organophosphates (incl. tetrachlorvinphos)",
+  "species": {
+   "cat": "supported",
+   "dog": "supported"
+  },
+  "threshold": null,
+  "safe_exceptions": "ASPCA (Merola 2006): topical insecticides including organophosphates \"when used appropriately... have a low risk of causing serious problems\"; \"In general, topical flea control products applied according to label directions will not cause systemic effects in cats.\"",
+  "effect": "Drooling, vomiting, diarrhea, eye/skin irritation, pupil changes, trembling, seizure, death; skin contact is a listed route.",
+  "sources": [
+   {
+    "title": "Pet Poison Helpline: Organophosphates",
+    "url": "https://www.petpoisonhelpline.com/poison/organophosphate/"
+   },
+   {
+    "title": "Pet Poison Helpline: Flea Collar",
+    "url": "https://www.petpoisonhelpline.com/poison/flea-collar/"
+   },
+   {
+    "title": "ASPCA APCC (Merola & Dunayer): The 10 most common toxicoses in cats (Veterinary Medicine, June 2006, PDF)",
+    "url": "https://www.aspcapro.org/sites/default/files/zl-vetm0606_339-342.pdf"
+   },
+   {
+    "title": "ASPCA Poison Control: Tox Cards (PDF, 2025)",
+    "url": "https://www.aspcapro.org/sites/default/files/2025-09/aspca-poison-control-tox-cards.pdf"
+   }
+  ],
+  "notes": "PPH says companion animals can be poisoned by \"skin/ eye contact with an organophosphate\" (not species-specific). No cat-specific sensitivity statement and no mention of tetrachlorvinphos by name in either source."
+ },
+ {
+  "ingredient": "ivermectin / avermectins (MDR1/ABCB1 dogs)",
+  "species": {
+   "cat": "not_found",
+   "dog": "supported"
+  },
+  "threshold": null,
+  "safe_exceptions": "ASPCA: \"While doses found in heartworm preventatives are safe when used as labeled, other forms require conservative and careful dosing in those breeds.\" PPH: heartworm-preventive amounts unlikely to concern non-sensitive breeds.",
+  "effect": "Dilated pupils, ataxia, tremors, drooling, seizures, coma, blindness, respiratory failure, death.",
+  "sources": [
+   {
+    "title": "Pet Poison Helpline: Ivermectin",
+    "url": "https://www.petpoisonhelpline.com/poison/ivermectin/"
+   },
+   {
+    "title": "ASPCA: Not All Pets Are the Same: Why Species Matters for Pet Toxins",
+    "url": "https://www.aspca.org/news/not-all-pets-are-same-why-species-matters-pet-toxins"
+   },
+   {
+    "title": "ASPCApro: Most Common Toxicologic Causes of Tremors in Cats",
+    "url": "https://www.aspcapro.org/resource/most-common-toxicologic-causes-tremors-cats"
+   }
+  ],
+  "notes": "Sensitive breeds: collies, Border collies, Australian shepherds, Old English sheepdogs, etc. Sources describe mainly oral exposures (horse dewormer, feces); neither addresses topical ivermectin. ASPCA lists avermectins (ivermectin, selamectin, moxidectin) as the #2 toxic cause of tremors in cats, but gives no explicit topical-toxicity statement for cats."
+ },
+ {
+  "ingredient": "alpha-lipoic acid",
+  "species": {
+   "cat": "supported",
+   "dog": "supported"
+  },
+  "threshold": null,
+  "safe_exceptions": null,
+  "effect": "Drooling, vomiting, ataxia, tremors, seizures, hypoglycemia, liver/kidney failure.",
+  "sources": [
+   {
+    "title": "Pet Poison Helpline: Warning: Alpha Lipoic Acid (ALA)",
+    "url": "https://www.petpoisonhelpline.com/uncategorized/warning-alpha-lipoic-acid-ala/"
+   }
+  ],
+  "notes": "PPH: cats \"are ten times more sensitive to alpha lipoic acid toxicity than dogs.\" Ingestion only (supplements); no topical/skin-product statement."
+ },
+ {
+  "ingredient": "nicotine",
+  "species": {
+   "cat": "supported",
+   "dog": "supported"
+  },
+  "threshold": "PPH (Brutlag): \"The oral LD 50 for nicotine in dogs is 9–12 mg/kg. Lethal dose data has not been reported in cats.\" Patches contain 7–114 mg",
+  "safe_exceptions": null,
+  "effect": "Drooling, vomiting, abnormal heart rate/BP, tremors, agitation, collapse, death.",
+  "sources": [
+   {
+    "title": "Pet Poison Helpline: Nicotine",
+    "url": "https://www.petpoisonhelpline.com/poison/nicotine/"
+   },
+   {
+    "title": "Pet Poison Helpline (Ahna Brutlag, DVM): Topical Toxic Titans...and How to Treat Them! (WVC 2010 proceedings PDF)",
+    "url": "https://www.petpoisonhelpline.com/wp-content/uploads/2011/09/AB-WVC-Topical-Toxins-2010.pdf"
+   }
+  ],
+  "notes": "Ingestion (including chewed transdermal patches). Narrow safety margin."
+ },
+ {
+  "ingredient": "retinoids (topical tretinoin)",
+  "species": {
+   "cat": "not_found",
+   "dog": "not_found"
+  },
+  "threshold": null,
+  "safe_exceptions": null,
+  "effect": "Not addressed.",
+  "sources": [],
+  "notes": "No ASPCA or PPH page found on topical tretinoin or retinoids."
+ },
+ {
+  "ingredient": "hydrocortisone / topical corticosteroids (human OTC strength)",
+  "species": {
+   "cat": "considered_safe",
+   "dog": "considered_safe"
+  },
+  "threshold": "PPH (Brutlag): products \"containing up to 1% hydrocortisone, betamethasone, or triamcinolone. Toxicity is unlikely following oral exposure to these products.\"",
+  "safe_exceptions": "PPH: \"dog-friendly hydrocortisone cream is a safe treatment\" with veterinary direction; Brutlag: mild self-limiting vomiting/diarrhea or PU/PD in dogs or cats.",
+  "effect": "Licking: mild GI upset, increased thirst/urination, panting; overdose in unhealthy pets: GI ulceration.",
+  "sources": [
+   {
+    "title": "Pet Poison Helpline (Ahna Brutlag, DVM): Topical Toxic Titans...and How to Treat Them! (WVC 2010 proceedings PDF)",
+    "url": "https://www.petpoisonhelpline.com/wp-content/uploads/2011/09/AB-WVC-Topical-Toxins-2010.pdf"
+   },
+   {
+    "title": "Pet Poison Helpline: Corticosteroids",
+    "url": "https://www.petpoisonhelpline.com/poison/corticosteroids/"
+   },
+   {
+    "title": "Pet Poison Helpline: Is Hydrocortisone Cream Safe for Dogs?",
+    "url": "https://www.petpoisonhelpline.com/uncategorized/is-hydrocortisone-cream-safe-for-dogs/"
+   }
+  ],
+  "notes": "Not flagged as a danger. PPH cautions that some creams \"may contain harmful ingredients\" (e.g., other actives)."
+ },
+ {
+  "ingredient": "camphor",
+  "species": {
+   "cat": "supported",
+   "dog": "supported"
+  },
+  "threshold": null,
+  "safe_exceptions": null,
+  "effect": "Skin irritation, vomiting, diarrhea, depression, seizures, rarely death.",
+  "sources": [
+   {
+    "title": "Pet Poison Helpline: Camphor",
+    "url": "https://www.petpoisonhelpline.com/poison/camphor/"
+   }
+  ],
+  "notes": "Extra candidate. PPH: \"Camphor is readily absorbed across the skin, and should never be applied to dogs or cats due to risks for poisoning.\" Found in Vicks VapoRub, Tiger Balm, Campho-Phenique, Carmex, arthritis rubs."
+ },
+ {
+  "ingredient": "cationic surfactants / quaternary ammonium (benzalkonium chloride, cetrimonium bromide)",
+  "species": {
+   "cat": "supported",
+   "dog": "supported"
+  },
+  "threshold": null,
+  "safe_exceptions": null,
+  "effect": "Oral/esophageal/gastric burns, hemorrhagic gastritis, drooling, CNS depression; dermal burns or irritation and corneal ulcers with concentrated products.",
+  "sources": [
+   {
+    "title": "ASPCApro: Ingredients & Toxicities of Cleaning Products",
+    "url": "https://www.aspcapro.org/resource/ingredients-toxicities-cleaning-products"
+   },
+   {
+    "title": "ASPCA APCC (Merola & Dunayer): The 10 most common toxicoses in cats (Veterinary Medicine, June 2006, PDF)",
+    "url": "https://www.aspcapro.org/sites/default/files/zl-vetm0606_339-342.pdf"
+   },
+   {
+    "title": "Pet Poison Helpline: Liquid Potpourri",
+    "url": "https://www.petpoisonhelpline.com/poison/potpourri-liquid/"
+   }
+  ],
+  "notes": "Extra candidate. ASPCApro: ingestion \"can be more serious, particularly in cats who appear to be sensitive to these surfactants\"; \"dermal burns may occur with dermal exposure of concentrated products.\" Liquid potpourri (cationic detergents and essential oils) is among the top-10 feline toxicoses, with cats licking it off fur. No threshold given. These ingredients appear in some shampoos/conditioners; the sources discuss cleaners and potpourri."
+ },
+ {
+  "ingredient": "propylene glycol",
+  "species": {
+   "cat": "supported",
+   "dog": "considered_safe"
+  },
+  "threshold": null,
+  "safe_exceptions": "PPH: \"Single or sporadic ingestion by pets of low concentration propylene glycol as found in cosmetics or prepared foods is generally recognized as safe.\"",
+  "effect": "Cats: repeated ingestion causes severe anemia; high-concentration (antifreeze) ingestion causes neurologic signs.",
+  "sources": [
+   {
+    "title": "Pet Poison Helpline: Propylene Glycol",
+    "url": "https://www.petpoisonhelpline.com/poison/propylene-glycol/"
+   }
+  ],
+  "notes": "Extra candidate, weak. PPH: \"Cats are very sensitive to propylene glycol and repeated ingestions – even at lower concentration – can result in severe anemia.\" It is relevant only if cats groom off leave-on PG products repeatedly. No source discusses PG in topical pet products specifically."
+ },
+ {
+  "ingredient": "fipronil",
+  "species": {
+   "cat": "considered_safe",
+   "dog": "considered_safe"
+  },
+  "threshold": "PPH: \"Neurologic signs seen with exposures to concentrated products (>40%) include tremors, seizures, coma, and death.\"",
+  "safe_exceptions": "ASPCA: fipronil \"is safe for most mammals when used properly\"; rabbits are the sensitive species.",
+  "effect": "Ingestion: salivation, vomiting; application-site irritation/alopecia.",
+  "sources": [
+   {
+    "title": "Pet Poison Helpline: Fipronil Insecticide Poisoning",
+    "url": "https://www.petpoisonhelpline.com/uncategorized/fipronil-insecticide-poisoning/"
+   },
+   {
+    "title": "Pet Poison Helpline: Four things you should know about flea and tick topical solutions",
+    "url": "https://www.petpoisonhelpline.com/uncategorized/four-things-know-flea-tick-topical-solutions/"
+   },
+   {
+    "title": "ASPCA: Not All Pets Are the Same: Why Species Matters for Pet Toxins",
+    "url": "https://www.aspca.org/news/not-all-pets-are-same-why-species-matters-pet-toxins"
+   }
+  ],
+  "notes": "Extra item. Fipronil is dangerous to rabbits, not to dogs or cats at label use. Do not apply lawn-concentrate products to pets."
+ },
+ {
+  "ingredient": "ethanol (hand sanitizer, high-alcohol products)",
+  "species": {
+   "cat": "supported",
+   "dog": "supported"
+  },
+  "threshold": null,
+  "safe_exceptions": null,
+  "effect": "Vomiting, incoordination, slow breathing, tremors, seizures, coma, death on ingestion.",
+  "sources": [
+   {
+    "title": "Pet Poison Helpline: Hand Sanitizer",
+    "url": "https://www.petpoisonhelpline.com/poison/hand-sanitizer-ethanol/"
+   },
+   {
+    "title": "ASPCA: What Pet Toxins Are Hiding in Your Diaper Bag?",
+    "url": "https://www.aspca.org/news/what-pet-toxins-are-hiding-your-diaper-bag"
+   }
+  ],
+  "notes": "Extra item, ingestion only. ASPCA: hand sanitizers \"60-95% alcohol... can be very dangerous to pets\". Not a skin-contact warning."
+ },
+ {
+  "ingredient": "menthol",
+  "species": {
+   "cat": "not_found",
+   "dog": "supported"
+  },
+  "threshold": null,
+  "safe_exceptions": null,
+  "effect": "Dogs: GI irritation (vomiting, diarrhea), lethargy, incoordination on ingestion.",
+  "sources": [
+   {
+    "title": "Pet Poison Helpline: Is Menthol Bad for Dogs?",
+    "url": "https://www.petpoisonhelpline.com/uncategorized/is-menthol-bad-for-dogs/"
+   },
+   {
+    "title": "ASPCApro: Understanding and Treating Cough Drop Toxicity in Pets",
+    "url": "https://www.aspcapro.org/resource/understanding-and-treating-cough-drop-toxicity-pets"
+   }
+  ],
+  "notes": "Extra item, weak. Based on cough-drop ingestion; no topical statement."
+ },
+ {
+  "ingredient": "benzoyl peroxide",
+  "species": {
+   "cat": "not_found",
+   "dog": "not_found"
+  },
+  "threshold": null,
+  "safe_exceptions": null,
+  "effect": "Not addressed.",
+  "sources": [],
+  "notes": "No ASPCA or PPH page found addressing this ingredient in dogs or cats."
+ },
+ {
+  "ingredient": "selenium sulfide",
+  "species": {
+   "cat": "not_found",
+   "dog": "not_found"
+  },
+  "threshold": null,
+  "safe_exceptions": null,
+  "effect": "Not addressed.",
+  "sources": [],
+  "notes": "No ASPCA or PPH page found addressing this ingredient in dogs or cats."
+ },
+ {
+  "ingredient": "lime sulfur",
+  "species": {
+   "cat": "not_found",
+   "dog": "not_found"
+  },
+  "threshold": null,
+  "safe_exceptions": null,
+  "effect": "Not addressed.",
+  "sources": [],
+  "notes": "No ASPCA or PPH page found addressing this ingredient in dogs or cats."
+ }
+]

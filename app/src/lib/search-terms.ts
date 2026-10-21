@@ -66,6 +66,12 @@ const SYNONYMS: Record<string, string[]> = {
   regenerate: ["regenerist", "regenerat"],
   regenerating: ["regenerist", "regenerating"],
   loreal: ["l'oreal", "loreal"],
+  // Oral care: FDA listings call it "PASTE, DENTIFRICE" or "RINSE" and most
+  // names leave it out, so "colgate optic white toothpaste" found nothing.
+  toothpaste: ["toothpaste", "tooth paste", "dentifrice"],
+  toothpastes: ["toothpaste", "tooth paste", "dentifrice"],
+  mouthwash: ["mouthwash", "mouth wash", "rinse"],
+  mouthwashes: ["mouthwash", "mouth wash", "rinse"],
   // Cantabria Labs (Heliocare, Endocare), misspelled twice in the 2026-10-16 log.
   cantabaria: ["cantabria"],
   cantabarai: ["cantabria"],

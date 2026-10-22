@@ -1,6 +1,6 @@
 const {chromium}=require('playwright');const fs=require('fs');
 const [tlPath,outDir]=process.argv.slice(2);const tl=JSON.parse(fs.readFileSync(tlPath));
-const SUB={1:'Fragrance can go by many names on a label.',2:'Save your avoid list once, then check any product against it.',3:'Your avoid list, saved in one place.'};
+const SUB={1:'Scan any product against your avoid list.',2:'Save your avoid list once, then check any product against it.',3:'Your avoid list, saved in one place.'};
 const lighten=h=>{const n=parseInt(h.slice(1),16);const f=c=>Math.round(c+(255-c)*.35);return `rgb(${f(n>>16)},${f((n>>8)&255)},${f(n&255)})`};
 (async()=>{const p=process.env.HTTPS_PROXY;const b=await chromium.launch({proxy:p?{server:p}:undefined,args:['--ignore-certificate-errors']});
 const chat=await b.newPage({viewport:{width:1080,height:1920}});await chat.goto('file://'+__dirname+'/chat.html');await chat.evaluate(()=>document.fonts.ready);

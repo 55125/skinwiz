@@ -101,7 +101,7 @@ export default function Home() {
               url: base,
               logo: `${base}/apple-icon.png`,
               description: SITE_DESCRIPTION,
-              sameAs: ["https://www.instagram.com/activelyskin/", "https://www.facebook.com/profile.php?id=61595454788535"],
+              sameAs: ["https://www.instagram.com/activelyskin/", "https://www.facebook.com/61595454788535"],
             },
           ],
         }}

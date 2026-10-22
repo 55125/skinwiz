@@ -23,13 +23,16 @@ CTA = "Check before you buy. Free at Actively Skin dot com."
 #   ("contact", name, subtitle, colour, initials, [already-visible messages])  switch chat, no time
 #   ("me", bubble, spoken)             "|" in spoken = dramatic pause             ("it", bubble, spoken, character)
 #   ("emoji", "🍋")                     incoming emoji, no voice
+#   ("hold", seconds)                  extra beat on the current screen (a pause before the next thing)
 #   ("toast", "X blocked", spoken-by-me or None)
 #   ("scan", False|True)               barcode-scan screen: scanning, then the red X
 #   ("note", [line, line], spoken)    narrator aside on screen (Kokoro, wry and a touch slower)
 #   ("end", subtitle, spoken)
 PARTS = {
     1: ("New number, who dis", [
-        ("contact", "Fragrance", "ex · goes by many names", (190, 110, 160), "Fr", [("it", "u up? 😘")]),
+        ("contact", "Fragrance", "ex · goes by many names", (190, 110, 160), "Fr", []),
+        ("it", "u up? 😘", "You up?", "fragrance"),
+        ("hold", 0.3),
         ("toast", "Fragrance blocked", "Blocked."),
         ("contact", "Parfum", "new number", (190, 110, 160), "Pa", []),
         ("it", "babe it's me. new number 😘", "Babe. It's me. New number.", "fragrance"),
@@ -150,6 +153,8 @@ def build_part(n, voiced):
         elif kind == "it":
             msgs.append(("it", b[1]))
             audio = np.concatenate([blip(990), silence(0.1), load_trimmed(voiced[(b[2], b[3])]), silence(0.35)])
+        elif kind == "hold":
+            beats[-1]["audio"] = np.concatenate([beats[-1]["audio"], silence(b[1])]); continue
         elif kind == "emoji":
             msgs.append(("it", b[1])); audio = np.concatenate([blip(990), silence(0.9)])
         elif kind == "toast":

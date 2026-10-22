@@ -5,7 +5,7 @@
   "fps": 30,
   "width": 1080,
   "height": 1920,
-  "total_seconds": 24.8667,
+  "total_seconds": 24.9667,
   "audio": "part1-audio.wav",
   "notes": [
     "Each beat's sound (a ding for a text, a thunk for a block, a beep or buzz for a scan) starts at the beat's start.",
@@ -17,8 +17,8 @@
     {
       "beat": 1,
       "start": 0.0,
-      "duration": 1.2,
-      "frames": 36,
+      "duration": 1.3,
+      "frames": 39,
       "kind": "it",
       "contact": {
         "name": "Fragrance",
@@ -37,12 +37,12 @@
         "from": "it",
         "text": "u up? 😘"
       },
-      "spoken": null,
-      "speaker": null
+      "spoken": "You up?",
+      "speaker": "Fragrance (Chatterbox, am_puck)"
     },
     {
       "beat": 2,
-      "start": 1.2,
+      "start": 1.3,
       "duration": 2.0333,
       "frames": 61,
       "kind": "toast",
@@ -65,7 +65,7 @@
     },
     {
       "beat": 3,
-      "start": 3.2333,
+      "start": 3.3333,
       "duration": 2.1,
       "frames": 63,
       "kind": "it",
@@ -91,7 +91,7 @@
     },
     {
       "beat": 4,
-      "start": 5.3333,
+      "start": 5.4333,
       "duration": 0.7,
       "frames": 21,
       "kind": "toast",
@@ -114,7 +114,7 @@
     },
     {
       "beat": 5,
-      "start": 6.0333,
+      "start": 6.1333,
       "duration": 1.8,
       "frames": 54,
       "kind": "it",
@@ -140,7 +140,7 @@
     },
     {
       "beat": 6,
-      "start": 7.8333,
+      "start": 7.9333,
       "duration": 0.7,
       "frames": 21,
       "kind": "toast",
@@ -163,7 +163,7 @@
     },
     {
       "beat": 7,
-      "start": 8.5333,
+      "start": 8.6333,
       "duration": 1.0,
       "frames": 30,
       "kind": "emoji",
@@ -189,7 +189,7 @@
     },
     {
       "beat": 8,
-      "start": 9.5333,
+      "start": 9.6333,
       "duration": 3.1,
       "frames": 93,
       "kind": "me",
@@ -219,7 +219,7 @@
     },
     {
       "beat": 9,
-      "start": 12.6333,
+      "start": 12.7333,
       "duration": 1.4,
       "frames": 42,
       "kind": "it",
@@ -253,7 +253,7 @@
     },
     {
       "beat": 10,
-      "start": 14.0333,
+      "start": 14.1333,
       "duration": 5.8667,
       "frames": 176,
       "kind": "note",
@@ -296,7 +296,7 @@
     },
     {
       "beat": 11,
-      "start": 19.9,
+      "start": 20.0,
       "duration": 4.9667,
       "frames": 149,
       "kind": "end",

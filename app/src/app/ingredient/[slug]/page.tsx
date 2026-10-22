@@ -48,6 +48,7 @@ import { isIndexableIngredient } from "@/lib/ingredient-index";
 import { JsonLd } from "@/components/json-ld";
 import { siteUrl } from "@/lib/site-url";
 import { SITE_NAME } from "@/lib/brand";
+import { ingredientSummary } from "@/lib/answer-summary";
 
 type Params = Promise<{ slug: string }>;
 
@@ -185,6 +186,19 @@ export default async function IngredientPage({
           <IngredientPreference id={id} initial={preference} />
         </div>
       </header>
+
+      <p className="max-w-3xl leading-relaxed">
+        {ingredientSummary({
+          name: ingredient.name,
+          products: stats.products,
+          brands: stats.brands,
+          asActive: stats.asActive,
+          use: active ? activeUse(active.id) : undefined,
+          allergens: allergens.map((a) => a.name),
+          failedChecks: failedChecks.map((c) => c.label),
+          avgPosition: avgPos,
+        }).join(" ")}
+      </p>
 
       <dl className="grid grid-cols-3 gap-3">
         <Stat value={stats.products.toLocaleString()} label={stats.products === 1 ? "product contains it" : "products contain it"} />

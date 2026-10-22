@@ -22,6 +22,7 @@ import { browseProducts, getAllergenProductCounts, getFreeOfAllergenByConcern } 
 import { readAvoidIds } from "@/lib/avoid";
 import { breadcrumbLd } from "@/lib/seo";
 import { siteUrl } from "@/lib/site-url";
+import { allergenSummary } from "@/lib/answer-summary";
 
 export const dynamic = "force-dynamic";
 
@@ -70,9 +71,15 @@ export default async function AllergenPage({ params }: { params: Promise<{ id: s
         title={name}
         description={
           allergen
-            ? unverifiable
-              ? `${(counts.get(allergen.id) ?? 0).toLocaleString()} products in our catalog list it.`
-              : `${(counts.get(allergen.id) ?? 0).toLocaleString()} products in our catalog list it; ${freeTotal.toLocaleString()} with a full ingredient list are free of it.`
+            ? allergenSummary({
+                name: allergen.name,
+                section: section!.title,
+                labelNames: labelNames(allergen),
+                listedOn: counts.get(allergen.id) ?? 0,
+                freeOf: unverifiable ? null : freeTotal,
+                hideable,
+                families: families.map((g) => g.name),
+              }).join(" ")
             : `${group!.note} ${freeTotal.toLocaleString()} products with a full ingredient list are free of all ${members.length}.`
         }
       >

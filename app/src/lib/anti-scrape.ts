@@ -265,7 +265,7 @@ export function judge(req: RequestInfo): Verdict {
   const path = req.pathname;
 
   // Always reachable so well-behaved crawlers can read the rules.
-  if (path === "/robots.txt" || path === "/sitemap.xml") return { action: "allow" };
+  if (path === "/robots.txt" || path === "/sitemap.xml" || path.startsWith("/sitemaps/")) return { action: "allow" };
 
   let automated = false;
   if (!ALLOWED_UA.test(ua)) {

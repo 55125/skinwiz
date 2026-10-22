@@ -1174,14 +1174,6 @@ export function getPopularIngredients(limit = 12) {
     .all();
 }
 
-export function getPublicIngredientIds(): { id: string }[] {
-  return db
-    .select({ id: ingredients.id })
-    .from(ingredients)
-    .where(sql`${ingredients.productCount} >= ${MIN_PUBLIC_PRODUCTS}`)
-    .all();
-}
-
 // One product, one URL: a merged duplicate's canonical is the row it was
 // merged into (tools/catalog_pipeline/build_product_merges.py, which also
 // folds in the old exact-match rule -- same name, labeler, form and strength

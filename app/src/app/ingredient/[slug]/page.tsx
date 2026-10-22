@@ -8,7 +8,6 @@ import { ProductGrid } from "@/components/product-grid";
 import { Pagination } from "@/components/pagination";
 import { RedFlagBanner } from "@/components/red-flag-banner";
 import {
-  MIN_PUBLIC_PRODUCTS,
   getActive,
   getActiveChemData,
   getActiveStrengthStats,
@@ -45,6 +44,7 @@ import { canonicalSlug } from "@/db/ingredient-parse";
 import { ewgHazardBadge } from "@/lib/ewg";
 import { cn } from "@/lib/utils";
 import { variantRobots, breadcrumbLd } from "@/lib/seo";
+import { isIndexableIngredient } from "@/lib/ingredient-index";
 import { JsonLd } from "@/components/json-ld";
 import { siteUrl } from "@/lib/site-url";
 import { SITE_NAME } from "@/lib/brand";
@@ -64,8 +64,9 @@ export async function generateMetadata({
   return {
     title: `${ingredient.name}: what it is and products that contain it`,
     description: `${ingredient.name} appears in ${n.toLocaleString()} product${n === 1 ? "" : "s"} in the ${SITE_NAME} catalog. See every product that contains it, how it is used, and what we know about it.`,
-    // one-off entries are mostly label typos; keep them reachable but out of search results
-    robots: n < MIN_PUBLIC_PRODUCTS ? { index: false } : variantRobots(await searchParams),
+    // one-off entries are mostly label typos, and a bare product list with
+    // little else on it is thin (lib/ingredient-index.ts): reachable, not indexed
+    robots: !isIndexableIngredient(ingredient, !!getActive(ingredient.id)) ? { index: false, follow: true } : variantRobots(await searchParams),
     alternates: { canonical: `/ingredient/${encodeURIComponent(ingredient.id)}` },
   };
 }

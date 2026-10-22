@@ -132,8 +132,8 @@ test("equivalence groups (/same) and HSA tags", async () => {
 });
 
 test("sitemap has no Rx, clinician or handout URLs", async () => {
-  const { default: sitemap } = await import("@/app/sitemap");
-  const urls = sitemap().map((e) => e.url);
+  const { SITEMAP_PARTS, sitemapPart } = await import("./sitemap");
+  const urls = SITEMAP_PARTS.flatMap((p) => sitemapPart(p)).map((e) => e.url);
   assert.ok(urls.some((u) => u.endsWith("/product/otc-1")));
   for (const u of urls) {
     assert.ok(!RX.some((id) => u.includes(id)), `sitemap lists ${u}`);

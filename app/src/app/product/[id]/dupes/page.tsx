@@ -21,10 +21,14 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   const product = getProduct(decodeURIComponent(id));
   if (!product) return {};
   const canonicalId = product.canonicalId ?? product.id;
+  // Every product links here, but most have no other-brand dupe; those empty
+  // pages stay reachable and out of search results.
+  const { total } = findDupesCached(canonicalId, LIMIT);
   return {
     title: `${product.brandName} dupes`,
     description: `Products with exactly the same active ingredients as ${product.brandName}, in the same form, ranked by how closely their inactive ingredients match. On ${SITE_NAME}.`,
     alternates: { canonical: `/product/${encodeURIComponent(canonicalId)}/dupes` },
+    robots: total === 0 ? { index: false, follow: true } : undefined,
   };
 }
 

@@ -257,6 +257,10 @@ export type RequestInfo = {
 
 const DETAIL_PATH = /^\/(product|ingredient)\//;
 const DATA_API = /^\/api\/(search|products)\//;
+// The public MCP endpoint (app/mcp/route.ts). AI assistants call it from
+// scripting libraries (python-httpx, node), so it gets the API budget rather
+// than the tight one for automated page loads; the route adds its own limits.
+const MCP_PATH = /^\/mcp\/?$/;
 const IMAGE_PATH = /^\/img\/[^?]*\.webp$/;
 
 export function judge(req: RequestInfo): Verdict {
@@ -304,7 +308,7 @@ export function judge(req: RequestInfo): Verdict {
     return { action: "block", status: 429, reason: "temporarily blocked", retryAfter: Math.ceil((c.bannedUntil - now) / 1000) };
   }
 
-  const isApi = DATA_API.test(path);
+  const isApi = DATA_API.test(path) || MCP_PATH.test(path);
   const review = req.reviewMode;
   // Next strips its own router headers (rsc, next-router-prefetch) before the
   // proxy runs, so spot router fetches by the browser's Sec-Fetch headers:

@@ -22,7 +22,7 @@
     "images:sync": "tsx src/db/sync-images.ts",
     "labels:scan": "tsx src/db/scan-labels.ts",
     "handouts:purge": "tsx src/db/purge-handout.ts",
-    "test": "tsx --test src/db/*.test.ts src/lib/*.test.ts src/lib/prices/*.test.ts src/lib/analytics/*.test.ts"
+    "test": "tsx --test src/db/*.test.ts src/lib/*.test.ts src/lib/prices/*.test.ts src/lib/analytics/*.test.ts src/lib/mcp/*.test.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",

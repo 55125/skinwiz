@@ -75,3 +75,18 @@ test("the visitor IP comes from CF-Connecting-IP only when the request arrives f
   assert.equal(clientIp(h("198.51.100.9")), "198.51.100.9");
   assert.equal(clientIp(new Headers({ "x-forwarded-for": "1.1.1.1, 198.51.100.9" })), "198.51.100.9");
 });
+
+test("AI assistants calling the MCP endpoint from scripting libraries get the API budget, not the automated page budget", () => {
+  const at = ip();
+  const call = (ua: string) => judge({ pathname: "/mcp", method: "POST", headers: new Headers({ "user-agent": ua }), ip: at, now: 1_000 });
+  for (let i = 0; i < LIMITS.apiPerMinute; i++) assert.equal(call("python-httpx/0.27").action, "allow", `call ${i + 1}`);
+  assert.equal(call("python-httpx/0.27").action, "block");
+  // training crawlers stay out of it too
+  assert.equal(judge({ pathname: "/mcp", method: "POST", headers: new Headers({ "user-agent": "ClaudeBot/1.0" }), ip: ip() }).action, "block");
+});
+
+test("answer-engine fetchers that send readers here are not refused", () => {
+  for (const ua of ["Mozilla/5.0 (compatible; OAI-SearchBot/1.0)", "Mozilla/5.0 (compatible; ChatGPT-User/1.0)", "Mozilla/5.0 (compatible; PerplexityBot/1.0)", "Claude-User/1.0", "Mozilla/5.0 (compatible; Claude-SearchBot/1.0)"]) {
+    assert.equal(judge(req(ua, { pathname: "/ingredient/niacinamide" })).action, "allow", ua);
+  }
+});

@@ -39,6 +39,7 @@ import { originIdsJson } from "@/lib/origin";
 import { ORIGINS, type OriginId } from "@/lib/origin-shared";
 import { discontinuedIdsJson, importIdsJson, inStockIdsJson, popularIdsJson } from "@/lib/availability";
 import { ttlCache } from "@/lib/ttl-cache";
+import type { StrengthRange } from "@/lib/strength-bands";
 
 // Prescription rows (products.isRx) are reference/handout data and must never
 // reach a consumer listing, search, count, score, equivalence list or the
@@ -231,12 +232,19 @@ function strengthExpr(activeId: string): SQL {
   return sql`json_extract(${products.strengths}, ${'$."' + activeId + '"'})`;
 }
 
+// One label strength, or a range (above lo, up to and including hi) -- see lib/strength-bands.ts.
+function strengthClause(activeId: string, r: StrengthRange): SQL {
+  const expr = strengthExpr(activeId);
+  if (r.lo === r.hi) return sql`${expr} = ${r.lo}`;
+  return r.hi === null ? sql`${expr} > ${r.lo}` : sql`${expr} > ${r.lo} AND ${expr} <= ${r.hi}`;
+}
+
 export function getProductsForConcern(
   concernId: string,
   page: number,
   activeId?: string,
   freeFromIds: string[] = [],
-  strengthPct?: number,
+  strength?: StrengthRange,
   excludeIngredientIds?: string[],
   origin?: OriginId,
 ) {
@@ -246,7 +254,7 @@ export function getProductsForConcern(
   if (origin) clauses.push(originClause(origin));
   if (activeId) {
     clauses.push(jsonArrayContains(products.activeIds, activeId));
-    if (strengthPct !== undefined) clauses.push(sql`${strengthExpr(activeId)} = ${strengthPct}`);
+    if (strength) clauses.push(strengthClause(activeId, strength));
   }
   const whereClause = and(...clauses);
 
@@ -266,8 +274,8 @@ export type BrowseFilters = {
   freeFromIds?: string[];
   hsaOnly?: boolean;
   excludeIngredientIds?: string[];
-  /** With activeId: only this label strength (concern pages). */
-  strengthPct?: number;
+  /** With activeId: only this label strength or range (concern pages). */
+  strength?: StrengthRange;
   /** A concern page's listing: applies lib/listing-rules.ts exclusions. */
   concernListing?: boolean;
   /** The header's region pick: only brands from there. */
@@ -282,7 +290,7 @@ export function browseWhere(filters: BrowseFilters): SQL | undefined {
   if (filters.activeId) clauses.push(jsonArrayContains(products.activeIds, filters.activeId));
   if (filters.concernListing) clauses.push(concernListingClause(filters.concernId));
   if (filters.origin) clauses.push(originClause(filters.origin));
-  if (filters.activeId && filters.strengthPct !== undefined) clauses.push(sql`${strengthExpr(filters.activeId)} = ${filters.strengthPct}`);
+  if (filters.activeId && filters.strength) clauses.push(strengthClause(filters.activeId, filters.strength));
   // The eligible set is computed in lib/otc-index.ts (label-text rules for
   // sunscreens), bound here as one JSON array parameter.
   if (filters.hsaOnly) clauses.push(sql`${products.id} IN (SELECT value FROM json_each(${hsaEligibleIdsJson()}))`);

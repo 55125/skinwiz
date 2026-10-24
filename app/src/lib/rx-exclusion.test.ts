@@ -58,7 +58,7 @@ test("concern lists and the hidden rx concern", () => {
   assert.equal(q.getConcern("rx"), undefined);
   noRx(q.getProductsForConcern("acne", 1).rows.map((r) => r.id), "getProductsForConcern");
   noRx(q.getProductsForConcern("rx", 1).rows.map((r) => r.id), "getProductsForConcern(rx)");
-  assert.equal(q.getProductsForConcern("acne", 1, "adapalene", ["fragrance-free"], 0.1).total, 2);
+  assert.equal(q.getProductsForConcern("acne", 1, "adapalene", ["fragrance-free"], { lo: 0.1, hi: 0.1 }).total, 2);
   assert.deepEqual(q.getStrengthOptionsForActive("acne", "adapalene"), [{ pct: 0.1, count: 2 }]);
 });
 

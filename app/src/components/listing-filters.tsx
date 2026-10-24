@@ -4,7 +4,6 @@ import { FreeFromFilters } from "@/components/free-from-filters";
 import { ORIGINS, type OriginId } from "@/lib/origin-shared";
 import { TRUST_TIERS } from "@/lib/trust-tiers";
 import { HSA_GUIDE_PATH } from "@/lib/hsa";
-import { formatPct } from "@/db/strength";
 import { cn } from "@/lib/utils";
 
 /** Builds a link to the same listing with some params changed (undefined removes one); resets ?page. */
@@ -32,7 +31,7 @@ export function ListingFilters({
     selected?: string;
     options: { id: string; canonicalName: string }[];
     /** Strength picks for the selected active (concern pages). */
-    strength?: { selected?: number; options: { pct: number; count: number }[] };
+    strength?: { selected?: string; options: { param: string; label: string; count: number }[] };
   };
   origin: { selected?: OriginId; counts: Map<OriginId, number> };
   hsa?: { selected: boolean };
@@ -79,9 +78,9 @@ export function ListingFilters({
               </FilterLink>
             </li>
             {active.strength.options.map((o) => (
-              <li key={o.pct}>
-                <FilterLink href={hrefWith({ strength: String(o.pct) })} selected={active.strength!.selected === o.pct}>
-                  <Count count={o.count}>{formatPct(o.pct)}</Count>
+              <li key={o.param}>
+                <FilterLink href={hrefWith({ strength: o.param })} selected={active.strength!.selected === o.param}>
+                  <Count count={o.count}>{o.label}</Count>
                 </FilterLink>
               </li>
             ))}

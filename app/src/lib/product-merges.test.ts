@@ -110,7 +110,7 @@ test("reviewed merge decisions are applied; needs_owner and the rest are not", (
 
 test("listings, counts, search and autocomplete leave the duplicate out", () => {
   noDup(q.getProductsForConcern("acne", 1).rows.map((r) => r.id), "getProductsForConcern");
-  assert.equal(q.getProductsForConcern("acne", 1, "adapalene", ["fragrance-free"], 0.1).total, 2);
+  assert.equal(q.getProductsForConcern("acne", 1, "adapalene", ["fragrance-free"], { lo: 0.1, hi: 0.1 }).total, 2);
   assert.deepEqual(q.getStrengthOptionsForActive("acne", "adapalene"), [{ pct: 0.1, count: 2 }]);
   noDup(q.browseProducts({}, 1).rows.map((r) => r.id), "browseProducts");
   assert.equal(q.browseProducts({}, 1).total, 2);

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound, permanentRedirect, redirect } from "next/navigation";
-import { AlertTriangle, ChevronLeft, ExternalLink, Info, Music2, Camera, ShieldCheck } from "lucide-react";
+import { AlertTriangle, ChevronLeft, ExternalLink, Info, Music2, Camera } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -28,7 +28,7 @@ import {
 import { DERM_PANEL_LAUNCHED, getScoresForProducts } from "@/lib/scoring";
 import { getVideoSearchLinks } from "@/lib/video-links";
 import { dataSourceBadge } from "@/lib/data-source";
-import { checkShownFor, FREE_FROM_CHECKS, getFreeFromCheck, ingredientFailsCheck, shownFreeFromFlags } from "@/db/ingredient-flags";
+import { checkShownFor, FREE_FROM_CHECKS, ingredientFailsCheck, shownFreeFromFlags } from "@/db/ingredient-flags";
 import { findSafeSwaps, findSimilarProductsCached } from "@/lib/similar";
 import { findDupesCached } from "@/lib/dupes";
 import { DupeEmpty, DupeExplainer, DupeRows } from "@/components/dupe-list";
@@ -36,7 +36,7 @@ import { ewgHazardBadge } from "@/lib/ewg";
 import { readSessionId } from "@/lib/session";
 import { getSessionOutcome } from "@/lib/outcomes";
 import { readAvoidIds, avoidConflicts, avoidVerdict, avoidedIngredientName } from "@/lib/avoid";
-import { AllergenFindings } from "@/components/allergen-findings";
+import { WhatsInIt } from "@/components/whats-in-it";
 import { activeName, describeStrengths, labelAmounts, labelQuantityCount } from "@/lib/strength-display";
 import { activeUse } from "@/db/active-uses";
 import { formatPct } from "@/db/strength";
@@ -55,7 +55,7 @@ import { HowToUse } from "@/components/how-to-use";
 import { getLabelSections, getRegimenSlot, guidanceForActives, guidanceForStep, stepTypeOf, suggestSlot } from "@/lib/regimen";
 import { MatchBadge } from "@/components/match-badge";
 import { avoidLabelsFor, hasProfile, matchProduct, readProfile } from "@/lib/profile";
-import { displayManufacturer, tidyIngredientName } from "@/lib/format";
+import { displayManufacturer } from "@/lib/format";
 import { productBrand } from "@/lib/product-brand";
 import { productTitle, breadcrumbLd } from "@/lib/seo";
 import { JsonLd } from "@/components/json-ld";
@@ -68,7 +68,7 @@ import { retailerSearchLinks } from "@/lib/retailer-search";
 import { EquivalenceExplainer, EquivalenceRows } from "@/components/equivalence-list";
 import { FEATURES } from "@/lib/feature-flags";
 import { productPregnancyFindings } from "@/lib/pregnancy";
-import { PregnancyNotice } from "@/components/pregnancy-notice";
+import { PregnancyNotice, pregnancyAvoidTitle } from "@/components/pregnancy-notice";
 import {
   DAILYMED_IMAGE_CAPTION,
   isKrogerImageUrl,
@@ -96,20 +96,6 @@ import { quickBuyLinks } from "@/lib/quick-buy";
 
 // Crawlers and tools don't count as a "recently viewed" signal for price refreshes.
 const BOT_UA = /bot|crawl|spider|slurp|preview|fetch|curl|wget|python|headless|monitor/i;
-
-const FREE_FROM_BADGE = "border-emerald-300 text-emerald-700 dark:border-emerald-900 dark:text-emerald-400";
-
-// Each filter tag links to its guide page (more products passing the same
-// check) -- also the main crawl path into the guides.
-function FreeFromLink({ id }: { id: string }) {
-  return (
-    <Link href={`/guide/${id}`}>
-      <Badge variant="outline" className={`${FREE_FROM_BADGE} hover:bg-emerald-50 dark:hover:bg-emerald-950/40`}>
-        {getFreeFromCheck(id)?.label ?? id}
-      </Badge>
-    </Link>
-  );
-}
 
 // The product page's notes stay one line each; the method behind them
 // (sources, matching, what a check can't see) is on the About page.
@@ -263,6 +249,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
   );
   const showPregnancy = FEATURES.PREGNANCY_MODE && (profile.pregnant || profile.breastfeeding);
   const pregnancyFound = showPregnancy ? productPregnancyFindings(product, ingredientRows) : [];
+  const pregnancyTitle = showPregnancy ? pregnancyAvoidTitle(pregnancyFound, profile.pregnant, profile.breastfeeding) : null;
   const shownFlags = shownFreeFromFlags(product.freeFromFlags ?? [], product.concernId);
   const flaggedSkin = product.freeFromFlags
     ? FREE_FROM_CHECKS.filter((c) => c.category === "skin" && checkShownFor(c.id, product.concernId) && !product.freeFromFlags!.includes(c.id)).map((c) => ({
@@ -287,6 +274,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
     (uncoveredActives.length > 0 || (product.activeIngredientText ?? "").includes("|") || labelQuantityCount(product.activeIngredientText) !== strengthRows.length);
 
   const brandStatus = product.dataSource === "brand_direct" ? brandDirectStatus(product) : null;
+  const otherNotes = evidenceNotes.filter((n) => !strengthRows.some((r) => r.id === n.activeId));
 
   return (
     <div className="mx-auto max-w-5xl space-y-10 px-4 py-8 sm:py-10">
@@ -449,63 +437,49 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
               keeps sizes, stock and per-store notes. */}
           <QuickBuyRow links={quickBuy} moreHref="#where-to-buy" />
 
+          {/* One line each for what can't wait; the details are in What's in it. */}
           {avoid?.status === "conflicts" && (
-            <Alert className="border-red-300 bg-red-50 dark:border-red-900 dark:bg-red-950/40">
-              <AlertTriangle className="h-4 w-4 text-red-600" />
-              <AlertTitle>Contains {avoid.conflicts.length === 1 ? "something" : `${avoid.conflicts.length} things`} on your avoid list</AlertTitle>
-              <AlertDescription>
-                {avoid.conflicts.map(avoidedIngredientName).join(", ")}. Based on the published ingredient list —{" "}
-                <Link href="/avoid" className="underline">
-                  edit your list
-                </Link>
-                .{safeSwaps.length > 0 && (
+            <p className="flex items-start gap-2 rounded-xl border border-red-300 bg-red-50 px-3.5 py-2.5 text-sm dark:border-red-900 dark:bg-red-950/40">
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-red-600" aria-hidden />
+              <span>
+                Contains <span className="font-semibold">{avoid.conflicts.map(avoidedIngredientName).join(", ")}</span>, on your avoid
+                list.{" "}
+                <a href="#whats-in-it" className="font-medium underline">
+                  Details ↓
+                </a>
+                {safeSwaps.length > 0 && (
                   <>
-                    {" "}
+                    {" · "}
                     <a href="#safe-swaps" className="font-medium underline">
-                      See {safeSwaps.length} similar without them ↓
+                      See {safeSwaps.length} similar without {avoid.conflicts.length === 1 ? "it" : "them"} ↓
                     </a>
                   </>
                 )}
-              </AlertDescription>
-            </Alert>
-          )}
-          {(avoid?.status === "possible" || (avoid?.status === "conflicts" && avoid.possible.length > 0)) && (
-            <Alert className="border-amber-300 bg-amber-50 dark:border-amber-900 dark:bg-amber-950/40">
-              <AlertTriangle className="h-4 w-4 text-amber-600" />
-              <AlertTitle>Undisclosed fragrance: can&apos;t rule out {avoid.possible.length === 1 ? "an allergen" : `${avoid.possible.length} allergens`} you avoid</AlertTitle>
-              <AlertDescription>
-                {avoid.possible.map(avoidedIngredientName).join(", ")} wouldn&apos;t have to be named on the label when
-                it&apos;s part of &ldquo;fragrance&rdquo; or &ldquo;parfum.&rdquo;
-                {avoid.status === "possible" && safeSwaps.length > 0 && (
-                  <>
-                    {" "}
-                    <a href="#safe-swaps" className="font-medium underline">
-                      See {safeSwaps.length} similar without it ↓
-                    </a>
-                  </>
-                )}
-              </AlertDescription>
-            </Alert>
-          )}
-          {avoid?.status === "clear" && (
-            <p className="flex items-center gap-2 rounded-xl border border-emerald-300 bg-emerald-50 px-3.5 py-2.5 text-sm text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-300">
-              <ShieldCheck className="h-4 w-4 shrink-0" />
-              Clear of all {avoid.checked} ingredients on your avoid list, per the published ingredient list.
+              </span>
             </p>
           )}
-          {avoid?.status === "unassessed" && (
-            <p className="rounded-xl border border-dashed px-3.5 py-2.5 text-sm text-muted-foreground">
-              Couldn&apos;t check against your avoid list: there&apos;s no full ingredient list, so it&apos;s unknown, not clear.
+          {avoid?.status === "possible" && (
+            <p className="flex items-start gap-2 rounded-xl border border-amber-300 bg-amber-50 px-3.5 py-2.5 text-sm dark:border-amber-900 dark:bg-amber-950/40">
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" aria-hidden />
+              <span>
+                Undisclosed fragrance: can&apos;t rule out {avoid.possible.length === 1 ? "an allergen" : `${avoid.possible.length} allergens`} you
+                avoid.{" "}
+                <a href="#whats-in-it" className="font-medium underline">
+                  Details ↓
+                </a>
+              </span>
             </p>
           )}
-
-          {showPregnancy && (
-            <PregnancyNotice
-              findings={pregnancyFound}
-              pregnant={profile.pregnant}
-              breastfeeding={profile.breastfeeding}
-              fullList={product.freeFromFlags !== null}
-            />
+          {pregnancyTitle && (
+            <p className="flex items-start gap-2 rounded-xl border border-amber-300 bg-amber-50/70 px-3.5 py-2.5 text-sm dark:border-amber-900 dark:bg-amber-950/30">
+              <Info className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" aria-hidden />
+              <span>
+                {pregnancyTitle}.{" "}
+                <a href="#whats-in-it" className="font-medium underline">
+                  Details ↓
+                </a>
+              </span>
+            </p>
           )}
 
           {match ? (
@@ -615,7 +589,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
               {showLabelLine && (
                 <p className="mt-2 text-xs text-muted-foreground">On the label: {product.activeIngredientText}</p>
               )}
-              <ActiveNotes notes={evidenceNotes.filter((n) => !strengthRows.some((r) => r.id === n.activeId))} className="mt-4 border-t pt-4" />
+              <ActiveNotes notes={otherNotes} className="mt-4 border-t pt-4" />
               {strengthRows.some((r) => r.monograph) && (
                 <details className="group/fda mt-3 text-xs text-muted-foreground">
                   <summary className="w-fit cursor-pointer font-medium text-brand">What does this mean?</summary>
@@ -640,110 +614,62 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
             </div>
           )}
 
-          {!(isDrugLabel && strengthRows.length > 0) && product.activeIngredientText && (
+          {isDrugLabel && strengthRows.length === 0 && product.activeIngredientText && (
             <div className="rounded-xl border bg-card p-4">
               <h2 className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                {isDrugLabel
-                  ? "Active ingredient (from FDA label)"
-                  : product.dataSource === "brand_direct"
-                    ? "Ingredients (from manufacturer)"
-                    : product.dataSource === "third_party"
-                      ? "Ingredients (third-party listing)"
-                      : "Ingredients (community-sourced)"}
+                Active ingredient (from FDA label)
               </h2>
-              {isDrugLabel ? (
-                <>
-                  <p className="text-sm leading-relaxed">{product.activeIngredientText}</p>
-                  {labelActives.length > 0 && <IngredientList items={labelActives} className="mt-2" likes={profile.likes} dislikes={profile.dislikes} />}
-                </>
-              ) : ingredientRows.length > 0 ? (
-                <IngredientList items={ingredientRows} likes={profile.likes} dislikes={profile.dislikes} />
-              ) : (
-                <p className="text-sm leading-relaxed">{product.activeIngredientText}</p>
-              )}
-              {!isDrugLabel && ingredientRows.length > 0 && (
-                <p className="mt-2 text-xs text-muted-foreground">
-                  Tap an ingredient for what it is and where else it&apos;s used. Bold ones are actives we track.
-                </p>
-              )}
-              <ActiveNotes notes={evidenceNotes.filter((n) => !strengthRows.some((r) => r.id === n.activeId))} className="mt-4 border-t pt-4" />
+              <p className="text-sm leading-relaxed">{product.activeIngredientText}</p>
+              {labelActives.length > 0 && <IngredientList items={labelActives} className="mt-2" likes={profile.likes} dislikes={profile.dislikes} />}
+              <ActiveNotes notes={otherNotes} className="mt-4 border-t pt-4" />
             </div>
           )}
-          {strengthRows.length === 0 && !product.activeIngredientText && evidenceNotes.length > 0 && (
+          {/* Cosmetics have no strength card: what each tracked active is for
+              gets its own small card, so What's in it stays about problems. */}
+          {strengthRows.length === 0 && !(isDrugLabel && product.activeIngredientText) && otherNotes.length > 0 && (
             <div className="rounded-xl border bg-card p-4">
-              <ActiveNotes notes={evidenceNotes} />
+              <ActiveNotes notes={otherNotes} />
             </div>
           )}
+
+          <WhatsInIt
+            items={isDrugLabel ? listedIngredients : ingredientRows}
+            listTitle={
+              isDrugLabel
+                ? "Inactive ingredients (from FDA label)"
+                : `${ingredientRows.length > 0 ? `All ${ingredientRows.length} ingredients` : "Ingredients"} (${
+                    product.dataSource === "brand_direct"
+                      ? "from manufacturer"
+                      : product.dataSource === "third_party"
+                        ? "third-party listing"
+                        : "community-sourced"
+                  })`
+            }
+            fallbackText={isDrugLabel ? null : product.activeIngredientText}
+            listHint={isDrugLabel ? undefined : "Tap an ingredient for what it is and where else it's used. Bold ones are actives we track."}
+            avoid={avoid}
+            safeSwapCount={safeSwaps.length}
+            allergenHits={product.allergenHits}
+            ingredients={ingredientRows}
+            avoidIds={avoidIds}
+            pregnancy={
+              showPregnancy ? (
+                <PregnancyNotice
+                  findings={pregnancyFound}
+                  pregnant={profile.pregnant}
+                  breastfeeding={profile.breastfeeding}
+                  fullList={product.freeFromFlags !== null}
+                  quiet
+                />
+              ) : undefined
+            }
+            failedChecks={flaggedSkin}
+            passedFlags={shownFlags}
+            likes={profile.likes}
+            dislikes={profile.dislikes}
+          />
 
           <HowToUse label={labelSection} activeGuidance={activeGuidance} formulation={formulationGuidance} />
-
-          {isDrugLabel && listedIngredients.length > 0 && (
-            <div className="rounded-xl border bg-card p-4">
-              <h2 className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                Inactive ingredients (from FDA label)
-              </h2>
-              <IngredientList items={listedIngredients} likes={profile.likes} dislikes={profile.dislikes} />
-            </div>
-          )}
-
-          {product.allergenHits && (
-            <AllergenFindings
-              hits={product.allergenHits}
-              ingredients={ingredientRows}
-              avoidIds={avoidIds}
-            />
-          )}
-
-          {shownFlags.length > 0 && (
-            <div>
-              <h2 className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                Ingredient-based filters this matches
-              </h2>
-              {/* First 6 inline, the rest behind a native disclosure -- 20+
-                  chips in a block buried the ingredient list above. The
-                  summary is only the toggle: links inside a summary are
-                  nested interactive controls (axe nested-interactive). */}
-              <div className="flex flex-wrap gap-1.5">
-                {shownFlags.slice(0, 6).map((id) => (
-                  <FreeFromLink key={id} id={id} />
-                ))}
-              </div>
-              {shownFlags.length > 6 && (
-                <details className="group/ff mt-1.5">
-                  <summary className="w-fit cursor-pointer list-none text-xs font-medium text-brand [&::-webkit-details-marker]:hidden">
-                    <span className="group-open/ff:hidden">Show all {shownFlags.length} →</span>
-                    <span className="hidden group-open/ff:inline">Show fewer</span>
-                  </summary>
-                  <div className="mt-1.5 flex flex-wrap gap-1.5">
-                    {shownFlags.slice(6).map((id) => (
-                      <FreeFromLink key={id} id={id} />
-                    ))}
-                  </div>
-                </details>
-              )}
-              {flaggedSkin.some((f) => f.hits.length > 0) && (
-                <div className="mt-3 space-y-1.5 text-xs text-muted-foreground">
-                  {flaggedSkin
-                    .filter((f) => f.hits.length > 0)
-                    .map(({ check, hits }) => (
-                      <p key={check.id}>
-                        <span className="font-medium text-foreground">Not {check.label.toLowerCase()}:</span>{" "}
-                        {hits.slice(0, 6).map((h, i) => (
-                          <span key={`${h.ingredientId}-${i}`}>
-                            {i > 0 && ", "}
-                            <IngredientLink id={h.ingredientId}>{tidyIngredientName(h.rawName)}</IngredientLink>
-                          </span>
-                        ))}
-                        {hits.length > 6 ? ` +${hits.length - 6} more` : ""}
-                      </p>
-                    ))}
-                </div>
-              )}
-              <p className="mt-2 text-xs text-muted-foreground">
-                From the ingredient list, not a certification; check your own allergens too. <HowWeCheck />
-              </p>
-            </div>
-          )}
         </div>
       </div>
 

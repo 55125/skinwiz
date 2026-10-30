@@ -660,6 +660,8 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
             fallbackText={fullList.fallbackText}
             listHint={fullList.hint}
             listBeside={!!imageUrl}
+            listNoun={isDrugLabel ? "inactive ingredients" : "ingredients"}
+            listAll={!isDrugLabel}
             avoid={avoid}
             safeSwapCount={safeSwaps.length}
             allergenHits={product.allergenHits}

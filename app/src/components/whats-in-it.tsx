@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ChevronDown } from "lucide-react";
 import type { ReactNode } from "react";
 import { CONTACT_ALLERGENS, allergenMembers, allergensInIngredient, concealableByFragrance, getAllergen, normalizeForAllergens, type ContactAllergen } from "@/db/contact-allergens";
 import { getFreeFromCheck, type FreeFromCheck } from "@/db/ingredient-flags";
@@ -33,6 +34,8 @@ export function WhatsInIt({
   likes,
   dislikes,
   listBeside = false,
+  listNoun = "ingredients",
+  listAll = true,
 }: {
   items: IngredientListItem[];
   listTitle: string;
@@ -53,6 +56,9 @@ export function WhatsInIt({
   dislikes: string[];
   /** On desktop the page shows the full list beside the card (under the photo), so the card keeps only the phone's collapsed copy. */
   listBeside?: boolean;
+  /** For the phone's toggle: "Show all 47 ingredients", "Show 23 inactive ingredients". */
+  listNoun?: string;
+  listAll?: boolean;
 }) {
   const avoided = new Set(avoidIds.flatMap(allergenMembers));
   const listedAs = new Map<string, Ingredient[]>();
@@ -216,12 +222,14 @@ export function WhatsInIt({
         <div className={cn((hasRows || pregnancy || passes.length > 0 || passedLabels.length > 0) && "border-t pt-3", listBeside && "md:hidden")}>
           {/* Collapsed on phones, where the rows above already name what matters. */}
           <details className="group/list md:hidden">
-            <summary className="w-fit cursor-pointer list-none text-[11px] font-semibold uppercase tracking-wider text-muted-foreground [&::-webkit-details-marker]:hidden">
-              {listTitle}
-              <span aria-hidden className="ml-1 inline-block transition-transform group-open/list:rotate-90">
-                ›
+            <summary className="flex cursor-pointer list-none items-center justify-between gap-2 rounded-lg border bg-background px-3 py-2.5 text-sm font-medium text-brand hover:border-brand/40 [&::-webkit-details-marker]:hidden">
+              <span className="group-open/list:hidden">
+                Show {items.length > 0 ? `${listAll ? "all " : ""}${items.length} ${listNoun}` : listNoun}
               </span>
+              <span className="hidden group-open/list:inline">Hide {listNoun}</span>
+              <ChevronDown aria-hidden className="h-4 w-4 shrink-0 transition-transform group-open/list:rotate-180" />
             </summary>
+            <p className="mt-2.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{listTitle}</p>
             <FullIngredientList className="mt-1.5" items={items} fallbackText={fallbackText} listHint={listHint} likes={likes} dislikes={dislikes} />
           </details>
           {!listBeside && (

@@ -64,6 +64,10 @@ before(async () => {
   product("rx-bait", { name: "Rx Mineral Cream", maker: "Rx Pharma", rx: true, inactives: base });
   product("merged", { name: "Shoreline Mineral Cream SPF 30 (2 oz)", maker: "Shoreline LLC", canonical: "near", inactives: base });
   product("kit", { name: "Sunbright Mineral Kit", maker: "Kit Co", form: "KIT", inactives: base });
+  // One white-label formula under the same plain name from three labelers: one dupe.
+  product("wl-a", { name: "Sunscreen", maker: "Clinic A", inactives: ["fragrance", "carbomer"] });
+  product("wl-b", { name: "Sunscreen", maker: "Clinic B", inactives: ["carbomer", "fragrance"] });
+  product("wl-c", { name: "sunscreen", maker: "Clinic C", inactives: ["fragrance", "carbomer"] });
   db.run(sql`INSERT INTO product_availability (product_id, status, note, updated_at) VALUES ('discontinued', 'discontinued', NULL, ${new Date().toISOString()})`);
 });
 
@@ -71,15 +75,15 @@ test("only exact active sets, in the same form, at matching or unstated strength
   const r = dupes.findDupes("target", 50);
   assert.equal(r.form, "cream");
   const ids = [...r.rows, ...r.sameBrandRows].map((d) => d.product.id).sort();
-  assert.deepEqual(ids, ["discontinued", "far", "near", "no-inactives", "no-strength", "other-concern", "same-brand"]);
-  assert.equal(r.total, 6);
+  assert.deepEqual(ids, ["discontinued", "far", "near", "no-inactives", "no-strength", "other-concern", "same-brand", "wl-c"]);
+  assert.equal(r.total, 7);
 });
 
 test("ranked by inactive match; no list after compared ones; discontinued last", () => {
   const r = dupes.findDupes("target", 50);
   assert.deepEqual(
     r.rows.map((d) => d.product.id),
-    ["near", "other-concern", "no-strength", "far", "no-inactives", "discontinued"],
+    ["near", "other-concern", "no-strength", "far", "wl-c", "no-inactives", "discontinued"],
   );
   const near = r.rows[0];
   assert.equal(near.match!.shared, 6);
@@ -103,7 +107,15 @@ test("the same brand's matches are listed apart", () => {
 test("limit trims the list but not the count", () => {
   const r = dupes.findDupes("target", 2);
   assert.equal(r.rows.length, 2);
-  assert.equal(r.total, 6);
+  assert.equal(r.total, 7);
+});
+
+test("one white-label formula sold by several labelers is one dupe, with its other sellers", () => {
+  const r = dupes.findDupes("target", 50);
+  const wl = r.rows.filter((d) => d.product.brandName.toLowerCase() === "sunscreen");
+  assert.equal(wl.length, 1);
+  assert.deepEqual(wl[0].alsoSoldBy.sort(), ["Clinic A", "Clinic B"]);
+  assert.deepEqual(r.rows.find((d) => d.product.id === "near")!.alsoSoldBy, []);
 });
 
 test("Rx rows, merged duplicates and kits get no dupes", () => {

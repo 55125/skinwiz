@@ -2,6 +2,7 @@ import { and, inArray, sql } from "drizzle-orm";
 import { db } from "@/db/client";
 import { products } from "@/db/schema";
 import { availabilityOf } from "@/lib/availability";
+import { displayManufacturer } from "@/lib/format";
 import {
   activeKey,
   brandKey,
@@ -92,7 +93,22 @@ function inactiveLists(ids: string[]): Map<string, string[]> {
   return out;
 }
 
-export type Dupe = DupeCandidate & { sameBrand: boolean; product: typeof products.$inferSelect };
+export type Dupe = DupeCandidate & {
+  sameBrand: boolean;
+  product: typeof products.$inferSelect;
+  /** Other labelers selling this same listing under their own label (see relabelKey). */
+  alsoSoldBy: string[];
+};
+
+// White-label products: one contract formula sold by many clinics and spas
+// under the same plain name ("Sunscreen"), each its own FDA listing. Same
+// name, same strengths and the very same inactive list make one product,
+// shown once with its other sellers, not four identical-looking cards.
+function relabelKey(row: Row, inactives: string[] | undefined): string | null {
+  if (!inactives?.length) return null;
+  const strengths = Object.entries(row.strengths ?? {}).sort(([a], [b]) => a.localeCompare(b));
+  return [row.brandName.trim().toLowerCase().replace(/\s+/g, " "), JSON.stringify(strengths), [...inactives].sort().join(",")].join("|");
+}
 
 export type DupeResult = {
   /** The form matched on; null when this product's form can't be told, so nothing is matched. */
@@ -144,15 +160,32 @@ export function findDupes(productId: string, limit = 4): DupeResult {
       };
     }),
   );
-  const others = ranked.filter((r) => !r.sameBrand);
-  const own = ranked.filter((r) => r.sameBrand);
+  // Keep each white-label group's best-ranked listing; the rest become its sellers.
+  const sellers = new Map<string, string[]>();
+  const leadByKey = new Map<string, string>();
+  const collapsed = ranked.filter((r) => {
+    const row = byId.get(r.id)!;
+    const key = relabelKey(row, lists.get(r.id));
+    if (!key) return true;
+    const k = `${r.sameBrand}|${key}`;
+    const lead = leadByKey.get(k);
+    if (!lead) {
+      leadByKey.set(k, r.id);
+      return true;
+    }
+    const maker = row.manufacturer ? displayManufacturer(row.manufacturer) : null;
+    if (maker) sellers.set(lead, [...(sellers.get(lead) ?? []), maker]);
+    return false;
+  });
+  const others = collapsed.filter((r) => !r.sameBrand);
+  const own = collapsed.filter((r) => r.sameBrand);
   const top = [...others.slice(0, limit), ...own.slice(0, limit)];
   const rows = top.length ? db.select().from(products).where(and(inArray(products.id, top.map((t) => t.id)), LISTED_OTC)).all() : [];
   const byRow = new Map(rows.map((r) => [r.id, r]));
   const withProduct = (list: typeof ranked) =>
     list.slice(0, limit).flatMap((t) => {
       const product = byRow.get(t.id);
-      return product ? [{ ...t, product }] : [];
+      return product ? [{ ...t, product, alsoSoldBy: [...new Set(sellers.get(t.id) ?? [])] }] : [];
     });
   return {
     ...base,

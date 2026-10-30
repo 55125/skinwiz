@@ -17,7 +17,6 @@ import {
   getLivePrices,
   getVideoLinksForProduct,
   getEwgScoreForProduct,
-  getEquivalentProducts,
   getConcern,
   getIngredientsForProduct,
   getMergedDuplicates,
@@ -190,8 +189,9 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
   const formulationGuidance = guidanceForStep(stepTypeOf(product));
   const myOutcome = sessionId ? getSessionOutcome(product.id, product.concernId, sessionId) : null;
   // Curated "same active, same strength" group when the product is in one
-  // (lib/equivalence.ts rules); otherwise the raw same-strength-key list,
-  // which is what sunscreens and antiperspirants fall back to.
+  // (lib/equivalence.ts rules). Products outside a group (sunscreens,
+  // antiperspirants) rely on the Dupes section, which already covers the same
+  // actives at the same strengths, ranked by how close the formulas are.
   const equivalenceGroup = getEquivalenceGroupForProduct(product.id);
   // On a name brand's page the store brands are the news, so they lead; on a
   // store brand's page, the name brands do.
@@ -230,7 +230,6 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
     retailerSearches,
   });
   if (livePricesEnabled() && !BOT_UA.test((await headers()).get("user-agent") ?? "")) recordProductView(product.id);
-  const equivalents = equivalenceGroup ? { rows: [], total: 0 } : getEquivalentProducts(product);
   const hsaEligible = isHsaEligible(product.id);
   const needsSwap = avoid?.status === "conflicts" || avoid?.status === "possible";
   const ingredientRows = getIngredientsForProduct(product.id);
@@ -842,23 +841,6 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
             {groupOthers.length > 8 ? `See all ${equivalenceGroup.members.length}` : "All"} {equivalenceGroup.title} products
             {equivalenceGroup.members.some((m) => m.storeBrand) ? ", including store brands" : ""} →
           </Link>
-        </section>
-      )}
-
-      {equivalents.total > 0 && (
-        <section className="space-y-4">
-          <div className="space-y-1">
-            <h2 className="text-xl font-semibold">Same active, same strength</h2>
-            <p className="text-sm text-muted-foreground">
-              {equivalents.total.toLocaleString()} other {equivalents.total === 1 ? "product lists" : "products list"} the
-              identical active ingredient{product.activeIds.length > 1 ? "s" : ""} at the identical strength
-              {product.dosageForm ? ` in the same form (${product.dosageForm.toLowerCase()})` : ""} on the FDA label — often a
-              store brand or generic. Inactive ingredients, texture and price can differ.
-              {isSunscreen(product) &&
-                " For sunscreens, SPF and broad-spectrum protection are tested on each finished product, so the same filters don't guarantee the same SPF — check each label."}
-            </p>
-          </div>
-          <ProductGrid products={equivalents.rows} columns="sm:grid-cols-2 lg:grid-cols-4" />
         </section>
       )}
 

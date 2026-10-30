@@ -36,7 +36,7 @@ import { ewgHazardBadge } from "@/lib/ewg";
 import { readSessionId } from "@/lib/session";
 import { getSessionOutcome } from "@/lib/outcomes";
 import { readAvoidIds, avoidConflicts, avoidVerdict, avoidedIngredientName } from "@/lib/avoid";
-import { WhatsInIt } from "@/components/whats-in-it";
+import { FullIngredientList, WhatsInIt } from "@/components/whats-in-it";
 import { activeName, describeStrengths, labelAmounts, labelQuantityCount } from "@/lib/strength-display";
 import { activeUse } from "@/db/active-uses";
 import { formatPct } from "@/db/strength";
@@ -274,6 +274,17 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
     (uncoveredActives.length > 0 || (product.activeIngredientText ?? "").includes("|") || labelQuantityCount(product.activeIngredientText) !== strengthRows.length);
 
   const brandStatus = product.dataSource === "brand_direct" ? brandDirectStatus(product) : null;
+  const fullList = {
+    items: isDrugLabel ? listedIngredients : ingredientRows,
+    title: isDrugLabel
+      ? "Inactive ingredients (from FDA label)"
+      : `${ingredientRows.length > 0 ? `All ${ingredientRows.length} ingredients` : "Ingredients"} (${
+          product.dataSource === "brand_direct" ? "from manufacturer" : product.dataSource === "third_party" ? "third-party listing" : "community-sourced"
+        })`,
+    fallbackText: isDrugLabel ? null : product.activeIngredientText,
+    hint: isDrugLabel ? undefined : "Tap an ingredient for what it is and where else it's used. Bold ones are actives we track.",
+  };
+  const hasFullList = fullList.items.length > 0 || !!fullList.fallbackText;
   const otherNotes = evidenceNotes.filter((n) => !strengthRows.some((r) => r.id === n.activeId));
 
   return (
@@ -310,7 +321,10 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
 
       <div className={imageUrl ? "grid gap-8 md:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] md:items-start" : ""}>
         {imageUrl && (
-          <figure className="space-y-2 md:sticky md:top-24">
+          <div className="space-y-6">
+          {/* Sticky only when nothing sits under it: a long ingredient list
+              below would scroll under a sticky photo. */}
+          <figure className={hasFullList ? "space-y-2" : "space-y-2 md:sticky md:top-24"}>
             <div className="flex aspect-[4/3] items-center justify-center overflow-hidden rounded-3xl border bg-white dark:bg-gradient-to-br dark:from-muted dark:to-secondary md:aspect-square">
               {/* eslint-disable-next-line @next/next/no-img-element -- mix of self-hosted (brand-direct, pre-rendered DailyMed WebP) and external OBF-hosted photos; not worth a next/image remotePatterns allowlist for the OBF case alone */}
               <img
@@ -358,6 +372,14 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
               </a>
             )}
           </figure>
+          {/* Desktop: the full list fills the column under the photo; phones get the collapsed copy in What's in it. */}
+          {hasFullList && (
+            <div className="hidden space-y-1.5 rounded-xl border bg-card p-4 md:block">
+              <h2 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{fullList.title}</h2>
+              <FullIngredientList items={fullList.items} fallbackText={fullList.fallbackText} listHint={fullList.hint} likes={profile.likes} dislikes={profile.dislikes} />
+            </div>
+          )}
+          </div>
         )}
 
         <div className="space-y-6">
@@ -633,20 +655,11 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
           )}
 
           <WhatsInIt
-            items={isDrugLabel ? listedIngredients : ingredientRows}
-            listTitle={
-              isDrugLabel
-                ? "Inactive ingredients (from FDA label)"
-                : `${ingredientRows.length > 0 ? `All ${ingredientRows.length} ingredients` : "Ingredients"} (${
-                    product.dataSource === "brand_direct"
-                      ? "from manufacturer"
-                      : product.dataSource === "third_party"
-                        ? "third-party listing"
-                        : "community-sourced"
-                  })`
-            }
-            fallbackText={isDrugLabel ? null : product.activeIngredientText}
-            listHint={isDrugLabel ? undefined : "Tap an ingredient for what it is and where else it's used. Bold ones are actives we track."}
+            items={fullList.items}
+            listTitle={fullList.title}
+            fallbackText={fullList.fallbackText}
+            listHint={fullList.hint}
+            listBeside={!!imageUrl}
             avoid={avoid}
             safeSwapCount={safeSwaps.length}
             allergenHits={product.allergenHits}

@@ -32,6 +32,7 @@ export function WhatsInIt({
   passedFlags,
   likes,
   dislikes,
+  listBeside = false,
 }: {
   items: IngredientListItem[];
   listTitle: string;
@@ -50,6 +51,8 @@ export function WhatsInIt({
   passedFlags: string[];
   likes: string[];
   dislikes: string[];
+  /** On desktop the page shows the full list beside the card (under the photo), so the card keeps only the phone's collapsed copy. */
+  listBeside?: boolean;
 }) {
   const avoided = new Set(avoidIds.flatMap(allergenMembers));
   const listedAs = new Map<string, Ingredient[]>();
@@ -210,14 +213,23 @@ export function WhatsInIt({
       )}
 
       {hasList && (
-        <div className={cn("space-y-1.5", (hasRows || pregnancy || passes.length > 0 || passedLabels.length > 0) && "border-t pt-3")}>
-          <h3 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{listTitle}</h3>
-          {items.length > 0 ? (
-            <IngredientList items={items} likes={likes} dislikes={dislikes} className="text-muted-foreground" />
-          ) : (
-            <p className="text-sm leading-relaxed">{fallbackText}</p>
+        <div className={cn((hasRows || pregnancy || passes.length > 0 || passedLabels.length > 0) && "border-t pt-3", listBeside && "md:hidden")}>
+          {/* Collapsed on phones, where the rows above already name what matters. */}
+          <details className="group/list md:hidden">
+            <summary className="w-fit cursor-pointer list-none text-[11px] font-semibold uppercase tracking-wider text-muted-foreground [&::-webkit-details-marker]:hidden">
+              {listTitle}
+              <span aria-hidden className="ml-1 inline-block transition-transform group-open/list:rotate-90">
+                ›
+              </span>
+            </summary>
+            <FullIngredientList className="mt-1.5" items={items} fallbackText={fallbackText} listHint={listHint} likes={likes} dislikes={dislikes} />
+          </details>
+          {!listBeside && (
+            <div className="hidden space-y-1.5 md:block">
+              <h3 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{listTitle}</h3>
+              <FullIngredientList items={items} fallbackText={fallbackText} listHint={listHint} likes={likes} dislikes={dislikes} />
+            </div>
           )}
-          {listHint && items.length > 0 && <p className="text-xs text-muted-foreground">{listHint}</p>}
         </div>
       )}
 
@@ -284,5 +296,32 @@ function AllergenNames({ rows }: { rows: AllergenRow[] }) {
         </span>
       ))}
     </span>
+  );
+}
+
+export function FullIngredientList({
+  items,
+  fallbackText,
+  listHint,
+  likes,
+  dislikes,
+  className,
+}: {
+  items: IngredientListItem[];
+  fallbackText?: string | null;
+  listHint?: string;
+  likes: string[];
+  dislikes: string[];
+  className?: string;
+}) {
+  return (
+    <div className={cn("space-y-1.5", className)}>
+      {items.length > 0 ? (
+        <IngredientList items={items} likes={likes} dislikes={dislikes} className="text-muted-foreground" />
+      ) : (
+        <p className="text-sm leading-relaxed">{fallbackText}</p>
+      )}
+      {listHint && items.length > 0 && <p className="text-xs text-muted-foreground">{listHint}</p>}
+    </div>
   );
 }

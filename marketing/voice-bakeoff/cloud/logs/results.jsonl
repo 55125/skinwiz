@@ -36,3 +36,15 @@
 {"model": "qwen3-tts-0.6b-base", "voice": "clone-fragrance", "line": "fragrance_1", "secs": 33.8, "audio_s": 5.28, "rtf": 6.4, "peak_rss_mb": 5781, "note": ""}
 {"model": "qwen3-tts-0.6b-base", "voice": "clone-fragrance", "line": "fragrance_2", "secs": 14.3, "audio_s": 2.08, "rtf": 6.87, "peak_rss_mb": 5781, "note": ""}
 {"model": "qwen3-tts-0.6b-base", "voice": "clone-narrator", "line": "narrator", "secs": 19.8, "audio_s": 2.96, "rtf": 6.69, "peak_rss_mb": 5781, "note": ""}
+{"model": "gemini-3.8-flash-tts", "voice": "stock-Puck", "line": "fragrance_1", "secs": 3.6, "audio_s": 7.81, "rtf": 0.46, "peak_rss_mb": 24, "note": "online API"}
+{"model": "gemini-3.8-flash-tts", "voice": "stock-Puck", "line": "fragrance_2", "secs": 2.1, "audio_s": 2.77, "rtf": 0.77, "peak_rss_mb": 26, "note": "online API"}
+{"model": "gemini-3.8-flash-tts", "voice": "stock-Kore", "line": "narrator", "secs": 63.1, "audio_s": 3.49, "rtf": 18.1, "peak_rss_mb": 26, "note": "online API"}
+{"model": "gemini-3.1-flash-tts-preview", "voice": "stock-Puck", "line": "fragrance_1", "secs": 4.6, "audio_s": 7.8, "rtf": 0.59, "peak_rss_mb": 26, "note": "online API"}
+{"model": "gemini-3.1-flash-tts-preview", "voice": "stock-Puck", "line": "fragrance_1-tags", "secs": 12.3, "audio_s": 11.84, "rtf": 1.04, "peak_rss_mb": 26, "note": "Say this like a smug, flirty ex who knows a secret, teasing and playful: Two truths and a lie. [chuckles] I'm in your shampoo. I'm in your detergent. [whispering] I'm in unscented products."}
+{"model": "gemini-3.1-flash-tts-preview", "voice": "stock-Puck", "line": "fragrance_2", "secs": 2.6, "audio_s": 2.72, "rtf": 0.97, "peak_rss_mb": 26, "note": "online API"}
+{"model": "gemini-3.1-flash-tts-preview", "voice": "stock-Puck", "line": "fragrance_2-tags", "secs": 3.7, "audio_s": 5.08, "rtf": 0.72, "peak_rss_mb": 26, "note": "Say this smugly, with a little laugh: [laughs] ...trick question. They're all true."}
+{"model": "gemini-3.1-flash-tts-preview", "voice": "stock-Kore", "line": "narrator", "secs": 3.3, "audio_s": 3.44, "rtf": 0.97, "peak_rss_mb": 26, "note": "online API"}
+{"model": "gemini-3.1-flash-tts-preview", "voice": "stock-Kore", "line": "narrator-tags", "secs": 23.6, "audio_s": 3.72, "rtf": 6.35, "peak_rss_mb": 26, "note": "Say this warmly and clearly, like a friendly expert giving a useful tip: Read the profile, not just the front of the bottle."}
+{"model": "gemini-3.8-flash-tts", "voice": "stock-Puck", "line": "fragrance_1-tags", "secs": 3.8, "audio_s": 10.09, "rtf": 0.38, "peak_rss_mb": 25, "note": "[smug] [flirty] Two truths and a lie. [chuckles] I'm in your shampoo. I'm in your detergent. [whispering] I'm in unscented products."}
+{"model": "gemini-3.8-flash-tts", "voice": "stock-Puck", "line": "fragrance_2-tags", "secs": 2.4, "audio_s": 3.45, "rtf": 0.7, "peak_rss_mb": 25, "note": "[laughs] [smug] ...trick question. They're all true."}
+{"model": "gemini-3.8-flash-tts", "voice": "stock-Kore", "line": "narrator-tags", "secs": 2.3, "audio_s": 3.69, "rtf": 0.63, "peak_rss_mb": 25, "note": "[warm] [friendly] Read the profile, not just the front of the bottle."}

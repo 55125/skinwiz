@@ -17,3 +17,7 @@ Seconds are compute for every take a model made (model already loaded), summed a
 Whisper (base.en) matched the script at 0.9 or better on 36 of 38 takes; see `logs/scores.json`. Turbo stock F1 with tags said "an unscented product", and Qwen's instructed F2 opens with laughter, as on the server.
 
 Changes from the server scripts: `run_turbo.py` loads from Hugging Face instead of a local snapshot path; `queue_cloud.sh` runs the models one at a time and clears each model's cache afterwards to fit disk; `compare.py` builds the table above. Run from the parent folder with the scripts from the server branch.
+
+## Gemini TTS (online API)
+
+`scripts/run_gemini.py` renders the same lines with Google's Gemini 3.8 Flash TTS and 3.1 Flash TTS preview (stock voices Puck for Fragrance, Kore for the narrator), reading the key from `GEMINI_API_KEY`. Each line is made plain and with style tags. 3.1 takes a spoken direction ("Say this like a smug, flirty ex…") plus `[chuckles]`/`[laughs]`/`[whispering]`. 3.8 reads such a direction aloud, so its tagged takes use bracket tags only (`--tags-only`). The free tier returns 429 after a few requests a minute; the script waits and retries, so a few logged times include that wait. Generation itself takes a few seconds per line. Whisper matched all 12 takes at 0.9 or better.

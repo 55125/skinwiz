@@ -3,9 +3,9 @@ import json, sys, html, collections, os
 S = sys.argv[1]; B = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 rows = [json.loads(l) for l in open(os.path.join(B, "logs/results.jsonl"))]
 L = json.load(open(os.path.join(B, "scripts/lines.json")))
-RAM = {"kokoro":1.5,"chatterbox":6.4,"chatterbox-turbo":6.0,"pocket-tts":1.0,"pocket-tts-english_drifting_26-09":1.0,"pocket-tts-english_18m_2026-10":0.6,"kitten-tts-2":6.2,"qwen3-tts-1.7b-customvoice":9.9,"qwen3-tts-0.6b-base":5.8}
+RAM = {"kokoro":1.5,"chatterbox":6.4,"chatterbox-turbo":6.0,"chatterbox-nano":3.4,"pocket-tts":1.0,"pocket-tts-english_drifting_26-09":1.0,"pocket-tts-english_18m_2026-10":0.6,"kitten-tts-2":6.2,"qwen3-tts-1.7b-customvoice":9.9,"qwen3-tts-0.6b-base":5.8}
 RAM.update(json.load(open(os.path.join(B, "logs/ram_extra.json"))) if os.path.exists(os.path.join(B, "logs/ram_extra.json")) else {})
-NAME = {"kokoro":"Kokoro 82M","chatterbox":"Chatterbox (original)","chatterbox-turbo":"Chatterbox Turbo","pocket-tts":"Pocket TTS","pocket-tts-english_drifting_26-09":"Pocket TTS · Sep model","pocket-tts-english_18m_2026-10":"Pocket TTS · 18M","kitten-tts-2":"Kitten TTS 2","qwen3-tts-1.7b-customvoice":"Qwen3-TTS 1.7B CustomVoice","qwen3-tts-0.6b-base":"Qwen3-TTS 0.6B Base","voxcpm2":"VoxCPM2 (Q8, CPU)"}
+NAME = {"kokoro":"Kokoro 82M","chatterbox":"Chatterbox (original)","chatterbox-turbo":"Chatterbox Turbo","chatterbox-nano":"Chatterbox Nano","pocket-tts":"Pocket TTS","pocket-tts-english_drifting_26-09":"Pocket TTS · Sep model","pocket-tts-english_18m_2026-10":"Pocket TTS · 18M","kitten-tts-2":"Kitten TTS 2","qwen3-tts-1.7b-customvoice":"Qwen3-TTS 1.7B CustomVoice","qwen3-tts-0.6b-base":"Qwen3-TTS 0.6B Base","voxcpm2":"VoxCPM2 (Q8, CPU)"}
 BASE = {"kokoro","chatterbox"}; ORDER = list(NAME)
 SP = os.path.join(B, "logs/scores.json"); SC = json.load(open(SP)) if os.path.exists(SP) else {}
 def voice_label(v):

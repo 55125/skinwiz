@@ -174,5 +174,45 @@
  "qwen3-tts-1.7b-customvoice__stock-Serena__narrator.wav": {
   "match": 1.0,
   "heard": "Read the profile. Not just the front of the bottle."
+ },
+ "chatterbox-nano__clone-fragrance__fragrance_1-tags.wav": {
+  "match": 0.88,
+  "heard": "Two truths and a lie. I'm in your shampoo. I'm in your detergent. I'm an unscented product."
+ },
+ "chatterbox-nano__clone-fragrance__fragrance_1.wav": {
+  "match": 1.0,
+  "heard": "Two truths and a lie, I'm in your shampoo. I'm in your detergent. I'm in unscented products. //"
+ },
+ "chatterbox-nano__clone-fragrance__fragrance_2-tags.wav": {
+  "match": 1.0,
+  "heard": "Trick question, they're all true."
+ },
+ "chatterbox-nano__clone-fragrance__fragrance_2.wav": {
+  "match": 1.0,
+  "heard": "Trick question, they're all true."
+ },
+ "chatterbox-nano__clone-narrator__narrator.wav": {
+  "match": 1.0,
+  "heard": "Read the profile, not just the front of the bottle."
+ },
+ "chatterbox-nano__stock-default__fragrance_1-tags.wav": {
+  "match": 0.97,
+  "heard": "Two truths and a lie. Heh, I'm in your shampoo. I'm in your detergent. I'm in unscented products."
+ },
+ "chatterbox-nano__stock-default__fragrance_1.wav": {
+  "match": 0.88,
+  "heard": "Two truths and a lie. I'm in your shampoo. I'm in your detergent. I'm an unscented product."
+ },
+ "chatterbox-nano__stock-default__fragrance_2-tags.wav": {
+  "match": 0.91,
+  "heard": "Hahaha trick question they're all true."
+ },
+ "chatterbox-nano__stock-default__fragrance_2.wav": {
+  "match": 0.8,
+  "heard": "True question, they're all true."
+ },
+ "chatterbox-nano__stock-default__narrator.wav": {
+  "match": 1.0,
+  "heard": "Read the profile, not just the front of the bottle."
  }
 }

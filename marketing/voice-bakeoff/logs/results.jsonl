@@ -42,3 +42,13 @@
 {"model": "qwen3-tts-0.6b-base", "voice": "clone-fragrance", "line": "fragrance_1", "secs": 132.5, "audio_s": 5.28, "rtf": 25.09, "peak_rss_mb": 5759, "note": ""}
 {"model": "qwen3-tts-0.6b-base", "voice": "clone-fragrance", "line": "fragrance_2", "secs": 56.1, "audio_s": 2.08, "rtf": 26.97, "peak_rss_mb": 5759, "note": ""}
 {"model": "qwen3-tts-0.6b-base", "voice": "clone-narrator", "line": "narrator", "secs": 54.5, "audio_s": 2.96, "rtf": 18.42, "peak_rss_mb": 5759, "note": ""}
+{"model": "chatterbox-nano", "voice": "stock-default", "line": "fragrance_1", "secs": 19.4, "audio_s": 5.68, "rtf": 3.41, "peak_rss_mb": 3266, "note": ""}
+{"model": "chatterbox-nano", "voice": "stock-default", "line": "fragrance_1-tags", "secs": 21.4, "audio_s": 6.2, "rtf": 3.46, "peak_rss_mb": 3266, "note": "Two truths and a lie. [chuckle] I'm in your shampoo. I'm in your detergent. I'm in unscented products."}
+{"model": "chatterbox-nano", "voice": "stock-default", "line": "fragrance_2", "secs": 10.8, "audio_s": 2.16, "rtf": 5.02, "peak_rss_mb": 3266, "note": ""}
+{"model": "chatterbox-nano", "voice": "stock-default", "line": "fragrance_2-tags", "secs": 14.0, "audio_s": 3.08, "rtf": 4.55, "peak_rss_mb": 3266, "note": "[laugh] ...trick question. They're all true."}
+{"model": "chatterbox-nano", "voice": "stock-default", "line": "narrator", "secs": 12.0, "audio_s": 2.36, "rtf": 5.1, "peak_rss_mb": 3266, "note": ""}
+{"model": "chatterbox-nano", "voice": "clone-fragrance", "line": "fragrance_1", "secs": 27.1, "audio_s": 6.8, "rtf": 3.98, "peak_rss_mb": 3266, "note": ""}
+{"model": "chatterbox-nano", "voice": "clone-fragrance", "line": "fragrance_1-tags", "secs": 31.1, "audio_s": 8.0, "rtf": 3.88, "peak_rss_mb": 3329, "note": "Two truths and a lie. [chuckle] I'm in your shampoo. I'm in your detergent. I'm in unscented products."}
+{"model": "chatterbox-nano", "voice": "clone-fragrance", "line": "fragrance_2", "secs": 18.3, "audio_s": 2.4, "rtf": 7.63, "peak_rss_mb": 3329, "note": ""}
+{"model": "chatterbox-nano", "voice": "clone-fragrance", "line": "fragrance_2-tags", "secs": 19.8, "audio_s": 2.92, "rtf": 6.79, "peak_rss_mb": 3359, "note": "[laugh] ...trick question. They're all true."}
+{"model": "chatterbox-nano", "voice": "clone-narrator", "line": "narrator", "secs": 17.2, "audio_s": 3.0, "rtf": 5.72, "peak_rss_mb": 3409, "note": ""}

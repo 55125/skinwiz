@@ -20,6 +20,7 @@ Timings are seconds of compute per line on 4 threads, with the model already loa
 | Kokoro 82M (baseline) | Apache-2.0 | 6.7 / 2.8 / 3.8 | ~1.1× | 1.5 GB | 1.0 | current narrator/"me" voice |
 | Chatterbox (baseline, exag 0.7 cfg 0.3) | MIT | 174 / 84 / 93 | 29–47× | 6.4 GB | 0.76–1.0 | current Fragrance voice; F1 misread "I'm a new detergent" |
 | Chatterbox Turbo 350M | MIT | clone 70 / 23 / 27; stock 50 / 23 / 29 | 7–11× | 6.0 GB | 0.88–1.0 | 3–4× faster than Chatterbox; exaggeration/cfg are ignored by Turbo, so expression comes from `[laugh]`/`[chuckle]` tags. Needs `setuptools<81` for the Perth watermarker |
+| Chatterbox Nano 110M | MIT | clone 27 / 18 / 17; stock 19 / 11 / 12 | 3.4–7.6× | 3.4 GB | 0.80–1.0 | fastest Chatterbox, 2–3× faster than Turbo. `[laugh]`/`[chuckle]` tags come out as real laughs. PyPI chatterbox-tts 0.1.7 can't load Nano yet, so `scripts/run_nano.py` registers its GPT-2-small backbone (768 wide, 12 layers) with the installed Turbo classes; the weights load with strict checking. Stock F2 misheard as "True question" |
 | Pocket TTS 100M (main) | MIT code; voices per HF card | 3.8 / 1.5 / 1.7 | 0.65× | 1.0 GB | 0.82–1.0 | faster than real time. Stock voices only: cloning weights are gated on Hugging Face |
 | Pocket TTS `english_drifting_26-09` | same | 3.4 / 1.3 / 1.9 | 0.7× | 1.0 GB | 1.0 | stock only |
 | Pocket TTS `english_18m_2026-10` | same | 1.6 / 0.8 / 0.8 | 0.3× | 0.6 GB | 0.94–1.0 | stock only |
@@ -29,8 +30,7 @@ Timings are seconds of compute per line on 4 threads, with the model already loa
 
 ## Skipped or pending
 
-- **Chatterbox Nano** (MIT): gated on Hugging Face. It needs an account that has accepted the terms, plus a token on persepolis.
-- **Pocket TTS cloning**: gated the same way.
+- **Pocket TTS cloning**: gated on Hugging Face. Access is granted on Michael's account; it needs a read token on persepolis.
 - **VoxCPM2** (Apache-2.0, 2B): the community GGUFs are downloaded (`VoxCPM2-BaseLM-Q8_0` plus `Acoustic-F16`, 3.5 GB). Building the llama.cpp-omni engine from GitHub was blocked by the session's permission check, so it needs a permission rule or a manual build.
 - **NeuTTS Air** (optional): not tried. It wasn't more expressive than the others, and disk was tight.
 - **MOSS-TTS-Nano, Hojo-TTS-Light, Fish S2 Pro, Maya1**: ruled out earlier (licence unclear, no emotion control, or too big for this CPU).

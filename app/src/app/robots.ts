@@ -22,7 +22,16 @@ export default function robots(): MetadataRoute.Robots {
         disallow: "/",
       },
       // /h/ links are private claim links printed on clinician handouts.
-      { userAgent: "*", allow: "/", disallow: ["/api/", "/search", "/shelf", "/profile", "/avoid", "/h/", "/clinicians", "/regimen"] },
+      // "/*?": filtered, sorted and paged listing URLs are all noindex
+      // (lib/seo.ts variantRobots) and Google was spending most of its crawl on
+      // them (170k crawled, deep /browse filter combinations timing out).
+      // Every indexed page has a query-free URL, except the A-Z ingredient
+      // directory's letters. Next's own assets stay crawlable for rendering.
+      {
+        userAgent: "*",
+        allow: ["/", "/_next/", "/ingredients?letter="],
+        disallow: ["/api/", "/search", "/shelf", "/profile", "/avoid", "/h/", "/clinicians", "/regimen", "/*?"],
+      },
     ],
     sitemap: `${siteUrl()}/sitemap.xml`,
   };

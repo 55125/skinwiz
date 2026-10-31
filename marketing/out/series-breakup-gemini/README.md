@@ -9,3 +9,5 @@ me = Leda, Fragrance = Puck (Gemini 3.8 Flash TTS, audio tags), narrator = Sulaf
       -af loudnorm=I=-14:TP=-1.5:LRA=11 -c:a aac -b:a 192k -ar 48000 -movflags +faststart -shortest breakup-part-2-gemini.mp4
 
 `clean()` cuts the ~0.13 s burst of noise that Gemini 3.8 adds to the end of every clip. Delete a line's WAV in `gem/` (or pass `--redo bN`) to re-voice just that line.
+
+Toned-down version (no laughing, casual instead of smug): `GEMINI_TTS_MODEL=gemini-3.8-flash-lite-tts python gemini_part2.py` -> `breakup-part-2-gemini-lite.mp4` (all seven lines on 3.8 Lite, 26.4 s).

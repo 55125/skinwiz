@@ -3,7 +3,7 @@ writes gem/part2-audio.wav (24 kHz, pre-loudnorm) and gem/part2-timeline.json fo
 import os, sys, json, base64, time, math, urllib.request, urllib.error, re, difflib
 import numpy as np, soundfile as sf
 D = os.path.dirname(os.path.abspath(__file__)); G = os.path.join(D, "gem"); os.makedirs(G, exist_ok=True)
-SR, FPS = 24000, 30; KEY = os.environ["GEMINI_API_KEY"]; MODEL = "gemini-3.8-flash-tts"
+SR, FPS = 24000, 30; KEY = os.environ["GEMINI_API_KEY"]; MODEL = os.environ.get("GEMINI_TTS_MODEL", "gemini-3.8-flash-tts")
 VOICE = {"me": "Leda", "fragrance": "Puck", "narrator": "Sulafat"}
 # spoken text with Gemini audio tags (3.8 reads plain-English directions aloud, so tags only)
 LINES = {  # toned down after Michael's note (less smug, no laughing)

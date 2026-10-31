@@ -1,0 +1,267 @@
+{
+  "series": "Breaking up with ingredients",
+  "part": 2,
+  "title": "Won't take the hint",
+  "fps": 30,
+  "width": 1080,
+  "height": 1920,
+  "total_seconds": 26.4,
+  "audio": "part2-audio.wav",
+  "notes": [
+    "Each beat's sound (a ding for a text, a thunk for a block, a beep or buzz for a scan) starts at the beat's start.",
+    "Speech in a text beat starts about 0.19 s in, after the ding; the end card's narration starts 0.2 s in; a note beat's narration starts 0.25 s in and ends with 0.6 s of silence.",
+    "kind 'note' is a narrator aside: show its 'lines' on screen; 'after' is the screen state it follows.",
+    "kind 'end' is the 4 s HTML end card (marketing/endcard/endcard.mp4), with its last frame held if the narration runs longer."
+  ],
+  "beats": [
+    {
+      "beat": 1,
+      "start": 0.0,
+      "duration": 1.4333,
+      "frames": 43,
+      "kind": "me",
+      "contact": {
+        "name": "Fragrance",
+        "subtitle": "ex · won't take the hint",
+        "initials": "Fr",
+        "colour": "#be6ea0"
+      },
+      "messages": [
+        {
+          "from": "me",
+          "text": "It's over."
+        }
+      ],
+      "toast": null,
+      "new_message": {
+        "from": "me",
+        "text": "It's over."
+      },
+      "spoken": "It's over.",
+      "speaker": "me (Gemini 3.8 Leda)"
+    },
+    {
+      "beat": 2,
+      "start": 1.4333,
+      "duration": 3.9333,
+      "frames": 118,
+      "kind": "it",
+      "contact": {
+        "name": "Fragrance",
+        "subtitle": "ex · won't take the hint",
+        "initials": "Fr",
+        "colour": "#be6ea0"
+      },
+      "messages": [
+        {
+          "from": "me",
+          "text": "It's over."
+        },
+        {
+          "from": "it",
+          "text": "lol ok. see u in ur shampoo tmrw 😘"
+        }
+      ],
+      "toast": null,
+      "new_message": {
+        "from": "it",
+        "text": "lol ok. see u in ur shampoo tmrw 😘"
+      },
+      "spoken": "Ha. Okay. See you in your shampoo tomorrow.",
+      "speaker": "Fragrance (Gemini 3.8 Puck)"
+    },
+    {
+      "beat": 3,
+      "start": 5.3667,
+      "duration": 2.6667,
+      "frames": 80,
+      "kind": "it",
+      "contact": {
+        "name": "Fragrance",
+        "subtitle": "ex · won't take the hint",
+        "initials": "Fr",
+        "colour": "#be6ea0"
+      },
+      "messages": [
+        {
+          "from": "me",
+          "text": "It's over."
+        },
+        {
+          "from": "it",
+          "text": "lol ok. see u in ur shampoo tmrw 😘"
+        },
+        {
+          "from": "it",
+          "text": "and ur laundry detergent"
+        }
+      ],
+      "toast": null,
+      "new_message": {
+        "from": "it",
+        "text": "and ur laundry detergent"
+      },
+      "spoken": "And your laundry detergent.",
+      "speaker": "Fragrance (Gemini 3.8 Puck)"
+    },
+    {
+      "beat": 4,
+      "start": 8.0333,
+      "duration": 3.1333,
+      "frames": 94,
+      "kind": "it",
+      "contact": {
+        "name": "Fragrance",
+        "subtitle": "ex · won't take the hint",
+        "initials": "Fr",
+        "colour": "#be6ea0"
+      },
+      "messages": [
+        {
+          "from": "me",
+          "text": "It's over."
+        },
+        {
+          "from": "it",
+          "text": "lol ok. see u in ur shampoo tmrw 😘"
+        },
+        {
+          "from": "it",
+          "text": "and ur laundry detergent"
+        },
+        {
+          "from": "it",
+          "text": "and that candle ur aunt got u"
+        }
+      ],
+      "toast": null,
+      "new_message": {
+        "from": "it",
+        "text": "and that candle ur aunt got u"
+      },
+      "spoken": "And that candle your aunt got you.",
+      "speaker": "Fragrance (Gemini 3.8 Puck)"
+    },
+    {
+      "beat": 5,
+      "start": 11.1667,
+      "duration": 0.8667,
+      "frames": 26,
+      "kind": "scan",
+      "result": false,
+      "flagged": []
+    },
+    {
+      "beat": 6,
+      "start": 12.0333,
+      "duration": 1.6,
+      "frames": 48,
+      "kind": "scan",
+      "result": true,
+      "flagged": [
+        "Fragrance (Parfum)"
+      ]
+    },
+    {
+      "beat": 7,
+      "start": 13.6333,
+      "duration": 2.6,
+      "frames": 78,
+      "kind": "it",
+      "contact": {
+        "name": "Fragrance",
+        "subtitle": "ex · won't take the hint",
+        "initials": "Fr",
+        "colour": "#be6ea0"
+      },
+      "messages": [
+        {
+          "from": "me",
+          "text": "It's over."
+        },
+        {
+          "from": "it",
+          "text": "lol ok. see u in ur shampoo tmrw 😘"
+        },
+        {
+          "from": "it",
+          "text": "and ur laundry detergent"
+        },
+        {
+          "from": "it",
+          "text": "and that candle ur aunt got u"
+        },
+        {
+          "from": "it",
+          "text": "...ok that's just rude."
+        }
+      ],
+      "toast": null,
+      "new_message": {
+        "from": "it",
+        "text": "...ok that's just rude."
+      },
+      "spoken": "Okay. That's just rude.",
+      "speaker": "Fragrance (Gemini 3.8 Puck)"
+    },
+    {
+      "beat": 8,
+      "start": 16.2333,
+      "duration": 4.8,
+      "frames": 144,
+      "kind": "note",
+      "lines": [
+        "Fragrance gets around.",
+        "Check the label before it comes home."
+      ],
+      "spoken": "Fragrance gets around. Check the label before it comes home.",
+      "speaker": "narrator (Gemini 3.8 Sulafat)",
+      "after": {
+        "kind": "it",
+        "contact": {
+          "name": "Fragrance",
+          "subtitle": "ex · won't take the hint",
+          "initials": "Fr",
+          "colour": "#be6ea0"
+        },
+        "messages": [
+          {
+            "from": "me",
+            "text": "It's over."
+          },
+          {
+            "from": "it",
+            "text": "lol ok. see u in ur shampoo tmrw 😘"
+          },
+          {
+            "from": "it",
+            "text": "and ur laundry detergent"
+          },
+          {
+            "from": "it",
+            "text": "and that candle ur aunt got u"
+          },
+          {
+            "from": "it",
+            "text": "...ok that's just rude."
+          }
+        ],
+        "toast": null,
+        "new_message": {
+          "from": "it",
+          "text": "...ok that's just rude."
+        },
+        "spoken": "Okay. That's just rude.",
+        "speaker": "Fragrance (Chatterbox, am_puck)"
+      }
+    },
+    {
+      "beat": 9,
+      "start": 21.0333,
+      "duration": 5.3667,
+      "frames": 161,
+      "kind": "end",
+      "spoken": "Check before you buy. Free at Actively Skin dot com."
+    }
+  ]
+}

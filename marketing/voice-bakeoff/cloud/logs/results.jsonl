@@ -1,0 +1,38 @@
+{"model": "chatterbox-turbo", "voice": "clone-fragrance", "line": "fragrance_1", "secs": 33.6, "audio_s": 6.84, "rtf": 4.91, "peak_rss_mb": 6268, "note": ""}
+{"model": "chatterbox-turbo", "voice": "clone-fragrance", "line": "fragrance_1-tags", "secs": 16.7, "audio_s": 7.08, "rtf": 2.35, "peak_rss_mb": 6268, "note": "Two truths and a lie. [chuckle] I'm in your shampoo. I'm in your detergent. I'm in unscented products."}
+{"model": "chatterbox-turbo", "voice": "clone-fragrance", "line": "fragrance_2", "secs": 6.7, "audio_s": 2.24, "rtf": 2.99, "peak_rss_mb": 6268, "note": ""}
+{"model": "chatterbox-turbo", "voice": "clone-fragrance", "line": "fragrance_2-tags", "secs": 10.0, "audio_s": 3.68, "rtf": 2.72, "peak_rss_mb": 6268, "note": "[laugh] ...trick question. They're all true."}
+{"model": "chatterbox-turbo", "voice": "clone-narrator", "line": "narrator", "secs": 8.1, "audio_s": 2.88, "rtf": 2.8, "peak_rss_mb": 6268, "note": ""}
+{"model": "chatterbox-turbo", "voice": "stock-default", "line": "fragrance_1", "secs": 15.9, "audio_s": 6.28, "rtf": 2.53, "peak_rss_mb": 6268, "note": ""}
+{"model": "chatterbox-turbo", "voice": "stock-default", "line": "fragrance_1-tags", "secs": 19.2, "audio_s": 7.52, "rtf": 2.55, "peak_rss_mb": 6268, "note": "Two truths and a lie. [chuckle] I'm in your shampoo. I'm in your detergent. I'm in unscented products."}
+{"model": "chatterbox-turbo", "voice": "stock-default", "line": "fragrance_2", "secs": 6.4, "audio_s": 2.0, "rtf": 3.22, "peak_rss_mb": 6268, "note": ""}
+{"model": "chatterbox-turbo", "voice": "stock-default", "line": "fragrance_2-tags", "secs": 8.8, "audio_s": 3.08, "rtf": 2.87, "peak_rss_mb": 6268, "note": "[laugh] ...trick question. They're all true."}
+{"model": "chatterbox-turbo", "voice": "stock-default", "line": "narrator", "secs": 8.4, "audio_s": 2.88, "rtf": 2.91, "peak_rss_mb": 6268, "note": ""}
+{"model": "pocket-tts", "voice": "stock-marius", "line": "fragrance_1", "secs": 5.0, "audio_s": 5.76, "rtf": 0.86, "peak_rss_mb": 1014, "note": ""}
+{"model": "pocket-tts", "voice": "stock-marius", "line": "fragrance_2", "secs": 1.6, "audio_s": 2.4, "rtf": 0.65, "peak_rss_mb": 1014, "note": ""}
+{"model": "pocket-tts", "voice": "stock-alba", "line": "narrator", "secs": 1.7, "audio_s": 2.64, "rtf": 0.64, "peak_rss_mb": 1014, "note": ""}
+{"model": "pocket-tts-english_drifting_26-09", "voice": "stock-marius", "line": "fragrance_1", "secs": 3.1, "audio_s": 5.04, "rtf": 0.62, "peak_rss_mb": 1030, "note": ""}
+{"model": "pocket-tts-english_drifting_26-09", "voice": "stock-marius", "line": "fragrance_2", "secs": 1.2, "audio_s": 1.76, "rtf": 0.7, "peak_rss_mb": 1030, "note": ""}
+{"model": "pocket-tts-english_drifting_26-09", "voice": "stock-alba", "line": "narrator", "secs": 1.8, "audio_s": 2.72, "rtf": 0.65, "peak_rss_mb": 1030, "note": ""}
+{"model": "pocket-tts-english_18m_2026-10", "voice": "stock-marius", "line": "fragrance_1", "secs": 1.9, "audio_s": 5.68, "rtf": 0.33, "peak_rss_mb": 621, "note": ""}
+{"model": "pocket-tts-english_18m_2026-10", "voice": "stock-marius", "line": "fragrance_2", "secs": 0.8, "audio_s": 2.4, "rtf": 0.34, "peak_rss_mb": 621, "note": ""}
+{"model": "pocket-tts-english_18m_2026-10", "voice": "stock-alba", "line": "narrator", "secs": 0.9, "audio_s": 2.56, "rtf": 0.35, "peak_rss_mb": 621, "note": ""}
+{"model": "kitten-tts-2", "voice": "clone-fragrance", "line": "fragrance_1", "secs": 36.0, "audio_s": 7.36, "rtf": 4.89, "peak_rss_mb": 5785, "note": ""}
+{"model": "kitten-tts-2", "voice": "clone-fragrance", "line": "fragrance_1-tags", "secs": 38.9, "audio_s": 8.24, "rtf": 4.72, "peak_rss_mb": 5785, "note": "[excited] Two truths and a lie. <laugh> I'm in your shampoo. I'm in your detergent. I'm in (((unscented))) products."}
+{"model": "kitten-tts-2", "voice": "clone-fragrance", "line": "fragrance_2", "secs": 14.9, "audio_s": 3.04, "rtf": 4.9, "peak_rss_mb": 5785, "note": ""}
+{"model": "kitten-tts-2", "voice": "clone-fragrance", "line": "fragrance_2-tags", "secs": 19.5, "audio_s": 4.04, "rtf": 4.83, "peak_rss_mb": 5785, "note": "<giggle> ...trick question. They're all true."}
+{"model": "kitten-tts-2", "voice": "clone-narrator", "line": "narrator", "secs": 17.2, "audio_s": 3.36, "rtf": 5.13, "peak_rss_mb": 5785, "note": ""}
+{"model": "kitten-tts-2", "voice": "stock-SarcasticCoworker", "line": "fragrance_1", "secs": 40.6, "audio_s": 8.56, "rtf": 4.75, "peak_rss_mb": 5785, "note": ""}
+{"model": "kitten-tts-2", "voice": "stock-SarcasticCoworker", "line": "fragrance_1-tags", "secs": 42.2, "audio_s": 8.72, "rtf": 4.84, "peak_rss_mb": 5825, "note": "[excited] Two truths and a lie. <laugh> I'm in your shampoo. I'm in your detergent. I'm in (((unscented))) products."}
+{"model": "kitten-tts-2", "voice": "stock-SarcasticCoworker", "line": "fragrance_2", "secs": 16.4, "audio_s": 3.12, "rtf": 5.27, "peak_rss_mb": 5825, "note": ""}
+{"model": "kitten-tts-2", "voice": "stock-SarcasticCoworker", "line": "fragrance_2-tags", "secs": 18.9, "audio_s": 4.04, "rtf": 4.67, "peak_rss_mb": 5825, "note": "<giggle> ...trick question. They're all true."}
+{"model": "kitten-tts-2", "voice": "stock-AudiobookNarratorFemale", "line": "narrator", "secs": 19.6, "audio_s": 3.8, "rtf": 5.16, "peak_rss_mb": 5825, "note": ""}
+{"model": "qwen3-tts-1.7b-customvoice", "voice": "stock-Ryan", "line": "fragrance_1", "secs": 70.3, "audio_s": 9.68, "rtf": 7.26, "peak_rss_mb": 10533, "note": ""}
+{"model": "qwen3-tts-1.7b-customvoice", "voice": "stock-Ryan", "line": "fragrance_1-instruct", "secs": 75.3, "audio_s": 10.88, "rtf": 6.92, "peak_rss_mb": 10533, "note": "Smug, flirty and teasing, like a charming ex who knows a secret; playful and a little smug."}
+{"model": "qwen3-tts-1.7b-customvoice", "voice": "stock-Ryan", "line": "fragrance_2", "secs": 23.2, "audio_s": 3.44, "rtf": 6.74, "peak_rss_mb": 10533, "note": ""}
+{"model": "qwen3-tts-1.7b-customvoice", "voice": "stock-Ryan", "line": "fragrance_2-instruct", "secs": 62.9, "audio_s": 9.36, "rtf": 6.72, "peak_rss_mb": 10533, "note": "Smug, flirty and teasing, like a charming ex who knows a secret; playful and a little smug."}
+{"model": "qwen3-tts-1.7b-customvoice", "voice": "stock-Serena", "line": "narrator", "secs": 28.0, "audio_s": 4.24, "rtf": 6.6, "peak_rss_mb": 10533, "note": ""}
+{"model": "qwen3-tts-1.7b-customvoice", "voice": "stock-Serena", "line": "narrator-instruct", "secs": 24.0, "audio_s": 3.6, "rtf": 6.66, "peak_rss_mb": 10533, "note": "Warm, calm and clear, a friendly expert giving a useful tip."}
+{"model": "qwen3-tts-0.6b-base", "voice": "clone-fragrance", "line": "fragrance_1", "secs": 33.8, "audio_s": 5.28, "rtf": 6.4, "peak_rss_mb": 5781, "note": ""}
+{"model": "qwen3-tts-0.6b-base", "voice": "clone-fragrance", "line": "fragrance_2", "secs": 14.3, "audio_s": 2.08, "rtf": 6.87, "peak_rss_mb": 5781, "note": ""}
+{"model": "qwen3-tts-0.6b-base", "voice": "clone-narrator", "line": "narrator", "secs": 19.8, "audio_s": 2.96, "rtf": 6.69, "peak_rss_mb": 5781, "note": ""}

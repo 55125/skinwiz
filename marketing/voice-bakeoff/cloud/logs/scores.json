@@ -1,0 +1,154 @@
+{
+ "chatterbox-turbo__clone-fragrance__fragrance_1-tags.wav": {
+  "match": 1.0,
+  "heard": "Two truths and a lie. I'm in your shampoo. I'm in your detergent. I'm in unscented products."
+ },
+ "chatterbox-turbo__clone-fragrance__fragrance_1.wav": {
+  "match": 1.0,
+  "heard": "Two truths and a lie. I'm in your shampoo. I'm in your detergent. I'm in unscented products."
+ },
+ "chatterbox-turbo__clone-fragrance__fragrance_2-tags.wav": {
+  "match": 0.91,
+  "heard": "Hahaha. Trick question, they're all true."
+ },
+ "chatterbox-turbo__clone-fragrance__fragrance_2.wav": {
+  "match": 1.0,
+  "heard": "Trick question, they're all true."
+ },
+ "chatterbox-turbo__clone-narrator__narrator.wav": {
+  "match": 1.0,
+  "heard": "Read the profile, not just the front of the bottle."
+ },
+ "chatterbox-turbo__stock-default__fragrance_1-tags.wav": {
+  "match": 0.88,
+  "heard": "Two truths and a lie. I'm in your shampoo. I'm in your detergent. I'm an unscented product."
+ },
+ "chatterbox-turbo__stock-default__fragrance_1.wav": {
+  "match": 0.94,
+  "heard": "Two troops and a lie. I'm in your shampoo. I'm in your detergent. I'm in unscented products."
+ },
+ "chatterbox-turbo__stock-default__fragrance_2-tags.wav": {
+  "match": 0.91,
+  "heard": "Haha, trick question. They're all true."
+ },
+ "chatterbox-turbo__stock-default__fragrance_2.wav": {
+  "match": 1.0,
+  "heard": "Trick question, they're all true."
+ },
+ "chatterbox-turbo__stock-default__narrator.wav": {
+  "match": 1.0,
+  "heard": "Read the profile, not just the front of the bottle."
+ },
+ "kitten-tts-2__clone-fragrance__fragrance_1-tags.wav": {
+  "match": 1.0,
+  "heard": "Two truths and a lie. I'm in your shampoo. I'm in your detergent. I'm in unscented products."
+ },
+ "kitten-tts-2__clone-fragrance__fragrance_1.wav": {
+  "match": 0.97,
+  "heard": "2 truths and a lie. I'm in your shampoo. I'm in your detergent. I'm in unscented products."
+ },
+ "kitten-tts-2__clone-fragrance__fragrance_2-tags.wav": {
+  "match": 0.91,
+  "heard": "Giggle trick question they're all true"
+ },
+ "kitten-tts-2__clone-fragrance__fragrance_2.wav": {
+  "match": 1.0,
+  "heard": "Trick question, they're all true."
+ },
+ "kitten-tts-2__clone-narrator__narrator.wav": {
+  "match": 1.0,
+  "heard": "Read the profile, not just the front of the bottle."
+ },
+ "kitten-tts-2__stock-AudiobookNarratorFemale__narrator.wav": {
+  "match": 1.0,
+  "heard": "Read the profile, not just the front of the bottle."
+ },
+ "kitten-tts-2__stock-SarcasticCoworker__fragrance_1-tags.wav": {
+  "match": 1.0,
+  "heard": "two truths and a lie. I'm in your shampoo. I'm in your detergent. I'm in unscented products."
+ },
+ "kitten-tts-2__stock-SarcasticCoworker__fragrance_1.wav": {
+  "match": 1.0,
+  "heard": "Two truths and a lie. I'm in your shampoo. I'm in your detergent. I'm in unscented products."
+ },
+ "kitten-tts-2__stock-SarcasticCoworker__fragrance_2-tags.wav": {
+  "match": 0.91,
+  "heard": "Giggle trick question. They're all true"
+ },
+ "kitten-tts-2__stock-SarcasticCoworker__fragrance_2.wav": {
+  "match": 1.0,
+  "heard": "Trick question, they're all true."
+ },
+ "pocket-tts-english_18m_2026-10__stock-alba__narrator.wav": {
+  "match": 1.0,
+  "heard": "Read the profile, not just the front of the bottle."
+ },
+ "pocket-tts-english_18m_2026-10__stock-marius__fragrance_1.wav": {
+  "match": 0.94,
+  "heard": "Two truths and a lie. I'm in your shampoo. I'm in your detergent. I'm an unscented products"
+ },
+ "pocket-tts-english_18m_2026-10__stock-marius__fragrance_2.wav": {
+  "match": 1.0,
+  "heard": "Trick question they're all true"
+ },
+ "pocket-tts-english_drifting_26-09__stock-alba__narrator.wav": {
+  "match": 1.0,
+  "heard": "Read the profile, not just the front of the bottle."
+ },
+ "pocket-tts-english_drifting_26-09__stock-marius__fragrance_1.wav": {
+  "match": 1.0,
+  "heard": "two truths and a lie. I'm in your shampoo. I'm in your detergent. I'm in unscented products."
+ },
+ "pocket-tts-english_drifting_26-09__stock-marius__fragrance_2.wav": {
+  "match": 1.0,
+  "heard": "trick question, they're all true."
+ },
+ "pocket-tts__stock-alba__narrator.wav": {
+  "match": 1.0,
+  "heard": "Read the profile, not just the front of the bottle."
+ },
+ "pocket-tts__stock-marius__fragrance_1.wav": {
+  "match": 0.94,
+  "heard": "Two truths and a lie. I'm in your shampoo. I'm in your detergent. I'm an unscented products"
+ },
+ "pocket-tts__stock-marius__fragrance_2.wav": {
+  "match": 1.0,
+  "heard": "trick question. They're all true."
+ },
+ "qwen3-tts-0.6b-base__clone-fragrance__fragrance_1.wav": {
+  "match": 1.0,
+  "heard": "Two truths and a lie, I'm in your shampoo, I'm in your detergent, I'm in unscented products."
+ },
+ "qwen3-tts-0.6b-base__clone-fragrance__fragrance_2.wav": {
+  "match": 1.0,
+  "heard": "Trick question, they're all true."
+ },
+ "qwen3-tts-0.6b-base__clone-narrator__narrator.wav": {
+  "match": 1.0,
+  "heard": "Read the profile, not just the front of the bottle."
+ },
+ "qwen3-tts-1.7b-customvoice__stock-Ryan__fragrance_1-instruct.wav": {
+  "match": 1.0,
+  "heard": "Two truths and a lie. I'm in your shampoo. I'm in your detergent. I'm in unscented products."
+ },
+ "qwen3-tts-1.7b-customvoice__stock-Ryan__fragrance_1.wav": {
+  "match": 1.0,
+  "heard": "Two truths and a lie. I'm in your shampoo. I'm in your detergent. I'm in unscented products."
+ },
+ "qwen3-tts-1.7b-customvoice__stock-Ryan__fragrance_2-instruct.wav": {
+  "match": 0.77,
+  "heard": "ha ha etc trick question they're all true"
+ },
+ "qwen3-tts-1.7b-customvoice__stock-Ryan__fragrance_2.wav": {
+  "match": 0.91,
+  "heard": "Hmm trick question. They're all true"
+ },
+ "qwen3-tts-1.7b-customvoice__stock-Serena__narrator-instruct.wav": {
+  "match": 1.0,
+  "heard": "Read the profile, not just the front of the bottle."
+ },
+ "qwen3-tts-1.7b-customvoice__stock-Serena__narrator.wav": {
+  "match": 1.0,
+  "heard": "Read the profile, not just the front of the bottle."
+ }
+}

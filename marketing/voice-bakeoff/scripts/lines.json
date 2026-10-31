@@ -1,0 +1,9 @@
+{
+ "fragrance_1": {"speaker": "fragrance", "text": "Two truths and a lie. I'm in your shampoo. I'm in your detergent. I'm in unscented products."},
+ "fragrance_2": {"speaker": "fragrance", "text": "...trick question. They're all true."},
+ "narrator":    {"speaker": "narrator",  "text": "Read the profile, not just the front of the bottle."},
+ "refs": {
+  "fragrance": {"wav": "refs/fragrance_am_puck.wav", "text": "Hey. It's me again. I know, I know, you said you were done, but honestly? You always come back. Everybody does. Anyway. Call me."},
+  "narrator":  {"wav": "refs/narrator_af_bella.wav", "text": "Every label tells a story. Some of it is on the front, and the rest is in the fine print. Here is how to read the whole thing."}
+ }
+}

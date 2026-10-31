@@ -23,6 +23,7 @@ import { variantRobots, breadcrumbLd } from "@/lib/seo";
 import { JsonLd } from "@/components/json-ld";
 import { siteUrl } from "@/lib/site-url";
 import { parseFreeParam } from "@/lib/avoid-shared";
+import { parseStrengthParam, strengthChoices, strengthParam } from "@/lib/strength-bands";
 import { AvoidSwitch } from "@/components/avoid-switch";
 import { FEATURES } from "@/lib/feature-flags";
 import { readProfile } from "@/lib/profile";
@@ -67,12 +68,12 @@ export default async function ConcernPage({
   const freeFromIds = parseFreeParam(free);
   const activesList = getActivesForConcern(slug);
   const allStrengthOptions = active ? getStrengthOptionsForActive(slug, active) : [];
-  // Labels carry one-off values (3.69%, 5.25%) that are almost always a
-  // filing quirk of a single product; a chip per singleton would drown the
-  // real strengths (2.5 / 5 / 10 for benzoyl peroxide). Rare values stay
-  // reachable via the URL and "All strengths", just not as chips.
-  const strengthOptions = allStrengthOptions.filter((o) => o.count >= 3);
-  const strengthPct = strength !== undefined && allStrengthOptions.some((o) => String(o.pct) === strength) ? Number(strength) : undefined;
+  // A single strength must be one that's on a label here; a range is any
+  // well-formed one (an empty range just lists nothing).
+  const parsedStrength = parseStrengthParam(strength);
+  const strengthPick =
+    parsedStrength && (parsedStrength.lo !== parsedStrength.hi || allStrengthOptions.some((o) => o.pct === parsedStrength.lo)) ? parsedStrength : undefined;
+  const strengthOptions = strengthChoices(allStrengthOptions, strengthPick);
   // Pregnancy filter (gated): only offered once the profile says pregnant,
   // but an existing ?pregnancy=hide link keeps working while the flag is on.
   const pregnancyMode = FEATURES.PREGNANCY_MODE;
@@ -84,20 +85,20 @@ export default async function ConcernPage({
   const canMatch = hasProfile(profile) || avoidIds.length > 0;
   const sort = parseListSort(sortParam, canMatch);
   const excludeIngredientIds = pregnancyHide ? pregnancyAvoidIngredientIds() : undefined;
-  const listFilters = { concernId: slug, activeId: active, freeFromIds, strengthPct, excludeIngredientIds, concernListing: true, origin };
+  const listFilters = { concernId: slug, activeId: active, freeFromIds, strength: strengthPick, excludeIngredientIds, concernListing: true, origin };
   const { rows, total, pageSize } =
     sort === "match"
       ? browseProductsByMatch(listFilters, page, (all) => scoreProducts(all, profile, avoidIds), JSON.stringify([listFilters, profile, avoidIds]))
       : sort === "name"
         ? browseProducts(listFilters, page, "name")
-        : getProductsForConcern(slug, page, active, freeFromIds, strengthPct, excludeIngredientIds, origin);
+        : getProductsForConcern(slug, page, active, freeFromIds, strengthPick, excludeIngredientIds, origin);
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
   // Every filter, sort and page link keeps the other params (a new active
   // also clears ?strength, inside ListingFilters).
   const current: Record<string, string | undefined> = {
     active,
     free,
-    strength: strengthPct !== undefined ? String(strengthPct) : undefined,
+    strength: strengthPick ? strengthParam(strengthPick) : undefined,
     [PREGNANCY_FILTER_PARAM]: pregnancyHide ? PREGNANCY_FILTER_VALUE : undefined,
     sort,
     [ORIGIN_PARAM]: origin,
@@ -110,7 +111,7 @@ export default async function ConcernPage({
   };
   const escalation = FEATURES.ESCALATION_GUIDANCE ? escalationFor(slug) : undefined;
   const originCounts = browseOriginCounts(listFilters);
-  const filterCount = [active, origin, strengthPct !== undefined ? "s" : undefined, pregnancyHide ? "p" : undefined].filter(Boolean).length + freeFromIds.length;
+  const filterCount = [active, origin, strengthPick ? "s" : undefined, pregnancyHide ? "p" : undefined].filter(Boolean).length + freeFromIds.length;
 
   const filters = (
     <ListingFilters
@@ -118,7 +119,7 @@ export default async function ConcernPage({
       active={{
         selected: active,
         options: activesList,
-        strength: active ? { selected: strengthPct, options: strengthOptions } : undefined,
+        strength: active ? { selected: strengthPick && strengthParam(strengthPick), options: strengthOptions } : undefined,
       }}
       origin={{ selected: origin, counts: originCounts }}
       freeFrom={{

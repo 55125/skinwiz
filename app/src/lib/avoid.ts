@@ -5,10 +5,25 @@ import { db } from "@/db/client";
 import { personAvoidLists } from "@/db/schema";
 import { personForSession } from "@/lib/identity";
 import { readDeviceSessionId } from "@/lib/session";
-import { avoidConflicts, normalizeAvoidId, type AvoidableProduct } from "@/lib/avoid-shared";
+import {
+  avoidConflicts as sharedAvoidConflicts,
+  avoidedIngredientId,
+  avoidedIngredientName as sharedAvoidedIngredientName,
+  normalizeAvoidId,
+  type AvoidableProduct,
+} from "@/lib/avoid-shared";
 import { getNotOnLabel } from "@/db/patch-test-series";
+import { avoidedIngredientPageName, listsIngredient, resolveIngredientAvoidId } from "@/lib/avoid-ingredients";
 
-export { avoidedIngredientName } from "@/lib/avoid-shared";
+/** avoidedIngredientName, with an avoided ingredient under its page's name. */
+export function avoidedIngredientName(id: string): string {
+  return avoidedIngredientPageName(id) ?? sharedAvoidedIngredientName(id);
+}
+
+/** avoidConflicts, checking "ing:" ids against each product's ingredient lines. */
+export function avoidConflicts(product: AvoidableProduct, avoidIds: string[]) {
+  return sharedAvoidConflicts(product, avoidIds, listsIngredient);
+}
 
 // The visitor's personal "ingredients I avoid" list -- free-from check ids
 // (db/ingredient-flags.ts) and contact allergen ids (db/contact-allergens.ts)
@@ -24,7 +39,7 @@ export const AVOID_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
 export function sanitizeAvoidIds(ids: unknown): string[] {
   if (!Array.isArray(ids)) return [];
   const out = ids.flatMap((id) => {
-    const valid = typeof id === "string" ? normalizeAvoidId(id) : undefined;
+    const valid = typeof id !== "string" ? undefined : avoidedIngredientId(id) ? resolveIngredientAvoidId(id) : normalizeAvoidId(id);
     return valid ? [valid] : [];
   });
   return [...new Set(out)];

@@ -12,6 +12,18 @@ export type SearchTerm = {
   alts: string[];
   /** Short words like "aha" only match at the start of a word, so "hsa" can't hit "thighsacne". */
   wordStart: boolean;
+  /** Also satisfied by a product in this concern whose dosage form contains one of `forms`. */
+  inConcern?: { concernId: string; forms: string[] };
+};
+
+// Words that name a kind of oral-care product. Within Oral Care a bare
+// "PASTE" or "GEL" form is a toothpaste, but outside it a paste is a zinc
+// diaper paste, so these only widen the match inside the concern.
+const CONCERN_FORMS: Record<string, { concernId: string; forms: string[] }> = {
+  toothpaste: { concernId: "oral-care", forms: ["paste", "gel"] },
+  toothpastes: { concernId: "oral-care", forms: ["paste", "gel"] },
+  mouthwash: { concernId: "oral-care", forms: ["rinse", "mouthwash", "liquid", "solution"] },
+  mouthwashes: { concernId: "oral-care", forms: ["rinse", "mouthwash", "liquid", "solution"] },
 };
 
 // Things people search for that are a topic rather than a product name. The
@@ -66,6 +78,12 @@ const SYNONYMS: Record<string, string[]> = {
   regenerate: ["regenerist", "regenerat"],
   regenerating: ["regenerist", "regenerating"],
   loreal: ["l'oreal", "loreal"],
+  // Oral care: FDA listings call it "PASTE, DENTIFRICE" or "RINSE" and most
+  // names leave it out, so "colgate optic white toothpaste" found nothing.
+  toothpaste: ["toothpaste", "tooth paste", "dentifrice"],
+  toothpastes: ["toothpaste", "tooth paste", "dentifrice"],
+  mouthwash: ["mouthwash", "mouth wash", "rinse"],
+  mouthwashes: ["mouthwash", "mouth wash", "rinse"],
   // Cantabria Labs (Heliocare, Endocare), misspelled twice in the 2026-10-16 log.
   cantabaria: ["cantabria"],
   cantabarai: ["cantabria"],
@@ -113,7 +131,7 @@ export function parseSearch(raw: string): { terms: SearchTerm[]; hints: SearchHi
     // spelled plain "L'Oreal" (the SQL fold only covers accented rows).
     const folded = base.flatMap((a) => [a, foldAccents(a)!]);
     const alts = [...new Set(folded.flatMap((a) => (a.includes("'") ? [a, a.replace(/'/g, "")] : [a])))];
-    terms.push({ alts, wordStart: w.length <= 3 && !SYNONYMS[w] });
+    terms.push({ alts, wordStart: w.length <= 3 && !SYNONYMS[w], ...(CONCERN_FORMS[w] ? { inConcern: CONCERN_FORMS[w] } : {}) });
   }
   return { terms, hints: [...hints] };
 }

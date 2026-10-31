@@ -4,7 +4,8 @@ import { PageHeader } from "@/components/page-header";
 import { MySkinTabs } from "@/components/my-skin-tabs";
 import { AvoidListEditor } from "@/components/avoid-list-editor";
 import { ShareAvoidList } from "@/components/share-avoid-list";
-import { readAvoidIds, readNotOnLabelIds } from "@/lib/avoid";
+import { avoidedIngredientName, readAvoidIds, readNotOnLabelIds } from "@/lib/avoid";
+import { avoidedIngredientId } from "@/lib/avoid-shared";
 import { SITE_NAME } from "@/lib/brand";
 
 export const metadata: Metadata = {
@@ -16,6 +17,7 @@ export default async function AvoidPage({ searchParams }: { searchParams: Promis
   const { paste, series } = await searchParams;
   const ids = await readAvoidIds();
   const notOnLabel = await readNotOnLabelIds();
+  const ingredientNames = Object.fromEntries(ids.filter((id) => avoidedIngredientId(id)).map((id) => [id, avoidedIngredientName(id)]));
   return (
     <div className="mx-auto max-w-6xl space-y-8 px-4 py-10">
       <MySkinTabs />
@@ -27,7 +29,7 @@ export default async function AvoidPage({ searchParams }: { searchParams: Promis
 
         <ShareAvoidList ids={ids} notOnLabel={notOnLabel} />
 
-        <AvoidListEditor initialIds={ids} initialNotOnLabel={notOnLabel} pasteOpen={paste === "1"} seriesOpen={series === "1"} />
+        <AvoidListEditor initialIds={ids} initialNotOnLabel={notOnLabel} ingredientNames={ingredientNames} pasteOpen={paste === "1"} seriesOpen={series === "1"} />
 
         <div className="space-y-2 rounded-2xl border bg-muted/40 p-4 text-xs leading-relaxed text-muted-foreground">
           <p>

@@ -38,7 +38,7 @@ import { readAvoidIds } from "@/lib/avoid";
 import { readProfile } from "@/lib/profile";
 import { IngredientPreference } from "@/components/ingredient-preference";
 import { IngredientAvoidButton } from "@/components/ingredient-avoid-button";
-import { avoidedIngredientName } from "@/lib/avoid-shared";
+import { avoidedIngredientName, ingredientAvoidId } from "@/lib/avoid-shared";
 import { pubchemLinkText } from "@/lib/pubchem";
 import { canonicalSlug } from "@/db/ingredient-parse";
 import { ewgHazardBadge } from "@/lib/ewg";
@@ -48,6 +48,7 @@ import { isIndexableIngredient } from "@/lib/ingredient-index";
 import { JsonLd } from "@/components/json-ld";
 import { siteUrl } from "@/lib/site-url";
 import { SITE_NAME } from "@/lib/brand";
+import { ingredientSummary } from "@/lib/answer-summary";
 
 type Params = Promise<{ slug: string }>;
 
@@ -121,10 +122,10 @@ export default async function IngredientPage({
   const avoidedAllergens = new Set(avoidIds.flatMap(allergenMembers));
   const allergensAvoided = allergens.filter((a) => avoidedAllergens.has(a.id));
   // What "Add to avoid list" puts on the list: the ingredient's own contact
-  // allergen when it is one, else the free-from check it breaks. Ingredients
-  // that are neither can't go on the list, so they get no button.
+  // allergen when it is one, else the free-from check it breaks, else the
+  // ingredient itself ("ing:iron-oxides", lib/avoid-shared.ts).
   const avoidAllergen = allergens.find((a) => a.id === id) ?? allergens[0];
-  const avoidTarget = avoidAllergen?.id ?? failedChecks[0]?.id;
+  const avoidTarget = avoidAllergen?.id ?? failedChecks[0]?.id ?? ingredientAvoidId(ingredient.id);
   const avoidAdds = avoidAllergen
     ? avoidAllergen.id !== id ? avoidAllergen.name : undefined
     : failedChecks[0] && avoidedIngredientName(failedChecks[0].id);
@@ -185,6 +186,19 @@ export default async function IngredientPage({
           <IngredientPreference id={id} initial={preference} />
         </div>
       </header>
+
+      <p className="max-w-3xl leading-relaxed">
+        {ingredientSummary({
+          name: ingredient.name,
+          products: stats.products,
+          brands: stats.brands,
+          asActive: stats.asActive,
+          use: active ? activeUse(active.id) : undefined,
+          allergens: allergens.map((a) => a.name),
+          failedChecks: failedChecks.map((c) => c.label),
+          avgPosition: avgPos,
+        }).join(" ")}
+      </p>
 
       <dl className="grid grid-cols-3 gap-3">
         <Stat value={stats.products.toLocaleString()} label={stats.products === 1 ? "product contains it" : "products contain it"} />

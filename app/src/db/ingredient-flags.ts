@@ -141,6 +141,25 @@ export const FREE_FROM_CHECKS: FreeFromCheck[] = [
   },
 ];
 
+// Checks that say nothing useful about a concern's products: a toothpaste is
+// trivially "reef-safer" (no UV filters), and fungal acne is a skin question.
+// The flags are still computed (filters and the avoid list rely on them);
+// these are only left off what a product shows.
+const NOT_SHOWN_FOR_CONCERN: Record<string, string[]> = {
+  "oral-care": ["reef-safe", "fungal-acne-safe"],
+};
+
+/** The free-from flags worth showing on a product of this concern. */
+export function shownFreeFromFlags(flags: string[], concernId: string): string[] {
+  const hidden = NOT_SHOWN_FOR_CONCERN[concernId];
+  return hidden ? flags.filter((id) => !hidden.includes(id)) : flags;
+}
+
+/** Whether a check is worth showing (passed or failed) on a product of this concern. */
+export function checkShownFor(checkId: string, concernId: string): boolean {
+  return !NOT_SHOWN_FOR_CONCERN[concernId]?.includes(checkId);
+}
+
 export function getFreeFromCheck(id: string): FreeFromCheck | undefined {
   return FREE_FROM_CHECKS.find((c) => c.id === id);
 }

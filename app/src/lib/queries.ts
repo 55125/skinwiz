@@ -20,6 +20,7 @@ import { isAllowedManualLinkUrl } from "@/lib/manual-links";
 import { concernIdToNiche } from "@/db/actives";
 import { getFreeFromCheck } from "@/db/ingredient-flags";
 import { allergenBlockers, resolveAllergenId } from "@/db/contact-allergens";
+import { avoidedIngredientId } from "@/lib/avoid-shared";
 import { hsaEligibleIdsJson } from "@/lib/otc-index";
 import { displayablePrice, parsePackageDescription, unitPrice } from "@/lib/equivalence";
 import { getDisplayQuotesFor, getKrogerImages } from "@/lib/prices/store";
@@ -37,6 +38,8 @@ import { productBrand } from "@/lib/product-brand";
 import { originIdsJson } from "@/lib/origin";
 import { ORIGINS, type OriginId } from "@/lib/origin-shared";
 import { discontinuedIdsJson, importIdsJson, inStockIdsJson, popularIdsJson } from "@/lib/availability";
+import { ttlCache } from "@/lib/ttl-cache";
+import type { StrengthRange } from "@/lib/strength-bands";
 
 // Prescription rows (products.isRx) are reference/handout data and must never
 // reach a consumer listing, search, count, score, equivalence list or the
@@ -62,8 +65,12 @@ export const LISTED_OTC: SQL = and(OTC_ONLY, LISTED)!;
 // product must have been assessed and contain none of the allergen's
 // blockers -- its group members, plus an undisclosed fragrance when one of
 // them is a fragrance allergen.
+// An avoided ingredient ("ing:iron-oxides") excludes the products that list
+// it, like the pregnancy filter below.
 function freeFromWhereClauses(freeFromIds: string[]): SQL[] {
   return freeFromIds.map((id) => {
+    const ingredient = avoidedIngredientId(id);
+    if (ingredient) return excludesIngredientsClause([ingredient]);
     const allergenId = getFreeFromCheck(id) ? undefined : resolveAllergenId(id);
     if (!allergenId) return jsonArrayContains(products.freeFromFlags, id);
     const blockers = allergenBlockers(allergenId);
@@ -225,12 +232,19 @@ function strengthExpr(activeId: string): SQL {
   return sql`json_extract(${products.strengths}, ${'$."' + activeId + '"'})`;
 }
 
+// One label strength, or a range (above lo, up to and including hi) -- see lib/strength-bands.ts.
+function strengthClause(activeId: string, r: StrengthRange): SQL {
+  const expr = strengthExpr(activeId);
+  if (r.lo === r.hi) return sql`${expr} = ${r.lo}`;
+  return r.hi === null ? sql`${expr} > ${r.lo}` : sql`${expr} > ${r.lo} AND ${expr} <= ${r.hi}`;
+}
+
 export function getProductsForConcern(
   concernId: string,
   page: number,
   activeId?: string,
   freeFromIds: string[] = [],
-  strengthPct?: number,
+  strength?: StrengthRange,
   excludeIngredientIds?: string[],
   origin?: OriginId,
 ) {
@@ -240,7 +254,7 @@ export function getProductsForConcern(
   if (origin) clauses.push(originClause(origin));
   if (activeId) {
     clauses.push(jsonArrayContains(products.activeIds, activeId));
-    if (strengthPct !== undefined) clauses.push(sql`${strengthExpr(activeId)} = ${strengthPct}`);
+    if (strength) clauses.push(strengthClause(activeId, strength));
   }
   const whereClause = and(...clauses);
 
@@ -260,8 +274,8 @@ export type BrowseFilters = {
   freeFromIds?: string[];
   hsaOnly?: boolean;
   excludeIngredientIds?: string[];
-  /** With activeId: only this label strength (concern pages). */
-  strengthPct?: number;
+  /** With activeId: only this label strength or range (concern pages). */
+  strength?: StrengthRange;
   /** A concern page's listing: applies lib/listing-rules.ts exclusions. */
   concernListing?: boolean;
   /** The header's region pick: only brands from there. */
@@ -276,7 +290,7 @@ export function browseWhere(filters: BrowseFilters): SQL | undefined {
   if (filters.activeId) clauses.push(jsonArrayContains(products.activeIds, filters.activeId));
   if (filters.concernListing) clauses.push(concernListingClause(filters.concernId));
   if (filters.origin) clauses.push(originClause(filters.origin));
-  if (filters.activeId && filters.strengthPct !== undefined) clauses.push(sql`${strengthExpr(filters.activeId)} = ${filters.strengthPct}`);
+  if (filters.activeId && filters.strength) clauses.push(strengthClause(filters.activeId, filters.strength));
   // The eligible set is computed in lib/otc-index.ts (label-text rules for
   // sunscreens), bound here as one JSON array parameter.
   if (filters.hsaOnly) clauses.push(sql`${products.id} IN (SELECT value FROM json_each(${hsaEligibleIdsJson()}))`);
@@ -284,11 +298,16 @@ export function browseWhere(filters: BrowseFilters): SQL | undefined {
 }
 
 /** Each region's count under every other filter, for the "Brand from" chips. */
-export function browseOriginCounts(filters: BrowseFilters): Map<OriginId, number> {
-  return countByOrigin(browseWhere({ ...filters, origin: undefined }));
-}
+// The listing reads below are catalog-only (no per-visitor data), and /browse
+// and the concern pages are what bulk crawlers hammer: cached per filter set
+// (lib/ttl-cache.ts) so a flood of identical hits costs one query, not one each.
+export const browseOriginCounts = ttlCache(
+  (filters: BrowseFilters): Map<OriginId, number> => countByOrigin(browseWhere({ ...filters, origin: undefined })),
+);
 
-export function browseProducts(filters: BrowseFilters, page: number, sort?: "name") {
+export const browseProducts = ttlCache(browseProductsUncached);
+
+function browseProductsUncached(filters: BrowseFilters, page: number, sort?: "name") {
   const offset = (page - 1) * PAGE_SIZE;
   const whereClause = browseWhere(filters);
 
@@ -627,6 +646,15 @@ function termMatches(col: SQLWrapper, term: SearchTerm, foldAccentsToo = false):
 
 const SEARCH_COLUMNS = [products.brandName, products.manufacturer, products.activeIngredientText, products.dosageForm];
 
+function termWhere(t: SearchTerm): SQL {
+  const columns = SEARCH_COLUMNS.map((c) => termMatches(c, t, true));
+  if (t.inConcern) {
+    const forms = t.inConcern.forms.map((f) => sql`${products.dosageForm} LIKE ${`%${f}%`}`);
+    columns.push(sql`(${products.concernId} = ${t.inConcern.concernId} AND (${sql.join(forms, sql` OR `)}))`);
+  }
+  return sql`(${sql.join(columns, sql` OR `)})`;
+}
+
 function buildSearchWhere(terms: SearchTerm[], filters: SearchFilters) {
   // Every word has to match somewhere: the product name, the brand, the
   // raw ingredient text (so "niacinamide" finds products that contain it),
@@ -635,7 +663,7 @@ function buildSearchWhere(terms: SearchTerm[], filters: SearchFilters) {
   const clauses = [
     LISTED_OTC,
     notDuplicate(),
-    ...(terms.length ? terms.map((t) => sql`(${sql.join(SEARCH_COLUMNS.map((c) => termMatches(c, t, true)), sql` OR `)})`) : [sql`0`]),
+    ...(terms.length ? terms.map(termWhere) : [sql`0`]),
     ...freeFromWhereClauses(filters.freeFromIds ?? []),
   ];
   if (filters.concernId) clauses.push(inConcern(filters.concernId));
@@ -912,7 +940,7 @@ export function getTopProducts(limit = 8) {
         sql`${products.freeFromFlags} IS NOT NULL`,
         sql`${products.imageUrl} IS NOT NULL`,
         sql`LENGTH(${products.brandName}) <= 60`,
-        sql`${products.concernId} NOT IN ('dandruff-seb-derm', 'excessive-sweating', 'antifungal')`,
+        sql`${products.concernId} NOT IN ('dandruff-seb-derm', 'excessive-sweating', 'antifungal', 'oral-care')`,
         ...SHOWCASE_SKIP.map((w) => sql`LOWER(${products.brandName}) NOT LIKE ${`%${w.replace(/[\\%_]/g, (c) => `\\${c}`)}%`} ESCAPE '\\'`),
       ),
     )

@@ -1,6 +1,6 @@
 {
-  "matched_products": 10637,
-  "unmatched_label_records": 21266,
+  "matched_products": 11906,
+  "unmatched_label_records": 23354,
   "by_niche": {
     "acne": 841,
     "sunscreen": 5833,
@@ -8,7 +8,8 @@
     "antidandruff": 65,
     "anti-itch": 396,
     "skin-protectant": 1231,
-    "antiperspirant": 1357
+    "antiperspirant": 1357,
+    "oral-care": 1269
   },
   "expired_listing_estimate": 0
 }

@@ -78,7 +78,7 @@ export function ShareAvoidList({ ids, notOnLabel = [] }: { ids: string[]; notOnL
             <p className="text-xs leading-relaxed text-muted-foreground">
               The link itself is the list: nothing is stored on our side, and your name is never in it. Anyone with the
               link can see the allergens.
-              {left.length > 0 && ` Your other settings (${left.map((id) => getFreeFromCheck(id)?.label ?? id).join(", ")}) aren't included.`}
+              {left.length > 0 && ` Your other settings (${left.map((id) => getFreeFromCheck(id)?.label ?? avoidedIngredientName(id)).join(", ")}) aren't included.`}
             </p>
           </div>
         </div>

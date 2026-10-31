@@ -4,6 +4,8 @@ import { buttonVariants } from "@/components/ui/button";
 import { DUPE_FORM_LABELS } from "@/lib/dupe-rules";
 import type { Dupe, DupeResult } from "@/lib/dupes";
 import { displayManufacturer } from "@/lib/format";
+import { productImageAlt, thumbnailUrl } from "@/lib/image-urls";
+import { productBrand } from "@/lib/product-brand";
 
 // The dupe finder's list (lib/dupes.ts), on the product page and on its own
 // /product/[id]/dupes page.
@@ -37,47 +39,75 @@ function matchLine(d: Dupe): string {
   return `${Math.round(d.match.score * 100)}% inactive match · ${d.match.shared} of ${d.match.union} inactive ingredients in common`;
 }
 
+// Many FDA listings are named only "Sunscreen" or "Moisturizer"; the brand
+// leads the title wherever the name doesn't already carry it.
+function dupeTitle(d: Dupe): string {
+  const name = d.product.brandName.trim();
+  const brand = productBrand(d.product).brand ?? (d.product.manufacturer ? displayManufacturer(d.product.manufacturer) : null);
+  return brand && !name.toLowerCase().includes(brand.toLowerCase()) ? `${brand} ${name}` : name;
+}
+
+function soldByLine(names: string[]): string {
+  const shown = names.slice(0, 2).join(", ");
+  return names.length > 2 ? `Same product also sold by ${shown} and ${names.length - 2} more` : `Same product also sold by ${shown}`;
+}
+
 export function DupeRows({ rows, compareWith }: { rows: Dupe[]; compareWith: string }) {
   return (
     <div className="grid gap-3 sm:grid-cols-2">
-      {rows.map((d) => (
-        <div key={d.product.id} className="flex min-w-0 items-center justify-between gap-3 rounded-xl border bg-card p-4">
-          <div className="min-w-0 space-y-1">
-            <Link href={`/product/${encodeURIComponent(d.product.id)}`} className="block truncate font-medium hover:underline">
-              {d.product.brandName}
-            </Link>
-            <p className="text-xs text-muted-foreground">
-              {matchLine(d)}
-              {d.product.manufacturer ? ` · ${displayManufacturer(d.product.manufacturer)}` : ""}
-            </p>
-            {(d.strength === "unknown" || d.discontinued || d.imported) && (
-              <div className="flex flex-wrap gap-1.5">
-                {d.strength === "unknown" && (
-                  <Badge variant="outline" className="text-[11px]" title="One of the two labels doesn't state the strength, so it couldn't be compared">
-                    Strength not listed
-                  </Badge>
-                )}
-                {d.imported && (
-                  <Badge variant="outline" className="text-[11px]">
-                    Imported
-                  </Badge>
-                )}
-                {d.discontinued && (
-                  <Badge variant="outline" className="text-[11px]">
-                    Likely discontinued
-                  </Badge>
-                )}
+      {rows.map((d) => {
+        const title = dupeTitle(d);
+        return (
+          <div key={d.product.id} className="flex min-w-0 items-center justify-between gap-3 rounded-xl border bg-card p-4">
+            {d.product.imageUrl && (
+              <div className="size-16 shrink-0 overflow-hidden rounded-lg border bg-white">
+                {/* eslint-disable-next-line @next/next/no-img-element -- same mix of self-hosted and OBF-hosted photos as product-card.tsx */}
+                <img
+                  src={thumbnailUrl(d.product.imageUrl)}
+                  alt={productImageAlt(d.product)}
+                  width={64}
+                  height={64}
+                  className="h-full w-full object-contain p-1"
+                  loading="lazy"
+                  decoding="async"
+                />
               </div>
             )}
+            <div className="min-w-0 flex-1 space-y-1">
+              <Link href={`/product/${encodeURIComponent(d.product.id)}`} className="block truncate font-medium hover:underline">
+                {title}
+              </Link>
+              <p className="text-xs text-muted-foreground">{matchLine(d)}</p>
+              {d.alsoSoldBy.length > 0 && <p className="text-xs text-muted-foreground">{soldByLine(d.alsoSoldBy)}</p>}
+              {(d.strength === "unknown" || d.discontinued || d.imported) && (
+                <div className="flex flex-wrap gap-1.5">
+                  {d.strength === "unknown" && (
+                    <Badge variant="outline" className="text-[11px]" title="One of the two labels doesn't state the strength, so it couldn't be compared">
+                      Strength not listed
+                    </Badge>
+                  )}
+                  {d.imported && (
+                    <Badge variant="outline" className="text-[11px]">
+                      Imported
+                    </Badge>
+                  )}
+                  {d.discontinued && (
+                    <Badge variant="outline" className="text-[11px]">
+                      Likely discontinued
+                    </Badge>
+                  )}
+                </div>
+              )}
+            </div>
+            <Link
+              href={`/compare?a=${encodeURIComponent(compareWith)}&b=${encodeURIComponent(d.product.id)}`}
+              className={buttonVariants({ variant: "outline", size: "sm" })}
+            >
+              Compare<span className="sr-only"> with {title}</span>
+            </Link>
           </div>
-          <Link
-            href={`/compare?a=${encodeURIComponent(compareWith)}&b=${encodeURIComponent(d.product.id)}`}
-            className={buttonVariants({ variant: "outline", size: "sm" })}
-          >
-            Compare<span className="sr-only"> with {d.product.brandName}</span>
-          </Link>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }

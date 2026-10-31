@@ -1,7 +1,7 @@
 // Free-from checks against sample ingredient lists. `npm test`.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { computeFreeFromFlags } from "./ingredient-flags";
+import { checkShownFor, computeFreeFromFlags, shownFreeFromFlags } from "./ingredient-flags";
 
 const BASE = "Water, Glycerin, Cetearyl Alcohol, Caprylic/Capric Triglyceride, Phenoxyethanol, Xanthan Gum";
 
@@ -28,4 +28,12 @@ test("abbreviations only match a whole ingredient name", () => {
 test("computeFreeFromFlags: a PEG/PPG copolymer is not PEG-free", () => {
   const flags = computeFreeFromFlags("Water, Glycerin, PEG/PPG-17/6 Copolymer, Dimethicone") ?? [];
   assert.ok(!flags.includes("peg-free"));
+});
+
+test("a toothpaste doesn't show skin-only flags", () => {
+  const flags = ["fragrance-free", "reef-safe", "fungal-acne-safe", "paraben-free"];
+  assert.deepEqual(shownFreeFromFlags(flags, "oral-care"), ["fragrance-free", "paraben-free"]);
+  assert.deepEqual(shownFreeFromFlags(flags, "dry-skin-eczema"), flags);
+  assert.ok(!checkShownFor("fungal-acne-safe", "oral-care"));
+  assert.ok(checkShownFor("alcohol-free", "oral-care"));
 });

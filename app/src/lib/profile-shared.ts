@@ -238,7 +238,7 @@ export function matchProduct(
     reasons.push({ tone: points >= 0 ? "good" : "bad", text, points });
   };
 
-  const avoidFound = avoidConflicts(product, avoidLabels.map((a) => a.id));
+  const avoidFound = avoidConflicts({ ...product, ingredientIds: [...present] }, avoidLabels.map((a) => a.id));
   if (avoidFound) {
     const named = (ids: string[]) => avoidLabels.filter((a) => ids.includes(a.id));
     const conflicts = named(avoidFound.conflicts);

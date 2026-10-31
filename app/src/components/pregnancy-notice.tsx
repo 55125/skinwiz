@@ -23,17 +23,29 @@ const LOW_ON_LIST = 12;
 
 type Mode = { key: "pregnancy" | "lactation"; label: string };
 
+/** The notice's own title when the product has an ingredient usually avoided, for the one-line warning at the top of the page. */
+export function pregnancyAvoidTitle(findings: PregnancyFinding[], pregnant: boolean, breastfeeding: boolean): string | null {
+  const keys = [...(pregnant ? (["pregnancy"] as const) : []), ...(breastfeeding ? (["lactation"] as const) : [])];
+  const avoidModes = keys.filter((k) => findings.some((f) => f[k].level === "avoid"));
+  if (avoidModes.length === 0) return null;
+  const when = avoidModes.length === 2 ? "during pregnancy or breastfeeding" : avoidModes[0] === "pregnancy" ? "during pregnancy" : "while breastfeeding";
+  return `Contains an ingredient usually avoided ${when}`;
+}
+
 export function PregnancyNotice({
   findings,
   pregnant,
   breastfeeding,
   fullList,
+  quiet = false,
 }: {
   findings: PregnancyFinding[];
   pregnant: boolean;
   breastfeeding: boolean;
   /** Whether the product's full ingredient list is on file (otherwise only label actives were checked). */
   fullList: boolean;
+  /** Inside another card: the nothing-flagged note drops its own box. */
+  quiet?: boolean;
 }) {
   const modes: Mode[] = [
     ...(pregnant ? [{ key: "pregnancy", label: "Pregnancy" } as Mode] : []),
@@ -66,7 +78,7 @@ export function PregnancyNotice({
 
   if (flagged.length === 0) {
     return (
-      <div className="space-y-1.5 rounded-xl border px-3.5 py-2.5 text-sm">
+      <div className={cn("space-y-1.5 text-sm", !quiet && "rounded-xl border px-3.5 py-2.5")}>
         <p className="flex items-start gap-2">
           <Info className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
           <span>

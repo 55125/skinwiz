@@ -11,7 +11,7 @@ import { computeFreeFromFlags } from "./ingredient-flags";
 import { computeAllergenHits } from "./contact-allergens";
 import { labelFirstStrengths, strengthKey } from "./strength";
 import { brandDirectNiche, labeledDrugActives, productNiches, sunscreenNiche } from "./labeled-actives";
-import { aliasesFor, canonicalSlug, parseIngredients, pickDisplayName } from "./ingredient-parse";
+import { aliasesFor, canonicalSlug, isOtherName, parseIngredients, pickDisplayName } from "./ingredient-parse";
 import { SITE_NAME } from "@/lib/brand";
 import { brandSiteBarcode, validGtin } from "@/lib/product-codes";
 import { validateManualLinks, type ManualLinkRow } from "@/lib/manual-links";
@@ -37,6 +37,9 @@ const CATALOG_CSVS = [
   CURATED_CSV,
   path.join(REPO_ROOT, "tools/catalog_pipeline/output/acne_sun_catalog.csv"),
   path.join(REPO_ROOT, "tools/catalog_pipeline/output/dailymed_resolved_catalog.csv"),
+  // Before cosmetic_catalog.csv: a shampoo that pass filed under Dry Skin
+  // for its panthenol is listed under Hair Care.
+  path.join(REPO_ROOT, "tools/catalog_pipeline/output/hair_care_catalog.csv"),
   path.join(REPO_ROOT, "tools/catalog_pipeline/output/cosmetic_catalog.csv"),
   path.join(REPO_ROOT, "tools/catalog_pipeline/output/brand_direct_catalog.csv"),
 ];
@@ -82,6 +85,8 @@ type CatalogRow = {
     | "skin-protectant"
     | "antiperspirant"
     | "hair-loss"
+    | "hair-care"
+    | "oral-care"
     | "brightening-texture";
   brand_name: string;
   manufacturer_name: string;
@@ -406,8 +411,10 @@ function reseed() {
       const activeIds = [...labeledActiveIds, ...new Set(listedFilters)];
 
       // Curated rows were each reviewed by hand, so one with no tracked
-      // active (a hydrocolloid patch, a plain lotion) still lists.
-      if (activeIds.length === 0 && csvPath !== CURATED_CSV) {
+      // active (a hydrocolloid patch, a plain lotion) still lists. Hair care
+      // rows are there for their ingredient list (the avoid list), not an
+      // active, so they list without one too.
+      if (activeIds.length === 0 && csvPath !== CURATED_CSV && row.niche !== "hair-care") {
         skippedNoActive++;
         continue;
       }
@@ -796,6 +803,9 @@ function insertIngredients(
   const memberships: typeof raw = [];
   const typoVariants = new Map<string, Map<string, number>>();
   const cleanVariants = new Map<string, Map<string, number>>();
+  // Other names for the same substance ("Shea Butter" on the Butyrospermum
+  // Parkii Butter page): shown under "also listed as", never as the name.
+  const otherNameVariants = new Map<string, Map<string, number>>();
   const add = (into: typeof typoVariants, slug: string, name: string) => {
     const v = into.get(slug) ?? new Map<string, number>();
     v.set(name, (v.get(name) ?? 0) + 1);
@@ -807,12 +817,12 @@ function insertIngredients(
     if (seen.has(k)) continue; // a product listing both a typo and the correct spelling
     seen.add(k);
     memberships.push({ ...m, slug });
-    add(slug === m.slug ? cleanVariants : typoVariants, slug, m.rawName);
+    add(slug === m.slug ? cleanVariants : isOtherName(m.slug) ? otherNameVariants : typoVariants, slug, m.rawName);
   }
   const variants = new Map<string, Map<string, number>>();
   const products = new Map<string, Set<string>>();
   for (const m of memberships) {
-    variants.set(m.slug, cleanVariants.get(m.slug) ?? typoVariants.get(m.slug)!);
+    variants.set(m.slug, cleanVariants.get(m.slug) ?? typoVariants.get(m.slug) ?? otherNameVariants.get(m.slug)!);
     const p = products.get(m.slug) ?? new Set<string>();
     // counted over listed products, like the ingredient page's own list
     if (!duplicateIds.has(m.productId)) p.add(m.productId);
@@ -823,7 +833,7 @@ function insertIngredients(
   for (const [slug, v] of variants) {
     const name = pickDisplayName(slug, v);
     names.set(slug, name);
-    const aliases = aliasesFor(slug, name, v);
+    const aliases = aliasesFor(slug, name, v, 8, otherNameVariants.get(slug));
     rows.push({ id: slug, name, aliases, productCount: products.get(slug)!.size });
   }
   const BATCH = 500;

@@ -6,6 +6,7 @@ import {
   ClipboardList,
   Droplets,
   Hand,
+  Scissors,
   ShieldCheck,
   ShieldPlus,
   Sparkles,
@@ -13,6 +14,7 @@ import {
   Stethoscope,
   Sun,
   ThermometerSun,
+  Toothbrush,
   Users,
   Wind,
   type LucideIcon,
@@ -51,6 +53,8 @@ const CONCERN_ICONS: Record<string, LucideIcon> = {
   "dry-skin-eczema": Droplets,
   "excessive-sweating": ThermometerSun,
   "hair-loss": Sprout,
+  "hair-care": Scissors,
+  "oral-care": Toothbrush,
   "brightening-texture": Sparkles,
 };
 

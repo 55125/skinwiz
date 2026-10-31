@@ -56,15 +56,24 @@ PAGE_LIMIT = 1000
 NDC_BATCH_SIZE = 50
 SLEEP = 0.25
 
-PURPOSES = {
-    "acne": "Acne treatment",
-    "sunscreen": "Sunscreen",
-    "antifungal": "Antifungal",
-    "antidandruff": "Antidandruff",
-    "anti-itch": "Anti-itch",
-    "skin-protectant": "Skin protectant",
-    "antiperspirant": "Antiperspirant",
+# Niche -> the Drug Facts "Purpose" phrases that find it. A label found by
+# more than one phrase (a toothpaste that is "Anticavity, antigingivitis,
+# antisensitivity") is one product after dedupe_latest.
+PURPOSES: dict[str, list[str]] = {
+    "acne": ["Acne treatment"],
+    "sunscreen": ["Sunscreen"],
+    "antifungal": ["Antifungal"],
+    "antidandruff": ["Antidandruff"],
+    "anti-itch": ["Anti-itch"],
+    "skin-protectant": ["Skin protectant"],
+    "antiperspirant": ["Antiperspirant"],
+    # Added 2026-10-21: fluoride toothpastes and rinses (21 CFR 355),
+    # sensitivity toothpastes, and CPC / essential-oil gum-care rinses.
+    "oral-care": ["Anticavity", "Antigingivitis", "Antisensitivity"],
 }
+
+CATALOG_CSV = "output/acne_sun_catalog.csv"
+UNMATCHED_CSV = "output/acne_sun_unmatched.csv"
 
 
 def _get(url: str, retries: int = 3) -> dict:
@@ -200,19 +209,39 @@ def write_csv(path: str, rows: list[dict], fieldnames: list[str]) -> None:
             writer.writerow(row)
 
 
+def read_csv(path: str) -> list[dict]:
+    if not os.path.exists(path):
+        return []
+    with open(path, newline="") as f:
+        return list(csv.DictReader(f))
+
+
 def main() -> None:
+    # --niches oral-care,...: fetch only these niches and swap their rows into
+    # the existing catalog, leaving every other niche's rows as they are (a
+    # full re-pull churns thousands of rows whose labels moved on since).
+    only: set[str] | None = None
+    if "--niches" in sys.argv:
+        only = set(sys.argv[sys.argv.index("--niches") + 1].split(","))
+        unknown = only - set(PURPOSES)
+        if unknown:
+            sys.exit(f"Unknown niche(s): {', '.join(sorted(unknown))}")
+
     matched_rows: list[dict] = []
     unmatched_rows: list[dict] = []
 
-    for niche, purpose in PURPOSES.items():
-        print(f"Fetching {purpose}...", file=sys.stderr)
-        records = fetch_all_labels(purpose)
-        for record in records:
-            row = label_to_row(record, niche)
-            if row:
-                matched_rows.append(row)
-            else:
-                unmatched_rows.append(unmatched_row(record, niche))
+    for niche, purposes in PURPOSES.items():
+        if only is not None and niche not in only:
+            continue
+        for purpose in purposes:
+            print(f"Fetching {purpose}...", file=sys.stderr)
+            records = fetch_all_labels(purpose)
+            for record in records:
+                row = label_to_row(record, niche)
+                if row:
+                    matched_rows.append(row)
+                else:
+                    unmatched_rows.append(unmatched_row(record, niche))
 
     print(f"\n{len(matched_rows)} label records with a resolvable product_ndc, "
           f"{len(unmatched_rows)} without", file=sys.stderr)
@@ -230,10 +259,19 @@ def main() -> None:
         "package_ndcs", "purpose_text", "indications_and_usage", "inactive_ingredient_text",
         "spl_set_id", "effective_time",
     ]
-    write_csv("output/acne_sun_catalog.csv", deduped, fieldnames)
+    if only is not None:
+        # Unmatched rows have no id, so the same label can come back once per
+        # purpose phrase; keep one per set id.
+        seen_sets: set[str] = set()
+        unmatched_rows = [r for r in unmatched_rows if not (r["spl_set_id"] in seen_sets or seen_sets.add(r["spl_set_id"]))]
+        kept = [r for r in read_csv(CATALOG_CSV) if r["niche"] not in only]
+        kept_ndcs = {r["product_ndc"] for r in kept}
+        deduped = kept + [r for r in deduped if r["product_ndc"] not in kept_ndcs]
+        unmatched_rows = [r for r in read_csv(UNMATCHED_CSV) if r["niche"] not in only] + unmatched_rows
+    write_csv(CATALOG_CSV, deduped, fieldnames)
 
     unmatched_fieldnames = ["niche", "generic_name_freetext", "spl_set_id", "effective_time", "active_ingredient_text", "purpose_text"]
-    write_csv("output/acne_sun_unmatched.csv", unmatched_rows, unmatched_fieldnames)
+    write_csv(UNMATCHED_CSV, unmatched_rows, unmatched_fieldnames)
 
     by_niche = {}
     for row in deduped:
@@ -255,8 +293,8 @@ def main() -> None:
     with open("output/catalog_summary.json", "w") as f:
         json.dump(summary, f, indent=2)
 
-    print(f"\ncatalog -> output/acne_sun_catalog.csv ({len(deduped)} rows)")
-    print(f"unmatched -> output/acne_sun_unmatched.csv ({len(unmatched_rows)} rows)")
+    print(f"\ncatalog -> {CATALOG_CSV} ({len(deduped)} rows)")
+    print(f"unmatched -> {UNMATCHED_CSV} ({len(unmatched_rows)} rows)")
     print(f"summary -> output/catalog_summary.json: {json.dumps(summary, indent=2)}")
 
 

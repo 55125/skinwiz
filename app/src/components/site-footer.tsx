@@ -28,6 +28,7 @@ function footerLinks() {
         { href: "/routines", label: "Community routines" },
         { href: "/clinic-tools", label: "For clinicians" },
         { href: "/for-clinicians", label: "Dermatologist panel" },
+        { href: "/connect", label: "Use in your AI assistant" },
         { href: "/about", label: "About & methodology" },
         { href: "/contact", label: "Contact" },
         { href: "/privacy", label: "Privacy policy" },

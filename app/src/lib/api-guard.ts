@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 
+import { clientIp as edgeClientIp } from "@/lib/anti-scrape";
+
 export { LIMITS } from "@/lib/limits";
 
 // In-memory fixed-window limiter. Correct for the current single-container
@@ -12,11 +14,9 @@ export function clientIp(request: Request): string {
 }
 
 export function clientIpFromHeaders(headers: Headers): string {
-  // Rightmost entry: the one appended by Railway's edge proxy (the single
-  // trusted hop). Earlier entries are client-supplied and spoofable.
-  const forwarded = headers.get("x-forwarded-for");
-  if (forwarded) return forwarded.split(",").at(-1)!.trim();
-  return headers.get("x-real-ip") ?? "unknown";
+  // Same reading as the bot filter: Railway's edge hop, or the visitor behind
+  // it when that hop is Cloudflare (lib/anti-scrape.ts).
+  return edgeClientIp(headers) ?? "unknown";
 }
 
 export function rateLimit(

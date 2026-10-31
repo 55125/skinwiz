@@ -13,7 +13,7 @@ import { getEquivalenceGroups } from "@/lib/otc-index";
 import { FEATURES } from "@/lib/feature-flags";
 import { ttlCache } from "@/lib/ttl-cache";
 
-const STATIC_PAGES = ["/browse", "/ingredients", "/allergens", "/same", "/guide/hsa-fsa-eligible", "/routines", "/check", "/about", "/for-clinicians", "/clinic-tools", "/contact", "/privacy", "/terms", "/accessibility"];
+const STATIC_PAGES = ["/browse", "/ingredients", "/allergens", "/same", "/guide/hsa-fsa-eligible", "/routines", "/check", "/about", "/connect", "/for-clinicians", "/clinic-tools", "/contact", "/privacy", "/terms", "/accessibility"];
 
 // The sitemap is split by page type (app/sitemap.xml is the index, each part
 // is app/sitemaps/sitemap.ts), so Search Console reports indexing per type.

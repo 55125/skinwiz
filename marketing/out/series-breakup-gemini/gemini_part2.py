@@ -6,14 +6,14 @@ D = os.path.dirname(os.path.abspath(__file__)); G = os.path.join(D, "gem"); os.m
 SR, FPS = 24000, 30; KEY = os.environ["GEMINI_API_KEY"]; MODEL = "gemini-3.8-flash-tts"
 VOICE = {"me": "Leda", "fragrance": "Puck", "narrator": "Sulafat"}
 # spoken text with Gemini audio tags (3.8 reads plain-English directions aloud, so tags only)
-LINES = {
- "b1": ("me", "[firm] [fed up] It's over."),
- "b2": ("fragrance", "[laughs] [smug] Ha. Okay. [flirty] See you in your shampoo tomorrow."),
- "b3": ("fragrance", "[teasing] And your laundry detergent."),
- "b4": ("fragrance", "[smug] [playful] And that candle your aunt got you."),
- "b7": ("fragrance", "[offended] [pause] Okay. That's just rude."),
- "b8": ("narrator", "[warm] [wry] Fragrance gets around. Check the label before it comes home."),
- "b9": ("narrator", "[warm] [friendly] Check before you buy. Free at Actively Skin dot com."),
+LINES = {  # toned down after Michael's note (less smug, no laughing)
+ "b1": ("me", "[calm] [matter-of-fact] It's over."),
+ "b2": ("fragrance", "[casual] [unbothered] Ha. Okay. See you in your shampoo tomorrow."),
+ "b3": ("fragrance", "[casual] And your laundry detergent."),
+ "b4": ("fragrance", "[casual] And that candle your aunt got you."),
+ "b7": ("fragrance", "[mildly annoyed] Okay. That's just rude."),
+ "b8": ("narrator", "[warm] Fragrance gets around. Check the label before it comes home."),
+ "b9": ("narrator", "[warm] Check before you buy. Free at Actively Skin dot com."),
 }
 # The free tier allows 10 requests a day per model; lines listed here fall back to 3.1 (which follows a spoken direction).
 FALLBACK_31 = {"b8": "Say this warmly, a little wry, like a friendly expert: Fragrance gets around. Check the label before it comes home.",

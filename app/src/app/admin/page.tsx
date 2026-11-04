@@ -1,3 +1,4 @@
+import { stillMissing } from "@/lib/search-gaps";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { cookies, headers } from "next/headers";
@@ -194,8 +195,8 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
         <Section title="Searches" note="Most frequent terms, with the latest result count in grey. Terms that look like an email or phone number are never stored.">
           <Bars rows={traffic.searchTerms} extraLabel="results" empty="No searches yet." />
         </Section>
-        <Section title="Searches with no results" note="Catalog gaps and spellings worth adding as aliases.">
-          <Bars rows={traffic.zeroResultSearches} empty="None. Every search found something." />
+        <Section title="Searches with no results" note="Catalog gaps and spellings worth adding as aliases. Terms the catalog finds now are hidden, so this is what is still missing.">
+          <Bars rows={stillMissing(traffic.zeroResultSearches)} empty="None. Everything searched for is in the catalog now." />
         </Section>
       </div>
 

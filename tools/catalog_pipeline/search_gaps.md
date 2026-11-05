@@ -129,25 +129,37 @@ antigingivitis and antisensitivity drugs from openFDA:
 low results "beauty of jos" (1 search, 1 result). Both are Beauty of Joseon, which the catalog
 had one product for (Revive Eye Serum). "hossein" now maps to "joseon" in `lib/search-terms.ts`.
 
-### Added (9 rows, all `cosmetic` / brand_direct)
+### Added (14 rows, all `cosmetic` / brand_direct)
 
-Dynasty Cream, Green Plum Refreshing Toner, Apricot Blossom Peeling Gel, Glow Replenishing Rice
-Milk, Red Bean Water Gel, Red Bean Refreshing Pore Mask, Radiance Cleansing Balm, Ginseng
-Cleansing Oil, Calming Barrier Serum. Lists come from beautyofjoseon.com product pages, which
-robots.txt allows (the note in README_cosmetic.md that these pages 404 is out of date). Open
-Beauty Facts has no ingredient list for the barcodes checked. No photos yet.
+Dynasty Cream, Green Plum Refreshing Toner and Cleanser, Apricot Blossom Peeling Gel, Glow
+Replenishing Rice Milk, Red Bean Water Gel, Red Bean Refreshing Pore Mask, Radiance Cleansing
+Balm, Ginseng Cleansing Oil, Calming Barrier Serum, Glow Serum, Glow Deep Serum, Light On Serum,
+Pore Firming Red Bean PDRN Serum. Lists come from beautyofjoseon.com product pages, which
+robots.txt allows. Open Beauty Facts has no ingredient list for the barcodes checked.
 
-`output/curated_catalog.csv` gained only these rows: a full rebuild without Pillow rewrites other
-brands' photos unresized, so those changes were dropped.
+Photos: Open Beauty Facts first (5 rows, hotlinked), otherwise the brand's, self-hosted (9 rows).
 
 ### Still missing
 
-- **Beauty of Joseon, the rest of the range**: the store answered 429 to these pages, including
-  on a pass one page a minute, so retry later: Glow Serum (Propolis + Niacinamide), Revive Serum
-  (Ginseng + Snail Mucin), Glow Deep Serum (Rice + Alpha-Arbutin), Light On Serum (Centella +
-  Vita C), Ginseng Essence Water, Green Plum Refreshing Cleanser, Ground Rice and Honey Glow
-  Mask, Revive Firming Moisturizer, Pore Firming Red Bean PDRN Serum.
+- **Beauty of Joseon**: Revive Serum (Ginseng + Snail Mucin), Ginseng Essence Water, Ground Rice
+  and Honey Glow Mask, Revive Firming Moisturizer. The store answered 429 to these on every
+  pass, including one page every three minutes, so retry on a later day.
 - **Beauty of Joseon sunscreens** (Relief Sun, Day Dew, Dayscreen, Tinted Mineral Dayscreen):
   DailyMed and openFDA searches found no label under the brand or these product names. A
   sunscreen sold in the US has to be listed as an OTC drug, so these aren't listed as cosmetics
   (same call as Heliocare above). Recheck under the labeler's name, which may not be the brand's.
+
+### First source sync (`sync_sources.py --apply`)
+
+Stopped at a 2-hour limit, partway through COSRX. New rows are additive; existing rows untouched.
+
+| Source | New | Note |
+|---|---|---|
+| openFDA | 8 | 445 ids the pull no longer returns, not removed |
+| OBF hair care | 8 | |
+| OBF cosmetics | not run | the bulk pull failed after retries, at a page of one ingredient tag |
+| Brands: The Ordinary, CeraVe, Naturium | 5, 0, 2 | One Naturium kit row removed; the sync now skips joined-list kits |
+| Brands: COSRX and later | not run | |
+
+The new drug rows haven't been through the DailyMed passes (inactive lists, photos) yet. Finish
+the rest with `--sources obf` and `--sources brands --brands ...`, a few brands per run.

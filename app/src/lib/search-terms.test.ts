@@ -41,6 +41,10 @@ test("Cantabria Labs misspellings from the search log", () => {
   assert.deepEqual(alts("cantabarai"), [["cantabria"]]);
 });
 
+test("Beauty of Joseon misspelling from the search log", () => {
+  assert.deepEqual(alts("beauty of hossein"), [["beauty"], ["joseon"]]);
+});
+
 test("short words only match at the start of a word", () => {
   const [spf] = parseSearch("spf").terms;
   assert.equal(spf.wordStart, true);

@@ -122,3 +122,32 @@ Michael moved hair care and oral care into scope ("k18", "colgate optic white to
 New niches: `hair-care` (cosmetics, curated rows) and `oral-care` (OTC anticavity,
 antigingivitis and antisensitivity drugs from openFDA:
 `python3 build_acne_sun_catalog.py --niches oral-care`).
+
+## Pass 2026-11-05 (weekly check)
+
+`/api/cron/search-gaps?days=7` (2026-10-30 to 2026-11-05): missing "beauty of hossein" (1),
+low results "beauty of jos" (1 search, 1 result). Both are Beauty of Joseon, which the catalog
+had one product for (Revive Eye Serum). "hossein" now maps to "joseon" in `lib/search-terms.ts`.
+
+### Added (9 rows, all `cosmetic` / brand_direct)
+
+Dynasty Cream, Green Plum Refreshing Toner, Apricot Blossom Peeling Gel, Glow Replenishing Rice
+Milk, Red Bean Water Gel, Red Bean Refreshing Pore Mask, Radiance Cleansing Balm, Ginseng
+Cleansing Oil, Calming Barrier Serum. Lists come from beautyofjoseon.com product pages, which
+robots.txt allows (the note in README_cosmetic.md that these pages 404 is out of date). Open
+Beauty Facts has no ingredient list for the barcodes checked. No photos yet.
+
+`output/curated_catalog.csv` gained only these rows: a full rebuild without Pillow rewrites other
+brands' photos unresized, so those changes were dropped.
+
+### Still missing
+
+- **Beauty of Joseon, the rest of the range**: the store answered 429 to these pages, including
+  on a pass one page a minute, so retry later: Glow Serum (Propolis + Niacinamide), Revive Serum
+  (Ginseng + Snail Mucin), Glow Deep Serum (Rice + Alpha-Arbutin), Light On Serum (Centella +
+  Vita C), Ginseng Essence Water, Green Plum Refreshing Cleanser, Ground Rice and Honey Glow
+  Mask, Revive Firming Moisturizer, Pore Firming Red Bean PDRN Serum.
+- **Beauty of Joseon sunscreens** (Relief Sun, Day Dew, Dayscreen, Tinted Mineral Dayscreen):
+  DailyMed and openFDA searches found no label under the brand or these product names. A
+  sunscreen sold in the US has to be listed as an OTC drug, so these aren't listed as cosmetics
+  (same call as Heliocare above). Recheck under the labeler's name, which may not be the brand's.

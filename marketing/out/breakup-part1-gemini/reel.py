@@ -61,12 +61,13 @@ if __name__ == "__main__":
             sf.write(p, clean(a), SR); print("voiced", k, flush=True)
         voiced[k] = sf.read(p, dtype="float32")[0]
     old = json.load(open(os.path.join(D, "part1-timeline-original.json")))
-    # Beat 1 holds at least 1.3 s so "u up?" lands before the block, per Michael's note on the October cut.
-    audio_for = {1: [blip(), sil(.1), voiced[1], sil(.45)], 2: [thunk(), sil(.08), voiced[2], sil(.35)],
-                 3: [blip(), sil(.1), voiced[3], sil(.25)], 4: [thunk(), sil(.4)],
-                 5: [blip(), sil(.1), voiced[5], sil(.25)], 6: [thunk(), sil(.4)], 7: [blip(), sil(.85)],
-                 8: [blip(1480), sil(.1), voiced[8], sil(.25)], 9: [blip(), sil(.1), voiced[9], sil(.25)],
-                 10: [sil(.25), voiced[10], sil(.5)], 11: [sil(.2), voiced[11], sil(.7)]}
+    # Tightened after the boosts, where paid viewers left within 1 to 4 s: the first line starts almost at once and the gaps
+    # are short. Beat 1 still holds at least 1.3 s so "u up?" lands before the block, per Michael's note on the October cut.
+    audio_for = {1: [blip(), sil(.04), voiced[1], sil(.3)], 2: [thunk(), sil(.04), voiced[2], sil(.2)],
+                 3: [blip(), sil(.06), voiced[3], sil(.15)], 4: [thunk(), sil(.28)],
+                 5: [blip(), sil(.06), voiced[5], sil(.15)], 6: [thunk(), sil(.28)], 7: [blip(), sil(.6)],
+                 8: [blip(1480), sil(.06), voiced[8], sil(.15)], 9: [blip(), sil(.06), voiced[9], sil(.2)],
+                 10: [sil(.15), voiced[10], sil(.4)], 11: [sil(.15), voiced[11], sil(.5)]}
     t, chunks, beats = 0.0, [], []
     for b in old["beats"]:
         a = np.concatenate(audio_for[b["beat"]])

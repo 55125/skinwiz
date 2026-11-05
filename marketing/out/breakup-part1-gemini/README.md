@@ -6,4 +6,4 @@
       -af loudnorm=I=-14:TP=-1.5:LRA=11 -c:a aac -b:a 192k -ar 48000 -movflags +faststart -shortest breakup-part-1-gemini.mp4
 
 Eight lines. If 3.8 Lite's free limit (10 a day, also used by the Unscented reel) stops it, the voiced lines stay cached; re-run after the reset.
-Aim for 25 s or less: shorten the silences in `audio_for`, never the words.
+Timing is already tightened from the October cut (first line almost at once, short gaps); keep "u up?" on screen at least 1.3 s. Aim for 22 s or so, and never over 25 s: shorten silences in `audio_for`, never the words.

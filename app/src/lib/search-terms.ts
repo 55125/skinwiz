@@ -87,6 +87,8 @@ const SYNONYMS: Record<string, string[]> = {
   // Cantabria Labs (Heliocare, Endocare), misspelled twice in the 2026-10-16 log.
   cantabaria: ["cantabria"],
   cantabarai: ["cantabria"],
+  // Beauty of Joseon, as "beauty of hossein" in the 2026-11-05 weekly gaps.
+  hossein: ["joseon"],
 };
 
 // Topic words: they set a hint and are not matched against products.

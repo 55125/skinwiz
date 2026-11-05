@@ -47,6 +47,19 @@ def clean(a):
     if len(q) and len(a) - (q.max() + 1) * n < 0.3 * SR: a = a[:(q.max() + 1) * n]
     loud = np.flatnonzero(np.abs(a) > 0.012); a = a[max(0, loud[0] - 1200): loud[-1] + 1200]
     f = int(.015 * SR); a = a.copy(); a[:f] *= np.linspace(0, 1, f); a[-f:] *= np.linspace(1, 0, f); return a
+def tighten(a, keep=0.1, lead=0.04):
+    """Shorten Gemini's leading silence to `lead` s and pauses inside a line to `keep` s (the words are untouched)."""
+    n = int(.01 * SR); rms = np.array([np.sqrt((a[i:i+n]**2).mean()) for i in range(0, len(a) - n, n)])
+    out, i, first = [], 0, True
+    while i < len(rms):
+        j = i
+        while j < len(rms) and rms[j] < 0.006: j += 1
+        if j > i: out.append(a[i*n:(i + min(int((lead if first else keep) * 100), j - i))*n]); i = j
+        else:
+            while j < len(rms) and rms[j] >= 0.006: j += 1
+            out.append(a[i*n:j*n]); i = j
+        first = False
+    out.append(a[len(rms)*n:]); return np.concatenate(out)
 sil = lambda s: np.zeros(int(SR * s), np.float32)
 def blip(freq=990, dur=0.09, vol=0.22):
     t = np.arange(int(SR * dur)) / SR; return (vol * np.sin(2 * np.pi * freq * t) * np.exp(-t * 40)).astype(np.float32)
@@ -60,6 +73,7 @@ if __name__ == "__main__":
             a = gemini(f"{tags} {text}", GEMINI_VOICE[who]) if ENGINE == "gemini" else kokoro(text, KOKORO_VOICE[who])
             sf.write(p, clean(a), SR); print("voiced", k, flush=True)
         voiced[k] = sf.read(p, dtype="float32")[0]
+        if ENGINE == "gemini": voiced[k] = tighten(voiced[k])
     old = json.load(open(os.path.join(D, "part1-timeline-original.json")))
     # Tightened after the boosts, where paid viewers left within 1 to 4 s: the first line starts almost at once and the gaps
     # are short. Beat 1 still holds at least 1.3 s so "u up?" lands before the block, per Michael's note on the October cut.

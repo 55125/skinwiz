@@ -50,6 +50,30 @@ def clean(a):
     if len(q) and len(a) - (q.max() + 1) * n < 0.3 * SR: a = a[:(q.max() + 1) * n]
     loud = np.flatnonzero(np.abs(a) > 0.012); a = a[max(0, loud[0] - 1200): loud[-1] + 1200]
     f = int(.015 * SR); a = a.copy(); a[:f] *= np.linspace(0, 1, f); a[-f:] *= np.linspace(1, 0, f); return a
+def tighten(a, keep=0.1, lead=0.04):
+    """--tight: shorten pauses over `keep` s inside a line to `keep` s and leading silence to `lead` s."""
+    n = int(.01 * SR); rms = np.array([np.sqrt((a[i:i+n]**2).mean()) for i in range(0, len(a) - n, n)])
+    out, i, first = [], 0, True
+    while i < len(rms):
+        j = i
+        while j < len(rms) and rms[j] < 0.006: j += 1
+        if j > i:
+            k = int((lead if first else keep) * 100)
+            out.append(a[i*n:(i + min(k, j - i))*n]); i = j
+        else:
+            while j < len(rms) and rms[j] >= 0.006: j += 1
+            out.append(a[i*n:j*n]); i = j
+        first = False
+    out.append(a[len(rms)*n:]); return np.concatenate(out)
+TIGHT = "--tight" in sys.argv
+SPEED = float(sys.argv[sys.argv.index("--speed") + 1]) if "--speed" in sys.argv else 1.0
+def speed(a, f):
+    """Pitch-preserving speed-up through ffmpeg's atempo."""
+    import subprocess
+    r = subprocess.run(["ffmpeg", "-v", "error", "-f", "f32le", "-ar", str(SR), "-ac", "1", "-i", "-", "-af", f"atempo={f}",
+                        "-f", "f32le", "-"], input=a.astype("<f4").tobytes(), capture_output=True, check=True)
+    return np.frombuffer(r.stdout, "<f4").copy()
+GAP = {"text": .12, "scan": .7, "block": .7, "note": .4, "end_min": 3.4, "end": .45} if TIGHT else {"text": .35, "scan": 1.4, "block": 1.1, "note": .6, "end_min": 4.0, "end": .7}
 sil = lambda s: np.zeros(int(SR * s), np.float32)
 def blip(freq=1320, dur=0.09, vol=0.22):
     t = np.arange(int(SR * dur)) / SR; return (vol * np.sin(2 * np.pi * freq * t) * np.exp(-t * 40)).astype(np.float32)
@@ -65,7 +89,9 @@ if __name__ == "__main__":
             a = gemini(f"{tags} {text}", GEMINI_VOICE[who]) if ENGINE == "gemini" else kokoro(text, KOKORO_VOICE[who])
             sf.write(p, clean(a), SR); print("voiced", k, flush=True)
         voiced[k] = sf.read(p, dtype="float32")[0]
-    def text_beat(k, gap=.35):
+        if TIGHT: voiced[k] = tighten(voiced[k])
+        if SPEED != 1.0: voiced[k] = speed(voiced[k], SPEED)
+    def text_beat(k, gap=GAP["text"]):
         return [blip(1480 if TEXTS[k][0] == "me" else 990), sil(.1), voiced[k], sil(gap)]
     seq = [("b1", "it"), ("b2", "me"), ("b3", "it"), ("b4", "it"), ("scan0", "scan"), ("scan1", "scan"), ("b7", "it"), ("b8", "me"),
            ("block", "block"), ("b10", "note"), ("b11", "end")]
@@ -79,14 +105,14 @@ if __name__ == "__main__":
         elif k == "scan0":
             a = np.concatenate([sil(.25), blip(2100, .14, .18), sil(.45)]); nb.update(result=False, flagged=[], bottle="UNSCENTED")
         elif k == "scan1":
-            a = np.concatenate([buzz(), sil(1.4)]); nb.update(result=True, flagged=["Fragrance (Parfum)"], bottle="UNSCENTED")
+            a = np.concatenate([buzz(), sil(GAP["scan"])]); nb.update(result=True, flagged=["Fragrance (Parfum)"], bottle="UNSCENTED")
         elif k == "block":
-            a = np.concatenate([thunk(), sil(1.1)]); nb.update(contact=CONTACT, messages=msgs, toast="Fragrance blocked", new_message=None)
+            a = np.concatenate([thunk(), sil(GAP["block"])]); nb.update(contact=CONTACT, messages=msgs, toast="Fragrance blocked", new_message=None)
         elif kind == "note":
-            a = np.concatenate([sil(.25), voiced[k], sil(.6)])
+            a = np.concatenate([sil(.25), voiced[k], sil(GAP["note"])])
             nb.update(lines=["“Unscented” isn't the same as fragrance-free.", "Read the label, not the front."], spoken=LINES[k][2])
         else:
-            a = np.concatenate([sil(.2), voiced[k], sil(.7)]); a = np.pad(a, (0, max(0, int(SR * 4.0) - len(a)))); nb.update(spoken=LINES[k][2])
+            a = np.concatenate([sil(.2), voiced[k], sil(GAP["end"])]); a = np.pad(a, (0, max(0, int(SR * GAP["end_min"]) - len(a)))); nb.update(spoken=LINES[k][2])
         fr = math.ceil(len(a) / SR * FPS); a = np.pad(a, (0, round(fr / FPS * SR) - len(a)))
         nb.update(start=round(t, 4), duration=round(fr / FPS, 4), frames=fr)
         beats.append(nb); chunks.append(a); t += fr / FPS

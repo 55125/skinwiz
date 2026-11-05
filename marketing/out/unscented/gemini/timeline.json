@@ -1,0 +1,305 @@
+{
+  "series": "Breaking up with ingredients",
+  "part": 4,
+  "title": "I'm unscented now",
+  "fps": 30,
+  "width": 1080,
+  "height": 1920,
+  "total_seconds": 25.0,
+  "audio": "audio.wav",
+  "beats": [
+    {
+      "beat": 1,
+      "kind": "it",
+      "contact": {
+        "name": "Fragrance",
+        "subtitle": "ex · won't take the hint",
+        "initials": "Fr",
+        "colour": "#be6ea0"
+      },
+      "messages": [
+        {
+          "from": "it",
+          "text": "babe. I changed. I'm unscented now 😇"
+        }
+      ],
+      "toast": null,
+      "new_message": {
+        "from": "it",
+        "text": "babe. I changed. I'm unscented now 😇"
+      },
+      "spoken": "Babe. I changed. I'm unscented now.",
+      "start": 0.0,
+      "duration": 2.8667,
+      "frames": 86
+    },
+    {
+      "beat": 2,
+      "kind": "me",
+      "contact": {
+        "name": "Fragrance",
+        "subtitle": "ex · won't take the hint",
+        "initials": "Fr",
+        "colour": "#be6ea0"
+      },
+      "messages": [
+        {
+          "from": "it",
+          "text": "babe. I changed. I'm unscented now 😇"
+        },
+        {
+          "from": "me",
+          "text": "you were literally in my shampoo"
+        }
+      ],
+      "toast": null,
+      "new_message": {
+        "from": "me",
+        "text": "you were literally in my shampoo"
+      },
+      "spoken": "You were literally in my shampoo.",
+      "start": 2.8667,
+      "duration": 2.1667,
+      "frames": 65
+    },
+    {
+      "beat": 3,
+      "kind": "it",
+      "contact": {
+        "name": "Fragrance",
+        "subtitle": "ex · won't take the hint",
+        "initials": "Fr",
+        "colour": "#be6ea0"
+      },
+      "messages": [
+        {
+          "from": "it",
+          "text": "babe. I changed. I'm unscented now 😇"
+        },
+        {
+          "from": "me",
+          "text": "you were literally in my shampoo"
+        },
+        {
+          "from": "it",
+          "text": "that never happened"
+        }
+      ],
+      "toast": null,
+      "new_message": {
+        "from": "it",
+        "text": "that never happened"
+      },
+      "spoken": "That never happened.",
+      "start": 5.0333,
+      "duration": 1.1667,
+      "frames": 35
+    },
+    {
+      "beat": 4,
+      "kind": "it",
+      "contact": {
+        "name": "Fragrance",
+        "subtitle": "ex · won't take the hint",
+        "initials": "Fr",
+        "colour": "#be6ea0"
+      },
+      "messages": [
+        {
+          "from": "it",
+          "text": "babe. I changed. I'm unscented now 😇"
+        },
+        {
+          "from": "me",
+          "text": "you were literally in my shampoo"
+        },
+        {
+          "from": "it",
+          "text": "that never happened"
+        },
+        {
+          "from": "it",
+          "text": "and if it did, you're being too sensitive"
+        }
+      ],
+      "toast": null,
+      "new_message": {
+        "from": "it",
+        "text": "and if it did, you're being too sensitive"
+      },
+      "spoken": "And if it did, you're being too sensitive.",
+      "start": 6.2,
+      "duration": 2.1,
+      "frames": 63
+    },
+    {
+      "beat": 5,
+      "kind": "scan",
+      "result": false,
+      "flagged": [],
+      "bottle": "UNSCENTED",
+      "start": 8.3,
+      "duration": 0.8667,
+      "frames": 26
+    },
+    {
+      "beat": 6,
+      "kind": "scan",
+      "result": true,
+      "flagged": [
+        "Fragrance (Parfum)"
+      ],
+      "bottle": "UNSCENTED",
+      "start": 9.1667,
+      "duration": 1.1,
+      "frames": 33
+    },
+    {
+      "beat": 7,
+      "kind": "it",
+      "contact": {
+        "name": "Fragrance",
+        "subtitle": "ex · won't take the hint",
+        "initials": "Fr",
+        "colour": "#be6ea0"
+      },
+      "messages": [
+        {
+          "from": "it",
+          "text": "babe. I changed. I'm unscented now 😇"
+        },
+        {
+          "from": "me",
+          "text": "you were literally in my shampoo"
+        },
+        {
+          "from": "it",
+          "text": "that never happened"
+        },
+        {
+          "from": "it",
+          "text": "and if it did, you're being too sensitive"
+        },
+        {
+          "from": "it",
+          "text": "...ok that's a MASKING fragrance. it doesn't count"
+        }
+      ],
+      "toast": null,
+      "new_message": {
+        "from": "it",
+        "text": "...ok that's a MASKING fragrance. it doesn't count"
+      },
+      "spoken": "Okay. That's a masking fragrance. It doesn't count.",
+      "start": 10.2667,
+      "duration": 3.4,
+      "frames": 102
+    },
+    {
+      "beat": 8,
+      "kind": "me",
+      "contact": {
+        "name": "Fragrance",
+        "subtitle": "ex · won't take the hint",
+        "initials": "Fr",
+        "colour": "#be6ea0"
+      },
+      "messages": [
+        {
+          "from": "it",
+          "text": "babe. I changed. I'm unscented now 😇"
+        },
+        {
+          "from": "me",
+          "text": "you were literally in my shampoo"
+        },
+        {
+          "from": "it",
+          "text": "that never happened"
+        },
+        {
+          "from": "it",
+          "text": "and if it did, you're being too sensitive"
+        },
+        {
+          "from": "it",
+          "text": "...ok that's a MASKING fragrance. it doesn't count"
+        },
+        {
+          "from": "me",
+          "text": "it's on the label. it counts."
+        }
+      ],
+      "toast": null,
+      "new_message": {
+        "from": "me",
+        "text": "it's on the label. it counts."
+      },
+      "spoken": "It's on the label. It counts.",
+      "start": 13.6667,
+      "duration": 1.8,
+      "frames": 54
+    },
+    {
+      "beat": 9,
+      "kind": "block",
+      "contact": {
+        "name": "Fragrance",
+        "subtitle": "ex · won't take the hint",
+        "initials": "Fr",
+        "colour": "#be6ea0"
+      },
+      "messages": [
+        {
+          "from": "it",
+          "text": "babe. I changed. I'm unscented now 😇"
+        },
+        {
+          "from": "me",
+          "text": "you were literally in my shampoo"
+        },
+        {
+          "from": "it",
+          "text": "that never happened"
+        },
+        {
+          "from": "it",
+          "text": "and if it did, you're being too sensitive"
+        },
+        {
+          "from": "it",
+          "text": "...ok that's a MASKING fragrance. it doesn't count"
+        },
+        {
+          "from": "me",
+          "text": "it's on the label. it counts."
+        }
+      ],
+      "toast": "Fragrance blocked",
+      "new_message": null,
+      "start": 15.4667,
+      "duration": 0.9333,
+      "frames": 28
+    },
+    {
+      "beat": 10,
+      "kind": "note",
+      "lines": [
+        "“Unscented” isn't the same as fragrance-free.",
+        "Read the label, not the front."
+      ],
+      "spoken": "Unscented isn't the same as fragrance-free. Read the label, not the front.",
+      "start": 16.4,
+      "duration": 4.7333,
+      "frames": 142
+    },
+    {
+      "beat": 11,
+      "kind": "end",
+      "spoken": "Check before you buy. Free at Actively Skin dot com.",
+      "start": 21.1333,
+      "duration": 3.8667,
+      "frames": 116
+    }
+  ]
+}

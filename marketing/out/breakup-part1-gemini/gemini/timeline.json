@@ -1,0 +1,306 @@
+{
+  "series": "Breaking up with ingredients",
+  "part": 1,
+  "title": "New number, who dis",
+  "fps": 30,
+  "width": 1080,
+  "height": 1920,
+  "total_seconds": 21.7,
+  "audio": "audio.wav",
+  "notes": [
+    "Each beat's sound (a ding for a text, a thunk for a block, a beep or buzz for a scan) starts at the beat's start.",
+    "Speech in a text beat starts about 0.19 s in, after the ding; the end card's narration starts 0.2 s in; a note beat's narration starts 0.25 s in and ends with 0.6 s of silence.",
+    "kind 'note' is a narrator aside: show its 'lines' on screen; 'after' is the screen state it follows.",
+    "kind 'end' is the 4 s HTML end card (marketing/endcard/endcard.mp4), with its last frame held if the narration runs longer."
+  ],
+  "beats": [
+    {
+      "beat": 1,
+      "start": 0.0,
+      "duration": 1.3,
+      "frames": 39,
+      "kind": "it",
+      "contact": {
+        "name": "Fragrance",
+        "subtitle": "ex · goes by many names",
+        "initials": "Fr",
+        "colour": "#be6ea0"
+      },
+      "messages": [
+        {
+          "from": "it",
+          "text": "u up? 😘"
+        }
+      ],
+      "toast": null,
+      "new_message": {
+        "from": "it",
+        "text": "u up? 😘"
+      },
+      "spoken": "You up?",
+      "speaker": "Fragrance (Chatterbox, am_puck)"
+    },
+    {
+      "beat": 2,
+      "start": 1.3,
+      "duration": 0.9667,
+      "frames": 29,
+      "kind": "toast",
+      "contact": {
+        "name": "Fragrance",
+        "subtitle": "ex · goes by many names",
+        "initials": "Fr",
+        "colour": "#be6ea0"
+      },
+      "messages": [
+        {
+          "from": "it",
+          "text": "u up? 😘"
+        }
+      ],
+      "toast": "Fragrance blocked",
+      "new_message": null,
+      "spoken": "Blocked.",
+      "speaker": null
+    },
+    {
+      "beat": 3,
+      "start": 2.2667,
+      "duration": 1.5333,
+      "frames": 46,
+      "kind": "it",
+      "contact": {
+        "name": "Parfum",
+        "subtitle": "new number",
+        "initials": "Pa",
+        "colour": "#be6ea0"
+      },
+      "messages": [
+        {
+          "from": "it",
+          "text": "babe it's me. new number 😘"
+        }
+      ],
+      "toast": null,
+      "new_message": {
+        "from": "it",
+        "text": "babe it's me. new number 😘"
+      },
+      "spoken": "Babe. It's me. New number.",
+      "speaker": "Parfum (Chatterbox, am_puck)"
+    },
+    {
+      "beat": 4,
+      "start": 3.8,
+      "duration": 0.5,
+      "frames": 15,
+      "kind": "toast",
+      "contact": {
+        "name": "Parfum",
+        "subtitle": "new number",
+        "initials": "Pa",
+        "colour": "#be6ea0"
+      },
+      "messages": [
+        {
+          "from": "it",
+          "text": "babe it's me. new number 😘"
+        }
+      ],
+      "toast": "Parfum blocked",
+      "new_message": null,
+      "spoken": null,
+      "speaker": null
+    },
+    {
+      "beat": 5,
+      "start": 4.3,
+      "duration": 2.5333,
+      "frames": 76,
+      "kind": "it",
+      "contact": {
+        "name": "Linalool",
+        "subtitle": "new number",
+        "initials": "Li",
+        "colour": "#8c78c8"
+      },
+      "messages": [
+        {
+          "from": "it",
+          "text": "ok that one wasn't me."
+        }
+      ],
+      "toast": null,
+      "new_message": {
+        "from": "it",
+        "text": "ok that one wasn't me."
+      },
+      "spoken": "Okay, that one wasn't me.",
+      "speaker": "Linalool (Chatterbox, am_puck)"
+    },
+    {
+      "beat": 6,
+      "start": 6.8333,
+      "duration": 0.5,
+      "frames": 15,
+      "kind": "toast",
+      "contact": {
+        "name": "Linalool",
+        "subtitle": "new number",
+        "initials": "Li",
+        "colour": "#8c78c8"
+      },
+      "messages": [
+        {
+          "from": "it",
+          "text": "ok that one wasn't me."
+        }
+      ],
+      "toast": "Linalool blocked",
+      "new_message": null,
+      "spoken": null,
+      "speaker": null
+    },
+    {
+      "beat": 7,
+      "start": 7.3333,
+      "duration": 0.7,
+      "frames": 21,
+      "kind": "emoji",
+      "contact": {
+        "name": "Limonene",
+        "subtitle": "new number",
+        "initials": "Lm",
+        "colour": "#deb01e"
+      },
+      "messages": [
+        {
+          "from": "it",
+          "text": "🍋"
+        }
+      ],
+      "toast": null,
+      "new_message": {
+        "from": "it",
+        "text": "🍋"
+      },
+      "spoken": null,
+      "speaker": null
+    },
+    {
+      "beat": 8,
+      "start": 8.0333,
+      "duration": 2.2333,
+      "frames": 67,
+      "kind": "me",
+      "contact": {
+        "name": "Limonene",
+        "subtitle": "new number",
+        "initials": "Lm",
+        "colour": "#deb01e"
+      },
+      "messages": [
+        {
+          "from": "it",
+          "text": "🍋"
+        },
+        {
+          "from": "me",
+          "text": "I read the WHOLE ingredient list now."
+        }
+      ],
+      "toast": null,
+      "new_message": {
+        "from": "me",
+        "text": "I read the WHOLE ingredient list now."
+      },
+      "spoken": "I read the whole ingredient list now.",
+      "speaker": "me (Kokoro af_heart)"
+    },
+    {
+      "beat": 9,
+      "start": 10.2667,
+      "duration": 2.2,
+      "frames": 66,
+      "kind": "it",
+      "contact": {
+        "name": "Limonene",
+        "subtitle": "new number",
+        "initials": "Lm",
+        "colour": "#deb01e"
+      },
+      "messages": [
+        {
+          "from": "it",
+          "text": "🍋"
+        },
+        {
+          "from": "me",
+          "text": "I read the WHOLE ingredient list now."
+        },
+        {
+          "from": "it",
+          "text": "...who taught you that."
+        }
+      ],
+      "toast": null,
+      "new_message": {
+        "from": "it",
+        "text": "...who taught you that."
+      },
+      "spoken": "Who taught you that.",
+      "speaker": "Limonene (Chatterbox, am_puck)"
+    },
+    {
+      "beat": 10,
+      "start": 12.4667,
+      "duration": 5.0667,
+      "frames": 152,
+      "kind": "note",
+      "lines": [
+        "Fragrance goes by many names.",
+        "Your avoid list should know all of them."
+      ],
+      "spoken": "Fragrance goes by many names. Your avoid list should know all of them.",
+      "speaker": "narrator (Kokoro af_bella, 0.95x)",
+      "after": {
+        "kind": "it",
+        "contact": {
+          "name": "Limonene",
+          "subtitle": "new number",
+          "initials": "Lm",
+          "colour": "#deb01e"
+        },
+        "messages": [
+          {
+            "from": "it",
+            "text": "🍋"
+          },
+          {
+            "from": "me",
+            "text": "I read the WHOLE ingredient list now."
+          },
+          {
+            "from": "it",
+            "text": "...who taught you that."
+          }
+        ],
+        "toast": null,
+        "new_message": {
+          "from": "it",
+          "text": "...who taught you that."
+        },
+        "spoken": "Who taught you that.",
+        "speaker": "Limonene (Chatterbox, am_puck)"
+      }
+    },
+    {
+      "beat": 11,
+      "start": 17.5333,
+      "duration": 4.1667,
+      "frames": 125,
+      "kind": "end",
+      "spoken": "Check before you buy. Free at Actively Skin dot com."
+    }
+  ]
+}

@@ -34,7 +34,7 @@ import sys
 import time
 import urllib.parse
 
-from build_cosmetic_catalog import OBF_BASE, PAGE_SIZE, SLEEP, _get, is_junk, matched_active_ids
+from build_cosmetic_catalog import OBF_BASE, PAGE_SIZE, SLEEP, _get, is_polish, is_junk, matched_active_ids
 
 # OBF category tags. Check each against a live count before relying on it
 # (a dead tag just returns 0 and is reported below).
@@ -144,7 +144,7 @@ def to_row(p: dict) -> dict | None:
         return None
     if is_body_only(p.get("product_name") or ""):
         return None
-    if is_junk({**p, "ingredients_text": ingredients}):
+    if is_junk({**p, "ingredients_text": ingredients}) or is_polish(p):
         return None
     row = {k: "" for k in FIELDNAMES}
     row.update({

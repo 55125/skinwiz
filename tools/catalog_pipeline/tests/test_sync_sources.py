@@ -20,6 +20,10 @@ class NewRows(unittest.TestCase):
         fresh = [{"product_ndc": "a"}, {"product_ndc": "b"}, {"product_ndc": "b"}, {"product_ndc": ""}]
         self.assertEqual(new_rows(fresh, {"a"}), [{"product_ndc": "b"}])
 
+    def test_a_known_label_under_a_new_ndc_is_not_new(self):
+        renumbered = {"product_ndc": "42851-211", "spl_set_id": "set-1"}
+        self.assertEqual(new_rows([renumbered], {"42851-202"}, {"set-1"}), [])
+
     def test_drops_a_kit_with_joined_lists(self):
         kit = {"product_ndc": "k", "source": "brand_direct", "active_ingredient_text": "The Glow Getter Body Wash Ingredients: Water, Glycerin"}
         self.assertEqual(new_rows([kit], set()), [])

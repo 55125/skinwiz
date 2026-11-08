@@ -10,8 +10,10 @@ Ask each bulk source what it has now and add what the catalog doesn't.
 Part of the weekly search-gap check. Each builder runs from a throwaway folder
 (they all write to a relative output/), and only rows with an id no catalog has
 yet are appended, so existing rows and photos never change here. Refreshing or
-removing a row stays a separate, deliberate rebuild; "gone" in the report is
-only a count of ids the source no longer returns.
+removing a row stays a separate, deliberate rebuild. "gone" in the report
+counts ids the source no longer returns. For openFDA most of those are still in
+the NDC directory: openFDA's label record just lost its link to the NDC (see
+output/openfda_gone_2026-11-08.csv), so the report says how many.
 
 Brand crawls skip pages the catalog already has (a full crawl is ~800 pages and
 as many photo downloads). A new product's photo follows the project's order:
@@ -32,6 +34,9 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import urllib.error
+import urllib.parse
+import urllib.request
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT_DIR = os.path.join(HERE, "output")
@@ -65,15 +70,32 @@ def is_kit(row: dict) -> bool:
     return row.get("source") == "brand_direct" and re.search(r"\bIngredients:", row.get("active_ingredient_text") or "", re.I) is not None
 
 
-def new_rows(fresh: list[dict], known_ids: set[str]) -> list[dict]:
-    """The rows whose id isn't known yet, first row per id, like seed.ts."""
+def new_rows(fresh: list[dict], known_ids: set[str], known_labels: set[str] = frozenset()) -> list[dict]:
+    """The rows whose id isn't known yet, first row per id, like seed.ts. A
+    drug whose label (SPL set id) is already listed is the same product under
+    a new NDC (ZO Skin Health renumbered its sunshades), so it isn't new."""
     seen = set(known_ids)
     rows = []
     for row in fresh:
-        if row["product_ndc"] and row["product_ndc"] not in seen and not is_kit(row):
+        if row["product_ndc"] and row["product_ndc"] not in seen and not is_kit(row) and row.get("spl_set_id", "") not in known_labels:
             seen.add(row["product_ndc"])
             rows.append(row)
     return rows
+
+
+def in_ndc_directory(product_ndcs: list[str]) -> int:
+    """How many of these product NDCs the FDA's NDC directory still lists."""
+    found = 0
+    for i in range(0, len(product_ndcs), 25):
+        query = " OR ".join(f'product_ndc:"{n}"' for n in product_ndcs[i:i + 25])
+        url = "https://api.fda.gov/drug/ndc.json?" + urllib.parse.urlencode({"search": query, "limit": 100})
+        try:
+            with urllib.request.urlopen(urllib.request.Request(url, headers={"User-Agent": "activelyskin-catalog-pipeline/0.1"}), timeout=40) as resp:
+                found += len(json.loads(resp.read()).get("results", []))
+        except urllib.error.HTTPError as exc:
+            if exc.code != 404:
+                raise
+    return found
 
 
 def append_rows(path: str, rows: list[dict]) -> None:
@@ -153,13 +175,20 @@ def main() -> None:
     if unknown:
         sys.exit(f"Unknown source(s): {', '.join(sorted(unknown))}")
 
-    known_ids = {r["product_ndc"] for name in ALL_CATALOGS for r in read_rows(catalog_path(name))}
+    known = [r for name in ALL_CATALOGS for r in read_rows(catalog_path(name))]
+    known_ids = {r["product_ndc"] for r in known}
+    known_labels = {r["spl_set_id"] for r in known if r.get("spl_set_id")}
     failed = []
 
-    def record(label: str, catalog: str, fresh: list[dict], gone: int | None, stage: str) -> None:
-        added = new_rows(fresh, known_ids)
+    def record(label: str, catalog: str, fresh: list[dict], gone: list[str] | None, stage: str) -> None:
+        added = new_rows(fresh, known_ids, known_labels)
         known_ids.update(r["product_ndc"] for r in added)
-        print(f"  {label}: {len(fresh)} returned, {len(added)} new" + (f", {gone} gone" if gone is not None else ""), flush=True)
+        summary = f"  {label}: {len(fresh)} returned, {len(added)} new"
+        if gone is not None:
+            summary += f", {len(gone)} gone"
+            if gone and catalog == "acne_sun":
+                summary += f" ({in_ndc_directory(gone)} still in the NDC directory)"
+        print(summary, flush=True)
         for row in added[:40]:
             print(f"  + {row['product_ndc']}: {row.get('manufacturer_name', '')} | {row['brand_name']} [{row['niche']}]")
         if len(added) > 40:
@@ -189,7 +218,7 @@ def main() -> None:
                 continue
             fresh = read_rows(catalog_path(catalog, os.path.join(stage, "output")))
             ids = {r["product_ndc"] for r in fresh}
-            record(source, catalog, fresh, sum(r["product_ndc"] not in ids for r in read_rows(catalog_path(catalog))), stage)
+            record(source, catalog, fresh, [r["product_ndc"] for r in read_rows(catalog_path(catalog)) if r["product_ndc"] not in ids], stage)
     if failed:
         sys.exit(f"Failed: {', '.join(failed)}")
 

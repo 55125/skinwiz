@@ -155,11 +155,35 @@ Stopped at a 2-hour limit, partway through COSRX. New rows are additive; existin
 
 | Source | New | Note |
 |---|---|---|
-| openFDA | 8 | 445 ids the pull no longer returns, not removed |
-| OBF hair care | 8 | |
-| OBF cosmetics | not run | the bulk pull failed after retries, at a page of one ingredient tag |
+| openFDA | 7 | 445 ids the pull no longer returns, kept (see below). An 8th "new" row, ZO Skin Health 42851-211, was the same label as 42851-202 under a new NDC and was dropped |
+| OBF hair care | 8 | Two Polish rows later removed with the rest (below) |
+| OBF cosmetics | not run | the pull stops at page 11 of a tag: OBF answers 401 past 10 pages of 100 (the hair care builder fetches big tags in English slices for this; the cosmetic builder doesn't yet) |
 | Brands: The Ordinary, CeraVe, Naturium | 5, 0, 2 | One Naturium kit row removed; the sync now skips joined-list kits |
 | Brands: COSRX and later | not run | |
 
 The new drug rows haven't been through the DailyMed passes (inactive lists, photos) yet. Finish
 the rest with `--sources obf` and `--sources brands --brands ...`, a few brands per run.
+
+## 2026-11-08: Polish products out, and the openFDA ids that went missing
+
+**Polish products** are kept out (Michael). OBF has many with an INCI list, which the English
+filters read as English. `is_polish()` in `build_cosmetic_catalog.py` (590 GS1 prefix, sold only
+in Poland, or a Polish name or Polish-language list) now runs in both OBF builders, and the
+existing rows it matches were removed: 63 from `cosmetic_catalog.csv` and 13 from
+`hair_care_catalog.csv` (71 products; some were in both).
+
+**The 446 openFDA ids** a fresh pull no longer returns are listed one per row with what happened
+in `output/openfda_gone_2026-11-08.csv`. Every one still has its label on openFDA; the label
+record's `openfda` block, which carries the product NDC, came back empty, so the builder filed
+them as unmatched. Checked against the NDC directory and DailyMed:
+
+| Status | Count | Meaning |
+|---|---|---|
+| still_listed | 308 | Still in the NDC directory. openFDA lost the label-to-NDC link, the product didn't go anywhere. 60 of these have a marketing end date, all in the future (2026-11-13 to 2031) |
+| delisted | 132 | Not in the NDC directory, and DailyMed lists no NDCs for the label: the listing was withdrawn or not recertified. Mostly sunscreens (83); Edgewell (Banana Boat, Hawaiian Tropic), Altona, P&G, Jafra lead |
+| renumbered | 6 | ZO Skin Health Daily Mineral Sunshade shades, 42851-201..206, now 42851-210..215 on the same labels |
+
+All 446 rows were kept: a full rebuild of `acne_sun_catalog.csv` would drop them, so don't run one
+without `resolve_unmatched_via_dailymed.py` after it. Open questions: whether the 132 delisted go to
+the "discontinued" shelf (`lib/availability-rules.ts` has a label-date rule, not a delisting one),
+and whether the six ZO rows move to their new NDCs.

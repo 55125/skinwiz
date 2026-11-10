@@ -40,7 +40,7 @@ def kokoro(text, voice):
     if _kp is None:
         from kokoro import KPipeline
         _kp = KPipeline(lang_code="a")
-    return np.concatenate([np.asarray(a, np.float32) for _, _, a in _kp(text, voice=voice, speed=1.0)])
+    return np.concatenate([np.asarray(a, np.float32) for _, _, a in _kp(text, voice=voice, speed=1.15 if voice == KOKORO_VOICE["fragrance"] else 1.0)])
 def clean(a):
     """Cut Gemini 3.8's ~0.13 s end burst (loud noise after the last silent gap), then trim lead/tail silence."""
     n = int(.01 * SR); rms = np.array([np.sqrt((a[i:i+n]**2).mean()) for i in range(0, len(a) - n, n)])
@@ -66,9 +66,9 @@ if __name__ == "__main__":
             sf.write(p, clean(a), SR); print("voiced", k, flush=True)
         v = sf.read(p, dtype="float32")[0]
         nb = {"beat": i, "kind": kind, "spoken": spoken}
-        if kind == "notes":  # the line types out in 0.5 s while the voice starts right away
-            ty = typing(0.5); ty = np.pad(ty, (0, max(0, len(v) - len(ty))))
-            a = np.concatenate([ty[:len(v)] * 0.6 + v, sil(.15)]); nb.update(text=shown, type_seconds=0.5)
+        if kind == "notes":  # the line types out in 0.35 s while the voice starts right away; quick pacing per Michael
+            ty = typing(0.35); ty = np.pad(ty, (0, max(0, len(v) - len(ty))))
+            a = np.concatenate([ty[:len(v)] * 0.6 + v, sil(.04)]); nb.update(text=shown, type_seconds=0.35)
         elif kind == "comment":
             a = np.concatenate([pop(), sil(.1), v, sil(.4)]); nb.update(user="skin_on_strike", text=shown)
         elif kind == "note":

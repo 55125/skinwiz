@@ -31,10 +31,8 @@ import csv
 import json
 import re
 import sys
-import time
-import urllib.parse
 
-from build_cosmetic_catalog import OBF_BASE, PAGE_SIZE, SLEEP, _get, is_polish, is_junk, matched_active_ids
+from build_cosmetic_catalog import ENGLISH_MARKETS, fetch_sliced, is_polish, is_junk, matched_active_ids
 
 # OBF category tags. Check each against a live count before relying on it
 # (a dead tag just returns 0 and is reported below).
@@ -57,7 +55,6 @@ CATEGORIES = [
     "en:hair-dyes",
 ]
 
-ENGLISH_MARKETS = {"en:united-states", "en:canada", "en:united-kingdom", "en:ireland", "en:australia", "en:new-zealand"}
 
 OUT = "output/hair_care_catalog.csv"
 
@@ -70,51 +67,11 @@ FIELDNAMES = [
 ]
 
 
-# OBF serves at most 10 pages of 100 to an anonymous client (page 11 is a
-# 401), so a tag with more than 1,000 products is fetched in English slices
-# instead: products with English text, plus each English-speaking market.
-# Those are the only products english_ingredients keeps anyway.
-MAX_RESULTS = 1000
-ENGLISH_SLICES = [{"languages_tags": "en:english"}] + [{"countries_tags": c} for c in sorted(ENGLISH_MARKETS)]
-
-
-def fetch_pages(filters: dict) -> tuple[list[dict], int]:
-    products: list[dict] = []
-    page = 1
-    count = 0
-    while True:
-        params = {
-            **filters,
-            "page": page,
-            "page_size": PAGE_SIZE,
-            "fields": "code,product_name,brands,ingredients_text,ingredients_text_en,completeness,image_front_url,lang,countries_tags",
-        }
-        data = _get(f"{OBF_BASE}?{urllib.parse.urlencode(params)}")
-        count = data.get("count", 0)
-        batch = data.get("products", [])
-        if not batch:
-            break
-        products.extend(batch)
-        if page * PAGE_SIZE >= min(count, MAX_RESULTS):
-            break
-        page += 1
-        time.sleep(SLEEP)
-    return products, count
-
-
 def fetch_category(tag: str) -> list[dict]:
-    products, count = fetch_pages({"categories_tags": tag})
-    if count <= MAX_RESULTS:
-        return products
-    by_code = {p.get("code"): p for p in products}
-    for extra in ENGLISH_SLICES:
-        print(f"  {tag}: {count} > {MAX_RESULTS}, slice {extra}", file=sys.stderr)
-        sliced, sliced_count = fetch_pages({"categories_tags": tag, **extra})
-        if sliced_count > MAX_RESULTS:
-            print(f"  warning: slice {extra} has {sliced_count}, only {MAX_RESULTS} fetched", file=sys.stderr)
-        for p in sliced:
-            by_code.setdefault(p.get("code"), p)
-    return list(by_code.values())
+    return fetch_sliced(
+        {"categories_tags": tag},
+        "code,product_name,brands,ingredients_text,ingredients_text_en,completeness,image_front_url,lang,countries_tags",
+    )
 
 
 def english_ingredients(p: dict) -> str | None:

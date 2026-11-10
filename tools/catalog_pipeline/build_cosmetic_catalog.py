@@ -132,26 +132,53 @@ def _get(url: str, retries: int = 3) -> dict:
     raise AssertionError("unreachable")
 
 
-def fetch_tag(tag: str) -> list[dict]:
+ENGLISH_MARKETS = {"en:united-states", "en:canada", "en:united-kingdom", "en:ireland", "en:australia", "en:new-zealand"}
+
+# OBF serves at most 10 pages of 100 to an anonymous client (page 11 is a
+# 401), so a search with more than 1,000 products is fetched in English
+# slices instead: products with English text, plus each English-speaking
+# market. Products outside every slice are ones a US site has little use for.
+MAX_RESULTS = 1000
+ENGLISH_SLICES = [{"languages_tags": "en:english"}] + [{"countries_tags": c} for c in sorted(ENGLISH_MARKETS)]
+
+
+def fetch_pages(filters: dict, fields: str) -> tuple[list[dict], int]:
     products: list[dict] = []
     page = 1
+    count = 0
     while True:
-        params = {
-            "ingredients_tags": tag,
-            "page": page,
-            "page_size": PAGE_SIZE,
-            "fields": "code,product_name,brands,ingredients_text,completeness,image_front_url",
-        }
+        params = {**filters, "page": page, "page_size": PAGE_SIZE, "fields": fields}
         data = _get(f"{OBF_BASE}?{urllib.parse.urlencode(params)}")
+        count = data.get("count", 0)
         batch = data.get("products", [])
         if not batch:
             break
         products.extend(batch)
-        if page * PAGE_SIZE >= data.get("count", 0):
+        if page * PAGE_SIZE >= min(count, MAX_RESULTS):
             break
         page += 1
         time.sleep(SLEEP)
-    return products
+    return products, count
+
+
+def fetch_sliced(filters: dict, fields: str) -> list[dict]:
+    """Every product matching `filters`, in English slices past MAX_RESULTS."""
+    products, count = fetch_pages(filters, fields)
+    if count <= MAX_RESULTS:
+        return products
+    by_code = {p.get("code"): p for p in products}
+    for extra in ENGLISH_SLICES:
+        print(f"  {filters}: {count} > {MAX_RESULTS}, slice {extra}", file=sys.stderr)
+        sliced, sliced_count = fetch_pages({**filters, **extra}, fields)
+        if sliced_count > MAX_RESULTS:
+            print(f"  warning: slice {extra} has {sliced_count}, only {MAX_RESULTS} fetched", file=sys.stderr)
+        for p in sliced:
+            by_code.setdefault(p.get("code"), p)
+    return list(by_code.values())
+
+
+def fetch_tag(tag: str) -> list[dict]:
+    return fetch_sliced({"ingredients_tags": tag}, "code,product_name,brands,ingredients_text,completeness,image_front_url")
 
 
 def is_junk(product: dict) -> bool:

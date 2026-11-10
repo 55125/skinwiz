@@ -10,3 +10,5 @@ Preview voices are Kokoro; final voices are Gemini 3.8 Lite (Fragrance = Puck, m
 
 The notes screen is a generic notes app (slate accent, no Apple styling). Michael approved the silent cut (22.4 s) on Nov 10 and wants the quicker pace kept: Fragrance lines carry a [brisk] tag. Aim for about 22 s, never over 25: shorten silences, not words.
 If the 3.8 Lite free limit stops it, cached lines are kept; re-run after the reset rather than mixing models.
+
+Gemini cut (Nov 10, statement-gemini.mp4, 24.8 s): b2 has no tags because 3.8 Lite read "[brisk]"/"[rehearsed]" aloud on that short line. For gemini, reel.py trims pauses over 0.12 s (squeeze) and speeds Fragrance 1.15x with ffmpeg atempo, matching Kokoro's speed=1.15 in the approved silent cut. All 9 lines checked with faster-whisper.

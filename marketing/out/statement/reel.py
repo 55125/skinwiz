@@ -12,7 +12,7 @@ KOKORO_VOICE = {"me": "af_heart", "fragrance": "am_puck", "narrator": "af_bella"
 # (key, kind, speaker, Gemini tags, spoken, on-screen). Fragrance is an out-of-touch celebrity reading a PR-drafted non-apology.
 BEATS = [
  ("b1", "notes", "fragrance", "[brisk] [sighs] [rehearsed]", "Hi guys. This is so hard for me to write.", "Hi guys. This is so hard for me to write. 🙏"),
- ("b2", "notes", "fragrance", "[brisk] [rehearsed]", "I'm sorry if anyone felt itchy.", "I'm sorry if anyone *felt* itchy."),
+ ("b2", "notes", "fragrance", "", "I'm sorry if anyone felt itchy.", "I'm sorry if anyone *felt* itchy."),
  ("b3", "notes", "fragrance", "[brisk] [rehearsed] [earnest]", "I'm taking a step back from the front of the bottle to focus on my healing.", "I'm taking a step back from the front of the bottle to focus on my healing."),
  ("b4", "notes", "fragrance", "[brisk] [proud]", "Going forward, I'll be going by Parfum. That's growth.", "Going forward, I'll be going by Parfum. That's growth. ✨"),
  ("b5", "notes", "fragrance", "[quickly] [defensive]", "Linalool, Limonene and I are just friends.", "Linalool, Limonene and I are just friends."),
@@ -27,11 +27,12 @@ def gemini(text, voice):
             "speechConfig": {"voiceConfig": {"prebuiltVoiceConfig": {"voiceName": voice}}}}}
     req = urllib.request.Request(f"https://generativelanguage.googleapis.com/v1beta/models/{MODEL}:generateContent",
         data=json.dumps(body).encode(), headers={"Content-Type": "application/json", "x-goog-api-key": os.environ["GEMINI_API_KEY"]})
-    for i in range(6):
+    for i in range(10):
         try: d = json.load(urllib.request.urlopen(req, timeout=120)); break
         except urllib.error.HTTPError as e:
             if e.code in (429, 500, 503): print("  retry", e.code, flush=True); time.sleep(15 * (i + 1)); continue
             raise
+    else: raise RuntimeError("Gemini TTS still rate-limited after retries (free tier: 10 requests/day/model); re-run after the reset")
     pcm = base64.b64decode(d["candidates"][0]["content"]["parts"][0]["inlineData"]["data"])
     return np.frombuffer(pcm, "<i2").astype(np.float32) / 32768
 _kp = None
@@ -67,6 +68,12 @@ def squeeze(a, cap=0.25, quiet=0.02):
     for q in parts[1:]: q[:f] *= np.linspace(0, 1, f)
     for q in parts[:-1]: q[-f:] *= np.linspace(1, 0, f)
     return np.concatenate(parts)
+def tempo(a, r):
+    """Speed speech up by r without changing pitch (ffmpeg atempo), like Kokoro's speed=1.15 in the approved silent cut."""
+    import subprocess
+    out = subprocess.run(["ffmpeg", "-v", "error", "-f", "f32le", "-ar", str(SR), "-ac", "1", "-i", "-", "-af", f"atempo={r}",
+                          "-f", "f32le", "-"], input=a.astype("<f4").tobytes(), capture_output=True, check=True).stdout
+    return np.frombuffer(out, "<f4").astype(np.float32)
 sil = lambda s: np.zeros(int(SR * s), np.float32)
 def tick():  # soft key click under the typing
     t = np.arange(int(SR * 0.02)) / SR; return (0.05 * np.random.default_rng(1).standard_normal(len(t)) * np.exp(-t * 250)).astype(np.float32)
@@ -81,20 +88,22 @@ if __name__ == "__main__":
     for i, (k, kind, who, tags, spoken, shown) in enumerate(BEATS, 1):
         p = os.path.join(G, f"{k}-{who}.wav")
         if not os.path.exists(p) or ("--redo" in sys.argv and k in sys.argv):
-            a = gemini(f"{tags} {spoken}", GEMINI_VOICE[who]) if ENGINE == "gemini" else kokoro(spoken, KOKORO_VOICE[who])
+            a = gemini(f"{tags} {spoken}".strip(), GEMINI_VOICE[who]) if ENGINE == "gemini" else kokoro(spoken, KOKORO_VOICE[who])
             sf.write(p, clean(a), SR); print("voiced", k, flush=True)
         v = sf.read(p, dtype="float32")[0]
-        if ENGINE == "gemini": v = squeeze(v)  # Gemini leaves long pauses; trim them so the reel stays near 25 s
+        if ENGINE == "gemini":  # Gemini reads slower than the approved Kokoro cut: trim long pauses, speed Fragrance up 1.15x
+            v = squeeze(v, cap=0.12)
+            if who == "fragrance": v = tempo(v, 1.15)
         nb = {"beat": i, "kind": kind, "spoken": spoken}
         if kind == "notes":  # the line types out in 0.35 s while the voice starts right away; quick pacing per Michael
             ty = typing(0.35); ty = np.pad(ty, (0, max(0, len(v) - len(ty))))
             a = np.concatenate([ty[:len(v)] * 0.6 + v, sil(.04)]); nb.update(text=shown, type_seconds=0.35)
         elif kind == "comment":
-            a = np.concatenate([pop(), sil(.1), v, sil(.4)]); nb.update(user="skin_on_strike", text=shown)
+            a = np.concatenate([pop(), sil(.1), v, sil(.3)]); nb.update(user="skin_on_strike", text=shown)
         elif kind == "note":
-            a = np.concatenate([sil(.2), v, sil(.4)]); nb.update(lines=NOTE_LINES)
+            a = np.concatenate([sil(.1), v, sil(.3)]); nb.update(lines=NOTE_LINES)
         else:
-            a = np.concatenate([sil(.15), v, sil(.5)]); a = np.pad(a, (0, max(0, int(SR * 4.0) - len(a))))
+            a = np.concatenate([sil(.05), v, sil(.35)]); a = np.pad(a, (0, max(0, int(SR * 4.0) - len(a))))
         fr = math.ceil(len(a) / SR * FPS); a = np.pad(a, (0, round(fr / FPS * SR) - len(a)))
         nb.update(start=round(t, 4), duration=round(fr / FPS, 4), frames=fr); beats.append(nb); chunks.append(a); t += fr / FPS
     audio = np.concatenate(chunks); audio /= max(1.0, np.abs(audio).max() / 0.95)

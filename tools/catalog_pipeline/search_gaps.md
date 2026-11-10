@@ -184,6 +184,38 @@ them as unmatched. Checked against the NDC directory and DailyMed:
 | renumbered | 6 | ZO Skin Health Daily Mineral Sunshade shades, 42851-201..206, now 42851-210..215 on the same labels |
 
 All 446 rows were kept: a full rebuild of `acne_sun_catalog.csv` would drop them, so don't run one
-without `resolve_unmatched_via_dailymed.py` after it. Open questions: whether the 132 delisted go to
-the "discontinued" shelf (`lib/availability-rules.ts` has a label-date rule, not a delisting one),
-and whether the six ZO rows move to their new NDCs.
+without `resolve_unmatched_via_dailymed.py` after it.
+
+## 2026-11-10: "delisted" doesn't mean discontinued
+
+Michael approved moving the 132 delisted products to the discontinued shelf if a random sample
+confirmed they're no longer sold. It didn't, so none were moved.
+
+Of the 132, 50 have a current listing from the same labeler with a similar name. Automatic
+matching can't tell which are the same product, so none were merged. A brand-only name
+("HAWAIIAN TROPIC"), a one-day vs. three-day miconazole, or a strength written differently
+misleads it. Most of those listings are already in the catalog as their own rows.
+
+The other 82 have no similar current listing from their labeler. In a random sample (seed
+202611101), every product checked was still sold at US retailers in November 2026:
+
+| Product | Delisted NDC | What we found |
+|---|---|---|
+| Old Spice Oasis with Vanilla Notes | 69423-701 | Relisted by P&G under labeler 84126 (84126-092); at Target, Walmart, Kroger, H-E-B |
+| Old Spice Nightpanther | 69423-508 | Relisted as 84126-244; at Food Lion, Hannaford |
+| Old Spice Fiji with Palm Tree | 69423-541 | Relisted as 84126-094; at Target, Walmart, ShopRite |
+| Terrasil Skin Repair Maximum Strength | 24909-033 | At Walmart; a newer Terrasil Skin Repair listing is 24909-032 |
+| Kerasal Athlete's Foot powder spray | 16864-110 | No new listing; still at CVS and H-E-B |
+| Versed SPF 30 Replenishing Body Mineral | 73690-028 | No new listing; still at Walmart, sold out at one retailer |
+| Drunk Elephant Umbra Tinte SPF 30 | 69455-167 | No new listing; in stock at some retailers, out of stock at Space NK |
+
+So a dropped listing means either the labeler relisted the product under another NDC (P&G moved its
+Old Spice line to a new labeler code) or stopped listing it while stock still sells through. The
+discontinued shelf's retail rule (`lib/availability-rules.ts`: price sources stop finding it for 60
+days) is the right signal for the second case. The first case is a relink to the new NDC, which
+needs matching across labelers and a human check per product.
+
+**ZO Skin Health** (6 rows) did move, as approved: 42851-201..206 are now merged into new rows
+42851-210..215 through `tools/catalog_pipeline/ndc_successors.csv`, a hand-kept file the seed
+applies with the merge pipeline's output. Old links redirect and saved items follow. The labels now
+say SPF 50 (were SPF 45) with the same zinc oxide and titanium dioxide strengths.

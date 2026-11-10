@@ -47,6 +47,7 @@ Run from tools/catalog_pipeline with Pillow installed (requirements.txt).
 from __future__ import annotations
 
 import csv
+import glob
 import io
 import json
 import os
@@ -160,7 +161,12 @@ def drug_row(spec: dict) -> dict:
 
 def download_image(url: str, product_id: str) -> str:
     """Like build_brand_direct_catalog.download_image, but names the file by
-    what the bytes actually are (a CDN's ".webp?fm=jpg" URL serves a JPEG)."""
+    what the bytes actually are (a CDN's ".webp?fm=jpg" URL serves a JPEG). A
+    photo already in the repo is kept, so a rebuild only fetches new ones."""
+    slug = re.sub(r"[^a-zA-Z0-9_-]+", "-", product_id).strip("-").lower()[:80]
+    existing = sorted(glob.glob(os.path.join(glob.escape(IMAGE_DIR), f"{slug}.*")))
+    if existing:
+        return f"{IMAGE_URL_PREFIX}/{os.path.basename(existing[0])}"
     data = _get_bytes(url)
     if not data:
         print(f"  failed to download image for {product_id}: {url}", file=sys.stderr)
@@ -170,11 +176,22 @@ def download_image(url: str, product_id: str) -> str:
         fmt = (Image.open(io.BytesIO(data)).format or "JPEG").lower()
         ext = {"jpeg": "jpg"}.get(fmt, fmt)
     data = _resize_if_needed(data, ext)
-    slug = re.sub(r"[^a-zA-Z0-9_-]+", "-", product_id).strip("-").lower()[:80]
     os.makedirs(IMAGE_DIR, exist_ok=True)
     with open(os.path.join(IMAGE_DIR, f"{slug}.{ext}"), "wb") as f:
         f.write(data)
     return f"{IMAGE_URL_PREFIX}/{slug}.{ext}"
+
+
+def image_url_for(spec: dict) -> str:
+    """Open Beauty Facts photos are hotlinked, its intended reuse (see
+    README_cosmetic.md). Any other photo is self-hosted. Check OBF for the
+    barcode first and use its URL in `image_source_url` if it has one."""
+    url = spec["image_source_url"]
+    if not url:
+        return ""
+    if urllib.parse.urlparse(url).hostname == "images.openbeautyfacts.org":
+        return url
+    return download_image(url, spec["product_id"])
 
 
 def cosmetic_row(spec: dict) -> dict:
@@ -195,7 +212,7 @@ def cosmetic_row(spec: dict) -> dict:
         "source": "third_party" if spec["kind"] == "third_party" else "brand_direct",
         "verified": "false" if spec["kind"] == "third_party" else "true",
         "source_url": spec["source_url"],
-        "image_url": download_image(spec["image_source_url"], spec["product_id"]) if spec["image_source_url"] else "",
+        "image_url": image_url_for(spec),
     }
 
 

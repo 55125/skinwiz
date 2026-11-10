@@ -173,6 +173,22 @@ def is_junk(product: dict) -> bool:
     return False
 
 
+# Polish-market products (Michael, 2026-11-08: keep them out). OBF has many
+# with an INCI list, which reads as English, so the English filters keep them.
+# 590 is Poland's GS1 barcode prefix; a product can also have a Polish name or
+# a list that opens in Polish ("Skladniki", "Pielegnacyjna") with another
+# country's barcode.
+POLISH_TEXT = re.compile(r"[ąęłńśźżĄĘŁŃŚŹŻ]|\bszampon\b", re.I)
+
+
+def is_polish(product: dict) -> bool:
+    if re.fullmatch(r"0?590\d{10}", product.get("code") or ""):
+        return True
+    if (product.get("countries_tags") or []) == ["en:poland"]:
+        return True
+    return bool(POLISH_TEXT.search(product.get("product_name") or "") or POLISH_TEXT.search((product.get("ingredients_text") or "")[:80]))
+
+
 # Which real-world concern a tracked cosmetic active is the better fit for.
 # Every cosmetic active defaulted to Brightening & Texture as a launch-day
 # catch-all, but that's wrong for barrier/hydration ingredients -- ceramides,
@@ -243,7 +259,7 @@ def main() -> None:
             code = p.get("code")
             if not code or code in by_barcode:
                 continue
-            if is_junk(p):
+            if is_junk(p) or is_polish(p):
                 continue
             active_ids = matched_active_ids(p.get("ingredients_text") or "")
             if not active_ids:

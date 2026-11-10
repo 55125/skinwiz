@@ -122,3 +122,100 @@ Michael moved hair care and oral care into scope ("k18", "colgate optic white to
 New niches: `hair-care` (cosmetics, curated rows) and `oral-care` (OTC anticavity,
 antigingivitis and antisensitivity drugs from openFDA:
 `python3 build_acne_sun_catalog.py --niches oral-care`).
+
+## Pass 2026-11-05 (weekly check)
+
+`/api/cron/search-gaps?days=7` (2026-10-30 to 2026-11-05): missing "beauty of hossein" (1),
+low results "beauty of jos" (1 search, 1 result). Both are Beauty of Joseon, which the catalog
+had one product for (Revive Eye Serum). "hossein" now maps to "joseon" in `lib/search-terms.ts`.
+
+### Added (14 rows, all `cosmetic` / brand_direct)
+
+Dynasty Cream, Green Plum Refreshing Toner and Cleanser, Apricot Blossom Peeling Gel, Glow
+Replenishing Rice Milk, Red Bean Water Gel, Red Bean Refreshing Pore Mask, Radiance Cleansing
+Balm, Ginseng Cleansing Oil, Calming Barrier Serum, Glow Serum, Glow Deep Serum, Light On Serum,
+Pore Firming Red Bean PDRN Serum. Lists come from beautyofjoseon.com product pages, which
+robots.txt allows. Open Beauty Facts has no ingredient list for the barcodes checked.
+
+Photos: Open Beauty Facts first (5 rows, hotlinked), otherwise the brand's, self-hosted (9 rows).
+
+### Still missing
+
+- **Beauty of Joseon**: Revive Serum (Ginseng + Snail Mucin), Ginseng Essence Water, Ground Rice
+  and Honey Glow Mask, Revive Firming Moisturizer. The store answered 429 to these on every
+  pass, including one page every three minutes, so retry on a later day.
+- **Beauty of Joseon sunscreens** (Relief Sun, Day Dew, Dayscreen, Tinted Mineral Dayscreen):
+  DailyMed and openFDA searches found no label under the brand or these product names. A
+  sunscreen sold in the US has to be listed as an OTC drug, so these aren't listed as cosmetics
+  (same call as Heliocare above). Recheck under the labeler's name, which may not be the brand's.
+
+### First source sync (`sync_sources.py --apply`)
+
+Stopped at a 2-hour limit, partway through COSRX. New rows are additive; existing rows untouched.
+
+| Source | New | Note |
+|---|---|---|
+| openFDA | 7 | 445 ids the pull no longer returns, kept (see below). An 8th "new" row, ZO Skin Health 42851-211, was the same label as 42851-202 under a new NDC and was dropped |
+| OBF hair care | 8 | Two Polish rows later removed with the rest (below) |
+| OBF cosmetics | not run | the pull stops at page 11 of a tag: OBF answers 401 past 10 pages of 100 (the hair care builder fetches big tags in English slices for this; the cosmetic builder doesn't yet) |
+| Brands: The Ordinary, CeraVe, Naturium | 5, 0, 2 | One Naturium kit row removed; the sync now skips joined-list kits |
+| Brands: COSRX and later | not run | |
+
+The new drug rows haven't been through the DailyMed passes (inactive lists, photos) yet. Finish
+the rest with `--sources obf` and `--sources brands --brands ...`, a few brands per run.
+
+## 2026-11-08: Polish products out, and the openFDA ids that went missing
+
+**Polish products** are kept out (Michael). OBF has many with an INCI list, which the English
+filters read as English. `is_polish()` in `build_cosmetic_catalog.py` (590 GS1 prefix, sold only
+in Poland, or a Polish name or Polish-language list) now runs in both OBF builders, and the
+existing rows it matches were removed: 63 from `cosmetic_catalog.csv` and 13 from
+`hair_care_catalog.csv` (71 products; some were in both).
+
+**The 446 openFDA ids** a fresh pull no longer returns are listed one per row with what happened
+in `output/openfda_gone_2026-11-08.csv`. Every one still has its label on openFDA; the label
+record's `openfda` block, which carries the product NDC, came back empty, so the builder filed
+them as unmatched. Checked against the NDC directory and DailyMed:
+
+| Status | Count | Meaning |
+|---|---|---|
+| still_listed | 308 | Still in the NDC directory. openFDA lost the label-to-NDC link, the product didn't go anywhere. 60 of these have a marketing end date, all in the future (2026-11-13 to 2031) |
+| delisted | 132 | Not in the NDC directory, and DailyMed lists no NDCs for the label: the listing was withdrawn or not recertified. Mostly sunscreens (83); Edgewell (Banana Boat, Hawaiian Tropic), Altona, P&G, Jafra lead |
+| renumbered | 6 | ZO Skin Health Daily Mineral Sunshade shades, 42851-201..206, now 42851-210..215 on the same labels |
+
+All 446 rows were kept: a full rebuild of `acne_sun_catalog.csv` would drop them, so don't run one
+without `resolve_unmatched_via_dailymed.py` after it.
+
+## 2026-11-10: "delisted" doesn't mean discontinued
+
+Michael approved moving the 132 delisted products to the discontinued shelf if a random sample
+confirmed they're no longer sold. It didn't, so none were moved.
+
+Of the 132, 50 have a current listing from the same labeler with a similar name. Automatic
+matching can't tell which are the same product, so none were merged. A brand-only name
+("HAWAIIAN TROPIC"), a one-day vs. three-day miconazole, or a strength written differently
+misleads it. Most of those listings are already in the catalog as their own rows.
+
+The other 82 have no similar current listing from their labeler. In a random sample (seed
+202611101), every product checked was still sold at US retailers in November 2026:
+
+| Product | Delisted NDC | What we found |
+|---|---|---|
+| Old Spice Oasis with Vanilla Notes | 69423-701 | Relisted by P&G under labeler 84126 (84126-092); at Target, Walmart, Kroger, H-E-B |
+| Old Spice Nightpanther | 69423-508 | Relisted as 84126-244; at Food Lion, Hannaford |
+| Old Spice Fiji with Palm Tree | 69423-541 | Relisted as 84126-094; at Target, Walmart, ShopRite |
+| Terrasil Skin Repair Maximum Strength | 24909-033 | At Walmart; a newer Terrasil Skin Repair listing is 24909-032 |
+| Kerasal Athlete's Foot powder spray | 16864-110 | No new listing; still at CVS and H-E-B |
+| Versed SPF 30 Replenishing Body Mineral | 73690-028 | No new listing; still at Walmart, sold out at one retailer |
+| Drunk Elephant Umbra Tinte SPF 30 | 69455-167 | No new listing; in stock at some retailers, out of stock at Space NK |
+
+So a dropped listing means either the labeler relisted the product under another NDC (P&G moved its
+Old Spice line to a new labeler code) or stopped listing it while stock still sells through. The
+discontinued shelf's retail rule (`lib/availability-rules.ts`: price sources stop finding it for 60
+days) is the right signal for the second case. The first case is a relink to the new NDC, which
+needs matching across labelers and a human check per product.
+
+**ZO Skin Health** (6 rows) did move, as approved: 42851-201..206 are now merged into new rows
+42851-210..215 through `tools/catalog_pipeline/ndc_successors.csv`, a hand-kept file the seed
+applies with the merge pipeline's output. Old links redirect and saved items follow. The labels now
+say SPF 50 (were SPF 45) with the same zinc oxide and titanium dioxide strengths.

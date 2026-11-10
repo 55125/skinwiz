@@ -409,7 +409,8 @@ plus one sitemap brand: **Medicube** (108 rows), **Round Lab** (75),
 - **Not extractable, so absent:** Anua (INCI only exists inside images);
   Curél's US body-care pages have no ingredient text at all — only the
   `/en-us/japanskincare/` pages carry server-rendered INCI, and just one of
-  those has a tracked active. Beauty of Joseon's product pages 404.
+  those has a tracked active. Beauty of Joseon's product pages 404
+  (they load as of 2026-11-05; its rows are in curated_products.csv).
 - **Rate limiting:** these stores return HTTP 429 to Python `urllib` after a
   few hundred rapid requests. The pipeline treats that as a real slow-down
   request rather than something to evade: `_get` backs off on 429 (the

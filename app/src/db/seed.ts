@@ -73,6 +73,10 @@ const SPL_INACTIVE_CSV = path.join(REPO_ROOT, "tools/catalog_pipeline/output/dai
 // changing a reviewed decision, and reseeding undoes that merge.
 const PRODUCT_MERGES_CSV = path.join(REPO_ROOT, "tools/catalog_pipeline/output/product_merges.csv");
 const PRODUCT_MERGE_FLAGGED_CSV = path.join(REPO_ROOT, "tools/catalog_pipeline/output/product_merge_flagged.csv");
+// Hand-kept, unlike the two files above (build_product_merges.py rewrites
+// them): an old NDC whose product the labeler relisted under a new one, so
+// links and saved items on the old id follow it.
+const NDC_SUCCESSORS_CSV = path.join(REPO_ROOT, "tools/catalog_pipeline/ndc_successors.csv");
 
 type CatalogRow = {
   product_ndc: string;
@@ -773,7 +777,7 @@ function insertLabelSections() {
 // Sets canonicalId on each merged duplicate in the batch (lib/canonical.ts);
 // returns the duplicates' ids.
 function applyProductMerges(batch: (typeof schema.products.$inferInsert)[]): Set<string> {
-  const auto = fs.existsSync(PRODUCT_MERGES_CSV) ? readCsv<MergeRow>(PRODUCT_MERGES_CSV) : [];
+  const auto = [PRODUCT_MERGES_CSV, NDC_SUCCESSORS_CSV].flatMap((f) => (fs.existsSync(f) ? readCsv<MergeRow>(f) : []));
   const reviewed = fs.existsSync(PRODUCT_MERGE_FLAGGED_CSV)
     ? reviewedMergeRows(readCsv<FlaggedRow>(PRODUCT_MERGE_FLAGGED_CSV))
     : [];

@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { aliasesFor, canonicalSlug, isOtherName, parseIngredients } from "./ingredient-parse";
+import { aliasesFor, canonicalSlug, isOtherName, parseIngredients, splitIngredientList } from "./ingredient-parse";
 import { matchActiveIds } from "./actives";
 
 const slugs = (text: string) => parseIngredients(text).map((i) => canonicalSlug(i.slug));
@@ -81,4 +81,36 @@ test("isOtherName: another name for the substance, not a misspelling", () => {
   assert.equal(isOtherName("ferric-oxide-red"), true);
   assert.equal(isOtherName("titanium-dioxida"), false);
   assert.equal(isOtherName("glycerin"), false);
+});
+
+test("a label's line wraps don't split an ingredient in two", () => {
+  const cerave = "AQUA/WATER,\r\nGLYCERIN, CETEARYL ALCOHOL,\r\nCAPRYLIC/CAPRIC TRIGLYCERIDE, CETYL\r\nALCOHOL, CETEARETH-20,\r\nETHYLHEXYLGLYCERIN, SODIUM LAUROYL\r\nLACTYLATE, DISODIUM EDTA, SODIUM\r\nHYALURONATE, TOCOPHEROL";
+  assert.deepEqual(splitIngredientList(cerave), [
+    "AQUA/WATER", "GLYCERIN", "CETEARYL ALCOHOL", "CAPRYLIC/CAPRIC TRIGLYCERIDE", "CETYL ALCOHOL", "CETEARETH-20",
+    "ETHYLHEXYLGLYCERIN", "SODIUM LAUROYL LACTYLATE", "DISODIUM EDTA", "SODIUM HYALURONATE", "TOCOPHEROL",
+  ]);
+  // one ingredient per line: the line breaks are the separators
+  assert.deepEqual(splitIngredientList("Water\nGlycerin\nCetyl Alcohol\nNiacinamide"), ["Water", "Glycerin", "Cetyl Alcohol", "Niacinamide"]);
+});
+
+test("a comma typed inside a two-word name is rejoined; real neighbours are not", () => {
+  assert.deepEqual(splitIngredientList("Aqua, Sodium Chloride, Sodium, Benzoate, Parfum"), ["Aqua", "Sodium Chloride", "Sodium Benzoate", "Parfum"]);
+  assert.deepEqual(splitIngredientList("PENTYLENE GLYCOL, ACRYLATES, COPOLYMER, TOCOPHEROL"), ["PENTYLENE GLYCOL", "ACRYLATES COPOLYMER", "TOCOPHEROL"]);
+  assert.deepEqual(splitIngredientList("Niacinamide, Ascorbyl, Palmitate, Glyceryl Oleate"), ["Niacinamide", "Ascorbyl Palmitate", "Glyceryl Oleate"]);
+  // a tail word after a complete name stays its own item
+  assert.deepEqual(splitIngredientList("Isopropyl Palmitate, Benzoate, Water"), ["Isopropyl Palmitate", "Benzoate", "Water"]);
+});
+
+test("a section label left on an item is dropped, zero-width spaces too", () => {
+  assert.deepEqual(splitIngredientList("Purified Water | Inactive ingredients water, glycerin"), ["Purified Water", "water", "glycerin"]);
+  assert.deepEqual(splitIngredientList("​Inactive ingredients BHT, Other ingredients AQUA/WATER/EAU, Glycerin"), ["BHT", "AQUA/WATER/EAU", "Glycerin"]);
+});
+
+test("labels with a heading or flavor in front, and organic footnotes, don't become ingredients", () => {
+  assert.deepEqual(splitIngredientList("Drug Facts Inactive Ingredients Hydrogenated Polyisobutene, Inctive ingredients Water, Inactives ingredients Octyldodecanol, Strawberry Inactive ingredients petrolatum, Inactive (non-medicinal)ingredients Water (Aqua), Non Medicinal Ingredients Water/Aqua/Eau"), [
+    "Hydrogenated Polyisobutene", "Water", "Octyldodecanol", "petrolatum", "Water (Aqua)", "Water/Aqua/Eau",
+  ]);
+  assert.deepEqual(splitIngredientList("Simmondsia Chinensis (Jojoba) Seed Oil Certified Organic Ingredient, Shea Butter, Certified Organic Ingredient - Mayacert Certifier, This Ingredient, * Ingredients from certified organic agriculture"), [
+    "Simmondsia Chinensis (Jojoba) Seed Oil", "Shea Butter",
+  ]);
 });

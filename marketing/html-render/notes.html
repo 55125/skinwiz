@@ -1,0 +1,47 @@
+<!doctype html><html><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=Geist:wght@400;500;600;700&display=block" rel="stylesheet">
+<style>
+*{margin:0;box-sizing:border-box}
+html,body{width:1080px;height:1920px;overflow:hidden;font-family:Geist,"Noto Color Emoji",sans-serif;color:#1C1C1E;background:#FBFAF7}
+.sb{position:absolute;top:0;left:0;right:0;height:110px;display:flex;align-items:center;justify-content:space-between;padding:22px 64px 0;font-size:36px;font-weight:600}
+.sb .r{display:flex;gap:14px;align-items:center}.sb svg{fill:currentColor}
+.nav{position:absolute;top:120px;left:0;right:0;height:110px;display:flex;align-items:center;justify-content:space-between;padding:0 48px;color:#5B6B8C;font-size:46px;font-weight:500}
+.nav .l{display:flex;align-items:center;gap:6px}.nav .l b{font-size:84px;font-weight:300;line-height:0;margin-top:-6px}
+.nav .r{display:flex;gap:44px;align-items:center;font-weight:600}
+.page{position:absolute;top:250px;left:0;right:0;bottom:200px;padding:0 72px}
+.date{text-align:center;color:#8E8E93;font-size:32px;margin:6px 0 34px}
+h1{font-size:80px;font-weight:700;letter-spacing:-1px;margin-bottom:34px}
+.ln{font-size:54px;line-height:1.32;margin-bottom:26px}
+.cur{display:inline-block;width:5px;height:58px;background:#5B6B8C;vertical-align:-10px;margin-left:3px}
+.kb{position:absolute;left:0;right:0;bottom:0;height:200px;border-top:1px solid #E5E3DD;display:flex;justify-content:space-around;align-items:center;color:#5B6B8C;font-size:44px;background:#F4F2EE}
+.cm{position:absolute;left:44px;right:44px;bottom:260px;background:#fff;border-radius:44px;box-shadow:0 20px 60px rgba(0,0,0,.18);padding:36px 40px;display:flex;gap:28px;align-items:flex-start}
+.cm .av{width:96px;height:96px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;font-size:52px;background:radial-gradient(120% 120% at 30% 20%,#fff 0%,#9fd4cd 70%)}
+.cm .u{font-size:34px;font-weight:600;color:#3A3A3C}.cm .u span{font-weight:400;color:#8E8E93;margin-left:12px}
+.cm .t{font-size:50px;line-height:1.25;margin-top:6px}
+.cm .h{margin-left:auto;font-size:44px;color:#D2483E;align-self:center;text-align:center}.cm .h small{display:block;font-size:28px;color:#8E8E93}
+.dim{position:absolute;inset:0;background:rgba(0,0,0,.25)}
+.note{position:absolute;inset:0;background:rgba(18,22,28,.82);backdrop-filter:blur(14px);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:0 110px 260px;color:#fff}
+.note h2{font-family:Fraunces,serif;font-weight:600;font-size:96px;line-height:1.05;letter-spacing:-1.5px}
+.note p{margin-top:36px;font-size:48px;color:#BFE3DE;line-height:1.3}
+</style></head><body><div id="ph"></div>
+<script>
+const E=(t,c,h)=>{const e=document.createElement(t);if(c)e.className=c;if(h!=null)e.innerHTML=h;return e};
+const ease=x=>1-Math.pow(1-Math.min(1,Math.max(0,x)),3);
+const spring=x=>{x=Math.min(1,Math.max(0,x));return 1-Math.exp(-7*x)*Math.cos(9*x)};
+// s: {title, lines:[...], typing: chars of the last line shown (null = all), cursor, comment:{user,text,local}, note:[h,p], local}
+function render(s){const ph=document.getElementById('ph');ph.innerHTML='';const L=s.local;
+ ph.appendChild(E('div','sb','<span>9:41</span><span class="r"><svg width="44" height="28" viewBox="0 0 44 28"><rect x="0" y="18" width="7" height="10" rx="2"/><rect x="11" y="12" width="7" height="16" rx="2"/><rect x="22" y="6" width="7" height="22" rx="2"/><rect x="33" y="0" width="7" height="28" rx="2"/></svg><svg width="64" height="30" viewBox="0 0 64 30"><rect x="1" y="1" width="54" height="28" rx="8" fill="none" stroke="currentColor" stroke-width="2" opacity=".4"/><rect x="5" y="5" width="38" height="20" rx="5"/><rect x="58" y="10" width="4" height="10" rx="2" opacity=".4"/></svg></span>'));
+ ph.appendChild(E('div','nav','<span class="l"><b>‹</b>Notes</span><span class="r"><span>⋯</span><span>Done</span></span>'));
+ const pg=E('div','page');pg.appendChild(E('div','date','November 27, 2026 at 9:41 AM'));pg.appendChild(E('h1',null,s.title));
+ s.lines.forEach((t,i)=>{const last=i===s.lines.length-1;const shown=last&&s.typing!=null?t.slice(0,s.typing):t;
+  pg.appendChild(E('div','ln',shown+(last&&s.cursor?'<span class="cur"></span>':'')))});
+ if(!s.lines.length&&s.cursor)pg.appendChild(E('div','ln','<span class="cur"></span>'));
+ ph.appendChild(pg);ph.appendChild(E('div','kb','<span>Aa</span><span>☑</span><span>▦</span><span>📎</span><span>✎</span>'));
+ if(s.comment){const k=spring(s.comment.local/0.5);const d=E('div','dim');d.style.opacity=ease(s.comment.local/0.3);ph.appendChild(d);
+  const c=E('div','cm',`<div class="av">🧴</div><div><div class="u">${s.comment.user}<span>1m</span></div><div class="t">${s.comment.text}</div></div><div class="h">♥<small>2.1k</small></div>`);
+  c.style.transform=`translateY(${(1-k)*240}px)`;c.style.opacity=Math.min(1,s.comment.local/0.15);ph.appendChild(c)}
+ if(s.note){const n=E('div','note');n.style.opacity=ease(L/0.35);const h=E('h2',null,s.note[0]);const q=E('p',null,s.note[1]||'');
+  h.style.transform=`translateY(${(1-ease(L/0.5))*30}px)`;const t2=Math.max(0,L-1.3);q.style.opacity=ease(t2/0.4);q.style.transform=`translateY(${(1-ease(t2/0.5))*20}px)`;
+  n.appendChild(h);n.appendChild(q);ph.appendChild(n)}
+}
+</script></body></html>

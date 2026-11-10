@@ -11,12 +11,12 @@ GEMINI_VOICE = {"me": "Leda", "fragrance": "Puck", "narrator": "Sulafat"}
 KOKORO_VOICE = {"me": "af_heart", "fragrance": "am_puck", "narrator": "af_bella"}
 # (key, kind, speaker, Gemini tags, spoken, on-screen). Fragrance is an out-of-touch celebrity reading a PR-drafted non-apology.
 BEATS = [
- ("b1", "notes", "fragrance", "[sighs] [rehearsed]", "Hi guys. This is so hard for me to write.", "Hi guys. This is so hard for me to write. 🙏"),
- ("b2", "notes", "fragrance", "[rehearsed]", "I'm sorry if anyone felt itchy.", "I'm sorry if anyone *felt* itchy."),
- ("b3", "notes", "fragrance", "[rehearsed] [earnest]", "I'm taking a step back from the front of the bottle to focus on my healing.", "I'm taking a step back from the front of the bottle to focus on my healing."),
- ("b4", "notes", "fragrance", "[proud]", "Going forward, I'll be going by Parfum. That's growth.", "Going forward, I'll be going by Parfum. That's growth. ✨"),
+ ("b1", "notes", "fragrance", "[brisk] [sighs] [rehearsed]", "Hi guys. This is so hard for me to write.", "Hi guys. This is so hard for me to write. 🙏"),
+ ("b2", "notes", "fragrance", "[brisk] [rehearsed]", "I'm sorry if anyone felt itchy.", "I'm sorry if anyone *felt* itchy."),
+ ("b3", "notes", "fragrance", "[brisk] [rehearsed] [earnest]", "I'm taking a step back from the front of the bottle to focus on my healing.", "I'm taking a step back from the front of the bottle to focus on my healing."),
+ ("b4", "notes", "fragrance", "[brisk] [proud]", "Going forward, I'll be going by Parfum. That's growth.", "Going forward, I'll be going by Parfum. That's growth. ✨"),
  ("b5", "notes", "fragrance", "[quickly] [defensive]", "Linalool, Limonene and I are just friends.", "Linalool, Limonene and I are just friends."),
- ("b6", "notes", "fragrance", "[rehearsed]", "Please respect my privacy. In the ingredient list.", "Please respect my privacy. In the ingredient list. 🤍"),
+ ("b6", "notes", "fragrance", "[brisk] [rehearsed]", "Please respect my privacy. In the ingredient list.", "Please respect my privacy. In the ingredient list. 🤍"),
  ("b7", "comment", "me", "[flat] [deadpan]", "Ratio. You're on my avoid list.", "ratio + you're on my avoid list"),
  ("b8", "note", "narrator", "[warm]", "Same ingredient. New names.", None),
  ("b9", "end", "narrator", "[warm]", "Check before you buy. Free at Actively Skin dot com.", None),

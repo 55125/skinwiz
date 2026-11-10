@@ -34,7 +34,7 @@ function render(s){const ph=document.getElementById('ph');ph.innerHTML='';const 
  ph.appendChild(E('div','nav','<span class="l"><b>‹</b>Notes</span><span class="r"><span>⋯</span><span>Done</span></span>'));
  const pg=E('div','page');pg.appendChild(E('div','date','November 27, 2026 at 9:41 AM'));pg.appendChild(E('h1',null,s.title));
  s.lines.forEach((t,i)=>{const last=i===s.lines.length-1;const shown=last&&s.typing!=null?t.slice(0,s.typing):t;
-  pg.appendChild(E('div','ln',shown+(last&&s.cursor?'<span class="cur"></span>':'')))});
+  pg.appendChild(E("div","ln",shown.replace(/\*(.+?)\*/g,"<i>$1</i>")+(last&&s.cursor?'<span class="cur"></span>':'')))});
  if(!s.lines.length&&s.cursor)pg.appendChild(E('div','ln','<span class="cur"></span>'));
  ph.appendChild(pg);ph.appendChild(E('div','kb','<span>Aa</span><span>☑</span><span>▦</span><span>📎</span><span>✎</span>'));
  if(s.comment){const k=spring(s.comment.local/0.5);const d=E('div','dim');d.style.opacity=ease(s.comment.local/0.3);ph.appendChild(d);

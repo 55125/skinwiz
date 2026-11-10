@@ -219,3 +219,16 @@ needs matching across labelers and a human check per product.
 42851-210..215 through `tools/catalog_pipeline/ndc_successors.csv`, a hand-kept file the seed
 applies with the merge pipeline's output. Old links redirect and saved items follow. The labels now
 say SPF 50 (were SPF 45) with the same zinc oxide and titanium dioxide strengths.
+
+## 2026-11-10: OBF cosmetics pull fixed
+
+`build_cosmetic_catalog.py` stopped at page 11 of any ingredient tag with more than 1,000 products
+(OBF answers 401 there). It now fetches those tags in English slices like the hair care builder;
+the paging moved into `build_cosmetic_catalog.py` (`fetch_sliced`) and both builders use it. A slice
+that itself has more than 1,000 products is still capped (panthenol's English-language slice: 1,626).
+
+The first full pull returned 3,045 products, 991 of them new. They were **not** added: by barcode
+prefix 301 are German, 128 Indian, and many are shampoos or makeup the active matcher files under
+Brightening. Only 266 have a US/Canada prefix. The list, with each barcode's country, is in
+`output/obf_cosmetics_pending_2026-11-10.csv` for a decision on which to add. Do that before the
+next `sync_sources.py --apply --sources obf`, which would add all of them.

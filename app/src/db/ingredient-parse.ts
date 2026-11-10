@@ -87,13 +87,18 @@ function splitTopLevel(text: string): string[] {
 
 // The organic footnote, alone or run onto the last ingredient before it:
 // "Shea Butter Denotes Certified Organic Ingredient", "* Organic Ingredients".
-const ORGANIC_FOOTNOTE = /\s*\*?\s*(?:denotes|indicates)?\s*(?:certified|cerified)?\s*organic\s+ingredients?\s*$/i;
+const ORGANIC_FOOTNOTE = /\s*\*?\s*(?:denotes|indicates)?\s*(?:certified|cerified)?\s*organic\s+ingredients?(?:\s*\(s\))?(?:\s*-\s*[\w\s]+certifier)?\s*$/i;
 
 function cleanToken(t: string): string {
   return t
     .replace(/\s+/g, " ")
     .replace(ORGANIC_FOOTNOTE, "")
     .replace(/^\s*(?:and|&|may contain|\+\/-|\(\+\/-\))[\s:]+/i, "")
+    // a section label left on the first item of a kit part or second list
+    // ("Inactive ingredients water", "Other ingredients AQUA/WATER/EAU")
+    // ("Inactive ingredients water", "Drug Facts Inactive Ingredients ...",
+    // "Strawberry Inactive ingredients petrolatum", "Non Medicinal Ingredients ...")
+    .replace(/^\s*(?:[\w-]+\s+){0,3}?(?:ina?ctr?i?ve?s?|other|active|non[\s-]?medicinal|inactive\s*\(non-medicinal\))\s*ingredients?\b\s*[:\-–]?\s*/i, "")
     .replace(/^\(\+\/-\)\s*/, "")
     .replace(/\s*\(?\d+(?:\.\d+)?\s*%\)?\s*$/, "")
     .replace(/[*†‡§¹²³]+$/g, "")
@@ -115,7 +120,7 @@ function decodeEntities(s: string): string {
 // Brand pages and OBF entries sometimes bury disclaimers/packaging text in
 // the list; those aren't ingredients and shouldn't get pages.
 const NOT_AN_INGREDIENT =
-  /\b(?:please|contains? one or more|seek medical|made in|ingredient lists?|external use|keep out|dermatologist|packaging|updated regularly|www\.|https?:|batch|e\.g\.|distributed|manufactured)/i;
+  /\b(?:this ingredient|ingredients from certified|incidental ingredients|animal-derived ingredients|please|contains? one or more|seek medical|made in|ingredient lists?|external use|keep out|dermatologist|packaging|updated regularly|www\.|https?:|batch|e\.g\.|distributed|manufactured)/i;
 // The same warnings and footnotes in the French, Spanish and Portuguese text
 // of imported packs ("tenir hors de portée des enfants", "no ingerir",
 // "*ingrédients issus de l'agriculture biologique"), which otherwise got
@@ -139,9 +144,52 @@ function looksLikeIngredient(t: string): boolean {
   return words.length <= 8;
 }
 
+// A label photographed or pasted as printed keeps its line wraps: "...,
+// CETYL\nALCOHOL, ..." is one ingredient broken across two lines. When most
+// lines end in a separator, the list is comma-separated and a line that
+// doesn't is a wrap, so it joins with a space. Lists with one ingredient per
+// line (no separators at line ends) keep their line breaks as separators.
+function joinWrappedLines(text: string): string {
+  const lines = text.split(/\r?\n/);
+  if (lines.length < 2) return text;
+  const body = lines.slice(0, -1).map((l) => l.trimEnd()).filter(Boolean);
+  const separated = body.filter((l) => /[,;•·●▪|]$/.test(l)).length;
+  if (separated * 2 < body.length) return text;
+  return lines.reduce((out, line, i) => {
+    if (i === 0) return line;
+    const prev = out.trimEnd();
+    return /[,;•·●▪|.:]$/.test(prev) || !prev ? `${out}\n${line}` : `${prev} ${line.trimStart()}`;
+  }, "");
+}
+
+// A comma typed inside a two-word name ("Sodium, Benzoate", "ACRYLATES,
+// COPOLYMER", "Ascorbyl, Palmitate"): a lone tail word whose previous item
+// ends in a word that starts such names is the second half of it.
+const NAME_TAILS = new Set([
+  "benzoate", "chloride", "citrate", "copolymer", "crosspolymer", "glucoside", "hyaluronate", "hydroxide", "lactylate",
+  "oleate", "palmitate", "phosphate", "sorbate", "stearate", "sulfate", "acetate",
+]);
+const NAME_HEADS = new Set([
+  "sodium", "potassium", "calcium", "magnesium", "disodium", "trisodium", "tetrasodium", "dipotassium", "ammonium", "zinc", "aluminum",
+  "ascorbyl", "cetearyl", "cetyl", "stearyl", "glyceryl", "tocopheryl", "retinyl", "ethylhexyl", "isopropyl", "lauryl", "decyl", "coco",
+  "acrylates", "crosspolymer", "hydroxypropyltrimonium", "neodecanoate",
+]);
+
+function rejoinSplitNames(items: string[]): string[] {
+  const out: string[] = [];
+  for (const item of items) {
+    const prev = out[out.length - 1];
+    const lastWord = prev?.toLowerCase().split(/[\s/]+/).pop() ?? "";
+    if (prev && NAME_TAILS.has(item.toLowerCase()) && NAME_HEADS.has(lastWord)) out[out.length - 1] = `${prev} ${item}`;
+    else out.push(item);
+  }
+  return out;
+}
+
 export function splitIngredientList(text: string | null | undefined): string[] {
   if (!text) return [];
-  const normalized = decodeEntities(text)
+  // zero-width spaces pasted from web pages hide in front of names
+  const normalized = joinWrappedLines(decodeEntities(text).replace(/[\u200b-\u200d\ufeff]/g, ""))
     .replace(LABELER_TAIL, "")
     .replace(/\\n(?=\\n|[A-Z])/g, ",")
     .replace(/[•·●▪|]/g, ",")
@@ -156,13 +204,13 @@ export function splitIngredientList(text: string | null | undefined): string[] {
     .replace(/\b(?:inactive|other)?\s*ingredients?\s*:/gi, ",")
     // asterisk-marked items run together: "*Sunflower Oil *Cocoa Butter"
     .replace(/\s\*(?=[A-Za-z])/g, ",");
-  return splitTopLevel(normalized)
+  return rejoinSplitNames(splitTopLevel(normalized)
     .flatMap((t) => t.split(/\.\s+(?=[A-Z*])/))
     .filter((t) => !NOT_AN_INGREDIENT.test(t))
     // "External Cream: Benzoic Acid", "/Peut Contenir: Iron Oxides" -- the
     // part before a colon is a label, not an ingredient
     .map((t) => cleanToken(t.includes(":") ? t.slice(t.lastIndexOf(":") + 1) : t))
-    .filter(looksLikeIngredient);
+    .filter(looksLikeIngredient));
 }
 
 export function ingredientKey(raw: string): string {

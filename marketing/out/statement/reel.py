@@ -11,12 +11,12 @@ GEMINI_VOICE = {"me": "Leda", "fragrance": "Puck", "narrator": "Sulafat"}
 KOKORO_VOICE = {"me": "af_heart", "fragrance": "am_puck", "narrator": "af_bella"}
 # (key, kind, speaker, Gemini tags, spoken, on-screen). Fragrance is an out-of-touch celebrity reading a PR-drafted non-apology.
 BEATS = [
- ("b1", "notes", "fragrance", "[sighs] [rehearsed]", "Hi guys. This is so hard for me to write.", "Hi guys. This is so hard for me to write. 🙏"),
- ("b2", "notes", "fragrance", "[rehearsed]", "I'm sorry if anyone felt itchy.", "I'm sorry if anyone *felt* itchy."),
- ("b3", "notes", "fragrance", "[rehearsed] [earnest]", "I'm taking a step back from the front of the bottle to focus on my healing.", "I'm taking a step back from the front of the bottle to focus on my healing."),
- ("b4", "notes", "fragrance", "[proud]", "Going forward, I'll be going by Parfum. That's growth.", "Going forward, I'll be going by Parfum. That's growth. ✨"),
+ ("b1", "notes", "fragrance", "[brisk] [sighs] [rehearsed]", "Hi guys. This is so hard for me to write.", "Hi guys. This is so hard for me to write. 🙏"),
+ ("b2", "notes", "fragrance", "[brisk] [rehearsed]", "I'm sorry if anyone felt itchy.", "I'm sorry if anyone *felt* itchy."),
+ ("b3", "notes", "fragrance", "[brisk] [rehearsed] [earnest]", "I'm taking a step back from the front of the bottle to focus on my healing.", "I'm taking a step back from the front of the bottle to focus on my healing."),
+ ("b4", "notes", "fragrance", "[brisk] [proud]", "Going forward, I'll be going by Parfum. That's growth.", "Going forward, I'll be going by Parfum. That's growth. ✨"),
  ("b5", "notes", "fragrance", "[quickly] [defensive]", "Linalool, Limonene and I are just friends.", "Linalool, Limonene and I are just friends."),
- ("b6", "notes", "fragrance", "[rehearsed]", "Please respect my privacy. In the ingredient list.", "Please respect my privacy. In the ingredient list. 🤍"),
+ ("b6", "notes", "fragrance", "[brisk] [rehearsed]", "Please respect my privacy. In the ingredient list.", "Please respect my privacy. In the ingredient list. 🤍"),
  ("b7", "comment", "me", "[flat] [deadpan]", "Ratio. You're on my avoid list.", "ratio + you're on my avoid list"),
  ("b8", "note", "narrator", "[warm]", "Same ingredient. New names.", None),
  ("b9", "end", "narrator", "[warm]", "Check before you buy. Free at Actively Skin dot com.", None),
@@ -40,7 +40,7 @@ def kokoro(text, voice):
     if _kp is None:
         from kokoro import KPipeline
         _kp = KPipeline(lang_code="a")
-    return np.concatenate([np.asarray(a, np.float32) for _, _, a in _kp(text, voice=voice, speed=1.0)])
+    return np.concatenate([np.asarray(a, np.float32) for _, _, a in _kp(text, voice=voice, speed=1.15 if voice == KOKORO_VOICE["fragrance"] else 1.0)])
 def clean(a):
     """Cut Gemini 3.8's ~0.13 s end burst (loud noise after the last silent gap), then trim lead/tail silence."""
     n = int(.01 * SR); rms = np.array([np.sqrt((a[i:i+n]**2).mean()) for i in range(0, len(a) - n, n)])
@@ -86,9 +86,9 @@ if __name__ == "__main__":
         v = sf.read(p, dtype="float32")[0]
         if ENGINE == "gemini": v = squeeze(v)  # Gemini leaves long pauses; trim them so the reel stays near 25 s
         nb = {"beat": i, "kind": kind, "spoken": spoken}
-        if kind == "notes":  # the line types out in 0.5 s while the voice starts right away
-            ty = typing(0.5); ty = np.pad(ty, (0, max(0, len(v) - len(ty))))
-            a = np.concatenate([ty[:len(v)] * 0.6 + v, sil(.15)]); nb.update(text=shown, type_seconds=0.5)
+        if kind == "notes":  # the line types out in 0.35 s while the voice starts right away; quick pacing per Michael
+            ty = typing(0.35); ty = np.pad(ty, (0, max(0, len(v) - len(ty))))
+            a = np.concatenate([ty[:len(v)] * 0.6 + v, sil(.04)]); nb.update(text=shown, type_seconds=0.35)
         elif kind == "comment":
             a = np.concatenate([pop(), sil(.1), v, sil(.4)]); nb.update(user="skin_on_strike", text=shown)
         elif kind == "note":

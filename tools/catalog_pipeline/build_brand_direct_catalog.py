@@ -379,6 +379,12 @@ def _get_bytes(url: str, retries: int = 3) -> bytes | None:
     return None
 
 
+def cerave_product_id(url: str) -> str:
+    """"https://www.cerave.com/skincare/acne/acne-control-gel" -> "cerave-acne-control-gel"."""
+    last = url.split("?", 1)[0].split("#", 1)[0].rstrip("/").rsplit("/", 1)[-1]
+    return "cerave-" + re.sub(r"[^a-z0-9]+", "-", last.lower()).strip("-")
+
+
 def download_image(url: str, product_id: str) -> str:
     """Downloads a product photo into IMAGE_DIR, returns the root-relative
     app path to store in the CSV, or "" if the download failed (a missing
@@ -1039,10 +1045,12 @@ def extract_product_cerave(html: str, url: str) -> dict | None:
 
     # No single unambiguous barcode: pages embed multiple (this product's
     # own, plus related-product carousel items), and JSON-LD here has no
-    # sku/mpn field. The canonical URL is CeraVe's own stable identifier
-    # for this product instead — still satisfies the "one distinct id per
-    # product" principle even though it isn't a GS1 barcode.
-    product_id = product_data.get("@id") or url
+    # sku/mpn field. The canonical URL's last segment is CeraVe's own stable
+    # name for the product instead ("cerave-acne-control-gel"), the same
+    # pattern as Curel's ids. Ids used to be the whole URL, which made
+    # /product/https%3A%2F%2F... page addresses; app/src/db/product-id-renames.json
+    # carries those old ids to these.
+    product_id = cerave_product_id(product_data.get("@id") or url)
 
     # CeraVe's JSON-LD "image" entries are site-relative paths (unlike The
     # Ordinary's absolute URLs) -- confirmed by inspecting real output before

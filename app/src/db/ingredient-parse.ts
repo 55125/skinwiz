@@ -85,6 +85,36 @@ function splitTopLevel(text: string): string[] {
   return out;
 }
 
+// A whole list wrapped in brackets ("INGREDIENTS: (AQUA, SODIUM ...)", a
+// kit part "TAGESCREME (Aqua , Glycerin , ...)") or behind a bracket that
+// never closes reaches here as one long item. Those are split at their own
+// commas, the bracket and any title before it dropped.
+function unwrapBracketedLists(items: string[]): string[] {
+  return items.flatMap((item) => {
+    if (item.length <= 100) return [item];
+    const parts = item.split(/,(?!\d)/);
+    if (parts.length < 4) return [item];
+    const opened = (s: string) => (s.match(/[([]/g)?.length ?? 0) > (s.match(/[)\]]/g)?.length ?? 0);
+    return parts.map((part, i) => {
+      if (i === 0 && opened(part)) return part.slice(Math.max(part.lastIndexOf("("), part.lastIndexOf("[")) + 1);
+      if (i === parts.length - 1) return part.replace(/[)\]]+\s*\.?\s*$/, "");
+      return part;
+    });
+  });
+}
+
+// Lists without a comma anywhere at the top level, separated some other way:
+// " - " between names (common on L'Oréal and Schwarzkopf packs), or each name
+// followed by its function in brackets ("Glycerin (Humectant) Sodium Chloride
+// (Thickener) ..."). Only used when the text has no top-level commas, so a
+// hyphenated name in an ordinary list is never split.
+function separateUncommaedList(text: string): string {
+  if (splitTopLevel(text).length > 2) return text;
+  if ((text.match(/\s[-–]\s/g)?.length ?? 0) >= 3) return text.replace(/\s+[-–]\s+/g, ",");
+  if ((text.match(/\)\s+(?=[A-Z])/g)?.length ?? 0) >= 3) return text.replace(/\)\s+(?=[A-Z])/g, "),");
+  return text;
+}
+
 // The organic footnote, alone or run onto the last ingredient before it:
 // "Shea Butter Denotes Certified Organic Ingredient", "* Organic Ingredients".
 const ORGANIC_FOOTNOTE = /\s*\*?\s*(?:denotes|indicates)?\s*(?:certified|cerified)?\s*organic\s+ingredients?(?:\s*\(s\))?(?:\s*-\s*[\w\s]+certifier)?\s*$/i;
@@ -204,7 +234,7 @@ export function splitIngredientList(text: string | null | undefined): string[] {
     .replace(/\b(?:inactive|other)?\s*ingredients?\s*:/gi, ",")
     // asterisk-marked items run together: "*Sunflower Oil *Cocoa Butter"
     .replace(/\s\*(?=[A-Za-z])/g, ",");
-  return rejoinSplitNames(splitTopLevel(normalized)
+  return rejoinSplitNames(unwrapBracketedLists(splitTopLevel(separateUncommaedList(normalized)))
     .flatMap((t) => t.split(/\.\s+(?=[A-Z*])/))
     .filter((t) => !NOT_AN_INGREDIENT.test(t))
     // "External Cream: Benzoic Acid", "/Peut Contenir: Iron Oxides" -- the

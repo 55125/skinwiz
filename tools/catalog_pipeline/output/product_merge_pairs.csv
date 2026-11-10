@@ -100,13 +100,13 @@ id_a,id_b,method,tier,p_ab,p_ba,formula,notes
 0301871373324,3606000537422,name,different_reformulated,,,conflict,"ingredient overlap 0.53; allergen hits differ: ethylhexylglycerin,parabens,phenoxyethanol,tocopherol"
 0301871373324,3606000537439,exact,different_reformulated,,,conflict,"ingredient overlap 0.59; allergen hits differ: ethylhexylglycerin,parabens,tocopherol"
 0301871373324,3606000537743,name,different_reformulated,,,conflict,ingredient overlap 0.55; allergen hits differ: phenoxyethanol
-0301871373324,https://www.cerave.com/skincare/moisturizers/eczema-relief-moisturizing-cream,name,different_reformulated,,,conflict,"ingredient overlap 0.30; allergen hits differ: parabens,sodium-benzoate,tocopherol"
-0301871373324,https://www.cerave.com/skincare/moisturizers/facial-moisturizers/oil-control-moisturizing-gel-cream,name,different_reformulated,,,conflict,"ingredient overlap 0.28; allergen hits differ: parabens,sodium-benzoate"
-0301871373324,https://www.cerave.com/skincare/moisturizers/intensive-moisturizing-cream,name,different_reformulated,,,conflict,"ingredient overlap 0.29; allergen hits differ: parabens,phenoxyethanol,sodium-benzoate"
-0301871373324,https://www.cerave.com/skincare/moisturizers/moisturizing-cream,exact,different_reformulated,,,conflict,"ingredient overlap 0.62; allergen hits differ: ethylhexylglycerin,parabens,tocopherol"
-0301871373324,https://www.cerave.com/skincare/moisturizers/moisturizing-cream-refill,name,different_reformulated,,,conflict,"ingredient overlap 0.62; allergen hits differ: ethylhexylglycerin,parabens,tocopherol"
+0301871373324,cerave-eczema-relief-moisturizing-cream,name,different_reformulated,,,conflict,"ingredient overlap 0.30; allergen hits differ: parabens,sodium-benzoate,tocopherol"
+0301871373324,cerave-oil-control-moisturizing-gel-cream,name,different_reformulated,,,conflict,"ingredient overlap 0.28; allergen hits differ: parabens,sodium-benzoate"
+0301871373324,cerave-intensive-moisturizing-cream,name,different_reformulated,,,conflict,"ingredient overlap 0.29; allergen hits differ: parabens,phenoxyethanol,sodium-benzoate"
+0301871373324,cerave-moisturizing-cream,exact,different_reformulated,,,conflict,"ingredient overlap 0.62; allergen hits differ: ethylhexylglycerin,parabens,tocopherol"
+0301871373324,cerave-moisturizing-cream-refill,name,different_reformulated,,,conflict,"ingredient overlap 0.62; allergen hits differ: ethylhexylglycerin,parabens,tocopherol"
 0301872484029,3606000537606,exact,different_reformulated,,,conflict,ingredient overlap 0.72; allergen hits differ: sodium-benzoate
-0301872484029,https://www.cerave.com/skincare/moisturizers/skin-renewing-night-cream,exact,different_reformulated,,,conflict,ingredient overlap 0.72; allergen hits differ: sodium-benzoate
+0301872484029,cerave-skin-renewing-night-cream,exact,different_reformulated,,,conflict,ingredient overlap 0.72; allergen hits differ: sodium-benzoate
 0302990532364,0772618075007,name,different_reformulated,,,conflict,"ingredient overlap 0.21; allergen hits differ: cetearyl-alcohol,cocamidopropyl-betaine,coco-glucoside,ethylhexylglycerin,phenoxyethanol,sodium-benzoate,tocopherol"
 0302990532364,302990110227,name,different_reformulated,,,conflict,"ingredient overlap 0.22; allergen hits differ: cetearyl-alcohol,cocamidopropyl-betaine,coco-glucoside,ethylhexylglycerin,phenoxyethanol,sodium-benzoate,tocopherol"
 0302990532364,302993889175,name,different_reformulated,,,conflict,"ingredient overlap 0.30; allergen hits differ: ethylhexylglycerin,sodium-benzoate"
@@ -218,7 +218,7 @@ id_a,id_b,method,tier,p_ab,p_ba,formula,notes
 0707129221810,0885492857437,name,different_reformulated,,,conflict,"ingredient overlap 0.07; allergen hits differ: acrylates,compositae,fragrance,imidazolidinyl-urea,parabens,phenoxyethanol,propylene-glycol,sodium-benzoate"
 0707129221810,11410-005,name,flagged,0.850,0.840,ok,ingredient overlap 1.00
 0707129221810,3606000560994,name,different_reformulated,,,conflict,"ingredient overlap 0.06; allergen hits differ: acrylates,compositae,ethylhexylglycerin,fragrance,imidazolidinyl-urea,parabens,propylene-glycol,sodium-benzoate"
-0707129221810,https://www.cerave.com/skincare/cleansers/renewing-sa-cleanser,name,different_reformulated,,,conflict,"ingredient overlap 0.06; allergen hits differ: acrylates,compositae,ethylhexylglycerin,fragrance,imidazolidinyl-urea,parabens,propylene-glycol,sodium-benzoate"
+0707129221810,cerave-renewing-sa-cleanser,name,different_reformulated,,,conflict,"ingredient overlap 0.06; allergen hits differ: acrylates,compositae,ethylhexylglycerin,fragrance,imidazolidinyl-urea,parabens,propylene-glycol,sodium-benzoate"
 0752830779389,CC03014T,name,different_reformulated,,,conflict,"ingredient overlap 0.36; allergen hits differ: bergamot,lavender-oil,limonene,linalool,sodium-benzoate"
 0769915190045,rdn-advanced-retinoid-2pct-30ml,name,flagged,0.870,0.820,minor,ingredient overlap 0.85; free-from flags differ: essential-oil-free
 0769915190670,0769915195712,name,different_reformulated,,,conflict,ingredient overlap 0.70; allergen hits differ: benzyl-alcohol
@@ -253,15 +253,15 @@ id_a,id_b,method,tier,p_ab,p_ba,formula,notes
 0787734793087,3606000537576,name,different_reformulated,,,conflict,"ingredient overlap 0.52; allergen hits differ: ethylhexylglycerin,parabens,phenoxyethanol,tocopherol"
 0787734793087,3606000537675,name,different,0.410,0.390,minor,"ingredient overlap 1.00; lists differ: ceramide-6-11, ceramide-6-ii"
 0787734793087,4068706886584,name,different_reformulated,,,conflict,"ingredient overlap 0.18; allergen hits differ: cocamidopropyl-betaine,other-alkyl-glucosides,parabens,propylene-glycol,sodium-benzoate,sorbic-acid"
-0787734793087,https://www.cerave.com/skincare/cleansers/acne-benzoyl-peroxide-cleanser,name,different_reformulated,,,conflict,"ingredient overlap 0.25; allergen hits differ: cetearyl-alcohol,ethylhexylglycerin,parabens,phenoxyethanol,propylene-glycol,sodium-benzoate"
-0787734793087,https://www.cerave.com/skincare/cleansers/air-foam-foaming-facial-cleanser,name,different_reformulated,,,conflict,"ingredient overlap 0.23; allergen hits differ: cetearyl-alcohol,cocamidopropyl-betaine,parabens,sodium-benzoate"
-0787734793087,https://www.cerave.com/skincare/cleansers/facial-cleansers/-acne-foaming-cream-wash-,name,different_reformulated,,,conflict,"ingredient overlap 0.24; allergen hits differ: cetearyl-alcohol,parabens,propylene-glycol,sodium-benzoate"
-0787734793087,https://www.cerave.com/skincare/cleansers/facial-cleansers/hydrating-foaming-oil-cleanser,name,different_reformulated,,,conflict,"ingredient overlap 0.25; allergen hits differ: cetearyl-alcohol,cocamidopropyl-betaine,parabens,sodium-benzoate"
-0787734793087,https://www.cerave.com/skincare/cleansers/foaming-cleanser-bar,name,different_reformulated,,,conflict,"ingredient overlap 0.34; allergen hits differ: ethylhexylglycerin,mineral-uv-filters,parabens,phenoxyethanol"
-0787734793087,https://www.cerave.com/skincare/cleansers/foaming-facial-cleanser,exact,different_reformulated,,,conflict,"ingredient overlap 0.35; allergen hits differ: cetearyl-alcohol,propylene-glycol"
-0787734793087,https://www.cerave.com/skincare/cleansers/hydrating-facial-cleanser,name,different_reformulated,,,conflict,"ingredient overlap 0.53; allergen hits differ: ethylhexylglycerin,parabens,phenoxyethanol,tocopherol"
-0787734793087,https://www.cerave.com/skincare/cleansers/hydrating-facial-cleanser-refill,name,different_reformulated,,,conflict,"ingredient overlap 0.53; allergen hits differ: ethylhexylglycerin,parabens,phenoxyethanol,tocopherol"
-0793379245584,https://www.cerave.com/skincare/moisturizers/am-facial-moisturizing-lotion-with-sunscreen,exact,different_reformulated,,,conflict,"ingredient overlap 0.47; allergen hits differ: bht,parabens,phenoxyethanol,sodium-benzoate"
+0787734793087,cerave-acne-benzoyl-peroxide-cleanser,name,different_reformulated,,,conflict,"ingredient overlap 0.25; allergen hits differ: cetearyl-alcohol,ethylhexylglycerin,parabens,phenoxyethanol,propylene-glycol,sodium-benzoate"
+0787734793087,cerave-air-foam-foaming-facial-cleanser,name,different_reformulated,,,conflict,"ingredient overlap 0.23; allergen hits differ: cetearyl-alcohol,cocamidopropyl-betaine,parabens,sodium-benzoate"
+0787734793087,cerave-acne-foaming-cream-wash,name,different_reformulated,,,conflict,"ingredient overlap 0.24; allergen hits differ: cetearyl-alcohol,parabens,propylene-glycol,sodium-benzoate"
+0787734793087,cerave-hydrating-foaming-oil-cleanser,name,different_reformulated,,,conflict,"ingredient overlap 0.25; allergen hits differ: cetearyl-alcohol,cocamidopropyl-betaine,parabens,sodium-benzoate"
+0787734793087,cerave-foaming-cleanser-bar,name,different_reformulated,,,conflict,"ingredient overlap 0.34; allergen hits differ: ethylhexylglycerin,mineral-uv-filters,parabens,phenoxyethanol"
+0787734793087,cerave-foaming-facial-cleanser,exact,different_reformulated,,,conflict,"ingredient overlap 0.35; allergen hits differ: cetearyl-alcohol,propylene-glycol"
+0787734793087,cerave-hydrating-facial-cleanser,name,different_reformulated,,,conflict,"ingredient overlap 0.53; allergen hits differ: ethylhexylglycerin,parabens,phenoxyethanol,tocopherol"
+0787734793087,cerave-hydrating-facial-cleanser-refill,name,different_reformulated,,,conflict,"ingredient overlap 0.53; allergen hits differ: ethylhexylglycerin,parabens,phenoxyethanol,tocopherol"
+0793379245584,cerave-am-facial-moisturizing-lotion-with-sunscreen,exact,different_reformulated,,,conflict,"ingredient overlap 0.47; allergen hits differ: bht,parabens,phenoxyethanol,sodium-benzoate"
 0810175610634,0810175610641,name,different_reformulated,,,conflict,"ingredient overlap 0.77; allergen hits differ: benzaldehyde,linalool,mineral-uv-filters"
 0810175610634,0810175611136,name,different,0.090,0.130,minor,"ingredient overlap 0.82; lists differ: blue-1-lake, calcium-sodium-borosilicate, iron-oxides, mica, red-6, tin-oxide"
 0810175610641,0810175611136,name,different_reformulated,,,conflict,"ingredient overlap 0.71; allergen hits differ: benzaldehyde,linalool,mineral-uv-filters"
@@ -281,9 +281,9 @@ id_a,id_b,method,tier,p_ab,p_ba,formula,notes
 0885492857437,3337875795456,name,different_reformulated,,,conflict,"ingredient overlap 0.59; allergen hits differ: ethylhexylglycerin,phenoxyethanol"
 0885492857437,3606000538078,name,different_reformulated,,,conflict,"ingredient overlap 0.35; allergen hits differ: cetearyl-alcohol,parabens,phenoxyethanol,sodium-benzoate,tocopherol"
 0885492857437,3606000560994,exact,different_reformulated,,,conflict,"ingredient overlap 0.52; allergen hits differ: ethylhexylglycerin,phenoxyethanol"
-0885492857437,https://www.cerave.com/skincare/cleansers/renewing-sa-cleanser,exact,different_reformulated,,,conflict,"ingredient overlap 0.53; allergen hits differ: ethylhexylglycerin,phenoxyethanol"
-0885492857437,https://www.cerave.com/skincare/cleansers/sa-body-wash-for-rough-and-bumpy-skin,name,different_reformulated,,,conflict,"ingredient overlap 0.53; allergen hits differ: ethylhexylglycerin,phenoxyethanol"
-0885492857437,https://www.cerave.com/skincare/cleansers/sa-cleanser-bar-for-rough-and-bumpy-skin,name,different_reformulated,,,conflict,"ingredient overlap 0.27; allergen hits differ: cetearyl-alcohol,ethylhexylglycerin,mineral-uv-filters,phenoxyethanol,sodium-benzoate,tocopherol"
+0885492857437,cerave-renewing-sa-cleanser,exact,different_reformulated,,,conflict,"ingredient overlap 0.53; allergen hits differ: ethylhexylglycerin,phenoxyethanol"
+0885492857437,cerave-sa-body-wash-for-rough-and-bumpy-skin,name,different_reformulated,,,conflict,"ingredient overlap 0.53; allergen hits differ: ethylhexylglycerin,phenoxyethanol"
+0885492857437,cerave-sa-cleanser-bar-for-rough-and-bumpy-skin,name,different_reformulated,,,conflict,"ingredient overlap 0.27; allergen hits differ: cetearyl-alcohol,ethylhexylglycerin,mineral-uv-filters,phenoxyethanol,sodium-benzoate,tocopherol"
 0904-5731,41250-069,name,different,0.220,0.170,minor,ingredient overlap 0.50
 0904-5731,56062-069,name,different,0.130,0.160,ok,ingredient overlap 1.00
 0924-5633,0924-5634,name,different_reformulated,,,conflict,"ingredient overlap 0.25; allergen hits differ: chlorocresol,mci-mi,methylisothiazolinone"
@@ -860,7 +860,7 @@ id_a,id_b,method,tier,p_ab,p_ba,formula,notes
 302993889175,8906005274069,name,different_reformulated,,,conflict,"ingredient overlap 0.24; allergen hits differ: cetearyl-alcohol,cocamidopropyl-betaine,coco-glucoside,phenoxyethanol,tocopherol"
 302993889175,8906005274106,name,different_reformulated,,,conflict,"ingredient overlap 0.29; allergen hits differ: cetearyl-alcohol,cocamidopropyl-betaine,coco-glucoside,phenoxyethanol,tocopherol"
 302993914938,3606000620988,name,different_reformulated,,,conflict,"ingredient overlap 0.12; allergen hits differ: sodium-benzoate,sorbitan-sesquioleate"
-302993914938,https://www.cerave.com/skincare/moisturizers/intensive-moisturizing-lotion,name,different_reformulated,,,conflict,"ingredient overlap 0.12; allergen hits differ: sodium-benzoate,sorbitan-sesquioleate"
+302993914938,cerave-intensive-moisturizing-lotion,name,different_reformulated,,,conflict,"ingredient overlap 0.12; allergen hits differ: sodium-benzoate,sorbitan-sesquioleate"
 302993917564,3499320013017,name,different_reformulated,,,conflict,"ingredient overlap 0.60; allergen hits differ: acrylates,propylene-glycol"
 302993923046-1,302993934035,name,different_reformulated,,,conflict,"ingredient overlap 0.06; allergen hits differ: decyl-glucoside,fragrance,gallates,mineral-uv-filters,phenoxyethanol,sodium-benzoate,sorbic-acid,tocopherol"
 302993923046-1,302993938064,name,different_reformulated,,,conflict,"ingredient overlap 0.05; allergen hits differ: acrylates,cocamidopropyl-betaine,gallates,laureth-sulfates,mineral-uv-filters,phenoxyethanol,sodium-benzoate"
@@ -912,27 +912,27 @@ id_a,id_b,method,tier,p_ab,p_ba,formula,notes
 3337875597180,3606000537576,name,flagged,0.880,0.930,minor,"ingredient overlap 0.81; lists differ: cetyl-alcohol, polysorbate-20"
 3337875597180,3606000537675,name,different_reformulated,,,conflict,"ingredient overlap 0.47; allergen hits differ: ethylhexylglycerin,parabens,phenoxyethanol,tocopherol"
 3337875597180,3606000577213,name,different_reformulated,,,conflict,"ingredient overlap 0.33; allergen hits differ: cocamidopropyl-betaine,mineral-uv-filters,sodium-benzoate"
-3337875597180,https://www.cerave.com/skincare/cleansers/facial-cleansers/hydrating-foaming-oil-cleanser,name,different_reformulated,,,conflict,"ingredient overlap 0.25; allergen hits differ: cetearyl-alcohol,cocamidopropyl-betaine,ethylhexylglycerin,phenoxyethanol,sodium-benzoate,tocopherol"
-3337875597180,https://www.cerave.com/skincare/cleansers/hydrating-cleanser-bar,name,different_reformulated,,,conflict,ingredient overlap 0.49; allergen hits differ: mineral-uv-filters
-3337875597180,https://www.cerave.com/skincare/cleansers/hydrating-cream-to-foam-cleanser,name,different_reformulated,,,conflict,"ingredient overlap 0.28; allergen hits differ: cocamidopropyl-betaine,coco-glucoside,mineral-uv-filters,sodium-benzoate,tocopherol"
-3337875597180,https://www.cerave.com/skincare/cleansers/hydrating-cream-to-foam-cleanser-refill,name,different_reformulated,,,conflict,"ingredient overlap 0.28; allergen hits differ: cocamidopropyl-betaine,coco-glucoside,mineral-uv-filters,sodium-benzoate,tocopherol"
-3337875597180,https://www.cerave.com/skincare/cleansers/hydrating-facial-cleanser,name,flagged,0.870,0.940,minor,"ingredient overlap 0.92; lists differ: cetyl-alcohol, polysorbate-20"
-3337875597180,https://www.cerave.com/skincare/cleansers/hydrating-facial-cleanser-refill,name,flagged,0.560,0.640,minor,"ingredient overlap 0.92; lists differ: cetyl-alcohol, polysorbate-20"
+3337875597180,cerave-hydrating-foaming-oil-cleanser,name,different_reformulated,,,conflict,"ingredient overlap 0.25; allergen hits differ: cetearyl-alcohol,cocamidopropyl-betaine,ethylhexylglycerin,phenoxyethanol,sodium-benzoate,tocopherol"
+3337875597180,cerave-hydrating-cleanser-bar,name,different_reformulated,,,conflict,ingredient overlap 0.49; allergen hits differ: mineral-uv-filters
+3337875597180,cerave-hydrating-cream-to-foam-cleanser,name,different_reformulated,,,conflict,"ingredient overlap 0.28; allergen hits differ: cocamidopropyl-betaine,coco-glucoside,mineral-uv-filters,sodium-benzoate,tocopherol"
+3337875597180,cerave-hydrating-cream-to-foam-cleanser-refill,name,different_reformulated,,,conflict,"ingredient overlap 0.28; allergen hits differ: cocamidopropyl-betaine,coco-glucoside,mineral-uv-filters,sodium-benzoate,tocopherol"
+3337875597180,cerave-hydrating-facial-cleanser,name,flagged,0.870,0.940,minor,"ingredient overlap 0.92; lists differ: cetyl-alcohol, polysorbate-20"
+3337875597180,cerave-hydrating-facial-cleanser-refill,name,flagged,0.560,0.640,minor,"ingredient overlap 0.92; lists differ: cetyl-alcohol, polysorbate-20"
 3337875597197,3337875597357,exact,different_reformulated,,,conflict,ingredient overlap 0.81; allergen hits differ: sodium-benzoate
 3337875597210,3606000537514,exact,different_reformulated,,,conflict,"ingredient overlap 0.85; allergen hits differ: sorbic-acid,tocopherol"
 3337875597210,3606000560239,name,different,0.140,0.150,minor,ingredient overlap 0.59
 3337875597210,3606000620988,name,different_reformulated,,,conflict,"ingredient overlap 0.30; allergen hits differ: ethylhexylglycerin,phenoxyethanol,sodium-benzoate,sorbitan-sesquioleate"
-3337875597210,https://www.cerave.com/skincare/moisturizers/daily-moisturizing-lotion,exact,auto,,,ok,ingredient overlap 1.00
-3337875597210,https://www.cerave.com/skincare/moisturizers/intensive-moisturizing-lotion,name,different_reformulated,,,conflict,"ingredient overlap 0.30; allergen hits differ: ethylhexylglycerin,phenoxyethanol,sodium-benzoate,sorbitan-sesquioleate"
-3337875597210,https://www.cerave.com/skincare/moisturizers/itch-relief-moisturizing-lotion,name,different_reformulated,,,conflict,ingredient overlap 0.48; allergen hits differ: pramoxine
+3337875597210,cerave-daily-moisturizing-lotion,exact,auto,,,ok,ingredient overlap 1.00
+3337875597210,cerave-intensive-moisturizing-lotion,name,different_reformulated,,,conflict,"ingredient overlap 0.30; allergen hits differ: ethylhexylglycerin,phenoxyethanol,sodium-benzoate,sorbitan-sesquioleate"
+3337875597210,cerave-itch-relief-moisturizing-lotion,name,different_reformulated,,,conflict,ingredient overlap 0.48; allergen hits differ: pramoxine
 3337875597470,3606000537422,name,different_reformulated,,,conflict,ingredient overlap 0.55; allergen hits differ: phenoxyethanol
 3337875597470,3606000537439,name,different_reformulated,,,conflict,ingredient overlap 0.59; free-from flags differ: alcohol-free
 3337875597470,3606000537743,name,different_reformulated,,,conflict,"ingredient overlap 0.39; allergen hits differ: ethylhexylglycerin,parabens,phenoxyethanol,tocopherol"
-3337875597470,https://www.cerave.com/skincare/moisturizers/eczema-relief-moisturizing-cream,name,different_reformulated,,,conflict,"ingredient overlap 0.30; allergen hits differ: ethylhexylglycerin,sodium-benzoate"
-3337875597470,https://www.cerave.com/skincare/moisturizers/facial-moisturizers/oil-control-moisturizing-gel-cream,name,different_reformulated,,,conflict,"ingredient overlap 0.24; allergen hits differ: ethylhexylglycerin,sodium-benzoate,tocopherol"
-3337875597470,https://www.cerave.com/skincare/moisturizers/intensive-moisturizing-cream,name,different_reformulated,,,conflict,"ingredient overlap 0.26; allergen hits differ: ethylhexylglycerin,phenoxyethanol,sodium-benzoate,tocopherol"
-3337875597470,https://www.cerave.com/skincare/moisturizers/moisturizing-cream,name,different_reformulated,,,conflict,ingredient overlap 0.58; free-from flags differ: alcohol-free
-3337875597470,https://www.cerave.com/skincare/moisturizers/moisturizing-cream-refill,name,different_reformulated,,,conflict,ingredient overlap 0.58; free-from flags differ: alcohol-free
+3337875597470,cerave-eczema-relief-moisturizing-cream,name,different_reformulated,,,conflict,"ingredient overlap 0.30; allergen hits differ: ethylhexylglycerin,sodium-benzoate"
+3337875597470,cerave-oil-control-moisturizing-gel-cream,name,different_reformulated,,,conflict,"ingredient overlap 0.24; allergen hits differ: ethylhexylglycerin,sodium-benzoate,tocopherol"
+3337875597470,cerave-intensive-moisturizing-cream,name,different_reformulated,,,conflict,"ingredient overlap 0.26; allergen hits differ: ethylhexylglycerin,phenoxyethanol,sodium-benzoate,tocopherol"
+3337875597470,cerave-moisturizing-cream,name,different_reformulated,,,conflict,ingredient overlap 0.58; free-from flags differ: alcohol-free
+3337875597470,cerave-moisturizing-cream-refill,name,different_reformulated,,,conflict,ingredient overlap 0.58; free-from flags differ: alcohol-free
 3337875696548,3337875763790,name,flagged,0.900,0.920,minor,"ingredient overlap 0.77; lists differ: brassica-campestris-seed-oil, brassica-campestris-seed-oil-rapeseed-seed-oil, butyrospermum-parkii-butter-shea-butter, shea-butter"
 3337875696548,3337875844543,name,different_reformulated,,,conflict,"ingredient overlap 0.40; allergen hits differ: acrylates,ethylhexylglycerin,phenoxyethanol,sodium-benzoate"
 3337875696548,3337875930338,name,different_reformulated,,,conflict,"ingredient overlap 0.26; allergen hits differ: acrylates,cocamidopropyl-betaine"
@@ -941,10 +941,10 @@ id_a,id_b,method,tier,p_ab,p_ba,formula,notes
 3337875743563,3606000537675,name,different_reformulated,,,conflict,"ingredient overlap 0.19; allergen hits differ: cocamidopropyl-betaine,coco-glucoside,ethylhexylglycerin,mineral-uv-filters,parabens,phenoxyethanol,sodium-benzoate"
 3337875743563,3606000559950,name,different_reformulated,,,conflict,ingredient overlap 0.88; allergen hits differ: fragrance
 3337875743563,3606000577213,name,different_reformulated,,,conflict,"ingredient overlap 0.53; allergen hits differ: coco-glucoside,tocopherol"
-3337875743563,https://www.cerave.com/skincare/cleansers/hydrating-cream-to-foam-cleanser,name,auto,0.980,0.980,ok,ingredient overlap 0.95
-3337875743563,https://www.cerave.com/skincare/cleansers/hydrating-cream-to-foam-cleanser-refill,name,flagged,0.690,0.720,ok,ingredient overlap 0.95
-3337875743563,https://www.cerave.com/skincare/cleansers/hydrating-facial-cleanser,name,different_reformulated,,,conflict,"ingredient overlap 0.29; allergen hits differ: cocamidopropyl-betaine,coco-glucoside,mineral-uv-filters,sodium-benzoate,tocopherol"
-3337875743563,https://www.cerave.com/skincare/cleansers/hydrating-facial-cleanser-refill,name,different_reformulated,,,conflict,"ingredient overlap 0.29; allergen hits differ: cocamidopropyl-betaine,coco-glucoside,mineral-uv-filters,sodium-benzoate,tocopherol"
+3337875743563,cerave-hydrating-cream-to-foam-cleanser,name,auto,0.980,0.980,ok,ingredient overlap 0.95
+3337875743563,cerave-hydrating-cream-to-foam-cleanser-refill,name,flagged,0.690,0.720,ok,ingredient overlap 0.95
+3337875743563,cerave-hydrating-facial-cleanser,name,different_reformulated,,,conflict,"ingredient overlap 0.29; allergen hits differ: cocamidopropyl-betaine,coco-glucoside,mineral-uv-filters,sodium-benzoate,tocopherol"
+3337875743563,cerave-hydrating-facial-cleanser-refill,name,different_reformulated,,,conflict,"ingredient overlap 0.29; allergen hits differ: cocamidopropyl-betaine,coco-glucoside,mineral-uv-filters,sodium-benzoate,tocopherol"
 3337875763790,3337875844543,name,different_reformulated,,,conflict,"ingredient overlap 0.44; allergen hits differ: acrylates,ethylhexylglycerin,phenoxyethanol,sodium-benzoate"
 3337875763790,3337875930338,name,different_reformulated,,,conflict,"ingredient overlap 0.27; allergen hits differ: acrylates,cocamidopropyl-betaine"
 3337875784054,49967-138,name,different_reformulated,,,conflict,ingredient overlap 0.45
@@ -954,18 +954,18 @@ id_a,id_b,method,tier,p_ab,p_ba,formula,notes
 3337875784054,68726-439,name,different_reformulated,,,conflict,"ingredient overlap 0.03; allergen hits differ: acrylates,sodium-benzoate,sorbitan-sesquioleate,tocopherol"
 3337875784054,75897-112,name,different_reformulated,,,conflict,ingredient overlap 0.42
 3337875784054,76354-417,name,different_reformulated,,,conflict,"ingredient overlap 0.14; allergen hits differ: cetearyl-alcohol,chromium,cocamidopropyl-betaine,ethylhexylglycerin,phenoxyethanol,tocopherol"
-3337875784054,https://www.cerave.com/skincare/cleansers/acne-salicylic-acid-cleanser,name,different_reformulated,,,conflict,ingredient overlap 0.48
+3337875784054,cerave-acne-salicylic-acid-cleanser,name,different_reformulated,,,conflict,ingredient overlap 0.48
 3337875795456,3606000560994,name,flagged,0.350,0.610,minor,ingredient overlap 0.73
-3337875795456,https://www.cerave.com/skincare/cleansers/renewing-sa-cleanser,name,flagged,0.420,0.730,minor,"ingredient overlap 0.82; lists differ: cholecalciferol, hydrolyzed-hyaluronic-acid, sodium-chloride, zea-mays-oil-corn-oil"
-3337875795456,https://www.cerave.com/skincare/cleansers/sa-body-wash-for-rough-and-bumpy-skin,name,flagged,0.190,0.790,minor,"ingredient overlap 0.82; lists differ: cholecalciferol, hydrolyzed-hyaluronic-acid, sodium-chloride, zea-mays-oil-corn-oil"
-3337875795456,https://www.cerave.com/skincare/cleansers/sa-cleanser-bar-for-rough-and-bumpy-skin,name,different_reformulated,,,conflict,"ingredient overlap 0.37; allergen hits differ: cetearyl-alcohol,mineral-uv-filters,sodium-benzoate,tocopherol"
+3337875795456,cerave-renewing-sa-cleanser,name,flagged,0.420,0.730,minor,"ingredient overlap 0.82; lists differ: cholecalciferol, hydrolyzed-hyaluronic-acid, sodium-chloride, zea-mays-oil-corn-oil"
+3337875795456,cerave-sa-body-wash-for-rough-and-bumpy-skin,name,flagged,0.190,0.790,minor,"ingredient overlap 0.82; lists differ: cholecalciferol, hydrolyzed-hyaluronic-acid, sodium-chloride, zea-mays-oil-corn-oil"
+3337875795456,cerave-sa-cleanser-bar-for-rough-and-bumpy-skin,name,different_reformulated,,,conflict,"ingredient overlap 0.37; allergen hits differ: cetearyl-alcohol,mineral-uv-filters,sodium-benzoate,tocopherol"
 3337875816847,49967-744,name,different_reformulated,,,conflict,ingredient overlap 0.75; allergen hits differ: phenoxyethanol
 3337875816847,69625-743,name,different_reformulated,,,conflict,ingredient overlap 0.70; allergen hits differ: phenoxyethanol
-3337875829007,https://www.cerave.com/skincare/facial-serums/resurfacing-retinol-serum,name,flagged,0.920,0.940,ok,ingredient overlap 0.91; review rules say keep_separate
+3337875829007,cerave-resurfacing-retinol-serum,name,flagged,0.920,0.940,ok,ingredient overlap 0.91; review rules say keep_separate
 3337875952866,3606000538078,name,different_reformulated,,,conflict,"ingredient overlap 0.23; allergen hits differ: parabens,sodium-benzoate,tocopherol"
-3337875952866,https://www.cerave.com/skincare/moisturizers/eye-repair-cream,name,different_reformulated,,,conflict,"ingredient overlap 0.25; allergen hits differ: ethylhexylglycerin,sodium-benzoate,sorbic-acid,tocopherol"
-3337875952866,https://www.cerave.com/skincare/moisturizers/facial-moisturizers/skin-renewing-eye-cream,exact,flagged,,,minor,"ingredient overlap 0.75; lists differ: cetearyl-alcohol, niacinamide-cetearyl-alcohol"
-3337875952866,https://www.cerave.com/skincare/moisturizers/facial-moisturizers/skin-renewing-vitamin-c-eye-cream,name,different_reformulated,,,conflict,"ingredient overlap 0.39; allergen hits differ: other-alkyl-glucosides,tocopherol"
+3337875952866,cerave-eye-repair-cream,name,different_reformulated,,,conflict,"ingredient overlap 0.25; allergen hits differ: ethylhexylglycerin,sodium-benzoate,sorbic-acid,tocopherol"
+3337875952866,cerave-skin-renewing-eye-cream,exact,flagged,,,minor,"ingredient overlap 0.75; lists differ: cetearyl-alcohol, niacinamide-cetearyl-alcohol"
+3337875952866,cerave-skin-renewing-vitamin-c-eye-cream,name,different_reformulated,,,conflict,"ingredient overlap 0.39; allergen hits differ: other-alkyl-glucosides,tocopherol"
 3383482295810,3383482307711,name,different_reformulated,,,conflict,"ingredient overlap 0.47; allergen hits differ: linalool,sorbic-acid"
 33992-0498,33992-0499,exact,different_reformulated,,,conflict,ingredient overlap 0.72; free-from flags differ: peg-free
 33992-3036,58503-115,name,different,0.330,0.480,ok,ingredient overlap 1.00
@@ -1046,90 +1046,90 @@ id_a,id_b,method,tier,p_ab,p_ba,formula,notes
 3600551135939,8809925134911,name,different_reformulated,,,conflict,"ingredient overlap 0.05; allergen hits differ: cetearyl-alcohol,ethylhexylglycerin,fragrance,other-alkyl-glucosides,phenoxyethanol"
 3606000512238,49967-238,name,flagged,0.660,0.810,ok,ingredient overlap 1.00
 3606000512238,49967-604,name,different_reformulated,,,conflict,"ingredient overlap 0.70; allergen hits differ: ethylhexylglycerin,phenoxyethanol"
-3606000512238,https://www.cerave.com/skincare/cleansers/acne-benzoyl-peroxide-cleanser,exact,auto,,,ok,ingredient overlap 1.00
-3606000512238,https://www.cerave.com/skincare/cleansers/acne-salicylic-acid-cleanser,name,different_reformulated,,,conflict,"ingredient overlap 0.38; allergen hits differ: ethylhexylglycerin,phenoxyethanol,propylene-glycol"
-3606000512238,https://www.cerave.com/skincare/cleansers/facial-cleansers/-acne-foaming-cream-wash-,name,different_reformulated,,,conflict,"ingredient overlap 0.73; allergen hits differ: ethylhexylglycerin,phenoxyethanol"
-3606000512238,https://www.cerave.com/skincare/cleansers/foaming-facial-cleanser,name,different_reformulated,,,conflict,"ingredient overlap 0.44; allergen hits differ: ethylhexylglycerin,parabens,phenoxyethanol,sodium-benzoate"
+3606000512238,cerave-acne-benzoyl-peroxide-cleanser,exact,auto,,,ok,ingredient overlap 1.00
+3606000512238,cerave-acne-salicylic-acid-cleanser,name,different_reformulated,,,conflict,"ingredient overlap 0.38; allergen hits differ: ethylhexylglycerin,phenoxyethanol,propylene-glycol"
+3606000512238,cerave-acne-foaming-cream-wash,name,different_reformulated,,,conflict,"ingredient overlap 0.73; allergen hits differ: ethylhexylglycerin,phenoxyethanol"
+3606000512238,cerave-foaming-facial-cleanser,name,different_reformulated,,,conflict,"ingredient overlap 0.44; allergen hits differ: ethylhexylglycerin,parabens,phenoxyethanol,sodium-benzoate"
 3606000534797,3606000560239,name,different_reformulated,,,conflict,"ingredient overlap 0.49; allergen hits differ: ethylhexylglycerin,parabens,phenoxyethanol,tocopherol"
-3606000537316,https://www.cerave.com/skincare/facial-serums/resurfacing-retinol-serum,name,different_reformulated,,,conflict,"ingredient overlap 0.52; allergen hits differ: sodium-benzoate,tocopherol"
-3606000537316,https://www.cerave.com/skincare/facial-serums/skin-renewing-retinol-serum,name,different_reformulated,,,conflict,ingredient overlap 0.71; allergen hits differ: sodium-benzoate
-3606000537316,https://www.cerave.com/skincare/facial-serums/skin-renewing-super-boost-serum,name,different_reformulated,,,conflict,ingredient overlap 0.36; allergen hits differ: ethylhexylglycerin
-3606000537316,https://www.cerave.com/skincare/facial-serums/skin-renewing-vitamin-c-serum,name,different_reformulated,,,conflict,ingredient overlap 0.35; allergen hits differ: sodium-benzoate
+3606000537316,cerave-resurfacing-retinol-serum,name,different_reformulated,,,conflict,"ingredient overlap 0.52; allergen hits differ: sodium-benzoate,tocopherol"
+3606000537316,cerave-skin-renewing-retinol-serum,name,different_reformulated,,,conflict,ingredient overlap 0.71; allergen hits differ: sodium-benzoate
+3606000537316,cerave-skin-renewing-super-boost-serum,name,different_reformulated,,,conflict,ingredient overlap 0.36; allergen hits differ: ethylhexylglycerin
+3606000537316,cerave-skin-renewing-vitamin-c-serum,name,different_reformulated,,,conflict,ingredient overlap 0.35; allergen hits differ: sodium-benzoate
 3606000537422,3606000537439,name,different_reformulated,,,conflict,ingredient overlap 0.92; allergen hits differ: phenoxyethanol
 3606000537422,3606000537743,name,different_reformulated,,,conflict,"ingredient overlap 0.55; allergen hits differ: ethylhexylglycerin,parabens,tocopherol"
-3606000537422,https://www.cerave.com/skincare/moisturizers/eczema-relief-moisturizing-cream,name,different_reformulated,,,conflict,"ingredient overlap 0.40; allergen hits differ: ethylhexylglycerin,phenoxyethanol,sodium-benzoate"
-3606000537422,https://www.cerave.com/skincare/moisturizers/facial-moisturizers/oil-control-moisturizing-gel-cream,name,different_reformulated,,,conflict,"ingredient overlap 0.38; allergen hits differ: ethylhexylglycerin,phenoxyethanol,sodium-benzoate,tocopherol"
-3606000537422,https://www.cerave.com/skincare/moisturizers/intensive-moisturizing-cream,name,different_reformulated,,,conflict,"ingredient overlap 0.35; allergen hits differ: ethylhexylglycerin,sodium-benzoate,tocopherol"
-3606000537422,https://www.cerave.com/skincare/moisturizers/moisturizing-cream,name,different_reformulated,,,conflict,ingredient overlap 0.88; allergen hits differ: phenoxyethanol
-3606000537422,https://www.cerave.com/skincare/moisturizers/moisturizing-cream-refill,name,different_reformulated,,,conflict,ingredient overlap 0.88; allergen hits differ: phenoxyethanol
+3606000537422,cerave-eczema-relief-moisturizing-cream,name,different_reformulated,,,conflict,"ingredient overlap 0.40; allergen hits differ: ethylhexylglycerin,phenoxyethanol,sodium-benzoate"
+3606000537422,cerave-oil-control-moisturizing-gel-cream,name,different_reformulated,,,conflict,"ingredient overlap 0.38; allergen hits differ: ethylhexylglycerin,phenoxyethanol,sodium-benzoate,tocopherol"
+3606000537422,cerave-intensive-moisturizing-cream,name,different_reformulated,,,conflict,"ingredient overlap 0.35; allergen hits differ: ethylhexylglycerin,sodium-benzoate,tocopherol"
+3606000537422,cerave-moisturizing-cream,name,different_reformulated,,,conflict,ingredient overlap 0.88; allergen hits differ: phenoxyethanol
+3606000537422,cerave-moisturizing-cream-refill,name,different_reformulated,,,conflict,ingredient overlap 0.88; allergen hits differ: phenoxyethanol
 3606000537439,3606000537743,name,different_reformulated,,,conflict,"ingredient overlap 0.60; allergen hits differ: ethylhexylglycerin,parabens,phenoxyethanol,tocopherol"
-3606000537439,https://www.cerave.com/skincare/moisturizers/eczema-relief-moisturizing-cream,name,different_reformulated,,,conflict,"ingredient overlap 0.44; allergen hits differ: ethylhexylglycerin,sodium-benzoate"
-3606000537439,https://www.cerave.com/skincare/moisturizers/facial-moisturizers/oil-control-moisturizing-gel-cream,name,different_reformulated,,,conflict,"ingredient overlap 0.38; allergen hits differ: ethylhexylglycerin,sodium-benzoate,tocopherol"
-3606000537439,https://www.cerave.com/skincare/moisturizers/intensive-moisturizing-cream,name,different_reformulated,,,conflict,"ingredient overlap 0.38; allergen hits differ: ethylhexylglycerin,phenoxyethanol,sodium-benzoate,tocopherol"
-3606000537439,https://www.cerave.com/skincare/moisturizers/moisturizing-cream,name,flagged,0.790,0.950,minor,ingredient overlap 0.96; lists differ: cetyl-alcohol
-3606000537439,https://www.cerave.com/skincare/moisturizers/moisturizing-cream-refill,name,flagged,0.630,0.720,minor,ingredient overlap 0.96; lists differ: cetyl-alcohol
+3606000537439,cerave-eczema-relief-moisturizing-cream,name,different_reformulated,,,conflict,"ingredient overlap 0.44; allergen hits differ: ethylhexylglycerin,sodium-benzoate"
+3606000537439,cerave-oil-control-moisturizing-gel-cream,name,different_reformulated,,,conflict,"ingredient overlap 0.38; allergen hits differ: ethylhexylglycerin,sodium-benzoate,tocopherol"
+3606000537439,cerave-intensive-moisturizing-cream,name,different_reformulated,,,conflict,"ingredient overlap 0.38; allergen hits differ: ethylhexylglycerin,phenoxyethanol,sodium-benzoate,tocopherol"
+3606000537439,cerave-moisturizing-cream,name,flagged,0.790,0.950,minor,ingredient overlap 0.96; lists differ: cetyl-alcohol
+3606000537439,cerave-moisturizing-cream-refill,name,flagged,0.630,0.720,minor,ingredient overlap 0.96; lists differ: cetyl-alcohol
 3606000537514,3606000560239,name,different_reformulated,,,conflict,"ingredient overlap 0.50; allergen hits differ: sorbic-acid,tocopherol"
 3606000537514,3606000620988,name,different_reformulated,,,conflict,"ingredient overlap 0.24; allergen hits differ: ethylhexylglycerin,phenoxyethanol,sodium-benzoate,sorbic-acid,sorbitan-sesquioleate,tocopherol"
-3606000537514,https://www.cerave.com/skincare/moisturizers/daily-moisturizing-lotion,name,different_reformulated,,,conflict,"ingredient overlap 0.85; allergen hits differ: sorbic-acid,tocopherol"
-3606000537514,https://www.cerave.com/skincare/moisturizers/intensive-moisturizing-lotion,name,different_reformulated,,,conflict,"ingredient overlap 0.24; allergen hits differ: ethylhexylglycerin,phenoxyethanol,sodium-benzoate,sorbic-acid,sorbitan-sesquioleate,tocopherol"
-3606000537514,https://www.cerave.com/skincare/moisturizers/itch-relief-moisturizing-lotion,name,different_reformulated,,,conflict,"ingredient overlap 0.50; allergen hits differ: pramoxine,sorbic-acid,tocopherol"
+3606000537514,cerave-daily-moisturizing-lotion,name,different_reformulated,,,conflict,"ingredient overlap 0.85; allergen hits differ: sorbic-acid,tocopherol"
+3606000537514,cerave-intensive-moisturizing-lotion,name,different_reformulated,,,conflict,"ingredient overlap 0.24; allergen hits differ: ethylhexylglycerin,phenoxyethanol,sodium-benzoate,sorbic-acid,sorbitan-sesquioleate,tocopherol"
+3606000537514,cerave-itch-relief-moisturizing-lotion,name,different_reformulated,,,conflict,"ingredient overlap 0.50; allergen hits differ: pramoxine,sorbic-acid,tocopherol"
 3606000537576,3606000537675,exact,different_reformulated,,,conflict,"ingredient overlap 0.52; allergen hits differ: ethylhexylglycerin,parabens,phenoxyethanol,tocopherol"
 3606000537576,3606000577213,name,different_reformulated,,,conflict,"ingredient overlap 0.31; allergen hits differ: cocamidopropyl-betaine,mineral-uv-filters,sodium-benzoate"
-3606000537576,https://www.cerave.com/skincare/cleansers/air-foam-foaming-facial-cleanser,name,different_reformulated,,,conflict,"ingredient overlap 0.24; allergen hits differ: cetearyl-alcohol,cocamidopropyl-betaine,ethylhexylglycerin,phenoxyethanol,sodium-benzoate,tocopherol"
-3606000537576,https://www.cerave.com/skincare/cleansers/facial-cleansers/hydrating-foaming-oil-cleanser,name,different_reformulated,,,conflict,"ingredient overlap 0.26; allergen hits differ: cetearyl-alcohol,cocamidopropyl-betaine,ethylhexylglycerin,phenoxyethanol,sodium-benzoate,tocopherol"
-3606000537576,https://www.cerave.com/skincare/cleansers/foaming-facial-cleanser,name,different_reformulated,,,conflict,"ingredient overlap 0.29; allergen hits differ: cetearyl-alcohol,ethylhexylglycerin,parabens,phenoxyethanol,propylene-glycol,tocopherol"
-3606000537576,https://www.cerave.com/skincare/cleansers/hydrating-cleanser-bar,name,different_reformulated,,,conflict,ingredient overlap 0.45; allergen hits differ: mineral-uv-filters
-3606000537576,https://www.cerave.com/skincare/cleansers/hydrating-cream-to-foam-cleanser,name,different_reformulated,,,conflict,"ingredient overlap 0.27; allergen hits differ: cocamidopropyl-betaine,coco-glucoside,mineral-uv-filters,sodium-benzoate,tocopherol"
-3606000537576,https://www.cerave.com/skincare/cleansers/hydrating-cream-to-foam-cleanser-refill,name,different_reformulated,,,conflict,"ingredient overlap 0.27; allergen hits differ: cocamidopropyl-betaine,coco-glucoside,mineral-uv-filters,sodium-benzoate,tocopherol"
-3606000537576,https://www.cerave.com/skincare/cleansers/hydrating-facial-cleanser,exact,auto,,,ok,ingredient overlap 0.88
-3606000537576,https://www.cerave.com/skincare/cleansers/hydrating-facial-cleanser-refill,name,flagged,0.660,0.610,ok,ingredient overlap 0.88
-3606000537576,https://www.cerave.com/skincare/moisturizers/facial-moisturizers/hydrating-hyaluronic-acid-water-gel,name,different_reformulated,,,conflict,"ingredient overlap 0.37; allergen hits differ: ethylhexylglycerin,sodium-benzoate"
+3606000537576,cerave-air-foam-foaming-facial-cleanser,name,different_reformulated,,,conflict,"ingredient overlap 0.24; allergen hits differ: cetearyl-alcohol,cocamidopropyl-betaine,ethylhexylglycerin,phenoxyethanol,sodium-benzoate,tocopherol"
+3606000537576,cerave-hydrating-foaming-oil-cleanser,name,different_reformulated,,,conflict,"ingredient overlap 0.26; allergen hits differ: cetearyl-alcohol,cocamidopropyl-betaine,ethylhexylglycerin,phenoxyethanol,sodium-benzoate,tocopherol"
+3606000537576,cerave-foaming-facial-cleanser,name,different_reformulated,,,conflict,"ingredient overlap 0.29; allergen hits differ: cetearyl-alcohol,ethylhexylglycerin,parabens,phenoxyethanol,propylene-glycol,tocopherol"
+3606000537576,cerave-hydrating-cleanser-bar,name,different_reformulated,,,conflict,ingredient overlap 0.45; allergen hits differ: mineral-uv-filters
+3606000537576,cerave-hydrating-cream-to-foam-cleanser,name,different_reformulated,,,conflict,"ingredient overlap 0.27; allergen hits differ: cocamidopropyl-betaine,coco-glucoside,mineral-uv-filters,sodium-benzoate,tocopherol"
+3606000537576,cerave-hydrating-cream-to-foam-cleanser-refill,name,different_reformulated,,,conflict,"ingredient overlap 0.27; allergen hits differ: cocamidopropyl-betaine,coco-glucoside,mineral-uv-filters,sodium-benzoate,tocopherol"
+3606000537576,cerave-hydrating-facial-cleanser,exact,auto,,,ok,ingredient overlap 0.88
+3606000537576,cerave-hydrating-facial-cleanser-refill,name,flagged,0.660,0.610,ok,ingredient overlap 0.88
+3606000537576,cerave-hydrating-hyaluronic-acid-water-gel,name,different_reformulated,,,conflict,"ingredient overlap 0.37; allergen hits differ: ethylhexylglycerin,sodium-benzoate"
 3606000537583,3606000538078,name,different_reformulated,,,conflict,ingredient overlap 0.62; free-from flags differ: mineral-oil-free
-3606000537583,https://www.cerave.com/skincare/cleansers/sa-body-wash-for-rough-and-bumpy-skin,name,different_reformulated,,,conflict,"ingredient overlap 0.38; allergen hits differ: cetearyl-alcohol,ethylhexylglycerin,parabens,sodium-benzoate,tocopherol"
-3606000537583,https://www.cerave.com/skincare/moisturizers/sa-cream-for-rough-and-bumpy-skin,name,different_reformulated,,,conflict,ingredient overlap 0.75; free-from flags differ: mineral-oil-free
-3606000537606,https://www.cerave.com/skincare/moisturizers/skin-renewing-night-cream,name,auto,0.980,0.980,ok,ingredient overlap 1.00
+3606000537583,cerave-sa-body-wash-for-rough-and-bumpy-skin,name,different_reformulated,,,conflict,"ingredient overlap 0.38; allergen hits differ: cetearyl-alcohol,ethylhexylglycerin,parabens,sodium-benzoate,tocopherol"
+3606000537583,cerave-sa-cream-for-rough-and-bumpy-skin,name,different_reformulated,,,conflict,ingredient overlap 0.75; free-from flags differ: mineral-oil-free
+3606000537606,cerave-skin-renewing-night-cream,name,auto,0.980,0.980,ok,ingredient overlap 1.00
 3606000537675,3606000577213,name,different_reformulated,,,conflict,"ingredient overlap 0.22; allergen hits differ: cocamidopropyl-betaine,ethylhexylglycerin,mineral-uv-filters,parabens,phenoxyethanol,sodium-benzoate,tocopherol"
-3606000537675,https://www.cerave.com/skincare/cleansers/air-foam-foaming-facial-cleanser,name,different_reformulated,,,conflict,"ingredient overlap 0.23; allergen hits differ: cetearyl-alcohol,cocamidopropyl-betaine,parabens,sodium-benzoate"
-3606000537675,https://www.cerave.com/skincare/cleansers/facial-cleansers/hydrating-foaming-oil-cleanser,name,different_reformulated,,,conflict,"ingredient overlap 0.25; allergen hits differ: cetearyl-alcohol,cocamidopropyl-betaine,parabens,sodium-benzoate"
-3606000537675,https://www.cerave.com/skincare/cleansers/foaming-facial-cleanser,name,different_reformulated,,,conflict,"ingredient overlap 0.35; allergen hits differ: cetearyl-alcohol,propylene-glycol"
-3606000537675,https://www.cerave.com/skincare/cleansers/hydrating-cleanser-bar,name,different_reformulated,,,conflict,"ingredient overlap 0.38; allergen hits differ: ethylhexylglycerin,mineral-uv-filters,parabens,phenoxyethanol,tocopherol"
-3606000537675,https://www.cerave.com/skincare/cleansers/hydrating-cream-to-foam-cleanser,name,different_reformulated,,,conflict,"ingredient overlap 0.19; allergen hits differ: cocamidopropyl-betaine,coco-glucoside,ethylhexylglycerin,mineral-uv-filters,parabens,phenoxyethanol,sodium-benzoate"
-3606000537675,https://www.cerave.com/skincare/cleansers/hydrating-cream-to-foam-cleanser-refill,name,different_reformulated,,,conflict,"ingredient overlap 0.19; allergen hits differ: cocamidopropyl-betaine,coco-glucoside,ethylhexylglycerin,mineral-uv-filters,parabens,phenoxyethanol,sodium-benzoate"
-3606000537675,https://www.cerave.com/skincare/cleansers/hydrating-facial-cleanser,name,different_reformulated,,,conflict,"ingredient overlap 0.53; allergen hits differ: ethylhexylglycerin,parabens,phenoxyethanol,tocopherol"
-3606000537675,https://www.cerave.com/skincare/cleansers/hydrating-facial-cleanser-refill,name,different_reformulated,,,conflict,"ingredient overlap 0.53; allergen hits differ: ethylhexylglycerin,parabens,phenoxyethanol,tocopherol"
-3606000537675,https://www.cerave.com/skincare/moisturizers/facial-moisturizers/hydrating-hyaluronic-acid-water-gel,name,different_reformulated,,,conflict,"ingredient overlap 0.26; allergen hits differ: parabens,phenoxyethanol,sodium-benzoate,tocopherol"
-3606000537712,https://www.cerave.com/skincare/cleansers/sa-body-wash-for-rough-and-bumpy-skin,name,different_reformulated,,,conflict,"ingredient overlap 0.36; allergen hits differ: cetearyl-alcohol,ethylhexylglycerin,parabens,phenoxyethanol,sodium-benzoate"
-3606000537712,https://www.cerave.com/skincare/moisturizers/sa-lotion-for-rough-and-bumpy-skin,name,flagged,0.960,0.940,minor,"ingredient overlap 0.86; lists differ: mineral-oil, paraffinum-liquidum-mineral-oil-huile-minerale, zea-mays-oil, zea-mays-oil-corn-oil"
-3606000537743,https://www.cerave.com/skincare/moisturizers/eczema-relief-moisturizing-cream,name,different_reformulated,,,conflict,"ingredient overlap 0.32; allergen hits differ: parabens,phenoxyethanol,sodium-benzoate,tocopherol"
-3606000537743,https://www.cerave.com/skincare/moisturizers/facial-moisturizers/oil-control-moisturizing-gel-cream,name,different_reformulated,,,conflict,"ingredient overlap 0.29; allergen hits differ: parabens,phenoxyethanol,sodium-benzoate"
-3606000537743,https://www.cerave.com/skincare/moisturizers/intensive-moisturizing-cream,name,different_reformulated,,,conflict,"ingredient overlap 0.36; allergen hits differ: parabens,sodium-benzoate"
-3606000537743,https://www.cerave.com/skincare/moisturizers/moisturizing-cream,name,different_reformulated,,,conflict,"ingredient overlap 0.63; allergen hits differ: ethylhexylglycerin,parabens,phenoxyethanol,tocopherol"
-3606000537743,https://www.cerave.com/skincare/moisturizers/moisturizing-cream-refill,name,different_reformulated,,,conflict,"ingredient overlap 0.63; allergen hits differ: ethylhexylglycerin,parabens,phenoxyethanol,tocopherol"
+3606000537675,cerave-air-foam-foaming-facial-cleanser,name,different_reformulated,,,conflict,"ingredient overlap 0.23; allergen hits differ: cetearyl-alcohol,cocamidopropyl-betaine,parabens,sodium-benzoate"
+3606000537675,cerave-hydrating-foaming-oil-cleanser,name,different_reformulated,,,conflict,"ingredient overlap 0.25; allergen hits differ: cetearyl-alcohol,cocamidopropyl-betaine,parabens,sodium-benzoate"
+3606000537675,cerave-foaming-facial-cleanser,name,different_reformulated,,,conflict,"ingredient overlap 0.35; allergen hits differ: cetearyl-alcohol,propylene-glycol"
+3606000537675,cerave-hydrating-cleanser-bar,name,different_reformulated,,,conflict,"ingredient overlap 0.38; allergen hits differ: ethylhexylglycerin,mineral-uv-filters,parabens,phenoxyethanol,tocopherol"
+3606000537675,cerave-hydrating-cream-to-foam-cleanser,name,different_reformulated,,,conflict,"ingredient overlap 0.19; allergen hits differ: cocamidopropyl-betaine,coco-glucoside,ethylhexylglycerin,mineral-uv-filters,parabens,phenoxyethanol,sodium-benzoate"
+3606000537675,cerave-hydrating-cream-to-foam-cleanser-refill,name,different_reformulated,,,conflict,"ingredient overlap 0.19; allergen hits differ: cocamidopropyl-betaine,coco-glucoside,ethylhexylglycerin,mineral-uv-filters,parabens,phenoxyethanol,sodium-benzoate"
+3606000537675,cerave-hydrating-facial-cleanser,name,different_reformulated,,,conflict,"ingredient overlap 0.53; allergen hits differ: ethylhexylglycerin,parabens,phenoxyethanol,tocopherol"
+3606000537675,cerave-hydrating-facial-cleanser-refill,name,different_reformulated,,,conflict,"ingredient overlap 0.53; allergen hits differ: ethylhexylglycerin,parabens,phenoxyethanol,tocopherol"
+3606000537675,cerave-hydrating-hyaluronic-acid-water-gel,name,different_reformulated,,,conflict,"ingredient overlap 0.26; allergen hits differ: parabens,phenoxyethanol,sodium-benzoate,tocopherol"
+3606000537712,cerave-sa-body-wash-for-rough-and-bumpy-skin,name,different_reformulated,,,conflict,"ingredient overlap 0.36; allergen hits differ: cetearyl-alcohol,ethylhexylglycerin,parabens,phenoxyethanol,sodium-benzoate"
+3606000537712,cerave-sa-lotion-for-rough-and-bumpy-skin,name,flagged,0.960,0.940,minor,"ingredient overlap 0.86; lists differ: mineral-oil, paraffinum-liquidum-mineral-oil-huile-minerale, zea-mays-oil, zea-mays-oil-corn-oil"
+3606000537743,cerave-eczema-relief-moisturizing-cream,name,different_reformulated,,,conflict,"ingredient overlap 0.32; allergen hits differ: parabens,phenoxyethanol,sodium-benzoate,tocopherol"
+3606000537743,cerave-oil-control-moisturizing-gel-cream,name,different_reformulated,,,conflict,"ingredient overlap 0.29; allergen hits differ: parabens,phenoxyethanol,sodium-benzoate"
+3606000537743,cerave-intensive-moisturizing-cream,name,different_reformulated,,,conflict,"ingredient overlap 0.36; allergen hits differ: parabens,sodium-benzoate"
+3606000537743,cerave-moisturizing-cream,name,different_reformulated,,,conflict,"ingredient overlap 0.63; allergen hits differ: ethylhexylglycerin,parabens,phenoxyethanol,tocopherol"
+3606000537743,cerave-moisturizing-cream-refill,name,different_reformulated,,,conflict,"ingredient overlap 0.63; allergen hits differ: ethylhexylglycerin,parabens,phenoxyethanol,tocopherol"
 3606000538078,3606000560994,name,different_reformulated,,,conflict,"ingredient overlap 0.40; allergen hits differ: cetearyl-alcohol,ethylhexylglycerin,parabens,sodium-benzoate,tocopherol"
-3606000538078,https://www.cerave.com/skincare/cleansers/renewing-sa-cleanser,name,different_reformulated,,,conflict,"ingredient overlap 0.41; allergen hits differ: cetearyl-alcohol,ethylhexylglycerin,parabens,sodium-benzoate,tocopherol"
-3606000538078,https://www.cerave.com/skincare/moisturizers/facial-moisturizers/skin-renewing-eye-cream,name,different_reformulated,,,conflict,"ingredient overlap 0.30; allergen hits differ: parabens,sodium-benzoate,tocopherol"
-3606000538078,https://www.cerave.com/skincare/moisturizers/facial-moisturizers/skin-renewing-vitamin-c-eye-cream,name,different_reformulated,,,conflict,"ingredient overlap 0.32; allergen hits differ: other-alkyl-glucosides,parabens,sodium-benzoate"
-3606000538078,https://www.cerave.com/skincare/moisturizers/sa-cream-for-rough-and-bumpy-skin,name,flagged,0.880,0.740,minor,"ingredient overlap 0.78; lists differ: paraffinum-liquidum, paraffinum-liquidum-mineral-oil-huile-minerale, zea-mays-oil, zea-mays-oil-corn-oil"
+3606000538078,cerave-renewing-sa-cleanser,name,different_reformulated,,,conflict,"ingredient overlap 0.41; allergen hits differ: cetearyl-alcohol,ethylhexylglycerin,parabens,sodium-benzoate,tocopherol"
+3606000538078,cerave-skin-renewing-eye-cream,name,different_reformulated,,,conflict,"ingredient overlap 0.30; allergen hits differ: parabens,sodium-benzoate,tocopherol"
+3606000538078,cerave-skin-renewing-vitamin-c-eye-cream,name,different_reformulated,,,conflict,"ingredient overlap 0.32; allergen hits differ: other-alkyl-glucosides,parabens,sodium-benzoate"
+3606000538078,cerave-sa-cream-for-rough-and-bumpy-skin,name,flagged,0.880,0.740,minor,"ingredient overlap 0.78; lists differ: paraffinum-liquidum, paraffinum-liquidum-mineral-oil-huile-minerale, zea-mays-oil, zea-mays-oil-corn-oil"
 3606000559950,3606000577213,name,different_reformulated,,,conflict,"ingredient overlap 0.50; allergen hits differ: coco-glucoside,fragrance,tocopherol"
-3606000559950,https://www.cerave.com/skincare/cleansers/hydrating-cream-to-foam-cleanser,name,different_reformulated,,,conflict,ingredient overlap 0.89; allergen hits differ: fragrance
-3606000559950,https://www.cerave.com/skincare/cleansers/hydrating-cream-to-foam-cleanser-refill,name,different_reformulated,,,conflict,ingredient overlap 0.89; allergen hits differ: fragrance
+3606000559950,cerave-hydrating-cream-to-foam-cleanser,name,different_reformulated,,,conflict,ingredient overlap 0.89; allergen hits differ: fragrance
+3606000559950,cerave-hydrating-cream-to-foam-cleanser-refill,name,different_reformulated,,,conflict,ingredient overlap 0.89; allergen hits differ: fragrance
 3606000560239,3606000620988,name,different_reformulated,,,conflict,"ingredient overlap 0.25; allergen hits differ: ethylhexylglycerin,phenoxyethanol,sodium-benzoate,sorbitan-sesquioleate"
-3606000560239,https://www.cerave.com/skincare/moisturizers/daily-moisturizing-lotion,name,different,0.220,0.170,minor,ingredient overlap 0.59
-3606000560239,https://www.cerave.com/skincare/moisturizers/intensive-moisturizing-lotion,name,different_reformulated,,,conflict,"ingredient overlap 0.25; allergen hits differ: ethylhexylglycerin,phenoxyethanol,sodium-benzoate,sorbitan-sesquioleate"
-3606000560239,https://www.cerave.com/skincare/moisturizers/itch-relief-moisturizing-lotion,name,different_reformulated,,,conflict,ingredient overlap 0.51; allergen hits differ: pramoxine
-3606000560994,https://www.cerave.com/skincare/cleansers/renewing-sa-cleanser,name,auto,0.980,0.980,ok,ingredient overlap 0.90
-3606000560994,https://www.cerave.com/skincare/cleansers/sa-body-wash-for-rough-and-bumpy-skin,name,flagged,0.390,0.860,ok,ingredient overlap 0.90
-3606000560994,https://www.cerave.com/skincare/cleansers/sa-cleanser-bar-for-rough-and-bumpy-skin,name,different_reformulated,,,conflict,"ingredient overlap 0.31; allergen hits differ: cetearyl-alcohol,mineral-uv-filters,sodium-benzoate,tocopherol"
-3606000577213,https://www.cerave.com/skincare/cleansers/hydrating-cream-to-foam-cleanser,exact,different_reformulated,,,conflict,"ingredient overlap 0.56; allergen hits differ: coco-glucoside,tocopherol"
-3606000577213,https://www.cerave.com/skincare/cleansers/hydrating-cream-to-foam-cleanser-refill,name,different_reformulated,,,conflict,"ingredient overlap 0.56; allergen hits differ: coco-glucoside,tocopherol"
-3606000577213,https://www.cerave.com/skincare/cleansers/hydrating-facial-cleanser,name,different_reformulated,,,conflict,"ingredient overlap 0.34; allergen hits differ: cocamidopropyl-betaine,mineral-uv-filters,sodium-benzoate"
-3606000577213,https://www.cerave.com/skincare/cleansers/hydrating-facial-cleanser-refill,name,different_reformulated,,,conflict,"ingredient overlap 0.34; allergen hits differ: cocamidopropyl-betaine,mineral-uv-filters,sodium-benzoate"
-3606000612655,https://www.cerave.com/skincare/moisturizers/facial-moisturizers/am-facial-moisturizing-lotion-spf-50,name,flagged,0.830,0.750,minor,"ingredient overlap 1.00; lists differ: octocrylene, octocrylene-5"
-3606000620988,https://www.cerave.com/skincare/moisturizers/daily-moisturizing-lotion,name,different_reformulated,,,conflict,"ingredient overlap 0.30; allergen hits differ: ethylhexylglycerin,phenoxyethanol,sodium-benzoate,sorbitan-sesquioleate"
-3606000620988,https://www.cerave.com/skincare/moisturizers/intensive-moisturizing-lotion,exact,auto,,,ok,ingredient overlap 1.00
-3606000620988,https://www.cerave.com/skincare/moisturizers/itch-relief-moisturizing-lotion,name,different_reformulated,,,conflict,"ingredient overlap 0.32; allergen hits differ: ethylhexylglycerin,phenoxyethanol,pramoxine,sodium-benzoate,sorbitan-sesquioleate"
-3606000637535,https://www.cerave.com/skincare/baby/baby-eczema-relief-cream,exact,flagged,,,minor,ingredient overlap 0.89; lists differ: colloidal-oatmeal
-3606000637535,https://www.cerave.com/skincare/baby/baby-moisturizing-cream,name,different_reformulated,,,conflict,"ingredient overlap 0.34; allergen hits differ: ethylhexylglycerin,sodium-benzoate,tocopherol"
+3606000560239,cerave-daily-moisturizing-lotion,name,different,0.220,0.170,minor,ingredient overlap 0.59
+3606000560239,cerave-intensive-moisturizing-lotion,name,different_reformulated,,,conflict,"ingredient overlap 0.25; allergen hits differ: ethylhexylglycerin,phenoxyethanol,sodium-benzoate,sorbitan-sesquioleate"
+3606000560239,cerave-itch-relief-moisturizing-lotion,name,different_reformulated,,,conflict,ingredient overlap 0.51; allergen hits differ: pramoxine
+3606000560994,cerave-renewing-sa-cleanser,name,auto,0.980,0.980,ok,ingredient overlap 0.90
+3606000560994,cerave-sa-body-wash-for-rough-and-bumpy-skin,name,flagged,0.390,0.860,ok,ingredient overlap 0.90
+3606000560994,cerave-sa-cleanser-bar-for-rough-and-bumpy-skin,name,different_reformulated,,,conflict,"ingredient overlap 0.31; allergen hits differ: cetearyl-alcohol,mineral-uv-filters,sodium-benzoate,tocopherol"
+3606000577213,cerave-hydrating-cream-to-foam-cleanser,exact,different_reformulated,,,conflict,"ingredient overlap 0.56; allergen hits differ: coco-glucoside,tocopherol"
+3606000577213,cerave-hydrating-cream-to-foam-cleanser-refill,name,different_reformulated,,,conflict,"ingredient overlap 0.56; allergen hits differ: coco-glucoside,tocopherol"
+3606000577213,cerave-hydrating-facial-cleanser,name,different_reformulated,,,conflict,"ingredient overlap 0.34; allergen hits differ: cocamidopropyl-betaine,mineral-uv-filters,sodium-benzoate"
+3606000577213,cerave-hydrating-facial-cleanser-refill,name,different_reformulated,,,conflict,"ingredient overlap 0.34; allergen hits differ: cocamidopropyl-betaine,mineral-uv-filters,sodium-benzoate"
+3606000612655,cerave-am-facial-moisturizing-lotion-spf-50,name,flagged,0.830,0.750,minor,"ingredient overlap 1.00; lists differ: octocrylene, octocrylene-5"
+3606000620988,cerave-daily-moisturizing-lotion,name,different_reformulated,,,conflict,"ingredient overlap 0.30; allergen hits differ: ethylhexylglycerin,phenoxyethanol,sodium-benzoate,sorbitan-sesquioleate"
+3606000620988,cerave-intensive-moisturizing-lotion,exact,auto,,,ok,ingredient overlap 1.00
+3606000620988,cerave-itch-relief-moisturizing-lotion,name,different_reformulated,,,conflict,"ingredient overlap 0.32; allergen hits differ: ethylhexylglycerin,phenoxyethanol,pramoxine,sodium-benzoate,sorbitan-sesquioleate"
+3606000637535,cerave-baby-eczema-relief-cream,exact,flagged,,,minor,ingredient overlap 0.89; lists differ: colloidal-oatmeal
+3606000637535,cerave-baby-moisturizing-cream,name,different_reformulated,,,conflict,"ingredient overlap 0.34; allergen hits differ: ethylhexylglycerin,sodium-benzoate,tocopherol"
 3610340670978,7509552874952,name,different_reformulated,,,conflict,"ingredient overlap 0.62; allergen hits differ: hexyl-cinnamal,hydroxycitronellal,linalool"
 3610340670978,8901526641239,name,different_reformulated,,,conflict,"ingredient overlap 0.00; allergen hits differ: acrylates,phenoxyethanol"
 3610340670978,8901526641314,name,different_reformulated,,,conflict,"ingredient overlap 0.00; allergen hits differ: acrylates,phenoxyethanol"
@@ -1372,7 +1372,7 @@ id_a,id_b,method,tier,p_ab,p_ba,formula,notes
 4067796183887,42348634,name,different_reformulated,,,conflict,"ingredient overlap 0.19; allergen hits differ: cetearyl-alcohol,citronellol,ethylhexylglycerin,linalool,tocopherol"
 4068134024862,4311596695850,name,different_reformulated,,,conflict,"ingredient overlap 0.19; allergen hits differ: mineral-uv-filters,peppermint-oil,propylene-glycol"
 4068134039743,4305615629223,name,different_reformulated,,,conflict,"ingredient overlap 0.23; allergen hits differ: cocamidopropyl-betaine,coco-glucoside,fragrance,propylene-glycol,sorbic-acid,tocopherol"
-4068706886584,https://www.cerave.com/skincare/cleansers/foaming-facial-cleanser,name,different_reformulated,,,conflict,"ingredient overlap 0.20; allergen hits differ: cetearyl-alcohol,cocamidopropyl-betaine,other-alkyl-glucosides,parabens,sodium-benzoate,sorbic-acid"
+4068706886584,cerave-foaming-facial-cleanser,name,different_reformulated,,,conflict,"ingredient overlap 0.20; allergen hits differ: cetearyl-alcohol,cocamidopropyl-betaine,other-alkyl-glucosides,parabens,sodium-benzoate,sorbic-acid"
 4068706887949,6931583605884,name,different_reformulated,,,conflict,"ingredient overlap 0.14; allergen hits differ: acrylates,ethylhexylglycerin,fragrance,limonene,phenoxyethanol,propylene-glycol"
 4068706887949,8721073626417,name,different_reformulated,,,conflict,"ingredient overlap 0.22; allergen hits differ: acrylates,compositae,fragrance,phenoxyethanol"
 4070765001280,8710276400412,name,different_reformulated,,,conflict,"ingredient overlap 0.22; allergen hits differ: citronellol,fragrance,other-alkyl-glucosides,phenoxyethanol,tocopherol"
@@ -1651,8 +1651,8 @@ id_a,id_b,method,tier,p_ab,p_ba,formula,notes
 49967-138,49967-840,name,flagged,0.560,0.620,minor,"ingredient overlap 0.87; lists differ: acrylates-copolymer, coconut-acid, sodium-chloride, sodium-cocoyl-isethionate"
 49967-138,75897-112,name,flagged,0.890,0.880,minor,"ingredient overlap 0.93; lists differ: hyaluronic-acid, hydrolyzed-hyaluronic-acid"
 49967-138,82046-291,name,different_reformulated,,,conflict,ingredient overlap 0.44; free-from flags differ: peg-free
-49967-138,https://www.cerave.com/skincare/acne/acne-control-gel,name,different_reformulated,,,conflict,ingredient overlap 0.47; allergen hits differ: cetearyl-alcohol
-49967-138,https://www.cerave.com/skincare/cleansers/acne-salicylic-acid-cleanser,name,flagged,0.870,0.890,ok,ingredient overlap 1.00
+49967-138,cerave-acne-control-gel,name,different_reformulated,,,conflict,ingredient overlap 0.47; allergen hits differ: cetearyl-alcohol
+49967-138,cerave-acne-salicylic-acid-cleanser,name,flagged,0.870,0.890,ok,ingredient overlap 1.00
 49967-142,49967-614,name,flagged,0.940,0.970,minor,ingredient overlap 0.97; lists differ: butylene-glycol
 49967-142,51150-142,name,flagged,0.890,0.940,ok,ingredient overlap 1.00
 49967-142,51150-222,name,different_reformulated,,,conflict,"ingredient overlap 0.88; allergen hits differ: sodium-benzoate,sorbic-acid"
@@ -1661,8 +1661,8 @@ id_a,id_b,method,tier,p_ab,p_ba,formula,notes
 49967-172,49967-840,name,different_reformulated,,,conflict,ingredient overlap 0.39; allergen hits differ: cetearyl-alcohol
 49967-172,75897-112,name,different_reformulated,,,conflict,ingredient overlap 0.48; allergen hits differ: cetearyl-alcohol
 49967-172,82046-291,name,different_reformulated,,,conflict,ingredient overlap 0.44; allergen hits differ: cetearyl-alcohol
-49967-172,https://www.cerave.com/skincare/acne/acne-control-gel,name,flagged,0.910,0.830,ok,ingredient overlap 1.00
-49967-172,https://www.cerave.com/skincare/cleansers/acne-salicylic-acid-cleanser,name,different_reformulated,,,conflict,ingredient overlap 0.44; allergen hits differ: cetearyl-alcohol
+49967-172,cerave-acne-control-gel,name,flagged,0.910,0.830,ok,ingredient overlap 1.00
+49967-172,cerave-acne-salicylic-acid-cleanser,name,different_reformulated,,,conflict,ingredient overlap 0.44; allergen hits differ: cetearyl-alcohol
 49967-180,51150-180,name,flagged,0.860,0.900,ok,ingredient overlap 1.00
 49967-199,82046-992,name,flagged,0.970,0.960,ok,ingredient overlap 1.00; review rules say keep_separate
 49967-203,69625-203,name,flagged,0.870,0.930,ok,ingredient overlap 1.00
@@ -1670,11 +1670,11 @@ id_a,id_b,method,tier,p_ab,p_ba,formula,notes
 49967-212,49967-312,name,different,0.080,0.080,minor,"ingredient overlap 0.86; lists differ: hyaluronic-acid, niacinamide, panthenol, sodium-hydroxide"
 49967-212,82046-114,name,different,0.160,0.150,minor,ingredient overlap 0.96; lists differ: hyaluronic-acid
 49967-230,69625-231,name,flagged,0.810,0.790,ok,ingredient overlap 1.00
-49967-238,https://www.cerave.com/skincare/cleansers/acne-benzoyl-peroxide-cleanser,name,flagged,0.820,0.670,ok,ingredient overlap 1.00
-49967-238,https://www.cerave.com/skincare/cleansers/facial-cleansers/-acne-foaming-cream-wash-,name,different_reformulated,,,conflict,"ingredient overlap 0.69; allergen hits differ: ethylhexylglycerin,phenoxyethanol"
+49967-238,cerave-acne-benzoyl-peroxide-cleanser,name,flagged,0.820,0.670,ok,ingredient overlap 1.00
+49967-238,cerave-acne-foaming-cream-wash,name,different_reformulated,,,conflict,"ingredient overlap 0.69; allergen hits differ: ethylhexylglycerin,phenoxyethanol"
 49967-240,51150-240,name,flagged,0.870,0.940,ok,ingredient overlap 1.00
 49967-260,49967-313,name,different,0.130,0.070,minor,ingredient overlap 0.70
-49967-263,https://www.cerave.com/skincare/moisturizers/facial-moisturizers/am-facial-moisturizing-lotion-spf-50,name,auto,0.950,0.930,ok,ingredient overlap 1.00
+49967-263,cerave-am-facial-moisturizing-lotion-spf-50,name,auto,0.950,0.930,ok,ingredient overlap 1.00
 49967-293,51150-293,barcode,auto,0.900,0.950,ok,ingredient overlap 1.00
 49967-302,51150-302,name,flagged,0.850,0.950,ok,ingredient overlap 1.00
 49967-303,51150-303,name,flagged,0.860,0.930,ok,ingredient overlap 1.00
@@ -1684,18 +1684,18 @@ id_a,id_b,method,tier,p_ab,p_ba,formula,notes
 49967-312,82046-114,name,different,0.120,0.240,minor,"ingredient overlap 0.89; lists differ: niacinamide, panthenol, sodium-hydroxide"
 49967-335,51150-335,name,flagged,0.890,0.950,ok,ingredient overlap 1.00
 49967-355,75897-105,name,flagged,0.900,0.820,minor,ingredient overlap 0.73
-49967-360,https://www.cerave.com/skincare/moisturizers/facial-moisturizers/skin-renewing-brightening-lotion-spf-30,name,flagged,0.910,0.910,ok,ingredient overlap 1.00; review rules say keep_separate
+49967-360,cerave-skin-renewing-brightening-lotion-spf-30,name,flagged,0.910,0.910,ok,ingredient overlap 1.00; review rules say keep_separate
 49967-380,51150-380,name,flagged,0.790,0.860,ok,ingredient overlap 1.00
 49967-456,49967-878,name,different_reformulated,,,conflict,"ingredient overlap 0.23; allergen hits differ: benzyl-alcohol,benzyl-salicylate,citronellol,eugenol,fragrance,geraniol,hexyl-cinnamal,hicc,hydroxycitronellal,linalool,mineral-uv-filters,parabens"
 49967-496,69625-496,barcode,auto,0.880,0.920,ok,ingredient overlap 1.00
-49967-517,https://www.cerave.com/skincare/moisturizers/ultra-light-moisturizing-lotion-spf-30,name,different_reformulated,,,conflict,"ingredient overlap 0.86; allergen hits differ: ethylhexylglycerin,phenoxyethanol"
+49967-517,cerave-ultra-light-moisturizing-lotion-spf-30,name,different_reformulated,,,conflict,"ingredient overlap 0.86; allergen hits differ: ethylhexylglycerin,phenoxyethanol"
 49967-529,69625-528,name,flagged,0.760,0.890,ok,ingredient overlap 1.00
 49967-536,85303-001,name,different_reformulated,,,conflict,"ingredient overlap 0.06; allergen hits differ: acrylates,compositae,other-alkyl-glucosides,phenoxyethanol,sodium-benzoate"
-49967-536,https://www.cerave.com/skincare/baby/baby-eczema-relief-cream,name,flagged,0.890,0.860,ok,ingredient overlap 0.91
+49967-536,cerave-baby-eczema-relief-cream,name,flagged,0.890,0.860,ok,ingredient overlap 0.91
 49967-584,69625-583,barcode,flagged,0.860,0.890,ok,ingredient overlap 1.00; review rules say keep_separate
-49967-600,https://www.cerave.com/skincare/cleansers/acne-salicylic-acid-cleanser,name,different_reformulated,,,conflict,ingredient overlap 0.47; allergen hits differ: cetearyl-alcohol
-49967-604,https://www.cerave.com/skincare/cleansers/acne-benzoyl-peroxide-cleanser,name,different_reformulated,,,conflict,"ingredient overlap 0.69; allergen hits differ: ethylhexylglycerin,phenoxyethanol"
-49967-604,https://www.cerave.com/skincare/cleansers/facial-cleansers/-acne-foaming-cream-wash-,name,flagged,0.900,0.860,ok,ingredient overlap 1.00
+49967-600,cerave-acne-salicylic-acid-cleanser,name,different_reformulated,,,conflict,ingredient overlap 0.47; allergen hits differ: cetearyl-alcohol
+49967-604,cerave-acne-benzoyl-peroxide-cleanser,name,different_reformulated,,,conflict,"ingredient overlap 0.69; allergen hits differ: ethylhexylglycerin,phenoxyethanol"
+49967-604,cerave-acne-foaming-cream-wash,name,flagged,0.900,0.860,ok,ingredient overlap 1.00
 49967-606,49967-660,name,different_reformulated,,,conflict,ingredient overlap 0.68; allergen hits differ: phenoxyethanol
 49967-606,69625-605,name,flagged,0.830,0.830,ok,ingredient overlap 1.00
 49967-606,69625-617,name,different_reformulated,,,conflict,"ingredient overlap 0.56; allergen hits differ: fragrance,phenoxyethanol"
@@ -1728,13 +1728,13 @@ id_a,id_b,method,tier,p_ab,p_ba,formula,notes
 49967-736,51150-736,name,flagged,0.890,0.950,ok,ingredient overlap 1.00
 49967-744,69625-743,barcode,flagged,0.830,0.870,minor,"ingredient overlap 0.94; lists differ: i-water, water"
 49967-840,75897-112,name,flagged,0.730,0.550,minor,"ingredient overlap 0.81; lists differ: acrylates-copolymer, coconut-acid, hyaluronic-acid, hydrolyzed-hyaluronic-acid, sodium-chloride, sodium-cocoyl-isethionate"
-49967-840,https://www.cerave.com/skincare/cleansers/acne-salicylic-acid-cleanser,name,flagged,0.800,0.850,minor,"ingredient overlap 0.86; lists differ: acrylates-copolymer, coconut-acid, sodium-chloride, sodium-cocoyl-isethionate"
+49967-840,cerave-acne-salicylic-acid-cleanser,name,flagged,0.800,0.850,minor,"ingredient overlap 0.86; lists differ: acrylates-copolymer, coconut-acid, sodium-chloride, sodium-cocoyl-isethionate"
 49967-869,69625-868,barcode,flagged,0.850,0.860,ok,ingredient overlap 1.00; review rules say keep_separate
-49967-870,https://www.cerave.com/skincare/ointment/baby-healing-ointment,name,flagged,0.950,0.790,ok,ingredient overlap 1.00
+49967-870,cerave-baby-healing-ointment,name,flagged,0.950,0.790,ok,ingredient overlap 1.00
 49967-892,83342-892,name,flagged,0.860,0.890,ok,ingredient overlap 1.00
 49967-899,69625-019,name,flagged,0.580,0.540,minor,"ingredient overlap 0.95; lists differ: c9-15-fluoroalcohol-phosphate, disodium-stearoyl-glutamate"
 49967-899,69625-899,barcode,auto,0.850,0.860,ok,ingredient overlap 1.00
-49967-900,https://www.cerave.com/skincare/moisturizers/skin-renewing-day-cream,name,different_reformulated,,,conflict,ingredient overlap 0.78; allergen hits differ: bht
+49967-900,cerave-skin-renewing-day-cream,name,different_reformulated,,,conflict,ingredient overlap 0.78; allergen hits differ: bht
 49967-907,69625-908,barcode,auto,0.850,0.840,ok,ingredient overlap 1.00
 49967-917,69625-917,barcode,auto,0.820,0.920,ok,ingredient overlap 1.00
 49967-926,69625-058,name,flagged,0.800,0.930,ok,ingredient overlap 1.00
@@ -2171,7 +2171,7 @@ id_a,id_b,method,tier,p_ab,p_ba,formula,notes
 58892-317,58892-319,name,different,0.050,0.040,minor,"ingredient overlap 0.90; lists differ: bismuth-oxychloride, iron-oxides, mica"
 58892-330,58892-430,name,different,0.040,0.040,minor,"ingredient overlap 0.89; lists differ: bismuth-oxychloride, iron-oxides, mica"
 58892-348,58892-354,name,different,0.050,0.060,minor,ingredient overlap 0.62
-5900017090344,https://www.cerave.com/skincare/baby/baby-moisturizing-lotion,name,different_reformulated,,,conflict,"ingredient overlap 0.12; allergen hits differ: acrylates,ethylhexylglycerin,fragrance"
+5900017090344,cerave-baby-moisturizing-lotion,name,different_reformulated,,,conflict,"ingredient overlap 0.12; allergen hits differ: acrylates,ethylhexylglycerin,fragrance"
 5901887010173,8402001017926,name,different_reformulated,,,conflict,"ingredient overlap 0.20; allergen hits differ: amyl-cinnamal,avobenzone,bemotrizinol,bht,cetearyl-alcohol,decyl-glucoside,linalool,mineral-uv-filters,octinoxate,salicylate-filters,sodium-benzoate,sorbic-acid"
 5901887010173,8480000502568,name,different_reformulated,,,conflict,"ingredient overlap 0.14; allergen hits differ: amyl-cinnamal,ethylhexylglycerin,linalool,phenoxyethanol,propylene-glycol"
 5901887946212,5901887946243,name,different_reformulated,,,conflict,"ingredient overlap 0.41; allergen hits differ: cetearyl-alcohol,diazolidinyl-urea,ethylhexylglycerin,other-alkyl-glucosides,parabens,propylene-glycol"
@@ -4541,7 +4541,7 @@ id_a,id_b,method,tier,p_ab,p_ba,formula,notes
 72805-200,76150-332,name,flagged,0.820,0.840,minor,ingredient overlap 0.88; lists differ: water
 72805-210,76150-331,name,flagged,0.840,0.850,minor,ingredient overlap 0.88; lists differ: water
 72812-144,79747-144,name,flagged,0.700,0.870,ok,ingredient overlap 1.00
-72812-151,https://www.cerave.com/skincare/baby/baby-eczema-relief-cream,name,different_reformulated,,,conflict,"ingredient overlap 0.07; allergen hits differ: acrylates,cetearyl-alcohol,mineral-uv-filters,phenoxyethanol,sodium-benzoate"
+72812-151,cerave-baby-eczema-relief-cream,name,different_reformulated,,,conflict,"ingredient overlap 0.07; allergen hits differ: acrylates,cetearyl-alcohol,mineral-uv-filters,phenoxyethanol,sodium-benzoate"
 72812-153,79747-153,name,flagged,0.720,0.870,ok,ingredient overlap 1.00
 72839-510,84728-510,name,flagged,0.650,0.630,ok,ingredient overlap 1.00
 72839-611,72839-613,name,different_reformulated,,,conflict,"ingredient overlap 0.15; allergen hits differ: cocamidopropyl-betaine,diazolidinyl-urea,laureth-sulfates,lavender-oil,parabens,propylene-glycol,sodium-benzoate"
@@ -4624,16 +4624,16 @@ id_a,id_b,method,tier,p_ab,p_ba,formula,notes
 7501438310714,8431876282030,name,different_reformulated,,,conflict,"ingredient overlap 0.16; allergen hits differ: acrylates,cetearyl-alcohol,citral,citronellol,coumarin,hexyl-cinnamal,jasmine,linalool,other-alkyl-glucosides,parabens,tocopherol"
 7509552874952,8901526652013,name,different_reformulated,,,conflict,"ingredient overlap 0.00; allergen hits differ: cetearyl-alcohol,chlorhexidine,cocamidopropyl-betaine,hexyl-cinnamal,hydroxycitronellal,laureth-sulfates,limonene,linalool,phenoxyethanol,propylene-glycol,sodium-benzoate"
 7509552874952,8901526663286,name,different_reformulated,,,conflict,"ingredient overlap 0.00; allergen hits differ: cetearyl-alcohol,chlorhexidine,cocamidopropyl-betaine,hexyl-cinnamal,hydroxycitronellal,laureth-sulfates,limonene,linalool,phenoxyethanol,propylene-glycol,sodium-benzoate"
-75376-103,https://www.cerave.com/skincare/cleansers/foaming-cleanser-bar,name,different_reformulated,,,conflict,"ingredient overlap 0.20; allergen hits differ: acrylates,cetearyl-alcohol,cocamidopropyl-betaine,ethylhexylglycerin,laureth-sulfates,lauryl-glucoside,mineral-uv-filters,phenoxyethanol,propylene-glycol"
-75376-103,https://www.cerave.com/skincare/cleansers/foaming-facial-cleanser,name,different_reformulated,,,conflict,"ingredient overlap 0.31; allergen hits differ: acrylates,cocamidopropyl-betaine,laureth-sulfates,lauryl-glucoside,parabens"
+75376-103,cerave-foaming-cleanser-bar,name,different_reformulated,,,conflict,"ingredient overlap 0.20; allergen hits differ: acrylates,cetearyl-alcohol,cocamidopropyl-betaine,ethylhexylglycerin,laureth-sulfates,lauryl-glucoside,mineral-uv-filters,phenoxyethanol,propylene-glycol"
+75376-103,cerave-foaming-facial-cleanser,name,different_reformulated,,,conflict,"ingredient overlap 0.31; allergen hits differ: acrylates,cocamidopropyl-betaine,laureth-sulfates,lauryl-glucoside,parabens"
 75376-320,83324-320,barcode,flagged,0.890,0.600,ok,ingredient overlap 1.00
 75376-321,83324-321,barcode,flagged,0.900,0.550,ok,ingredient overlap 1.00
 75376-322,83324-322,barcode,flagged,0.910,0.620,ok,ingredient overlap 1.00
 75592-301,75592-302,exact,auto,,,ok,ingredient overlap 1.00
 75870-008,75870-009,name,different_reformulated,,,conflict,"ingredient overlap 0.17; allergen hits differ: acrylates,bisabolol,cetearyl-alcohol,chlorhexidine,cocamidopropyl-betaine,parabens,propylene-glycol"
 75897-112,82046-291,name,different_reformulated,,,conflict,ingredient overlap 0.44; free-from flags differ: peg-free
-75897-112,https://www.cerave.com/skincare/acne/acne-control-gel,name,different_reformulated,,,conflict,ingredient overlap 0.48; allergen hits differ: cetearyl-alcohol
-75897-112,https://www.cerave.com/skincare/cleansers/acne-salicylic-acid-cleanser,name,flagged,0.810,0.860,minor,ingredient overlap 0.96; lists differ: hydrolyzed-hyaluronic-acid
+75897-112,cerave-acne-control-gel,name,different_reformulated,,,conflict,ingredient overlap 0.48; allergen hits differ: cetearyl-alcohol
+75897-112,cerave-acne-salicylic-acid-cleanser,name,flagged,0.810,0.860,minor,ingredient overlap 0.96; lists differ: hydrolyzed-hyaluronic-acid
 75916-0659,75916-0660,name,different,0.230,0.380,minor,ingredient overlap 0.88; lists differ: avocado-oil
 75916-0659,75916-0664,name,flagged,0.740,0.670,ok,ingredient overlap 1.00
 75916-0660,75916-0664,name,flagged,0.510,0.220,minor,ingredient overlap 0.88; lists differ: avocado-oil
@@ -6671,7 +6671,7 @@ id_a,id_b,method,tier,p_ab,p_ba,formula,notes
 85302-201,85302-203,name,auto,0.980,0.970,ok,ingredient overlap 1.00
 85302-202,85302-203,name,different,0.050,0.070,minor,ingredient overlap 0.92; lists differ: iron-oxides
 85302-208,85302-226,name,different,0.060,0.040,minor,ingredient overlap 0.93; lists differ: iron-oxides
-85303-001,https://www.cerave.com/skincare/baby/baby-eczema-relief-cream,name,different_reformulated,,,conflict,"ingredient overlap 0.06; allergen hits differ: acrylates,compositae,other-alkyl-glucosides,phenoxyethanol,sodium-benzoate"
+85303-001,cerave-baby-eczema-relief-cream,name,different_reformulated,,,conflict,"ingredient overlap 0.06; allergen hits differ: acrylates,compositae,other-alkyl-glucosides,phenoxyethanol,sodium-benzoate"
 85384-0006,85384-0012,name,different_reformulated,,,conflict,"ingredient overlap 0.16; allergen hits differ: compositae,tea-tree-oil"
 85398-011,85398-026,name,different_reformulated,,,conflict,"ingredient overlap 0.35; allergen hits differ: fragrance,lavender-oil,propylene-glycol"
 85398-019,85398-025,name,flagged,0.710,0.490,minor,"ingredient overlap 0.82; lists differ: cocos-nucifera-fruit-extract, cucurbita-pepo-seed-extract, diospyros-kaki-fruit-extract"
@@ -6836,7 +6836,7 @@ id_a,id_b,method,tier,p_ab,p_ba,formula,notes
 8904430201070,8906118414215,name,different_reformulated,,,conflict,"ingredient overlap 0.16; allergen hits differ: acrylates,avobenzone,benzyl-alcohol,ethylhexylglycerin,mineral-uv-filters,octinoxate,oxybenzone,phenoxyethanol,sodium-benzoate,sorbic-acid"
 8906005274069,8906005274106,name,flagged,0.960,0.960,minor,ingredient overlap 0.73
 8934681907568,8934681907650,name,different_reformulated,,,conflict,"ingredient overlap 0.40; allergen hits differ: bemotrizinol,fragrance,parabens,phenoxyethanol,propylene-glycol"
-8997220243596,https://www.cerave.com/skincare/cleansers/brightening-vitamin-c-cleanser,name,different_reformulated,,,conflict,"ingredient overlap 0.14; allergen hits differ: dmdm-hydantoin,fragrance,laureth-sulfates,sodium-benzoate,tocopherol"
+8997220243596,cerave-brightening-vitamin-c-cleanser,name,different_reformulated,,,conflict,"ingredient overlap 0.14; allergen hits differ: dmdm-hydantoin,fragrance,laureth-sulfates,sodium-benzoate,tocopherol"
 90086-013,90086-014,name,different,0.440,0.070,ok,ingredient overlap 1.00
 90086-013,90086-015,name,different,0.040,0.050,ok,ingredient overlap 1.00
 90086-013,90086-016,name,different,0.040,0.050,ok,ingredient overlap 1.00
@@ -7427,64 +7427,64 @@ aquaphor-072140010119,aquaphor-072140022242,name,flagged,0.950,0.870,ok,ingredie
 aquaphor-072140019464,aquaphor-072140633776,name,flagged,0.800,0.780,unknown,an ingredient list is missing on one side
 aquaphor-072140019464,aquaphor-072140633868,name,flagged,0.810,0.770,unknown,an ingredient list is missing on one side
 aquaphor-072140633776,aquaphor-072140633868,name,flagged,0.760,0.770,unknown,an ingredient list is missing on one side
-https://www.cerave.com/skincare/acne/acne-control-gel,https://www.cerave.com/skincare/cleansers/acne-salicylic-acid-cleanser,name,different_reformulated,,,conflict,ingredient overlap 0.46; allergen hits differ: cetearyl-alcohol
-https://www.cerave.com/skincare/acne/acne-control-gel,https://www.cerave.com/skincare/moisturizers/facial-moisturizers/oil-control-moisturizing-gel-cream,name,different_reformulated,,,conflict,ingredient overlap 0.53; allergen hits differ: phenoxyethanol
-https://www.cerave.com/skincare/baby/baby-eczema-relief-cream,https://www.cerave.com/skincare/baby/baby-moisturizing-cream,name,different_reformulated,,,conflict,"ingredient overlap 0.33; allergen hits differ: ethylhexylglycerin,sodium-benzoate,tocopherol"
-https://www.cerave.com/skincare/cleansers/acne-benzoyl-peroxide-cleanser,https://www.cerave.com/skincare/cleansers/acne-salicylic-acid-cleanser,name,different_reformulated,,,conflict,"ingredient overlap 0.38; allergen hits differ: ethylhexylglycerin,phenoxyethanol,propylene-glycol"
-https://www.cerave.com/skincare/cleansers/acne-benzoyl-peroxide-cleanser,https://www.cerave.com/skincare/cleansers/facial-cleansers/-acne-foaming-cream-wash-,name,different_reformulated,,,conflict,"ingredient overlap 0.73; allergen hits differ: ethylhexylglycerin,phenoxyethanol"
-https://www.cerave.com/skincare/cleansers/acne-benzoyl-peroxide-cleanser,https://www.cerave.com/skincare/cleansers/foaming-facial-cleanser,name,different_reformulated,,,conflict,"ingredient overlap 0.44; allergen hits differ: ethylhexylglycerin,parabens,phenoxyethanol,sodium-benzoate"
-https://www.cerave.com/skincare/cleansers/acne-salicylic-acid-cleanser,https://www.cerave.com/skincare/cleansers/clay-to-foam-cleanser,name,different_reformulated,,,conflict,ingredient overlap 0.47; allergen hits differ: cetearyl-alcohol
-https://www.cerave.com/skincare/cleansers/acne-salicylic-acid-cleanser,https://www.cerave.com/skincare/cleansers/facial-cleansers/-acne-foaming-cream-wash-,name,different_reformulated,,,conflict,ingredient overlap 0.44; allergen hits differ: propylene-glycol
-https://www.cerave.com/skincare/cleansers/air-foam-foaming-facial-cleanser,https://www.cerave.com/skincare/cleansers/foaming-facial-cleanser,name,different_reformulated,,,conflict,"ingredient overlap 0.39; allergen hits differ: cocamidopropyl-betaine,parabens,propylene-glycol,sodium-benzoate"
-https://www.cerave.com/skincare/cleansers/air-foam-foaming-facial-cleanser,https://www.cerave.com/skincare/cleansers/hydrating-facial-cleanser,name,different_reformulated,,,conflict,"ingredient overlap 0.25; allergen hits differ: cetearyl-alcohol,cocamidopropyl-betaine,ethylhexylglycerin,phenoxyethanol,sodium-benzoate,tocopherol"
-https://www.cerave.com/skincare/cleansers/air-foam-foaming-facial-cleanser,https://www.cerave.com/skincare/cleansers/hydrating-facial-cleanser-refill,name,different_reformulated,,,conflict,"ingredient overlap 0.25; allergen hits differ: cetearyl-alcohol,cocamidopropyl-betaine,ethylhexylglycerin,phenoxyethanol,sodium-benzoate,tocopherol"
-https://www.cerave.com/skincare/cleansers/brightening-vitamin-c-cleanser,https://www.cerave.com/skincare/moisturizers/brightening-vitamin-c-lotion,name,different_reformulated,,,conflict,"ingredient overlap 0.29; allergen hits differ: cetearyl-alcohol,cocamidopropyl-betaine,compositae,phenoxyethanol"
-https://www.cerave.com/skincare/cleansers/facial-cleansers/-acne-foaming-cream-wash-,https://www.cerave.com/skincare/cleansers/foaming-facial-cleanser,name,different_reformulated,,,conflict,"ingredient overlap 0.36; allergen hits differ: parabens,sodium-benzoate"
-https://www.cerave.com/skincare/cleansers/facial-cleansers/hydrating-foaming-oil-cleanser,https://www.cerave.com/skincare/cleansers/foaming-facial-cleanser,name,different_reformulated,,,conflict,"ingredient overlap 0.33; allergen hits differ: cocamidopropyl-betaine,parabens,propylene-glycol,sodium-benzoate"
-https://www.cerave.com/skincare/cleansers/facial-cleansers/hydrating-foaming-oil-cleanser,https://www.cerave.com/skincare/cleansers/hydrating-facial-cleanser,name,different_reformulated,,,conflict,"ingredient overlap 0.27; allergen hits differ: cetearyl-alcohol,cocamidopropyl-betaine,ethylhexylglycerin,phenoxyethanol,sodium-benzoate,tocopherol"
-https://www.cerave.com/skincare/cleansers/facial-cleansers/hydrating-foaming-oil-cleanser,https://www.cerave.com/skincare/cleansers/hydrating-facial-cleanser-refill,name,different_reformulated,,,conflict,"ingredient overlap 0.27; allergen hits differ: cetearyl-alcohol,cocamidopropyl-betaine,ethylhexylglycerin,phenoxyethanol,sodium-benzoate,tocopherol"
-https://www.cerave.com/skincare/cleansers/foaming-cleanser-bar,https://www.cerave.com/skincare/cleansers/foaming-facial-cleanser,name,different_reformulated,,,conflict,"ingredient overlap 0.33; allergen hits differ: cetearyl-alcohol,ethylhexylglycerin,mineral-uv-filters,parabens,phenoxyethanol,propylene-glycol"
-https://www.cerave.com/skincare/cleansers/foaming-cleanser-bar,https://www.cerave.com/skincare/cleansers/hydrating-cleanser-bar,name,different_reformulated,,,conflict,ingredient overlap 0.61; allergen hits differ: tocopherol
-https://www.cerave.com/skincare/cleansers/foaming-cleanser-bar,https://www.cerave.com/skincare/cleansers/sa-cleanser-bar-for-rough-and-bumpy-skin,name,different_reformulated,,,conflict,ingredient overlap 0.70; allergen hits differ: tocopherol
-https://www.cerave.com/skincare/cleansers/foaming-facial-cleanser,https://www.cerave.com/skincare/cleansers/hydrating-facial-cleanser,name,different_reformulated,,,conflict,"ingredient overlap 0.30; allergen hits differ: cetearyl-alcohol,ethylhexylglycerin,parabens,phenoxyethanol,propylene-glycol,tocopherol"
-https://www.cerave.com/skincare/cleansers/foaming-facial-cleanser,https://www.cerave.com/skincare/cleansers/hydrating-facial-cleanser-refill,name,different_reformulated,,,conflict,"ingredient overlap 0.30; allergen hits differ: cetearyl-alcohol,ethylhexylglycerin,parabens,phenoxyethanol,propylene-glycol,tocopherol"
-https://www.cerave.com/skincare/cleansers/hydrating-cleanser-bar,https://www.cerave.com/skincare/cleansers/hydrating-facial-cleanser,name,different_reformulated,,,conflict,ingredient overlap 0.50; allergen hits differ: mineral-uv-filters
-https://www.cerave.com/skincare/cleansers/hydrating-cleanser-bar,https://www.cerave.com/skincare/cleansers/hydrating-facial-cleanser-refill,name,different_reformulated,,,conflict,ingredient overlap 0.50; allergen hits differ: mineral-uv-filters
-https://www.cerave.com/skincare/cleansers/hydrating-cleanser-bar,https://www.cerave.com/skincare/cleansers/sa-cleanser-bar-for-rough-and-bumpy-skin,name,different,0.120,0.350,minor,ingredient overlap 0.70
-https://www.cerave.com/skincare/cleansers/hydrating-cream-to-foam-cleanser,https://www.cerave.com/skincare/cleansers/hydrating-cream-to-foam-cleanser-refill,name,different,0.660,0.490,ok,ingredient overlap 1.00
-https://www.cerave.com/skincare/cleansers/hydrating-cream-to-foam-cleanser,https://www.cerave.com/skincare/cleansers/hydrating-facial-cleanser,name,different_reformulated,,,conflict,"ingredient overlap 0.29; allergen hits differ: cocamidopropyl-betaine,coco-glucoside,mineral-uv-filters,sodium-benzoate,tocopherol"
-https://www.cerave.com/skincare/cleansers/hydrating-cream-to-foam-cleanser,https://www.cerave.com/skincare/cleansers/hydrating-facial-cleanser-refill,name,different_reformulated,,,conflict,"ingredient overlap 0.29; allergen hits differ: cocamidopropyl-betaine,coco-glucoside,mineral-uv-filters,sodium-benzoate,tocopherol"
-https://www.cerave.com/skincare/cleansers/hydrating-cream-to-foam-cleanser-refill,https://www.cerave.com/skincare/cleansers/hydrating-facial-cleanser,name,different_reformulated,,,conflict,"ingredient overlap 0.29; allergen hits differ: cocamidopropyl-betaine,coco-glucoside,mineral-uv-filters,sodium-benzoate,tocopherol"
-https://www.cerave.com/skincare/cleansers/hydrating-cream-to-foam-cleanser-refill,https://www.cerave.com/skincare/cleansers/hydrating-facial-cleanser-refill,name,different_reformulated,,,conflict,"ingredient overlap 0.29; allergen hits differ: cocamidopropyl-betaine,coco-glucoside,mineral-uv-filters,sodium-benzoate,tocopherol"
-https://www.cerave.com/skincare/cleansers/hydrating-facial-cleanser,https://www.cerave.com/skincare/cleansers/hydrating-facial-cleanser-refill,name,flagged,0.610,0.540,ok,ingredient overlap 1.00
-https://www.cerave.com/skincare/cleansers/hydrating-facial-cleanser,https://www.cerave.com/skincare/moisturizers/facial-moisturizers/hydrating-hyaluronic-acid-water-gel,name,different_reformulated,,,conflict,"ingredient overlap 0.38; allergen hits differ: ethylhexylglycerin,sodium-benzoate"
-https://www.cerave.com/skincare/cleansers/hydrating-facial-cleanser-refill,https://www.cerave.com/skincare/moisturizers/facial-moisturizers/hydrating-hyaluronic-acid-water-gel,name,different_reformulated,,,conflict,"ingredient overlap 0.38; allergen hits differ: ethylhexylglycerin,sodium-benzoate"
-https://www.cerave.com/skincare/cleansers/hydrating-micellar-water,https://www.cerave.com/skincare/cleansers/micellar-water,name,different_reformulated,,,conflict,"ingredient overlap 0.54; allergen hits differ: bht,ethylhexylglycerin,phenoxyethanol,sodium-benzoate"
-https://www.cerave.com/skincare/cleansers/renewing-sa-cleanser,https://www.cerave.com/skincare/cleansers/sa-body-wash-for-rough-and-bumpy-skin,name,flagged,0.300,0.800,ok,ingredient overlap 1.00
-https://www.cerave.com/skincare/cleansers/renewing-sa-cleanser,https://www.cerave.com/skincare/cleansers/sa-cleanser-bar-for-rough-and-bumpy-skin,name,different_reformulated,,,conflict,"ingredient overlap 0.35; allergen hits differ: cetearyl-alcohol,mineral-uv-filters,sodium-benzoate,tocopherol"
-https://www.cerave.com/skincare/cleansers/sa-body-wash-for-rough-and-bumpy-skin,https://www.cerave.com/skincare/cleansers/sa-cleanser-bar-for-rough-and-bumpy-skin,name,different_reformulated,,,conflict,"ingredient overlap 0.35; allergen hits differ: cetearyl-alcohol,mineral-uv-filters,sodium-benzoate,tocopherol"
-https://www.cerave.com/skincare/cleansers/sa-body-wash-for-rough-and-bumpy-skin,https://www.cerave.com/skincare/cleansers/soothing-body-wash,name,different_reformulated,,,conflict,"ingredient overlap 0.28; allergen hits differ: sodium-benzoate,tocopherol"
-https://www.cerave.com/skincare/cleansers/sa-body-wash-for-rough-and-bumpy-skin,https://www.cerave.com/skincare/moisturizers/sa-cream-for-rough-and-bumpy-skin,name,different_reformulated,,,conflict,"ingredient overlap 0.44; allergen hits differ: cetearyl-alcohol,ethylhexylglycerin,parabens,sodium-benzoate,tocopherol"
-https://www.cerave.com/skincare/cleansers/sa-body-wash-for-rough-and-bumpy-skin,https://www.cerave.com/skincare/moisturizers/sa-lotion-for-rough-and-bumpy-skin,name,different_reformulated,,,conflict,"ingredient overlap 0.39; allergen hits differ: cetearyl-alcohol,ethylhexylglycerin,parabens,phenoxyethanol,sodium-benzoate"
-https://www.cerave.com/skincare/facial-serums/resurfacing-retinol-serum,https://www.cerave.com/skincare/facial-serums/skin-renewing-retinol-serum,name,different_reformulated,,,conflict,ingredient overlap 0.43; allergen hits differ: tocopherol
-https://www.cerave.com/skincare/facial-serums/skin-renewing-retinol-serum,https://www.cerave.com/skincare/facial-serums/skin-renewing-super-boost-serum,name,different_reformulated,,,conflict,"ingredient overlap 0.29; allergen hits differ: ethylhexylglycerin,sodium-benzoate"
-https://www.cerave.com/skincare/facial-serums/skin-renewing-retinol-serum,https://www.cerave.com/skincare/facial-serums/skin-renewing-vitamin-c-serum,name,different_reformulated,,,conflict,ingredient overlap 0.29; free-from flags differ: peg-free
-https://www.cerave.com/skincare/moisturizers/daily-moisturizing-lotion,https://www.cerave.com/skincare/moisturizers/intensive-moisturizing-lotion,name,different_reformulated,,,conflict,"ingredient overlap 0.30; allergen hits differ: ethylhexylglycerin,phenoxyethanol,sodium-benzoate,sorbitan-sesquioleate"
-https://www.cerave.com/skincare/moisturizers/daily-moisturizing-lotion,https://www.cerave.com/skincare/moisturizers/itch-relief-moisturizing-lotion,name,different_reformulated,,,conflict,ingredient overlap 0.48; allergen hits differ: pramoxine
-https://www.cerave.com/skincare/moisturizers/eczema-relief-moisturizing-cream,https://www.cerave.com/skincare/moisturizers/intensive-moisturizing-cream,name,different_reformulated,,,conflict,"ingredient overlap 0.45; allergen hits differ: phenoxyethanol,tocopherol"
-https://www.cerave.com/skincare/moisturizers/eczema-relief-moisturizing-cream,https://www.cerave.com/skincare/moisturizers/itch-relief-moisturizing-cream,name,different_reformulated,,,conflict,"ingredient overlap 0.35; allergen hits differ: ethylhexylglycerin,pramoxine,sodium-benzoate,tocopherol"
-https://www.cerave.com/skincare/moisturizers/eczema-relief-moisturizing-cream,https://www.cerave.com/skincare/moisturizers/moisturizing-cream,name,different_reformulated,,,conflict,"ingredient overlap 0.42; allergen hits differ: ethylhexylglycerin,sodium-benzoate"
-https://www.cerave.com/skincare/moisturizers/eczema-relief-moisturizing-cream,https://www.cerave.com/skincare/moisturizers/moisturizing-cream-refill,name,different_reformulated,,,conflict,"ingredient overlap 0.42; allergen hits differ: ethylhexylglycerin,sodium-benzoate"
-https://www.cerave.com/skincare/moisturizers/eye-repair-cream,https://www.cerave.com/skincare/moisturizers/facial-moisturizers/skin-renewing-eye-cream,name,different_reformulated,,,conflict,"ingredient overlap 0.35; allergen hits differ: ethylhexylglycerin,sodium-benzoate,sorbic-acid,tocopherol"
-https://www.cerave.com/skincare/moisturizers/eye-repair-cream,https://www.cerave.com/skincare/moisturizers/facial-moisturizers/skin-renewing-vitamin-c-eye-cream,name,different_reformulated,,,conflict,"ingredient overlap 0.32; allergen hits differ: ethylhexylglycerin,other-alkyl-glucosides,sodium-benzoate,sorbic-acid"
-https://www.cerave.com/skincare/moisturizers/facial-moisturizers/oil-control-moisturizing-gel-cream,https://www.cerave.com/skincare/moisturizers/intensive-moisturizing-cream,name,different_reformulated,,,conflict,ingredient overlap 0.34; allergen hits differ: phenoxyethanol
-https://www.cerave.com/skincare/moisturizers/facial-moisturizers/oil-control-moisturizing-gel-cream,https://www.cerave.com/skincare/moisturizers/moisturizing-cream,name,different_reformulated,,,conflict,"ingredient overlap 0.37; allergen hits differ: ethylhexylglycerin,sodium-benzoate,tocopherol"
-https://www.cerave.com/skincare/moisturizers/facial-moisturizers/oil-control-moisturizing-gel-cream,https://www.cerave.com/skincare/moisturizers/moisturizing-cream-refill,name,different_reformulated,,,conflict,"ingredient overlap 0.37; allergen hits differ: ethylhexylglycerin,sodium-benzoate,tocopherol"
-https://www.cerave.com/skincare/moisturizers/facial-moisturizers/skin-renewing-eye-cream,https://www.cerave.com/skincare/moisturizers/facial-moisturizers/skin-renewing-vitamin-c-eye-cream,name,different_reformulated,,,conflict,"ingredient overlap 0.51; allergen hits differ: other-alkyl-glucosides,tocopherol"
-https://www.cerave.com/skincare/moisturizers/intensive-moisturizing-cream,https://www.cerave.com/skincare/moisturizers/moisturizing-cream,name,different_reformulated,,,conflict,"ingredient overlap 0.40; allergen hits differ: ethylhexylglycerin,phenoxyethanol,sodium-benzoate,tocopherol"
-https://www.cerave.com/skincare/moisturizers/intensive-moisturizing-cream,https://www.cerave.com/skincare/moisturizers/moisturizing-cream-refill,name,different_reformulated,,,conflict,"ingredient overlap 0.40; allergen hits differ: ethylhexylglycerin,phenoxyethanol,sodium-benzoate,tocopherol"
-https://www.cerave.com/skincare/moisturizers/intensive-moisturizing-lotion,https://www.cerave.com/skincare/moisturizers/itch-relief-moisturizing-lotion,name,different_reformulated,,,conflict,"ingredient overlap 0.32; allergen hits differ: ethylhexylglycerin,phenoxyethanol,pramoxine,sodium-benzoate,sorbitan-sesquioleate"
-https://www.cerave.com/skincare/moisturizers/moisturizing-cream,https://www.cerave.com/skincare/moisturizers/moisturizing-cream-refill,name,flagged,0.680,0.580,ok,ingredient overlap 1.00
+cerave-acne-control-gel,cerave-acne-salicylic-acid-cleanser,name,different_reformulated,,,conflict,ingredient overlap 0.46; allergen hits differ: cetearyl-alcohol
+cerave-acne-control-gel,cerave-oil-control-moisturizing-gel-cream,name,different_reformulated,,,conflict,ingredient overlap 0.53; allergen hits differ: phenoxyethanol
+cerave-baby-eczema-relief-cream,cerave-baby-moisturizing-cream,name,different_reformulated,,,conflict,"ingredient overlap 0.33; allergen hits differ: ethylhexylglycerin,sodium-benzoate,tocopherol"
+cerave-acne-benzoyl-peroxide-cleanser,cerave-acne-salicylic-acid-cleanser,name,different_reformulated,,,conflict,"ingredient overlap 0.38; allergen hits differ: ethylhexylglycerin,phenoxyethanol,propylene-glycol"
+cerave-acne-benzoyl-peroxide-cleanser,cerave-acne-foaming-cream-wash,name,different_reformulated,,,conflict,"ingredient overlap 0.73; allergen hits differ: ethylhexylglycerin,phenoxyethanol"
+cerave-acne-benzoyl-peroxide-cleanser,cerave-foaming-facial-cleanser,name,different_reformulated,,,conflict,"ingredient overlap 0.44; allergen hits differ: ethylhexylglycerin,parabens,phenoxyethanol,sodium-benzoate"
+cerave-acne-salicylic-acid-cleanser,cerave-clay-to-foam-cleanser,name,different_reformulated,,,conflict,ingredient overlap 0.47; allergen hits differ: cetearyl-alcohol
+cerave-acne-salicylic-acid-cleanser,cerave-acne-foaming-cream-wash,name,different_reformulated,,,conflict,ingredient overlap 0.44; allergen hits differ: propylene-glycol
+cerave-air-foam-foaming-facial-cleanser,cerave-foaming-facial-cleanser,name,different_reformulated,,,conflict,"ingredient overlap 0.39; allergen hits differ: cocamidopropyl-betaine,parabens,propylene-glycol,sodium-benzoate"
+cerave-air-foam-foaming-facial-cleanser,cerave-hydrating-facial-cleanser,name,different_reformulated,,,conflict,"ingredient overlap 0.25; allergen hits differ: cetearyl-alcohol,cocamidopropyl-betaine,ethylhexylglycerin,phenoxyethanol,sodium-benzoate,tocopherol"
+cerave-air-foam-foaming-facial-cleanser,cerave-hydrating-facial-cleanser-refill,name,different_reformulated,,,conflict,"ingredient overlap 0.25; allergen hits differ: cetearyl-alcohol,cocamidopropyl-betaine,ethylhexylglycerin,phenoxyethanol,sodium-benzoate,tocopherol"
+cerave-brightening-vitamin-c-cleanser,cerave-brightening-vitamin-c-lotion,name,different_reformulated,,,conflict,"ingredient overlap 0.29; allergen hits differ: cetearyl-alcohol,cocamidopropyl-betaine,compositae,phenoxyethanol"
+cerave-acne-foaming-cream-wash,cerave-foaming-facial-cleanser,name,different_reformulated,,,conflict,"ingredient overlap 0.36; allergen hits differ: parabens,sodium-benzoate"
+cerave-hydrating-foaming-oil-cleanser,cerave-foaming-facial-cleanser,name,different_reformulated,,,conflict,"ingredient overlap 0.33; allergen hits differ: cocamidopropyl-betaine,parabens,propylene-glycol,sodium-benzoate"
+cerave-hydrating-foaming-oil-cleanser,cerave-hydrating-facial-cleanser,name,different_reformulated,,,conflict,"ingredient overlap 0.27; allergen hits differ: cetearyl-alcohol,cocamidopropyl-betaine,ethylhexylglycerin,phenoxyethanol,sodium-benzoate,tocopherol"
+cerave-hydrating-foaming-oil-cleanser,cerave-hydrating-facial-cleanser-refill,name,different_reformulated,,,conflict,"ingredient overlap 0.27; allergen hits differ: cetearyl-alcohol,cocamidopropyl-betaine,ethylhexylglycerin,phenoxyethanol,sodium-benzoate,tocopherol"
+cerave-foaming-cleanser-bar,cerave-foaming-facial-cleanser,name,different_reformulated,,,conflict,"ingredient overlap 0.33; allergen hits differ: cetearyl-alcohol,ethylhexylglycerin,mineral-uv-filters,parabens,phenoxyethanol,propylene-glycol"
+cerave-foaming-cleanser-bar,cerave-hydrating-cleanser-bar,name,different_reformulated,,,conflict,ingredient overlap 0.61; allergen hits differ: tocopherol
+cerave-foaming-cleanser-bar,cerave-sa-cleanser-bar-for-rough-and-bumpy-skin,name,different_reformulated,,,conflict,ingredient overlap 0.70; allergen hits differ: tocopherol
+cerave-foaming-facial-cleanser,cerave-hydrating-facial-cleanser,name,different_reformulated,,,conflict,"ingredient overlap 0.30; allergen hits differ: cetearyl-alcohol,ethylhexylglycerin,parabens,phenoxyethanol,propylene-glycol,tocopherol"
+cerave-foaming-facial-cleanser,cerave-hydrating-facial-cleanser-refill,name,different_reformulated,,,conflict,"ingredient overlap 0.30; allergen hits differ: cetearyl-alcohol,ethylhexylglycerin,parabens,phenoxyethanol,propylene-glycol,tocopherol"
+cerave-hydrating-cleanser-bar,cerave-hydrating-facial-cleanser,name,different_reformulated,,,conflict,ingredient overlap 0.50; allergen hits differ: mineral-uv-filters
+cerave-hydrating-cleanser-bar,cerave-hydrating-facial-cleanser-refill,name,different_reformulated,,,conflict,ingredient overlap 0.50; allergen hits differ: mineral-uv-filters
+cerave-hydrating-cleanser-bar,cerave-sa-cleanser-bar-for-rough-and-bumpy-skin,name,different,0.120,0.350,minor,ingredient overlap 0.70
+cerave-hydrating-cream-to-foam-cleanser,cerave-hydrating-cream-to-foam-cleanser-refill,name,different,0.660,0.490,ok,ingredient overlap 1.00
+cerave-hydrating-cream-to-foam-cleanser,cerave-hydrating-facial-cleanser,name,different_reformulated,,,conflict,"ingredient overlap 0.29; allergen hits differ: cocamidopropyl-betaine,coco-glucoside,mineral-uv-filters,sodium-benzoate,tocopherol"
+cerave-hydrating-cream-to-foam-cleanser,cerave-hydrating-facial-cleanser-refill,name,different_reformulated,,,conflict,"ingredient overlap 0.29; allergen hits differ: cocamidopropyl-betaine,coco-glucoside,mineral-uv-filters,sodium-benzoate,tocopherol"
+cerave-hydrating-cream-to-foam-cleanser-refill,cerave-hydrating-facial-cleanser,name,different_reformulated,,,conflict,"ingredient overlap 0.29; allergen hits differ: cocamidopropyl-betaine,coco-glucoside,mineral-uv-filters,sodium-benzoate,tocopherol"
+cerave-hydrating-cream-to-foam-cleanser-refill,cerave-hydrating-facial-cleanser-refill,name,different_reformulated,,,conflict,"ingredient overlap 0.29; allergen hits differ: cocamidopropyl-betaine,coco-glucoside,mineral-uv-filters,sodium-benzoate,tocopherol"
+cerave-hydrating-facial-cleanser,cerave-hydrating-facial-cleanser-refill,name,flagged,0.610,0.540,ok,ingredient overlap 1.00
+cerave-hydrating-facial-cleanser,cerave-hydrating-hyaluronic-acid-water-gel,name,different_reformulated,,,conflict,"ingredient overlap 0.38; allergen hits differ: ethylhexylglycerin,sodium-benzoate"
+cerave-hydrating-facial-cleanser-refill,cerave-hydrating-hyaluronic-acid-water-gel,name,different_reformulated,,,conflict,"ingredient overlap 0.38; allergen hits differ: ethylhexylglycerin,sodium-benzoate"
+cerave-hydrating-micellar-water,cerave-micellar-water,name,different_reformulated,,,conflict,"ingredient overlap 0.54; allergen hits differ: bht,ethylhexylglycerin,phenoxyethanol,sodium-benzoate"
+cerave-renewing-sa-cleanser,cerave-sa-body-wash-for-rough-and-bumpy-skin,name,flagged,0.300,0.800,ok,ingredient overlap 1.00
+cerave-renewing-sa-cleanser,cerave-sa-cleanser-bar-for-rough-and-bumpy-skin,name,different_reformulated,,,conflict,"ingredient overlap 0.35; allergen hits differ: cetearyl-alcohol,mineral-uv-filters,sodium-benzoate,tocopherol"
+cerave-sa-body-wash-for-rough-and-bumpy-skin,cerave-sa-cleanser-bar-for-rough-and-bumpy-skin,name,different_reformulated,,,conflict,"ingredient overlap 0.35; allergen hits differ: cetearyl-alcohol,mineral-uv-filters,sodium-benzoate,tocopherol"
+cerave-sa-body-wash-for-rough-and-bumpy-skin,cerave-soothing-body-wash,name,different_reformulated,,,conflict,"ingredient overlap 0.28; allergen hits differ: sodium-benzoate,tocopherol"
+cerave-sa-body-wash-for-rough-and-bumpy-skin,cerave-sa-cream-for-rough-and-bumpy-skin,name,different_reformulated,,,conflict,"ingredient overlap 0.44; allergen hits differ: cetearyl-alcohol,ethylhexylglycerin,parabens,sodium-benzoate,tocopherol"
+cerave-sa-body-wash-for-rough-and-bumpy-skin,cerave-sa-lotion-for-rough-and-bumpy-skin,name,different_reformulated,,,conflict,"ingredient overlap 0.39; allergen hits differ: cetearyl-alcohol,ethylhexylglycerin,parabens,phenoxyethanol,sodium-benzoate"
+cerave-resurfacing-retinol-serum,cerave-skin-renewing-retinol-serum,name,different_reformulated,,,conflict,ingredient overlap 0.43; allergen hits differ: tocopherol
+cerave-skin-renewing-retinol-serum,cerave-skin-renewing-super-boost-serum,name,different_reformulated,,,conflict,"ingredient overlap 0.29; allergen hits differ: ethylhexylglycerin,sodium-benzoate"
+cerave-skin-renewing-retinol-serum,cerave-skin-renewing-vitamin-c-serum,name,different_reformulated,,,conflict,ingredient overlap 0.29; free-from flags differ: peg-free
+cerave-daily-moisturizing-lotion,cerave-intensive-moisturizing-lotion,name,different_reformulated,,,conflict,"ingredient overlap 0.30; allergen hits differ: ethylhexylglycerin,phenoxyethanol,sodium-benzoate,sorbitan-sesquioleate"
+cerave-daily-moisturizing-lotion,cerave-itch-relief-moisturizing-lotion,name,different_reformulated,,,conflict,ingredient overlap 0.48; allergen hits differ: pramoxine
+cerave-eczema-relief-moisturizing-cream,cerave-intensive-moisturizing-cream,name,different_reformulated,,,conflict,"ingredient overlap 0.45; allergen hits differ: phenoxyethanol,tocopherol"
+cerave-eczema-relief-moisturizing-cream,cerave-itch-relief-moisturizing-cream,name,different_reformulated,,,conflict,"ingredient overlap 0.35; allergen hits differ: ethylhexylglycerin,pramoxine,sodium-benzoate,tocopherol"
+cerave-eczema-relief-moisturizing-cream,cerave-moisturizing-cream,name,different_reformulated,,,conflict,"ingredient overlap 0.42; allergen hits differ: ethylhexylglycerin,sodium-benzoate"
+cerave-eczema-relief-moisturizing-cream,cerave-moisturizing-cream-refill,name,different_reformulated,,,conflict,"ingredient overlap 0.42; allergen hits differ: ethylhexylglycerin,sodium-benzoate"
+cerave-eye-repair-cream,cerave-skin-renewing-eye-cream,name,different_reformulated,,,conflict,"ingredient overlap 0.35; allergen hits differ: ethylhexylglycerin,sodium-benzoate,sorbic-acid,tocopherol"
+cerave-eye-repair-cream,cerave-skin-renewing-vitamin-c-eye-cream,name,different_reformulated,,,conflict,"ingredient overlap 0.32; allergen hits differ: ethylhexylglycerin,other-alkyl-glucosides,sodium-benzoate,sorbic-acid"
+cerave-oil-control-moisturizing-gel-cream,cerave-intensive-moisturizing-cream,name,different_reformulated,,,conflict,ingredient overlap 0.34; allergen hits differ: phenoxyethanol
+cerave-oil-control-moisturizing-gel-cream,cerave-moisturizing-cream,name,different_reformulated,,,conflict,"ingredient overlap 0.37; allergen hits differ: ethylhexylglycerin,sodium-benzoate,tocopherol"
+cerave-oil-control-moisturizing-gel-cream,cerave-moisturizing-cream-refill,name,different_reformulated,,,conflict,"ingredient overlap 0.37; allergen hits differ: ethylhexylglycerin,sodium-benzoate,tocopherol"
+cerave-skin-renewing-eye-cream,cerave-skin-renewing-vitamin-c-eye-cream,name,different_reformulated,,,conflict,"ingredient overlap 0.51; allergen hits differ: other-alkyl-glucosides,tocopherol"
+cerave-intensive-moisturizing-cream,cerave-moisturizing-cream,name,different_reformulated,,,conflict,"ingredient overlap 0.40; allergen hits differ: ethylhexylglycerin,phenoxyethanol,sodium-benzoate,tocopherol"
+cerave-intensive-moisturizing-cream,cerave-moisturizing-cream-refill,name,different_reformulated,,,conflict,"ingredient overlap 0.40; allergen hits differ: ethylhexylglycerin,phenoxyethanol,sodium-benzoate,tocopherol"
+cerave-intensive-moisturizing-lotion,cerave-itch-relief-moisturizing-lotion,name,different_reformulated,,,conflict,"ingredient overlap 0.32; allergen hits differ: ethylhexylglycerin,phenoxyethanol,pramoxine,sodium-benzoate,sorbitan-sesquioleate"
+cerave-moisturizing-cream,cerave-moisturizing-cream-refill,name,flagged,0.680,0.580,ok,ingredient overlap 1.00
 rdn-hair-care-natural-moisturizing-factors-ha-eu-60ml,rdn-natural-moisturizing-factors-ha-30ml,name,different_reformulated,,,conflict,"ingredient overlap 0.34; allergen hits differ: acrylates,cetearyl-alcohol,lauryl-glucoside,other-alkyl-glucosides,sorbic-acid,tocopherol"
 rdn-salicylic-acid-2pct-anhydrous-solution-30ml,rdn-salicylic-acid-2pct-masque-50ml,name,different_reformulated,,,conflict,ingredient overlap 0.27; allergen hits differ: acrylates
 vanicream-enhanced-moisturizer,vanicream-vanicream-daily-facial-moisturizer,name,different_reformulated,,,conflict,ingredient overlap 0.67; free-from flags differ: silicone-free

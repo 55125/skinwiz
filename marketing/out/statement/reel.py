@@ -9,16 +9,16 @@ G = os.path.join(D, ENGINE); os.makedirs(G, exist_ok=True)
 SR, FPS = 24000, 30; MODEL = os.environ.get("GEMINI_TTS_MODEL", "gemini-3.8-flash-lite-tts")
 GEMINI_VOICE = {"me": "Leda", "fragrance": "Puck", "narrator": "Sulafat"}
 KOKORO_VOICE = {"me": "af_heart", "fragrance": "am_puck", "narrator": "af_bella"}
-# (key, kind, speaker, Gemini tags, spoken, on-screen). Fragrance reads it like a rehearsed PR statement, not smug.
+# (key, kind, speaker, Gemini tags, spoken, on-screen). Fragrance is an out-of-touch celebrity reading a PR-drafted non-apology.
 BEATS = [
- ("b1", "notes", "fragrance", "[sighs] [solemn]", "To everyone whose skin I've hurt.", "To everyone whose skin I've hurt."),
- ("b2", "notes", "fragrance", "[solemn]", "I never meant to make anyone itch.", "I never meant to make anyone itch."),
- ("b3", "notes", "fragrance", "[solemn]", "I'm stepping away... from the front of the bottle.", "I'm stepping away… from the front of the bottle."),
- ("b4", "notes", "fragrance", "[solemn]", "Going forward, I'll be going by Parfum.", "Going forward, I'll be going by Parfum."),
- ("b5", "notes", "fragrance", "[quickly] [casual]", "My associates Linalool and Limonene may also be around.", "My associates Linalool and Limonene may also be around."),
- ("b6", "notes", "fragrance", "[solemn]", "Please respect my privacy. In the ingredient list.", "Please respect my privacy. In the ingredient list."),
+ ("b1", "notes", "fragrance", "[sighs] [rehearsed]", "Hi guys. This is so hard for me to write.", "Hi guys. This is so hard for me to write. 🙏"),
+ ("b2", "notes", "fragrance", "[rehearsed]", "I'm sorry if anyone felt itchy.", "I'm sorry if anyone *felt* itchy."),
+ ("b3", "notes", "fragrance", "[rehearsed] [earnest]", "I'm taking a step back from the front of the bottle to focus on my healing.", "I'm taking a step back from the front of the bottle to focus on my healing."),
+ ("b4", "notes", "fragrance", "[proud]", "Going forward, I'll be going by Parfum. That's growth.", "Going forward, I'll be going by Parfum. That's growth. ✨"),
+ ("b5", "notes", "fragrance", "[quickly] [defensive]", "Linalool, Limonene and I are just friends.", "Linalool, Limonene and I are just friends."),
+ ("b6", "notes", "fragrance", "[rehearsed]", "Please respect my privacy. In the ingredient list.", "Please respect my privacy. In the ingredient list. 🤍"),
  ("b7", "comment", "me", "[flat] [deadpan]", "Ratio. You're on my avoid list.", "ratio + you're on my avoid list"),
- ("b8", "note", "narrator", "[warm]", "Same ingredient, new names. Save the whole fragrance group to catch every one.", None),
+ ("b8", "note", "narrator", "[warm]", "Same ingredient. New names.", None),
  ("b9", "end", "narrator", "[warm]", "Check before you buy. Free at Actively Skin dot com.", None),
 ]
 NOTE_LINES = ["Same ingredient.<br>New names.", "Add “Fragrance allergens (all)” to catch every one."]

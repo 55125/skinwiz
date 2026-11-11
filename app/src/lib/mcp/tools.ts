@@ -13,6 +13,7 @@ import { avoidedIngredientPageName, listsIngredient } from "@/lib/avoid-ingredie
 import { productBrand } from "@/lib/product-brand";
 import { SITE_NAME } from "@/lib/brand";
 import { siteUrl } from "@/lib/site-url";
+import { renamedProductId } from "@/db/product-id-renames";
 import {
   MIN_PUBLIC_PRODUCTS,
   getConcern,
@@ -159,7 +160,8 @@ const productTool: Tool = {
     additionalProperties: false,
   },
   run(args) {
-    const found = getProduct(textArg(args, "id", 80));
+    const asked = textArg(args, "id", 120);
+    const found = getProduct(renamedProductId(asked) ?? asked);
     const p = found?.canonicalId ? getProduct(found.canonicalId) ?? found : found;
     if (!p) return { text: "No product with that id. Use search_products to find one.", isError: true };
     const ings = getIngredientsForProduct(p.id);

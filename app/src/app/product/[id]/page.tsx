@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound, permanentRedirect, redirect } from "next/navigation";
+import { renamedProductId } from "@/db/product-id-renames";
 import { AlertTriangle, ChevronLeft, ExternalLink, Info, Music2, Camera } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
@@ -134,6 +135,9 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
   const { id } = await params;
   const product = getProduct(decodeURIComponent(id));
   if (!product) {
+    // An old id (db/product-id-renames.ts) moves to the product's address now.
+    const renamed = renamedProductId(decodeURIComponent(id));
+    if (renamed) permanentRedirect(`/product/${encodeURIComponent(renamed)}`);
     // Prescription rows have no consumer product page; a verified clinician
     // is sent to the Rx reference page instead, everyone else gets a 404.
     if (getRxProduct(decodeURIComponent(id)) && (await canViewRxReference())) redirect(`/rx/${encodeURIComponent(decodeURIComponent(id))}`);

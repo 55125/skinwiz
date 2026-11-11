@@ -21,6 +21,7 @@ import { drugInactiveList, groupSplInactive, type SplInactiveCsvRow } from "./sp
 import { linkAllDailymedImages } from "@/lib/product-images/link";
 import { seedStarterRoutines } from "./starter-routines";
 import { resolveMerges, reviewedMergeRows, type FlaggedRow, type MergeRow } from "./product-merges";
+import { PRODUCT_ID_RENAMES } from "./product-id-renames";
 
 const REPO_ROOT = path.resolve(process.cwd(), "..");
 // Four sources: the primary openFDA catalog, the DailyMed resolution pass
@@ -572,6 +573,7 @@ function reseed() {
   insertRxLabelSections();
   linkPackageImages();
   applyImageOverrides();
+  applyProductIdRenames();
   reconcileOrphans();
 }
 
@@ -867,6 +869,29 @@ function insertManualLinks(otcIds: Set<string>) {
   for (const r of rejected) console.warn(`  WARNING: manual_links.csv line ${r.row} skipped: ${r.reason}`);
   if (links.length) db.insert(schema.manualAffiliateLinks).values(links).run();
   console.log(`  inserted ${links.length} manual affiliate links`);
+}
+
+// A product whose id changed (db/product-id-renames.ts) keeps everything
+// people saved under the old id: every table's product_id column, and the
+// product ids inside clinician lists and handout versions, move to the new
+// id before orphans are reconciled. A no-op once nothing uses an old id.
+function applyProductIdRenames() {
+  const tables = db
+    .all<{ name: string }>(sql`SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%'`)
+    .map((t) => t.name)
+    .filter((t) => db.all<{ name: string }>(sql`SELECT name FROM pragma_table_info(${t})`).some((c) => c.name === "product_id"));
+  let moved = 0;
+  for (const [oldId, newId] of Object.entries(PRODUCT_ID_RENAMES)) {
+    for (const t of tables) {
+      // OR IGNORE: a row already saved under the new id wins over its old twin,
+      // which reconcileOrphans then clears like any other orphan
+      moved += db.run(sql`UPDATE OR IGNORE ${sql.identifier(t)} SET product_id = ${newId} WHERE product_id = ${oldId}`).changes;
+    }
+    const quoted = JSON.stringify(oldId);
+    moved += db.run(sql`UPDATE clinician_lists SET ids = replace(ids, ${quoted}, ${JSON.stringify(newId)}) WHERE instr(ids, ${quoted}) > 0`).changes;
+    moved += db.run(sql`UPDATE handout_versions SET content = replace(content, ${quoted}, ${JSON.stringify(newId)}) WHERE instr(content, ${quoted}) > 0`).changes;
+  }
+  if (moved) console.log(`  moved ${moved} saved rows from renamed product ids`);
 }
 
 // Products that dropped out of the catalog CSVs leave rows pointing at ids

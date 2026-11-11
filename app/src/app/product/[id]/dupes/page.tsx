@@ -7,6 +7,7 @@ import { JsonLd } from "@/components/json-ld";
 import { DupeEmpty, DupeExplainer, DupeRows } from "@/components/dupe-list";
 import { findDupesCached } from "@/lib/dupes";
 import { getProduct } from "@/lib/queries";
+import { renamedProductId } from "@/db/product-id-renames";
 import { isSunscreen } from "@/lib/hsa";
 import { breadcrumbLd } from "@/lib/seo";
 import { siteUrl } from "@/lib/site-url";
@@ -35,7 +36,11 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 export default async function DupesPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const product = getProduct(decodeURIComponent(id));
-  if (!product) notFound();
+  if (!product) {
+    const renamed = renamedProductId(decodeURIComponent(id));
+    if (renamed) permanentRedirect(`/product/${encodeURIComponent(renamed)}/dupes`);
+    notFound();
+  }
   if (product.canonicalId) permanentRedirect(`/product/${encodeURIComponent(product.canonicalId)}/dupes`);
 
   const dupes = findDupesCached(product.id, LIMIT);

@@ -114,3 +114,17 @@ test("labels with a heading or flavor in front, and organic footnotes, don't bec
     "Simmondsia Chinensis (Jojoba) Seed Oil", "Shea Butter",
   ]);
 });
+
+test("lists separated by dashes or by bracketed functions, and lists wrapped in brackets, split into names", () => {
+  assert.deepEqual(splitIngredientList("1247592 - ALCOHOL DENAT. - DIMETHYL ETHER - VA/CROTONATES/VINYL NEODECANOATE COPOLYMER - ASCORBIC ACID - PARFUM / FRAGRANCE").slice(-4), [
+    "DIMETHYL ETHER", "VA/CROTONATES/VINYL NEODECANOATE COPOLYMER", "ASCORBIC ACID", "PARFUM / FRAGRANCE",
+  ]);
+  assert.deepEqual(splitIngredientList("Aqua / Water / Eau (Solvent) Sodium C14-16 Olefin Sulfonate (Cleansing Agent) Glycerin (Hydrating Humectant) Sodium Chloride (Thickener)"), [
+    "Aqua / Water / Eau (Solvent)", "Sodium C14-16 Olefin Sulfonate (Cleansing Agent)", "Glycerin (Hydrating Humectant)", "Sodium Chloride (Thickener)",
+  ]);
+  assert.deepEqual(splitIngredientList("INGREDIENTS: (AQUA, SODIUM LAURETH SULFATE, SODIUM CHLORIDE, COCAMIDOPROPYL BETAINE, GLYCERIN, PARFUM, LIMONENE, CITRIC ACID, BENZYL ALCOHOL, LINALOOL)"), [
+    "AQUA", "SODIUM LAURETH SULFATE", "SODIUM CHLORIDE", "COCAMIDOPROPYL BETAINE", "GLYCERIN", "PARFUM", "LIMONENE", "CITRIC ACID", "BENZYL ALCOHOL", "LINALOOL",
+  ]);
+  // an ordinary list with a hyphenated name or a bracketed note is untouched
+  assert.deepEqual(splitIngredientList("Water, Ceteareth-20, Glycerin (Vegetable) - Organic, Niacinamide"), ["Water", "Ceteareth-20", "Glycerin (Vegetable) - Organic", "Niacinamide"]);
+});

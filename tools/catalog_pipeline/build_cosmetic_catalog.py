@@ -216,6 +216,22 @@ def is_polish(product: dict) -> bool:
     return bool(POLISH_TEXT.search(product.get("product_name") or "") or POLISH_TEXT.search((product.get("ingredients_text") or "")[:80]))
 
 
+# Vitamins and other supplements you swallow (Michael, 2026-11-11: keep them
+# out). OBF files gummies and tablets beside skincare, and their "Vitamin C" or
+# "Biotin" reads as a skincare active. Told apart by the pack ("tablets",
+# "gummies", "multi-vitamin") or a per-dose label ("each tablet contains",
+# "per capsule"); "Capsule Cream" and "Capsule Serum" skincare don't match.
+SUPPLEMENT_NAME = re.compile(r"\b(?:tablets?|gummies|softgels?|multi-?vitamins?|effervescent)\b", re.I)
+SUPPLEMENT_TEXT = re.compile(
+    r"\b(?:each|per)\s+(?:\w+\s+){0,2}?(?:tablet|caplet|capsule|pastille|gumm(?:y|ie)|softgel|serving|sachet)\b|\bacidi?t?y regulator\b",
+    re.I,
+)
+
+
+def is_supplement(product: dict) -> bool:
+    return bool(SUPPLEMENT_NAME.search(product.get("product_name") or "") or SUPPLEMENT_TEXT.search(product.get("ingredients_text") or ""))
+
+
 # Which real-world concern a tracked cosmetic active is the better fit for.
 # Every cosmetic active defaulted to Brightening & Texture as a launch-day
 # catch-all, but that's wrong for barrier/hydration ingredients -- ceramides,
@@ -286,7 +302,7 @@ def main() -> None:
             code = p.get("code")
             if not code or code in by_barcode:
                 continue
-            if is_junk(p) or is_polish(p):
+            if is_junk(p) or is_polish(p) or is_supplement(p):
                 continue
             active_ids = matched_active_ids(p.get("ingredients_text") or "")
             if not active_ids:

@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound, permanentRedirect, redirect } from "next/navigation";
 import { renamedProductId } from "@/db/product-id-renames";
-import { AlertTriangle, ChevronLeft, ExternalLink, Info, Music2, Camera } from "lucide-react";
+import { AlertTriangle, ChevronLeft, ExternalLink, Info, Landmark, Music2, Camera } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -82,6 +82,9 @@ import { recallsForProduct } from "@/lib/recalls";
 import { RecallBanner } from "@/components/recall-banner";
 import { DiscontinuedBanner } from "@/components/discontinued-banner";
 import { availabilityOf } from "@/lib/availability";
+import { regulatoryNotesForHits } from "@/db/regulatory-notes";
+import { allergenLabel } from "@/db/contact-allergens";
+import { RegulatoryNoteCard } from "@/components/regulatory-note";
 import { canViewRxReference } from "@/lib/clinicians";
 import { isAmazonLink, manualLinkHref, manualLinkLabel } from "@/lib/manual-links";
 import { headers } from "next/headers";
@@ -253,6 +256,11 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
   const showPregnancy = FEATURES.PREGNANCY_MODE && (profile.pregnant || profile.breastfeeding);
   const pregnancyFound = showPregnancy ? productPregnancyFindings(product, ingredientRows) : [];
   const pregnancyTitle = showPregnancy ? pregnancyAvoidTitle(pregnancyFound, profile.pregnant, profile.breastfeeding) : null;
+  // Ingredients a regulator has restricted for safety (db/regulatory-notes.ts).
+  const regulatory = regulatoryNotesForHits(product.allergenHits).map((r) => ({
+    ...r,
+    names: r.allergenIds.map((id) => allergenLabel(id) ?? id),
+  }));
   const shownFlags = shownFreeFromFlags(product.freeFromFlags ?? [], product.concernId);
   const flaggedSkin = product.freeFromFlags
     ? FREE_FROM_CHECKS.filter((c) => c.category === "skin" && checkShownFor(c.id, product.concernId) && !product.freeFromFlags!.includes(c.id)).map((c) => ({
@@ -507,6 +515,22 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
             </p>
           )}
 
+          {regulatory.map((r) => (
+            <p
+              key={r.note.id}
+              className="flex items-start gap-2 rounded-xl border border-sky-300 bg-sky-50 px-3.5 py-2.5 text-sm dark:border-sky-900 dark:bg-sky-950/30"
+            >
+              <Landmark className="mt-0.5 h-4 w-4 shrink-0 text-sky-700 dark:text-sky-300" aria-hidden />
+              <span>
+                Contains <span className="font-semibold">{r.names.join(", ")}</span>
+                {r.note.productSuffix}.{" "}
+                <a href={`#reg-${r.note.id}`} className="font-medium underline">
+                  Regulatory note ↓
+                </a>
+              </span>
+            </p>
+          ))}
+
           {match ? (
             <div className="space-y-2.5 rounded-xl border bg-card p-4">
               <div className="flex flex-wrap items-center gap-2">
@@ -656,6 +680,10 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
               <ActiveNotes notes={otherNotes} />
             </div>
           )}
+
+          {regulatory.map((r) => (
+            <RegulatoryNoteCard key={r.note.id} id={`reg-${r.note.id}`} note={r.note} ingredientNames={r.names} isDrug={isDrugLabel} />
+          ))}
 
           <WhatsInIt
             items={fullList.items}

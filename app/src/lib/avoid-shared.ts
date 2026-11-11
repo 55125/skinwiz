@@ -1,5 +1,5 @@
 import { getFreeFromCheck } from "@/db/ingredient-flags";
-import { allergenFinding, allergenLabel, resolveAllergenId } from "@/db/contact-allergens";
+import { allergenFinding, allergenLabel, allergenMembers, resolveAllergenId } from "@/db/contact-allergens";
 
 // Pure avoid-list logic (no cookies), shared by server code and the
 // client-side profile scoring. An avoid id is a free-from check id
@@ -45,6 +45,22 @@ export function avoidedIngredientName(id: string): string {
   const check = getFreeFromCheck(id);
   if (check) return check.avoidName ?? check.label.replace(/-free$/i, "").toLowerCase();
   return allergenLabel(id) ?? id;
+}
+
+/**
+ * The ingredients behind a product's avoid conflicts, named once each: a
+ * group on the list ("Formaldehyde and all releasers") becomes the members
+ * the label actually has ("DMDM hydantoin"), so two overlapping groups
+ * don't read as two hits. `name` turns any other avoid id into its name.
+ */
+export function avoidConflictNames(conflicts: string[], allergenHits: string[] | null | undefined, name: (id: string) => string): string[] {
+  const hits = new Set(allergenHits ?? []);
+  const out: string[] = [];
+  for (const id of conflicts) {
+    const members = allergenMembers(id).filter((m) => m !== id && hits.has(m));
+    for (const n of members.length > 0 ? members.map((m) => allergenLabel(m) ?? m) : [name(id)]) if (!out.includes(n)) out.push(n);
+  }
+  return out;
 }
 
 /**

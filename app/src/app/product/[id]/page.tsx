@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound, permanentRedirect, redirect } from "next/navigation";
 import { renamedProductId } from "@/db/product-id-renames";
-import { AlertTriangle, ChevronLeft, ExternalLink, Info, Landmark, Music2, Camera } from "lucide-react";
+import { AlertTriangle, ChevronLeft, ExternalLink, Info, Music2, XCircle, Camera } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -36,6 +36,7 @@ import { ewgHazardBadge } from "@/lib/ewg";
 import { readSessionId } from "@/lib/session";
 import { getSessionOutcome } from "@/lib/outcomes";
 import { readAvoidIds, avoidConflicts, avoidVerdict, avoidedIngredientName } from "@/lib/avoid";
+import { avoidConflictNames } from "@/lib/avoid-shared";
 import { FullIngredientList, WhatsInIt } from "@/components/whats-in-it";
 import { activeName, describeStrengths, labelAmounts, labelQuantityCount } from "@/lib/strength-display";
 import { activeUse } from "@/db/active-uses";
@@ -84,7 +85,7 @@ import { DiscontinuedBanner } from "@/components/discontinued-banner";
 import { availabilityOf } from "@/lib/availability";
 import { regulatoryNotesForHits } from "@/db/regulatory-notes";
 import { allergenLabel } from "@/db/contact-allergens";
-import { RegulatoryNoteCard } from "@/components/regulatory-note";
+import { BannedIngredientsBox } from "@/components/regulatory-note";
 import { canViewRxReference } from "@/lib/clinicians";
 import { isAmazonLink, manualLinkHref, manualLinkLabel } from "@/lib/manual-links";
 import { headers } from "next/headers";
@@ -257,6 +258,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
   const pregnancyFound = showPregnancy ? productPregnancyFindings(product, ingredientRows) : [];
   const pregnancyTitle = showPregnancy ? pregnancyAvoidTitle(pregnancyFound, profile.pregnant, profile.breastfeeding) : null;
   // Ingredients a regulator has restricted for safety (db/regulatory-notes.ts).
+  const avoidNames = avoid?.status === "conflicts" ? avoidConflictNames(avoid.conflicts, product.allergenHits, avoidedIngredientName) : [];
   const regulatory = regulatoryNotesForHits(product.allergenHits).map((r) => ({
     ...r,
     names: r.allergenIds.map((id) => allergenLabel(id) ?? id),
@@ -471,12 +473,29 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
           <QuickBuyRow links={quickBuy} moreHref="#where-to-buy" />
 
           {/* One line each for what can't wait; the details are in What's in it. */}
+          {/* With an avoid-list hit the verdict comes first, its reasons
+              inside it, and the match card below is folded into it. */}
           {avoid?.status === "conflicts" && (
-            <p className="flex items-start gap-2 rounded-xl border border-red-300 bg-red-50 px-3.5 py-2.5 text-sm dark:border-red-900 dark:bg-red-950/40">
-              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-red-600" aria-hidden />
-              <span>
-                Contains <span className="font-semibold">{avoid.conflicts.map(avoidedIngredientName).join(", ")}</span>, on your avoid
-                list.{" "}
+            <div className="rounded-xl border border-red-300 bg-red-50 px-4 py-3 text-sm dark:border-red-900 dark:bg-red-950/40">
+              <p className="flex items-center gap-2 font-semibold text-red-800 dark:text-red-200">
+                <XCircle className="h-4 w-4 shrink-0 text-red-600" aria-hidden />
+                Not a match for you
+              </p>
+              <ul className="mt-1.5 list-disc space-y-0.5 pl-9">
+                {avoidNames.map((n) => (
+                  <li key={n}>
+                    Has <span className="font-semibold">{n}</span>, which you avoid
+                  </li>
+                ))}
+                {match?.reasons
+                  .filter((r) => !r.avoid)
+                  .map((r, i) => (
+                    <li key={i} className={r.tone === "good" ? "text-emerald-700 dark:text-emerald-400" : undefined}>
+                      {r.text}
+                    </li>
+                  ))}
+              </ul>
+              <p className="mt-2 pl-6 text-[13px]">
                 <a href="#whats-in-it" className="font-medium underline">
                   Details ↓
                 </a>
@@ -484,12 +503,12 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
                   <>
                     {" · "}
                     <a href="#safe-swaps" className="font-medium underline">
-                      See {safeSwaps.length} similar without {avoid.conflicts.length === 1 ? "it" : "them"} ↓
+                      See {safeSwaps.length} similar without {avoidNames.length === 1 ? "it" : "them"} ↓
                     </a>
                   </>
                 )}
-              </span>
-            </p>
+              </p>
+            </div>
           )}
           {avoid?.status === "possible" && (
             <p className="flex items-start gap-2 rounded-xl border border-amber-300 bg-amber-50 px-3.5 py-2.5 text-sm dark:border-amber-900 dark:bg-amber-950/40">
@@ -515,23 +534,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
             </p>
           )}
 
-          {regulatory.map((r) => (
-            <p
-              key={r.note.id}
-              className="flex items-start gap-2 rounded-xl border border-sky-300 bg-sky-50 px-3.5 py-2.5 text-sm dark:border-sky-900 dark:bg-sky-950/30"
-            >
-              <Landmark className="mt-0.5 h-4 w-4 shrink-0 text-sky-700 dark:text-sky-300" aria-hidden />
-              <span>
-                Contains <span className="font-semibold">{r.names.join(", ")}</span>
-                {r.note.productSuffix}.{" "}
-                <a href={`#reg-${r.note.id}`} className="font-medium underline">
-                  Regulatory note ↓
-                </a>
-              </span>
-            </p>
-          ))}
-
-          {match ? (
+          {avoid?.status === "conflicts" ? null : match ? (
             <div className="space-y-2.5 rounded-xl border bg-card p-4">
               <div className="flex flex-wrap items-center gap-2">
                 <h2 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Match for your skin</h2>
@@ -563,6 +566,8 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
               </Link>
             )
           )}
+
+          <BannedIngredientsBox entries={regulatory} isDrug={isDrugLabel} />
 
           {ewgScore && (
             <a
@@ -680,10 +685,6 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
               <ActiveNotes notes={otherNotes} />
             </div>
           )}
-
-          {regulatory.map((r) => (
-            <RegulatoryNoteCard key={r.note.id} id={`reg-${r.note.id}`} note={r.note} ingredientNames={r.names} isDrug={isDrugLabel} />
-          ))}
 
           <WhatsInIt
             items={fullList.items}

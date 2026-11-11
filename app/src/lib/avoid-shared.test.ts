@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { avoidConflicts, avoidedIngredientId, avoidedIngredientName, ingredientAvoidId, normalizeAvoidId, parseFreeParam } from "./avoid-shared";
+import { avoidConflictNames, avoidConflicts, avoidedIngredientId, avoidedIngredientName, ingredientAvoidId, normalizeAvoidId, parseFreeParam } from "./avoid-shared";
 
 test("ingredient avoid ids: any ingredient page id behind an ing: prefix", () => {
   assert.equal(ingredientAvoidId("iron-oxides"), "ing:iron-oxides");
@@ -26,4 +26,10 @@ test("avoidConflicts: an avoided ingredient is checked against the product's own
   assert.equal(avoidConflicts({ ...assessed, id: "p1" }, ["ing:iron-oxides"]), null);
   // no full ingredient list: couldn't check either
   assert.equal(avoidConflicts({ freeFromFlags: null, id: "p1" }, ["ing:iron-oxides"], lists), null);
+});
+
+test("conflict names: overlapping groups name the label's ingredient once", () => {
+  const names = avoidConflictNames(["formaldehyde-and-releasers", "formaldehyde-releasers"], ["dmdm-hydantoin", "tocopherol"], avoidedIngredientName);
+  assert.deepEqual(names, ["DMDM hydantoin"]);
+  assert.deepEqual(avoidConflictNames(["fragrance-free"], [], () => "fragrance"), ["fragrance"]);
 });

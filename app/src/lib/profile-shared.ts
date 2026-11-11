@@ -197,7 +197,8 @@ export function mergeProfiles(saved: Profile | null, local: Profile): Profile {
 
 export type ProductIngredient = { id: string; position: number; isActive: boolean };
 
-export type MatchReason = { tone: "good" | "bad"; text: string; points: number };
+/** avoid: the reason is an avoid-list hit (product pages show those in their own verdict box). */
+export type MatchReason = { tone: "good" | "bad"; text: string; points: number; avoid?: boolean };
 export type Match = { score: number; label: "Great match" | "Good match" | "Mixed" | "Poor match"; reasons: MatchReason[] };
 
 // Also the listing pages' "Sensitive skin" filter (free-from-filters.tsx).
@@ -233,20 +234,20 @@ export function matchProduct(
   let score = 60;
   let cap = 100;
   const reasons: MatchReason[] = [];
-  const add = (points: number, text: string) => {
+  const add = (points: number, text: string, avoid = false) => {
     score += points;
-    reasons.push({ tone: points >= 0 ? "good" : "bad", text, points });
+    reasons.push({ tone: points >= 0 ? "good" : "bad", text, points, ...(avoid ? { avoid } : {}) });
   };
 
   const avoidFound = avoidConflicts({ ...product, ingredientIds: [...present] }, avoidLabels.map((a) => a.id));
   if (avoidFound) {
     const named = (ids: string[]) => avoidLabels.filter((a) => ids.includes(a.id));
     const conflicts = named(avoidFound.conflicts);
-    for (const c of conflicts.slice(0, 3)) add(-25, `Contains ${c.name}, which you avoid`);
+    for (const c of conflicts.slice(0, 3)) add(-25, `Contains ${c.name}, which you avoid`, true);
     if (conflicts.length > 0) cap = Math.min(cap, 35);
     const possible = named(avoidFound.possible);
     if (possible.length > 0) {
-      add(-10, `Undisclosed fragrance may contain ${possible[0].name}${possible.length > 1 ? ` and ${possible.length - 1} more` : ""}, which you avoid`);
+      add(-10, `Undisclosed fragrance may contain ${possible[0].name}${possible.length > 1 ? ` and ${possible.length - 1} more` : ""}, which you avoid`, true);
       cap = Math.min(cap, 60);
     }
   }

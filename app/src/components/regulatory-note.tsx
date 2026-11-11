@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ChevronDown, Landmark } from "lucide-react";
 import type { RegulatoryNote } from "@/db/regulatory-notes";
+import { AUTHORITIES, type SubstanceStatus } from "@/db/regulatory-status";
 
 function checkedLabel(iso: string): string {
   return new Date(`${iso}T00:00:00Z`).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });
@@ -67,19 +68,27 @@ function Sources({ note }: { note: RegulatoryNote }) {
 
 /**
  * Product pages: one plain box, "N ingredients banned by at least one
- * authority", naming them; tapping opens who acted and the sources. Neutral
- * on purpose: red is for "not a match for you" alone.
+ * authority", naming them; tapping opens who acted, from when, and the
+ * sources. Bans that start later count too (Michael, Nov 11: users avoid
+ * them either way); their dates are in the opened text. Neutral on purpose:
+ * red is for "not a match for you" alone.
  */
 export function BannedIngredientsBox({
-  entries,
+  statuses,
+  ingredientNames,
   isDrug = false,
 }: {
-  entries: { note: RegulatoryNote; allergenIds: string[]; names: string[] }[];
+  statuses: SubstanceStatus[];
+  /** Catalog ingredient id -> display name; the box counts and names the label's ingredients. */
+  ingredientNames: Record<string, string>;
   isDrug?: boolean;
 }) {
-  const names = [...new Set(entries.flatMap((e) => e.names))];
-  if (names.length === 0) return null;
+  const shown = statuses.filter((s) => s.banned.length > 0 || s.bannedLater.length > 0);
+  if (shown.length === 0) return null;
+  const nameOf = (id: string) => ingredientNames[id] ?? id.replace(/-/g, " ");
+  const names = [...new Set(shown.flatMap((s) => s.ingredientIds.map(nameOf)))];
   const count = `${names.length} ${names.length === 1 ? "ingredient" : "ingredients"}`;
+  const cosmeticsRule = shown.some((s) => [...s.banned, ...s.bannedLater].some((a) => /cosmetic/i.test(a.scope)));
   return (
     <details id="banned" className="group scroll-mt-24 rounded-xl border bg-card px-4 py-3 text-sm">
       <summary className="flex cursor-pointer list-none items-start justify-between gap-3 [&::-webkit-details-marker]:hidden">
@@ -89,27 +98,38 @@ export function BannedIngredientsBox({
         </span>
         <ChevronDown className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" aria-hidden />
       </summary>
-      <div className="mt-3 space-y-3 border-t pt-3">
-        {entries.map(({ note, allergenIds, names }) => (
-          <div key={note.id} className="space-y-1.5">
+      <div className="mt-3 space-y-4 border-t pt-3">
+        {shown.map((s) => (
+          <div key={s.substance.id} className="space-y-1.5">
             <p>
-              {allergenIds.map((id, i) => (
+              {s.ingredientIds.map((id, i) => (
                 <span key={id}>
                   {i > 0 && ", "}
-                  <Link href={`/allergens/${id}`} className="font-medium underline underline-offset-2">
-                    {names[i]}
+                  <Link href={`/ingredient/${encodeURIComponent(id)}`} className="font-medium underline underline-offset-2">
+                    {nameOf(id)}
                   </Link>
                 </span>
               ))}
-              {note.productSuffix && <span className="text-muted-foreground">{note.productSuffix.replace(/^, (which )?/, " · ")}</span>}
+              {s.ingredientIds.length > 1 || !s.substance.name.toLowerCase().startsWith(nameOf(s.ingredientIds[0]).toLowerCase()) ? (
+                <span className="text-muted-foreground"> · {s.substance.name}</span>
+              ) : null}
             </p>
-            <p className="text-[13px] leading-relaxed">{note.body}</p>
-            <p className="text-xs text-muted-foreground">
-              {isDrug && note.cosmeticsOnly && "This product is sold as an OTC drug, which that cosmetics rule doesn't cover. "}
-              <Sources note={note} /> A summary of public rules, not legal or medical advice.
-            </p>
+            <ul className="space-y-1.5 text-[13px] leading-relaxed">
+              {[...s.banned, ...s.bannedLater].map((a, i) => (
+                <li key={i}>
+                  <span className="font-medium">{AUTHORITIES[a.authority].short}:</span> {a.summary}{" "}
+                  <a href={a.url} target="_blank" rel="noopener noreferrer" className="text-muted-foreground underline">
+                    {a.law}
+                  </a>
+                </li>
+              ))}
+            </ul>
           </div>
         ))}
+        <p className="text-xs text-muted-foreground">
+          {isDrug && cosmeticsRule && "This product is sold as an OTC drug, which cosmetics rules don't cover. "}
+          Checked {checkedLabel(shown[0].substance.checked)}. A summary of public rules, not legal or medical advice.
+        </p>
       </div>
     </details>
   );

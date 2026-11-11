@@ -11,7 +11,13 @@ import { SITE_NAME } from "@/lib/brand";
 // sentence is always visible; the when-to-see-a-dermatologist list sits
 // one tap away behind a native <details> (still in the page, no client JS),
 // wording unchanged.
+//
+// Hidden for now (Michael, 2026-11-11): may come back later. Every page still
+// renders <RedFlagBanner />, so flipping this to true restores it everywhere.
+const SHOW_RED_FLAG_BANNER = false;
+
 export function RedFlagBanner() {
+  if (!SHOW_RED_FLAG_BANNER) return null;
   return (
     <div
       role="note"

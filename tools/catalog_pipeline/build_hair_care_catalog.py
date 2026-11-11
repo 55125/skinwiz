@@ -32,7 +32,7 @@ import json
 import re
 import sys
 
-from build_cosmetic_catalog import ENGLISH_MARKETS, fetch_sliced, is_polish, is_junk, matched_active_ids
+from build_cosmetic_catalog import ENGLISH_MARKETS, fetch_sliced, is_polish, is_junk, is_supplement, matched_active_ids
 
 # OBF category tags. Check each against a live count before relying on it
 # (a dead tag just returns 0 and is reported below).
@@ -101,7 +101,7 @@ def to_row(p: dict) -> dict | None:
         return None
     if is_body_only(p.get("product_name") or ""):
         return None
-    if is_junk({**p, "ingredients_text": ingredients}) or is_polish(p):
+    if is_junk({**p, "ingredients_text": ingredients}) or is_polish(p) or is_supplement(p):
         return None
     row = {k: "" for k in FIELDNAMES}
     row.update({

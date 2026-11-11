@@ -1283,3 +1283,39 @@ export function getBestProductImages(ids: string[], now = new Date()): Map<strin
   const kroger = getKrogerImages(ids, now);
   return new Map(ids.map((id) => [id, bestProductImage({ imageUrl: own.get(id) ?? null }, dups.get(id) ?? [], kroger.get(id) ?? null)]));
 }
+
+// Products that LIST an allergen (or any member of a group), for the
+// "Where it shows up" block on regulated ingredients' pages. Products people
+// can buy and look at come first: in stock, then popular here, then with a
+// photo; likely-discontinued ones last.
+function containsAnyAllergen(ids: string[]): SQL {
+  return sql`EXISTS (SELECT 1 FROM json_each(${products.allergenHits}) WHERE json_each.value IN (SELECT value FROM json_each(${JSON.stringify(ids)})))`;
+}
+
+export const getProductsContainingAllergens = ttlCache((ids: string[], limit: number, featuredIds: string[] = []) => {
+  const where = and(LISTED_OTC, notDuplicate(), containsAnyAllergen(ids));
+  const rows = db
+    .select()
+    .from(products)
+    .where(where)
+    .orderBy(
+      sql`COALESCE((SELECT key FROM json_each(${JSON.stringify(featuredIds)}) WHERE value = ${products.id}), ${featuredIds.length})`,
+      sql`CASE WHEN ${inIds(discontinuedIdsJson())} THEN 1 ELSE 0 END`,
+      poorTitleLast(),
+      sql`CASE WHEN ${inIds(inStockIdsJson())} THEN 0 ELSE 1 END`,
+      sql`CASE WHEN ${inIds(popularIdsJson())} THEN 0 ELSE 1 END`,
+      sql`CASE WHEN ${products.imageUrl} IS NULL THEN 1 ELSE 0 END`,
+      sql`CASE WHEN ${inIds(importIdsJson())} THEN 1 ELSE 0 END`,
+      products.brandName,
+    )
+    .limit(limit)
+    .all();
+  const byConcern = db.all<{ id: string; name: string; n: number }>(sql`
+    SELECT c.id AS id, c.name AS name, COUNT(*) AS n
+    FROM products JOIN concerns c ON c.id IN (SELECT value FROM json_each(products.concern_ids))
+    WHERE ${where}
+    GROUP BY c.id ORDER BY n DESC
+  `);
+  const total = db.get<{ n: number }>(sql`SELECT COUNT(*) AS n FROM products WHERE ${where}`)!.n;
+  return { rows, byConcern, total };
+});

@@ -18,11 +18,13 @@ import {
   labelNames,
   resolveAllergenId,
 } from "@/db/contact-allergens";
-import { browseProducts, getAllergenProductCounts, getFreeOfAllergenByConcern } from "@/lib/queries";
+import { browseProducts, getAllergenProductCounts, getFreeOfAllergenByConcern, getProductsContainingAllergens } from "@/lib/queries";
 import { readAvoidIds } from "@/lib/avoid";
 import { breadcrumbLd } from "@/lib/seo";
 import { siteUrl } from "@/lib/site-url";
 import { allergenSummary } from "@/lib/answer-summary";
+import { regulatoryNoteFor, regulatoryNoteForGroup } from "@/db/regulatory-notes";
+import { RegulatoryNoteCard } from "@/components/regulatory-note";
 
 export const dynamic = "force-dynamic";
 
@@ -59,6 +61,10 @@ export default async function AllergenPage({ params }: { params: Promise<{ id: s
   const unverifiable = allergen ? METALS_NOT_ON_LABELS.has(allergen.id) : false;
   const section = allergen ? getAllergenSection(allergen.section) : undefined;
   const families = allergen ? groupsContaining(allergen.id) : [];
+  // Ingredients a regulator has acted on also get where they show up, not
+  // only what's free of them: the surprise is the familiar products.
+  const regulatory = allergen ? regulatoryNoteFor(allergen.id) : regulatoryNoteForGroup(members);
+  const containing = regulatory ? getProductsContainingAllergens(members, 8, regulatory.featuredProductIds) : null;
 
   return (
     <div className="mx-auto max-w-5xl space-y-10 px-4 py-10">
@@ -87,6 +93,29 @@ export default async function AllergenPage({ params }: { params: Promise<{ id: s
           <AvoidToggleButton id={id} avoidIds={avoidIds} size="default" />
         </div>
       </PageHeader>
+
+      {regulatory && <RegulatoryNoteCard note={regulatory} />}
+
+      {containing && containing.total > 0 && (
+        <section className="space-y-4" id="where-it-shows-up">
+          <div className="space-y-1">
+            <h2 className="text-xl font-semibold">Where it shows up</h2>
+            <p className="text-sm text-muted-foreground">
+              {containing.total.toLocaleString()} {containing.total === 1 ? "product" : "products"} we track{" "}
+              {containing.total === 1 ? "lists" : "list"} {allergen ? "it" : "one of these"} on their ingredient label. Formulas change, so check
+              the bottle you own.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-1.5 text-sm">
+            {containing.byConcern.slice(0, 6).map((c) => (
+              <span key={c.id} className="rounded-md bg-muted px-2 py-1">
+                {c.name} ({c.n.toLocaleString()})
+              </span>
+            ))}
+          </div>
+          <ProductGrid products={containing.rows} />
+        </section>
+      )}
 
       {allergen && (
         <section className="space-y-3 rounded-2xl border bg-card p-5">

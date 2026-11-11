@@ -1,0 +1,52 @@
+<!doctype html><html><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=Geist:wght@400;500;600;700&display=block" rel="stylesheet">
+<style>
+:root{--ink:#1B1F27;--muted:#6B7079;--teal:#0E6B66;--teal2:#138A82;--red:#D2483E;--card:#fff;--bg:#F4F1EC}
+*{margin:0;box-sizing:border-box}
+html,body{width:1080px;height:1920px;overflow:hidden;font-family:Geist,"Noto Color Emoji",sans-serif;color:var(--ink);background:var(--bg)}
+.sb{position:absolute;top:0;left:0;right:0;height:110px;display:flex;align-items:center;justify-content:space-between;padding:22px 64px 0;font-size:36px;font-weight:600;z-index:5}
+.sb .r{display:flex;gap:14px;align-items:center}.sb svg{fill:currentColor}
+.hdrbg{position:absolute;top:0;left:0;right:0;height:240px;background:var(--bg);z-index:4}
+.app{z-index:5;position:absolute;top:110px;left:0;right:0;height:120px;display:flex;align-items:center;justify-content:space-between;padding:0 56px}
+.app .t{font-family:Fraunces,serif;font-size:56px;font-weight:600;letter-spacing:-1px}
+.app .i{font-size:44px;color:var(--muted)}
+.feed{position:absolute;top:240px;left:40px;right:40px;bottom:0;display:flex;flex-direction:column;gap:28px;transition:transform .6s}
+.hero{height:760px;border-radius:44px;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:330px}
+.hero .nm{position:absolute;left:44px;bottom:36px;color:#fff;font-size:76px;font-weight:700;text-shadow:0 4px 30px rgba(0,0,0,.25)}
+.hero .nm small{display:block;font-size:36px;font-weight:500;opacity:.92;margin-top:6px}
+.basics{background:var(--card);border-radius:36px;padding:30px 40px;display:flex;flex-wrap:wrap;gap:14px}
+.chip{font-size:32px;padding:12px 24px;border-radius:999px;background:#F1EEE8;color:#3B4048;font-weight:500}
+.p{background:var(--card);border-radius:36px;padding:44px 48px 52px}
+.p .q{font-size:34px;font-weight:600;color:var(--muted)}
+.p .a{margin-top:16px;font-family:Fraunces,serif;font-weight:600;font-size:64px;line-height:1.12;letter-spacing:-1px}
+.fade{position:absolute;left:0;right:0;bottom:0;height:640px;background:linear-gradient(180deg,rgba(244,241,236,0),var(--bg) 45%);z-index:5}
+.btns{position:absolute;bottom:400px;left:0;right:0;display:flex;justify-content:space-between;padding:0 70px;z-index:6}
+.b{width:150px;height:150px;border-radius:50%;background:#fff;box-shadow:0 10px 40px rgba(0,0,0,.18);display:flex;align-items:center;justify-content:center;font-size:72px}
+.b.x{color:var(--red);font-weight:300}
+.flag{position:absolute;left:50%;top:880px;transform:translate(-50%,0) rotate(-6deg);border:10px solid var(--red);color:var(--red);border-radius:28px;padding:22px 44px;font-size:64px;font-weight:800;letter-spacing:2px;text-transform:uppercase;background:rgba(255,255,255,.9);z-index:7;white-space:nowrap}
+.flag small{display:block;font-size:32px;letter-spacing:1px;font-weight:600;text-transform:none;text-align:center;margin-top:6px}
+.match{position:absolute;inset:0;background:linear-gradient(180deg,rgba(14,107,102,.96),rgba(10,70,66,.98));color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:30px;z-index:8;text-align:center}
+.match h1{font-family:Fraunces,serif;font-size:120px;letter-spacing:-2px}
+.match p{font-size:44px;opacity:.9;max-width:800px}
+.match .pair{font-size:180px}
+</style></head><body>
+<div class="hdrbg"></div><div class="sb"><span>11:47</span><span class="r"><svg width="52" height="34" viewBox="0 0 52 34"><rect x="0" y="22" width="9" height="12" rx="2"/><rect x="14" y="15" width="9" height="19" rx="2"/><rect x="28" y="8" width="9" height="26" rx="2"/><rect x="42" y="0" width="9" height="34" rx="2"/></svg><svg width="70" height="34" viewBox="0 0 70 34"><rect x="1.5" y="1.5" width="60" height="31" rx="9" fill="none" stroke="currentColor" stroke-width="3"/><rect x="7" y="7" width="44" height="20" rx="5"/><rect x="64" y="11" width="5" height="12" rx="2"/></svg></span></div>
+<div class="app"><span class="t">Discover</span><span class="i">⚙︎</span></div>
+<div id="root"></div>
+<script>
+const P={
+ fragrance:{name:'Fragrance',sub:'Also goes by: Parfum · Aroma',emo:'🌸',g:'linear-gradient(160deg,#F3B6D2,#C77BA8)',
+  chips:['📍 Your shampoo','🧺 Your laundry','🕯️ That candle','🚩 Commitment issues'],
+  prompts:[['Two truths and a lie','I\'m in your shampoo. I\'m in your detergent. I\'m in "unscented" products.'],['My most irrational fear','Someone reading the whole ingredient list.']]},
+ mi:{name:'Methylisothiazolinone',sub:'"Just call me MI"',emo:'🧪',g:'linear-gradient(160deg,#BFE3DC,#5FA89C)',
+  chips:['🧴 Shampoo','🧻 Wet wipes','⏳ Lasts for years'],
+  prompts:[['My love language','Commitment. I\'m a preservative.'],['I\'m convinced that','Nobody can pronounce my name, so nobody will notice me.']]}
+};
+const q=new URLSearchParams(location.search);const k=q.get('p')||'fragrance';const d=P[k];
+let h=`<div class="feed"><div class="hero" style="background:${d.g}">${d.emo}<div class="nm">${d.name}<small>${d.sub}</small></div></div><div class="basics">${d.chips.map(c=>`<span class="chip">${c}</span>`).join('')}</div>${d.prompts.map(p=>`<div class="p"><div class="q">${p[0]}</div><div class="a">${p[1]}</div></div>`).join('')}</div>`;
+if(q.get('flag'))h+=`<div class="flag">On your avoid list<small>Actively · ${d.name}</small></div>`;
+h+=`<div class="fade"></div><div class="btns"><div class="b x">✕</div><div class="b">💚</div></div>`;
+if(q.get('match'))h=`<div class="match"><div class="pair">🧴🤝🫶</div><h1>It's a match.</h1><p>Nothing on your avoid list.</p></div>`;
+document.getElementById('root').innerHTML=h;
+if(q.get('scroll'))document.querySelector('.feed').style.transform=`translateY(-${q.get('scroll')}px)`;
+</script></body></html>

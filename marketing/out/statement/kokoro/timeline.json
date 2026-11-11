@@ -1,0 +1,101 @@
+{
+  "title": "A statement from Fragrance",
+  "note_title": "A statement.",
+  "fps": 30,
+  "width": 1080,
+  "height": 1920,
+  "total_seconds": 22.3667,
+  "audio": "audio.wav",
+  "beats": [
+    {
+      "beat": 1,
+      "kind": "notes",
+      "spoken": "Hi guys. This is so hard for me to write.",
+      "text": "Hi guys. This is so hard for me to write. 🙏",
+      "type_seconds": 0.35,
+      "start": 0.0,
+      "duration": 1.8667,
+      "frames": 56
+    },
+    {
+      "beat": 2,
+      "kind": "notes",
+      "spoken": "I'm sorry if anyone felt itchy.",
+      "text": "I'm sorry if anyone *felt* itchy.",
+      "type_seconds": 0.35,
+      "start": 1.8667,
+      "duration": 1.4333,
+      "frames": 43
+    },
+    {
+      "beat": 3,
+      "kind": "notes",
+      "spoken": "I'm taking a step back from the front of the bottle to focus on my healing.",
+      "text": "I'm taking a step back from the front of the bottle to focus on my healing.",
+      "type_seconds": 0.35,
+      "start": 3.3,
+      "duration": 3.3,
+      "frames": 99
+    },
+    {
+      "beat": 4,
+      "kind": "notes",
+      "spoken": "Going forward, I'll be going by Parfum. That's growth.",
+      "text": "Going forward, I'll be going by Parfum. That's growth. ✨",
+      "type_seconds": 0.35,
+      "start": 6.6,
+      "duration": 2.4,
+      "frames": 72
+    },
+    {
+      "beat": 5,
+      "kind": "notes",
+      "spoken": "Linalool, Limonene and I are just friends.",
+      "text": "Linalool, Limonene and I are just friends.",
+      "type_seconds": 0.35,
+      "start": 9.0,
+      "duration": 1.8667,
+      "frames": 56
+    },
+    {
+      "beat": 6,
+      "kind": "notes",
+      "spoken": "Please respect my privacy. In the ingredient list.",
+      "text": "Please respect my privacy. In the ingredient list. 🤍",
+      "type_seconds": 0.35,
+      "start": 10.8667,
+      "duration": 2.4667,
+      "frames": 74
+    },
+    {
+      "beat": 7,
+      "kind": "comment",
+      "spoken": "Ratio. You're on my avoid list.",
+      "user": "skin_on_strike",
+      "text": "ratio + you're on my avoid list",
+      "start": 13.3333,
+      "duration": 2.4333,
+      "frames": 73
+    },
+    {
+      "beat": 8,
+      "kind": "note",
+      "spoken": "Same ingredient. New names.",
+      "lines": [
+        "Same ingredient.<br>New names.",
+        "Add “Fragrance allergens (all)” to catch every one."
+      ],
+      "start": 15.7667,
+      "duration": 2.6,
+      "frames": 78
+    },
+    {
+      "beat": 9,
+      "kind": "end",
+      "spoken": "Check before you buy. Free at Actively Skin dot com.",
+      "start": 18.3667,
+      "duration": 4.0,
+      "frames": 120
+    }
+  ]
+}

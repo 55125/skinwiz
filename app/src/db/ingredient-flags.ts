@@ -63,6 +63,82 @@ export const FREE_FROM_CHECKS: FreeFromCheck[] = [
   { id: "dye-free", label: "Dye-free", category: "clean", avoidSubstrings: ["fd&c", "d&c "] },
   { id: "peg-free", label: "PEG-free", category: "clean", avoidSubstrings: ["peg-", "peg/", "polyethylene glycol"] },
 
+  // Public-concern preferences. These are things many shoppers choose to
+  // avoid; most are not regulatory findings of harm (those live in
+  // db/regulatory-status.ts and are shown separately). Each explain line says
+  // what the check can and can't see from an ingredient list.
+  {
+    id: "microplastic-free",
+    label: "Microplastic-free",
+    category: "clean",
+    avoidName: "plastic microparticles",
+    explain:
+      "Flags solid plastic polymers that are usually added as tiny particles (polyethylene, nylon, polymethyl methacrylate and similar, plastic glitter, PTFE). The US banned plastic microbeads in rinse-off products in 2015, and the EU is phasing out added microplastics in cosmetics from 2027. A label doesn't say a polymer's particle size, so some flagged ingredients may be dissolved or film-forming rather than particles.",
+    avoidSubstrings: [
+      "nylon-", "nylon 6", "nylon 12", "polymethyl methacrylate", "methyl methacrylate crosspolymer",
+      "polyethylene terephthalate", "polybutylene terephthalate", "glitter", "polytetrafluoroethylene", "ptfe", "polylactic acid",
+    ],
+    // Bare names only: polyethylene glycol, polypropylene glycol and sodium
+    // polystyrene sulfonate are soluble, not plastic particles.
+    avoidPatterns: [/^(polyethylene|polypropylene|polystyrene)(\s*\(.*\))?$/],
+  },
+  {
+    id: "pfas-free",
+    label: "PFAS-free",
+    category: "clean",
+    avoidName: "PFAS",
+    explain:
+      "Flags fluorinated ingredients such as PTFE and perfluoro- ingredients. California, Washington, Vermont and other states ban intentionally added PFAS in cosmetics.",
+    avoidSubstrings: ["ptfe", "polytetrafluoroethylene", "perfluoro", "polyperfluoro", "fluoroalcohol phosphate", "perfluorononyl"],
+  },
+  {
+    id: "cyclic-silicone-free",
+    label: "Cyclic silicone-free",
+    category: "clean",
+    avoidName: "cyclic silicones (D4, D5, D6)",
+    explain:
+      "Flags cyclotetrasiloxane (D4), cyclopentasiloxane (D5), cyclohexasiloxane (D6) and cyclomethicone. The EU restricts them over persistence in the environment: in wash-off products since 2020, and in all cosmetics from June 2027. Other silicones such as dimethicone are not flagged.",
+    avoidSubstrings: ["cyclotetrasiloxane", "cyclopentasiloxane", "cyclohexasiloxane", "cyclomethicone"],
+  },
+  {
+    id: "formaldehyde-releaser-free",
+    label: "Formaldehyde releaser-free",
+    category: "clean",
+    avoidName: "formaldehyde or formaldehyde releasers",
+    explain:
+      "Flags formaldehyde and preservatives that release it (DMDM hydantoin, diazolidinyl urea, imidazolidinyl urea, quaternium-15, bronopol and others on Washington's list).",
+    avoidSubstrings: [
+      "formaldehyde", "formalin", "methylene glycol", "dmdm hydantoin", "mdm hydantoin", "diazolidinyl urea", "imidazolidinyl urea", "quaternium-15",
+      "bronopol", "2-bromo-2-nitropropane", "sodium hydroxymethylglycinate", "bronidox", "5-bromo-5-nitro-1,3-dioxane", "benzylhemiformal",
+      "dimethyl oxazolidine", "ethylbicyclooxazolidine", "polyoxymethylene", "methenamine", "methylal", "tris(hydroxymethyl)nitromethane",
+    ],
+  },
+  {
+    id: "talc-free",
+    label: "Talc-free",
+    category: "clean",
+    explain: "Flags talc. Concern about talc is mainly about asbestos contamination, which an ingredient list can't show either way.",
+    avoidSubstrings: ["talc"],
+  },
+  {
+    id: "ethoxylate-free",
+    label: "No ethoxylated ingredients",
+    category: "clean",
+    avoidName: "ethoxylated ingredients",
+    explain:
+      "Flags ingredients made with ethylene oxide (PEGs, polysorbates, laureth and ceteareth-type names), which can carry traces of 1,4-dioxane, a contaminant New York caps in cosmetics. A label can't show the actual 1,4-dioxane level.",
+    avoidSubstrings: ["peg-", "peg/", "polyethylene glycol", "polysorbate", "laureth", "ceteareth", "steareth", "oleth-", "ceteth-", "pareth", "poloxamer"],
+  },
+  {
+    id: "bha-bht-free",
+    label: "BHA and BHT-free",
+    category: "clean",
+    avoidName: "BHA or BHT",
+    explain: "Flags the antioxidant preservatives BHA and BHT. Both are on the European Commission's list of possible endocrine disruptors under review; neither is banned in cosmetics.",
+    avoidSubstrings: ["butylated hydroxyanisole", "butylated hydroxytoluene"],
+    avoidPatterns: [/^(bha|bht)$/],
+  },
+
   // Contact allergens live in db/contact-allergens.ts: ~100 of them with
   // label synonyms, stored per product as hits rather than free-from flags.
   // The old contact-allergen check ids here map to them via
@@ -125,7 +201,7 @@ export const FREE_FROM_CHECKS: FreeFromCheck[] = [
     label: "Reef-safer",
     category: "skin",
     avoidName: "reef-harming UV filters",
-    explain: "Free of oxybenzone and octinoxate, the two UV filters banned in Hawaii and Key West over coral-bleaching concerns. Other filters are not evaluated.",
+    explain: "Free of oxybenzone and octinoxate, the two UV filters Hawaii has banned in sunscreens since 2021 over coral-reef concerns. Other filters are not evaluated.",
     avoidSubstrings: ["oxybenzone", "benzophenone-3", "octinoxate", "ethylhexyl methoxycinnamate", "octyl methoxycinnamate"],
   },
   {

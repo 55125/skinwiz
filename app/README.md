@@ -155,9 +155,16 @@ Schedule it hourly — not set up yet. Either:
 1. **Railway cron service** (same project): new service from the
    `curlimages/curl` image (or any image with curl), Settings → Cron
    Schedule `0 * * * *`, start command
-   `curl -fsS -X POST -H "Authorization: Bearer $CRON_SECRET" https://activelyskin.com/api/cron/run`,
+   `curl --variable %CRON_SECRET --expand-oauth2-bearer {{CRON_SECRET}} -fsS --retry 4 --retry-all-errors --retry-delay 20 -m 600 -X POST https://activelyskin.com/api/cron/run`,
    with `CRON_SECRET` set as a shared/reference variable. The service runs,
-   exits, and is billed only for those seconds.
+   exits, and is billed only for those seconds. The retries cover the
+   occasional 502 the edge returns on the opening call at the top of the
+   hour (Oct 18 and Oct 20: the run died about 20s in, before the app
+   logged anything). Retrying is safe because a call during a run answers
+   `202 skipped` and the price refresh runs once a day. The image has no
+   shell, so a bare `$CRON_SECRET` is sent literally (401 on every run, Oct 21):
+   curl's own `--variable %CRON_SECRET` reads it from the environment and
+   `--expand-oauth2-bearer` puts it in the header.
 2. **External pinger** (cron-job.org, GitHub Actions `schedule:`, etc.)
    sending the same POST with the header.
 

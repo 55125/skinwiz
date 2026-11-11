@@ -16,6 +16,7 @@
 export type DupeForm =
   | "cleanser"
   | "shampoo"
+  | "mouthwash"
   | "lip"
   | "tinted"
   | "mask"
@@ -37,6 +38,7 @@ export type DupeForm =
 export const DUPE_FORM_LABELS: Record<DupeForm, string> = {
   cleanser: "Cleanser",
   shampoo: "Shampoo",
+  mouthwash: "Mouthwash",
   lip: "Lip product",
   tinted: "Tinted makeup",
   mask: "Mask",
@@ -61,6 +63,7 @@ const NAME_TYPES: [RegExp, DupeForm][] = [
   [/\blip(s|stick)?\b/i, "lip"],
   [/\b(foundation|bb|cc|tinted|cushion|concealer|skin tint)\b/i, "tinted"],
   [/\bshampoo\b/i, "shampoo"],
+  [/\b(mouthwash|mouth ?rinse|oral rinse)\b/i, "mouthwash"],
   [/\b(wash|cleanser|cleansing|scrub|soap|body bar|face bar)\b/i, "cleanser"],
   [/\bmasks?\b/i, "mask"],
   [/\b(patch|patches)\b/i, "patch"],
@@ -71,6 +74,7 @@ const NAME_TYPES: [RegExp, DupeForm][] = [
 const FDA_FORMS: [RegExp, DupeForm][] = [
   [/^SOAP\b/, "cleanser"],
   [/SHAMPOO/, "shampoo"],
+  [/MOUTHWASH/, "mouthwash"],
   [/^LIPSTICK\b/, "lip"],
   [/^PATCH\b/, "patch"],
   [/^(CLOTH|SWAB|SPONGE|DISC)\b/, "pad"],

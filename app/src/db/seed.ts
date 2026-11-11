@@ -67,6 +67,9 @@ const RX_LABEL_SECTIONS_CSV = path.join(REPO_ROOT, "tools/catalog_pipeline/outpu
 // Inactive-ingredient lists from the SPL XML for FDA rows whose catalog CSV
 // row has none (fetch_dailymed_inactive.py). Optional.
 const SPL_INACTIVE_CSV = path.join(REPO_ROOT, "tools/catalog_pipeline/output/dailymed_inactive_ingredients.csv");
+// FDA dosage forms from the SPL XML for DailyMed rows whose catalog row has
+// none (fetch_dailymed_forms.py); the dupe finder matches on form. Optional.
+const SPL_FORMS_CSV = path.join(REPO_ROOT, "tools/catalog_pipeline/output/dailymed_dosage_forms.csv");
 // Duplicate listings of one retail product: the auto tier
 // (build_product_merges.py, duplicate_id -> canonical_id) plus the reviewed
 // "merge" decisions in the flagged file (review_product_merges.py), applied
@@ -362,6 +365,12 @@ function reseed() {
     ? groupSplInactive(readCsv<SplInactiveCsvRow>(SPL_INACTIVE_CSV))
     : new Map();
   console.log(`  ${splInactive.size} SPL inactive-ingredient lists (DailyMed)`);
+  const splForms = new Map<string, string>(
+    fs.existsSync(SPL_FORMS_CSV)
+      ? readCsv<{ product_id: string; dosage_form: string }>(SPL_FORMS_CSV).map((r) => [r.product_id, r.dosage_form])
+      : [],
+  );
+  console.log(`  ${splForms.size} SPL dosage forms (DailyMed)`);
   const inactiveSources: Record<string, number> = {};
 
   for (const csvPath of CATALOG_CSVS) {
@@ -494,7 +503,7 @@ function reseed() {
         // names are already human-written product names, not SPL label text.
         brandName: isPreMatched ? trimmedBrandName : normalizeBrandName(trimmedBrandName),
         manufacturer: row.manufacturer_name || null,
-        dosageForm: DOSAGE_FORM_OVERRIDES[row.product_ndc] ?? (row.dosage_form || null),
+        dosageForm: DOSAGE_FORM_OVERRIDES[row.product_ndc] ?? (row.dosage_form || splForms.get(row.product_ndc) || null),
         // For pre-matched sources, active_ingredients_structured holds
         // internal canonical ids (see activeIds above), not display text —
         // show the raw ingredient list instead.

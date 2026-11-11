@@ -30,6 +30,8 @@ test("form: FDA forms are grouped so near-synonyms match", () => {
   assert.equal(dupeForm("SOLUTION", "Acne Treatment"), "liquid");
   assert.equal(dupeForm("LIQUID", "Acne Treatment"), "liquid");
   assert.equal(dupeForm("JELLY", "Petroleum Jelly"), "ointment");
+  assert.equal(dupeForm("MOUTHWASH", "Listerine Cool Mint Antiseptic"), "mouthwash");
+  assert.equal(dupeForm(null, "Anticavity Fluoride Mouth Rinse"), "mouthwash");
   assert.equal(dupeForm("CREAM", "Hydrocortisone 1%"), "cream");
   // A kit has no dupe, and the FDA form wins over a texture word in the name.
   assert.equal(dupeForm("KIT", "Post Procedure Kit"), null);

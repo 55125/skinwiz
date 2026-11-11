@@ -319,3 +319,23 @@ def spl_version(root: ET.Element) -> str:
 def effective_time(root: ET.Element) -> str:
     v = root.find(f"{NS}effectiveTime")
     return (v.get("value") if v is not None else "") or ""
+
+
+def product_forms(root: ET.Element) -> list[tuple[str, str]]:
+    """(ndc, dosage form) per manufactured product, e.g. ("37012-726", "CREAM").
+    The product's own <formCode> is its dosage form; package forms (BOTTLE,
+    CARTON) sit under <containerPackagedProduct> and aren't read here."""
+    out: list[tuple[str, str]] = []
+    for mp in root.iter(f"{NS}manufacturedProduct"):
+        form_el = mp.find(f"{NS}formCode")
+        if form_el is None:
+            continue
+        form = (form_el.get("displayName") or "").strip().upper()
+        if not form:
+            continue
+        code_el = mp.find(f"{NS}code")
+        ndc = ""
+        if code_el is not None and code_el.get("codeSystem") == NDC_SYSTEM:
+            ndc = code_el.get("code") or ""
+        out.append((ndc, form))
+    return out

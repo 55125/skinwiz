@@ -55,7 +55,7 @@ import { primaryOwnRegimenId } from "@/lib/regimens";
 import { HowToUse } from "@/components/how-to-use";
 import { getLabelSections, getRegimenSlot, guidanceForActives, guidanceForStep, stepTypeOf, suggestSlot } from "@/lib/regimen";
 import { MatchBadge } from "@/components/match-badge";
-import { avoidLabelsFor, hasProfile, matchProduct, readProfile } from "@/lib/profile";
+import { avoidLabelsFor, getIngredientNames, hasProfile, matchProduct, readProfile } from "@/lib/profile";
 import { displayManufacturer } from "@/lib/format";
 import { productBrand } from "@/lib/product-brand";
 import { productTitle, breadcrumbLd } from "@/lib/seo";
@@ -83,8 +83,7 @@ import { recallsForProduct } from "@/lib/recalls";
 import { RecallBanner } from "@/components/recall-banner";
 import { DiscontinuedBanner } from "@/components/discontinued-banner";
 import { availabilityOf } from "@/lib/availability";
-import { regulatoryNotesForHits } from "@/db/regulatory-notes";
-import { allergenLabel } from "@/db/contact-allergens";
+import { regulatoryStatusFor } from "@/db/regulatory-status";
 import { BannedIngredientsBox } from "@/components/regulatory-note";
 import { canViewRxReference } from "@/lib/clinicians";
 import { isAmazonLink, manualLinkHref, manualLinkLabel } from "@/lib/manual-links";
@@ -257,12 +256,14 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
   const showPregnancy = FEATURES.PREGNANCY_MODE && (profile.pregnant || profile.breastfeeding);
   const pregnancyFound = showPregnancy ? productPregnancyFindings(product, ingredientRows) : [];
   const pregnancyTitle = showPregnancy ? pregnancyAvoidTitle(pregnancyFound, profile.pregnant, profile.breastfeeding) : null;
-  // Ingredients a regulator has restricted for safety (db/regulatory-notes.ts).
   const avoidNames = avoid?.status === "conflicts" ? avoidConflictNames(avoid.conflicts, product.allergenHits, avoidedIngredientName) : [];
-  const regulatory = regulatoryNotesForHits(product.allergenHits).map((r) => ({
-    ...r,
-    names: r.allergenIds.map((id) => allergenLabel(id) ?? id),
-  }));
+  // Ingredients a regulator has banned (db/regulatory-status.ts).
+  const stepType = stepTypeOf(product);
+  const regulatory = regulatoryStatusFor(
+    ingredientRows.map((r) => r.ingredientId),
+    { rinseOff: stepType === "cleanser" || stepType === "scalp" || stepType === "oral", activeIngredientIds: labelActives.map((r) => r.ingredientId) },
+  );
+  const regulatoryNames = getIngredientNames(regulatory.flatMap((s) => s.ingredientIds));
   const shownFlags = shownFreeFromFlags(product.freeFromFlags ?? [], product.concernId);
   const flaggedSkin = product.freeFromFlags
     ? FREE_FROM_CHECKS.filter((c) => c.category === "skin" && checkShownFor(c.id, product.concernId) && !product.freeFromFlags!.includes(c.id)).map((c) => ({
@@ -567,7 +568,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
             )
           )}
 
-          <BannedIngredientsBox entries={regulatory} isDrug={isDrugLabel} />
+          <BannedIngredientsBox statuses={regulatory} ingredientNames={regulatoryNames} isDrug={isDrugLabel} />
 
           {ewgScore && (
             <a

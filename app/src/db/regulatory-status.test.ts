@@ -85,3 +85,24 @@ test("public-concern checks", () => {
   assert.ok(!computeFreeFromFlags(`${base}, BHT`)!.includes("bha-bht-free"));
   assert.ok(!computeFreeFromFlags(`${base}, Polysorbate 20`)!.includes("ethoxylate-free"));
 });
+
+test("other states: Oregon from 2027, Minnesota and Colorado PFAS already, New York mercury", () => {
+  const [ptfe] = regulatoryStatusFor(["ptfe"], leaveOn);
+  for (const a of ["mn", "co", "me"]) assert.ok(ptfe.banned.some((x) => x.authority === a), a);
+  assert.ok(ptfe.bannedLater.some((x) => x.authority === "or" && x.from === "2027-01-01"));
+  const [dmdm] = regulatoryStatusFor(["dmdm-hydantoin"], leaveOn);
+  assert.deepEqual(dmdm.bannedLater.map((a) => a.authority).sort(), ["or", "wa"]);
+  const [hg] = regulatoryStatusFor(["thimerosal"], leaveOn);
+  assert.ok(hg.banned.some((a) => a.authority === "ny") && hg.banned.some((a) => a.authority === "md"));
+  // Oregon's ban reaches products whose drug active is triclosan.
+  const [tcs] = regulatoryStatusFor(["triclosan"], { ...rinseOff, activeIngredientIds: ["triclosan"] });
+  assert.ok(tcs.bannedLater.some((a) => a.authority === "or"));
+});
+
+test("recheck fetches EUR-Lex and leginfo pages through routes the cloud can reach", async () => {
+  const { fetchableUrl, fingerprint } = await import("./regulatory-recheck");
+  assert.equal(fetchableUrl("https://eur-lex.europa.eu/eli/reg/2016/1198/oj").url, "http://publications.europa.eu/resource/celex/32016R1198");
+  assert.equal(fetchableUrl("https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:02009R1223-20260518").url, "http://publications.europa.eu/resource/celex/02009R1223-20260518");
+  assert.match(fetchableUrl("https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?lawCode=HSC&sectionNum=108981.5").url, /california\.public\.law\/codes\/health_and_safety_code_section_108981\.5$/);
+  assert.equal(fingerprint("<p>Ban</p> 10:42 am").hash, fingerprint("<b>Ban</b>").hash);
+});

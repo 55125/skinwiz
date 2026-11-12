@@ -26,13 +26,19 @@
 // (https://claude.ai/artifact/TGz2Fkd6PMvvMeqGqMPysx). Re-check before using
 // a line in marketing.
 
-export type AuthorityId = "eu" | "ca" | "wa" | "vt" | "jp" | "canada" | "fda" | "hi" | "p65";
+export type AuthorityId = "eu" | "ca" | "wa" | "vt" | "md" | "or" | "mn" | "co" | "me" | "ny" | "jp" | "canada" | "fda" | "hi" | "p65";
 
 export const AUTHORITIES: Record<AuthorityId, { name: string; short: string }> = {
   eu: { name: "European Union", short: "EU" },
   ca: { name: "California", short: "California" },
   wa: { name: "Washington State", short: "Washington" },
   vt: { name: "Vermont", short: "Vermont" },
+  md: { name: "Maryland", short: "Maryland" },
+  or: { name: "Oregon", short: "Oregon" },
+  mn: { name: "Minnesota", short: "Minnesota" },
+  co: { name: "Colorado", short: "Colorado" },
+  me: { name: "Maine", short: "Maine" },
+  ny: { name: "New York State", short: "New York" },
   jp: { name: "Japan", short: "Japan" },
   canada: { name: "Health Canada", short: "Canada" },
   fda: { name: "US Food and Drug Administration", short: "FDA" },
@@ -84,9 +90,9 @@ export type RegulatedSubstance = {
 // ---------------------------------------------------------------------------
 // Sources
 
-const EU_ANNEX_II = "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:02009R1223-20260501";
+const EU_ANNEX_II = "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:02009R1223-20260518";
 const EU = {
-  consolidated: { law: "EU Cosmetics Regulation 1223/2009, Annex II (consolidated text of 1 May 2026)", url: EU_ANNEX_II },
+  consolidated: { law: "EU Cosmetics Regulation 1223/2009, Annex II (consolidated text of 18 May 2026)", url: EU_ANNEX_II },
   r2019_831: { law: "Commission Regulation (EU) 2019/831", url: "https://eur-lex.europa.eu/eli/reg/2019/831/oj" },
   r2014_358: { law: "Commission Regulation (EU) No 358/2014", url: "https://eur-lex.europa.eu/eli/reg/2014/358/oj" },
   r2014_1003: { law: "Commission Regulation (EU) No 1003/2014", url: "https://eur-lex.europa.eu/eli/reg/2014/1003/oj" },
@@ -97,6 +103,7 @@ const EU = {
   r2023_1490: { law: "Commission Regulation (EU) 2023/1490", url: "https://eur-lex.europa.eu/eli/reg/2023/1490/oj" },
   r2024_996: { law: "Commission Regulation (EU) 2024/996", url: "https://eur-lex.europa.eu/eli/reg/2024/996/oj" },
   r2025_877: { law: "Commission Regulation (EU) 2025/877", url: "https://eur-lex.europa.eu/eli/reg/2025/877/oj" },
+  r2026_909: { law: "Commission Regulation (EU) 2026/909 (Annex II entry 1767)", url: "https://eur-lex.europa.eu/eli/reg/2026/909/oj" },
   r2026_78: { law: "Commission Regulation (EU) 2026/78", url: "https://eur-lex.europa.eu/eli/reg/2026/78/oj" },
   reach_d4d5d6: { law: "REACH Annex XVII entry 70, as replaced by Commission Regulation (EU) 2024/1328", url: "https://eur-lex.europa.eu/eli/reg/2024/1328/oj" },
   reach_pfhxa: { law: "REACH Annex XVII entry 79, Commission Regulation (EU) 2024/2462", url: "https://eur-lex.europa.eu/eli/reg/2024/2462/oj" },
@@ -110,6 +117,12 @@ const CA_PFAS = { law: "California Health and Safety Code § 108981.5 (AB 2771)"
 const WA_RCW = { law: "RCW 70A.560.020 (Toxic-Free Cosmetics Act)", url: "https://app.leg.wa.gov/RCW/default.aspx?cite=70A.560.020" };
 const WA_WAC = { law: "WAC 173-339-110 (WSR 25-18-057)", url: "https://app.leg.wa.gov/WAC/default.aspx?cite=173-339-110" };
 const VT = { law: "9 V.S.A. § 2494b", url: "https://legislature.vermont.gov/statutes/section/09/063/02494b" };
+const MD = { law: "Maryland Health-General § 21-259.2 (HB 643, Chapter 490 of 2021)", url: "https://mgaleg.maryland.gov/2021RS/Chapters_noln/CH_490_hb0643t.pdf" };
+const OR = { law: "ORS 431A.345 (SB 546, Toxic-Free Cosmetics Act)", url: "https://www.oregon.gov/oha/PH/HEALTHYENVIRONMENTS/HEALTHYNEIGHBORHOODS/TOXICSUBSTANCES/Documents/Toxic-Free%20Cosmetics%20Act%20ORS%20431A.330%20-%20431A.249.pdf" };
+const MN = { law: "Minnesota Statutes § 116.943 (Amara's Law)", url: "https://www.revisor.mn.gov/statutes/cite/116.943" };
+const CO = { law: "Colorado HB22-1345 (PFAS Consumer Protection Act)", url: "https://leg.colorado.gov/bills/hb22-1345" };
+const ME = { law: "Maine 38 M.R.S. § 1614", url: "https://legislature.maine.gov/statutes/38/title38sec1614.html" };
+const NY = { law: "New York Environmental Conservation Law § 37-0117", url: "https://www.nysenate.gov/legislation/laws/ENV/37-0117" };
 const JP = { law: "Japan Standards for Cosmetics (MHW Notification No. 331 of 2000), Appendix 1", url: "https://www.mhlw.go.jp/content/001257665.pdf" };
 const CANADA = {
   law: "Health Canada Cosmetic Ingredient Hotlist",
@@ -179,6 +192,28 @@ const vtBan = (what: string, from = "2026-01-01"): RegulatoryAction => ({
   summary: `Vermont bans ${what} intentionally added to cosmetics and menstrual products from ${from === "2026-01-01" ? "January 1, 2026" : "July 1, 2027"}.`,
   ...VT,
 });
+const mdBan = (what: string): RegulatoryAction => ({
+  authority: "md",
+  kind: "ban",
+  scope: "Cosmetics",
+  from: "2025-01-01",
+  summary: `Maryland bans ${what} intentionally added to cosmetics from January 1, 2025.`,
+  ...MD,
+});
+const orBan = (what: string): RegulatoryAction => ({
+  authority: "or",
+  kind: "ban",
+  scope: "Cosmetics, including those with drug ingredients",
+  from: "2027-01-01",
+  summary: `Oregon bans ${what} intentionally added to cosmetics from January 1, 2027, even in products that also contain FDA drug ingredients.`,
+  ...OR,
+});
+const pfasStateBans: RegulatoryAction[] = [
+  { authority: "mn", kind: "ban", scope: "Cosmetics", from: "2025-01-01", summary: "Minnesota bans intentionally added PFAS in cosmetics from January 1, 2025.", ...MN },
+  { authority: "co", kind: "ban", scope: "Cosmetics", from: "2025-01-01", summary: "Colorado bans intentionally added PFAS in cosmetics from January 1, 2025.", ...CO },
+  { authority: "me", kind: "ban", scope: "Cosmetics", from: "2026-01-01", summary: "Maine bans intentionally added PFAS in cosmetics from January 1, 2026.", ...ME },
+  orBan("PFAS"),
+];
 const jpBan = (what: string, extra: Partial<RegulatoryAction> = {}): RegulatoryAction => ({
   authority: "jp",
   kind: "ban",
@@ -224,6 +259,8 @@ export const REGULATED_SUBSTANCES: RegulatedSubstance[] = [
       caBan2025("formaldehyde, paraformaldehyde and methylene glycol"),
       waBan2025("formaldehyde and methylene glycol"),
       vtBan("formaldehyde and methylene glycol"),
+      mdBan("formaldehyde, paraformaldehyde and methylene glycol"),
+      orBan("formaldehyde and methylene glycol"),
       jpBan("formalin"),
     ],
     checked: CHECKED,
@@ -236,16 +273,18 @@ export const REGULATED_SUBSTANCES: RegulatedSubstance[] = [
       eu("ban", "The EU banned quaternium-15 in cosmetics in 2019 after part of it was classified as a possible carcinogen.", EU.r2019_831, { from: "2019-06-12" }),
       caBan2025("quaternium-15"),
       vtBan("quaternium-15"),
+      mdBan("quaternium-15"),
       waReleaser,
+      orBan("formaldehyde releasers such as quaternium-15"),
     ],
     checked: CHECKED,
   },
   {
     id: "wa-formaldehyde-releasers",
-    name: "Formaldehyde releasers on Washington's list",
+    name: "Formaldehyde releasers (as listed by Washington)",
     match:
       /^(dmdm-hydantoin|diazolidinyl-urea|imidazolidinyl-urea|tosylamide-formaldehyde-resin|2-bromo-2-nitropropane-1-3-diol|bronopol|sodium-hydroxymethylglycinate|polyoxymethylene-urea|polyoxymethylene-melamine|5-bromo-5-nitro-1-3-dioxane|bronidox|7-ethylbicyclooxazolidine|benzylhemiformal|dimethyl-oxazolidine|mdm-hydantoin|methenamine|methylal|tetramethylol-glycoluril|tris-hydroxymethyl-nitromethane|tris-nitro)$/,
-    actions: [waReleaser],
+    actions: [waReleaser, orBan("formaldehyde releasers")],
     checked: CHECKED,
   },
 
@@ -278,6 +317,7 @@ export const REGULATED_SUBSTANCES: RegulatedSubstance[] = [
       eu("ban", "The EU banned these five parabens in cosmetics in 2014 because their safety couldn't be shown.", EU.r2014_358, { from: "2014-10-30", sellThrough: "2015-07-29" }),
       caBan2025("isopropylparaben and isobutylparaben"),
       vtBan("isopropylparaben and isobutylparaben"),
+      mdBan("isopropylparaben and isobutylparaben"),
     ],
     checked: CHECKED,
   },
@@ -297,6 +337,7 @@ export const REGULATED_SUBSTANCES: RegulatedSubstance[] = [
     actions: [
       waBan2025("triclosan"),
       vtBan("triclosan"),
+      orBan("triclosan"),
       { authority: "fda", kind: "ban", scope: "Consumer antibacterial soaps and washes", from: "2017-09-06", summary: "FDA ruled in 2016 that consumer antibacterial washes may no longer contain triclosan, from September 6, 2017.", ...FDA_WASH },
       edReview("triclosan"),
     ],
@@ -406,6 +447,9 @@ export const REGULATED_SUBSTANCES: RegulatedSubstance[] = [
       caBan2025("mercury"),
       waBan2025("mercury and mercury compounds"),
       vtBan("mercury and mercury compounds"),
+      mdBan("mercury"),
+      orBan("mercury and mercury compounds"),
+      { authority: "ny", kind: "ban", scope: "Cosmetics and personal care products", summary: "New York bans cosmetics and personal care products containing mercury, other than trace amounts.", ...NY },
       canadaBan("mercury and its compounds"),
       jpBan("mercury and its compounds"),
     ],
@@ -471,6 +515,7 @@ export const REGULATED_SUBSTANCES: RegulatedSubstance[] = [
       { authority: "ca", kind: "ban", scope: "Cosmetics", from: "2025-01-01", summary: "California bans intentionally added PFAS in cosmetics from January 1, 2025.", ...CA_PFAS },
       waBan2025("PFAS"),
       vtBan("PFAS"),
+      ...pfasStateBans,
       eu("limit", "From October 10, 2026 the EU limits PFHxA and related PFAS in cosmetics to trace levels.", EU.reach_pfhxa, { from: "2026-10-10" }),
     ],
     checked: CHECKED,
@@ -486,6 +531,8 @@ export const REGULATED_SUBSTANCES: RegulatedSubstance[] = [
       caBan2025("dibutyl phthalate and diethylhexyl phthalate"),
       waBan2025("ortho-phthalates"),
       vtBan("ortho-phthalates"),
+      mdBan("dibutyl phthalate and diethylhexyl phthalate"),
+      orBan("ortho-phthalates"),
       eu("ban", "The EU bans dibutyl phthalate and diethylhexyl phthalate (not diethyl phthalate) in cosmetics.", EU.consolidated),
     ],
     checked: CHECKED,
@@ -500,6 +547,8 @@ export const REGULATED_SUBSTANCES: RegulatedSubstance[] = [
       caBan2025("m- and o-phenylenediamine and their salts"),
       waBan2025("m- and o-phenylenediamine and their salts"),
       vtBan("m- and o-phenylenediamine and their salts"),
+      mdBan("m- and o-phenylenediamine and their salts"),
+      orBan("m- and o-phenylenediamine and their salts"),
       eu("ban", "The EU bans m- and o-phenylenediamine in cosmetics.", EU.consolidated),
     ],
     checked: CHECKED,
@@ -516,6 +565,15 @@ export const REGULATED_SUBSTANCES: RegulatedSubstance[] = [
     name: "N,N-Dimethyl-p-toluidine (dimethyltolylamine)",
     match: /^(n-n-dimethyl-p-toluidine|dimethyl-p-toluidine|dimethyltolylamine)$/,
     actions: [eu("ban", "The EU banned N,N-dimethyl-p-toluidine, used in nail products, in cosmetics from September 1, 2025.", EU.r2025_877, { from: "2025-09-01" })],
+    checked: CHECKED,
+  },
+  {
+    id: "triphenyl-phosphate",
+    name: "Triphenyl phosphate (TPHP)",
+    match: /^(triphenyl-phosphate|tphp)$/,
+    actions: [
+      eu("ban", "The EU added triphenyl phosphate, a plasticizer used in nail polish, to its banned list because its safety couldn't be shown: no new products from January 1, 2027, and none on sale from July 1, 2028.", EU.r2026_909, { from: "2027-01-01", sellThrough: "2028-06-30" }),
+    ],
     checked: CHECKED,
   },
   {

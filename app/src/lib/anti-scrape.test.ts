@@ -90,3 +90,29 @@ test("answer-engine fetchers that send readers here are not refused", () => {
     assert.equal(judge(req(ua, { pathname: "/ingredient/niacinamide" })).action, "allow", ua);
   }
 });
+
+test("published crawler ranges parse into a lookup list", async () => {
+  const { parseRanges } = await import("./anti-scrape");
+  const list = parseRanges({ prefixes: [{ ipv4Prefix: "66.249.64.0/27" }, { ipv6Prefix: "2001:4860:4801:10::/64" }, { ipv4Prefix: "junk" }] });
+  assert.ok(list);
+  assert.equal(list.check("66.249.64.5", "ipv4"), true);
+  assert.equal(list.check("66.249.65.5", "ipv4"), false);
+  assert.equal(list.check("2001:4860:4801:10::1", "ipv6"), true);
+  assert.equal(parseRanges({}), null);
+  assert.equal(parseRanges({ prefixes: [{ ipv4Prefix: "nope" }] }), null);
+});
+
+test("a Googlebot IP from the published list verifies even when reverse DNS fails", async () => {
+  const { verifyCrawler } = await import("./anti-scrape");
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = (async () => new Response(JSON.stringify({ prefixes: [{ ipv4Prefix: "192.0.2.0/24" }] }))) as typeof fetch;
+  try {
+    // 192.0.2.0/24 is a documentation range: no reverse DNS, so only the list can vouch for it
+    assert.equal(await verifyCrawler("192.0.2.10", "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"), true);
+    // the Google list doesn't vouch for a Bingbot claim
+    globalThis.fetch = (async () => new Response("{}", { status: 500 })) as typeof fetch;
+    assert.equal(await verifyCrawler("192.0.2.11", "Mozilla/5.0 (compatible; bingbot/2.0; +http://www.bing.com/bingbot.htm)"), false);
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+});

@@ -2,7 +2,7 @@ import type { MetadataRoute } from "next";
 import { ne } from "drizzle-orm";
 import { db } from "@/db/client";
 import { RX_CONCERN_ID } from "@/db/rx";
-import { concerns } from "@/db/schema";
+import { concerns, indexnowUrls } from "@/db/schema";
 import { siteUrl } from "@/lib/site-url";
 import { canonicalProductIds } from "@/lib/queries";
 import { getIndexableIngredientIds } from "@/lib/ingredient-index";
@@ -24,7 +24,32 @@ export const SITEMAP_PARTS = ["pages", "ingredients", "products", "routines"] as
 export type SitemapPart = (typeof SITEMAP_PARTS)[number];
 
 // Crawlers fetch these repeatedly, so each part is built at most every 10 minutes.
+// <lastmod> is the date lib/indexnow.ts saw the page change; pages with no
+// known change since tracking began have none (a guessed date is worse than
+// none: search engines stop trusting a site's lastmod values).
 export const sitemapPart = ttlCache((part: SitemapPart): MetadataRoute.Sitemap => {
+  const dates = lastModifiedByUrl();
+  return buildSitemapPart(part).map((e) => {
+    const d = dates.get(e.url);
+    return d ? { ...e, lastModified: d } : e;
+  });
+});
+
+/** Known change dates by URL (empty until the IndexNow job has run). */
+export function lastModifiedByUrl(): Map<string, Date> {
+  const out = new Map<string, Date>();
+  try {
+    for (const r of db.select({ url: indexnowUrls.url, changedAt: indexnowUrls.changedAt }).from(indexnowUrls).all()) {
+      if (r.changedAt) out.set(r.url, new Date(r.changedAt));
+    }
+  } catch {
+    // table not there yet (migration pending): no dates, as before
+  }
+  return out;
+}
+
+/** One sitemap part's URLs, uncached and without dates (also lib/indexnow.ts's list of pages). */
+export function buildSitemapPart(part: SitemapPart): MetadataRoute.Sitemap {
   switch (part) {
     case "pages":
       return pagesPart();
@@ -48,7 +73,7 @@ export const sitemapPart = ttlCache((part: SitemapPart): MetadataRoute.Sitemap =
         .filter((r) => r.score >= 0)
         .map((r) => ({ url: `${siteUrl()}/routines/${r.id}`, changeFrequency: "weekly" as const, priority: 0.4 }));
   }
-});
+}
 
 function pagesPart(): MetadataRoute.Sitemap {
   // Never the hidden prescription concern; no /rx, /clinicians or /h URLs

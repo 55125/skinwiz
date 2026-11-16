@@ -8,7 +8,9 @@
 // DailyMed package photos per run (lib/product-images/sync.ts), so a fresh
 // volume fills itself over the first day or two after a deploy. The label
 // scan then reads barcodes off the label images of OTC products that have
-// none (lib/label-barcodes.ts), also capped per run.
+// none (lib/label-barcodes.ts), also capped per run. The IndexNow step sends
+// new and changed pages to Bing and friends (lib/indexnow.ts; off until
+// INDEXNOW_KEY is set).
 import { purgeExpiredTokens } from "@/lib/identity";
 import { purgeOldRaterApplications, purgeStaleYoutubeData } from "@/lib/retention";
 import { sendDueCheckins, type CheckinRunResult } from "@/lib/checkins";
@@ -18,10 +20,11 @@ import { refreshPrices, type PriceRefreshReport } from "@/lib/prices/refresh";
 import { PRICE_RUN_HOUR_UTC, priceRunDay } from "@/lib/prices/config";
 import { syncDailymedImages, type ImageSyncReport } from "@/lib/product-images/sync";
 import { scanLabelBarcodes, type LabelScanReport } from "@/lib/label-barcodes";
+import { runIndexNow, type IndexNowReport } from "@/lib/indexnow";
 
-export type JobName = "checkins" | "recalls" | "cleanup" | "prices" | "images" | "labels";
+export type JobName = "checkins" | "recalls" | "cleanup" | "prices" | "indexnow" | "images" | "labels";
 // images and labels last: they're the slowest steps and nothing else waits on them
-export const ALL_JOBS: JobName[] = ["recalls", "checkins", "cleanup", "prices", "images", "labels"];
+export const ALL_JOBS: JobName[] = ["recalls", "checkins", "cleanup", "prices", "indexnow", "images", "labels"];
 
 // Per-run cap for the image sync, count and wall clock, whichever comes
 // first (IMAGE_SYNC_PER_RUN, IMAGE_SYNC_SECONDS; IMAGE_SYNC=off disables).
@@ -55,6 +58,7 @@ export type JobReport = {
   prices?: PriceRefreshReport | { error: string } | { skipped: string };
   images?: ImageSyncReport | { error: string } | { skipped: string };
   labels?: LabelScanReport | { error: string } | { skipped: string };
+  indexnow?: IndexNowReport | { error: string };
 };
 
 let running = false;
@@ -100,6 +104,13 @@ export async function runJobs(now: Date, jobs: JobName[] = ALL_JOBS, opts: { for
         } catch (err) {
           report.prices = { error: (err as Error).message };
         }
+      }
+    }
+    if (jobs.includes("indexnow")) {
+      try {
+        report.indexnow = await runIndexNow(now);
+      } catch (err) {
+        report.indexnow = { error: (err as Error).message };
       }
     }
     if (jobs.includes("images")) {

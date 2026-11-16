@@ -720,6 +720,18 @@ export const jobState = sqliteTable("job_state", {
   updatedAt: text("updated_at").notNull(),
 });
 
+// Every sitemap URL with a fingerprint of what its page shows (lib/indexnow.ts).
+// When a fingerprint changes, or a URL appears or disappears, the page is
+// sent to IndexNow (Bing, Yandex, Seznam, Naver) and changed_at becomes the
+// sitemap's <lastmod>. changed_at is null for pages first seen in the
+// baseline run, whose real last change is unknown.
+export const indexnowUrls = sqliteTable("indexnow_urls", {
+  url: text("url").primaryKey(),
+  hash: text("hash").notNull(),
+  changedAt: text("changed_at"),
+  submittedAt: text("submitted_at"), // null = waiting to be sent
+});
+
 // ---------------------------------------------------------------------------
 // Clinician handouts (lib/clinicians.ts, lib/handouts.ts). Behind
 // FEATURE_HANDOUTS. PRIVACY BY DESIGN: none of these tables has a column for

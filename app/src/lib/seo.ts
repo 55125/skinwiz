@@ -46,3 +46,84 @@ export function productTitle(p: TitleProduct, describe: (s: TitleProduct["streng
   if (m && makerWord.length > 2 && !lower.includes(makerWord)) title += ` by ${m}`;
   return title;
 }
+
+// The search snippet for a product page. FDA drug rows lead with the label's
+// active ingredient and strength; everything else used to lead with the raw
+// ingredient list ("Aqua (Water), Dimethicone, ..."), which tells a searcher
+// nothing, so it now names the tracked actives, the concern and the
+// free-from checks it passes instead.
+export type DescribedProduct = {
+  name: string;
+  brand: string | null;
+  isDrugLabel: boolean;
+  activeIngredientText: string | null;
+  activeNames: string[];
+  concernName: string | null;
+  freeFrom: string[]; // labels of passed checks, most useful first ("Fragrance-free", ...)
+};
+
+const MAX_DESCRIPTION = 200;
+
+function clip(s: string, max = MAX_DESCRIPTION): string {
+  if (s.length <= max) return s;
+  const cut = s.slice(0, max - 1);
+  return `${cut.slice(0, Math.max(cut.lastIndexOf(" "), max - 40)).replace(/[\s,;:.—-]+$/, "")}…`;
+}
+
+const joinAnd = (items: string[]) => (items.length <= 1 ? (items[0] ?? "") : `${items.slice(0, -1).join(", ")} and ${items[items.length - 1]}`);
+
+export function productDescription(p: DescribedProduct, siteName: string): string {
+  const who = p.brand && !p.name.toLowerCase().includes(p.brand.toLowerCase()) ? `${p.name} by ${p.brand}` : p.name;
+  if (p.isDrugLabel && p.activeIngredientText) {
+    const what = p.concernName ? ` OTC ${p.concernName.toLowerCase()} product.` : "";
+    return clip(`${who}: ${p.activeIngredientText.trim().replace(/\.$/, "")}.${what} Label details, ingredient checks and where to buy on ${siteName}.`);
+  }
+  const parts: string[] = [];
+  const kind = p.concernName ? `a ${p.concernName.toLowerCase()} product` : "a skincare product";
+  parts.push(p.activeNames.length ? `${who}: ${kind} with ${joinAnd(p.activeNames.slice(0, 3).map((a) => a.toLowerCase()))}.` : `${who}: ${kind}.`);
+  if (p.freeFrom.length) {
+    const ff = joinAnd(p.freeFrom.slice(0, 3).map((f) => f.toLowerCase()));
+    parts.push(`${ff[0].toUpperCase()}${ff.slice(1)}.`);
+  }
+  // The closing line only when it fits whole; a cut-off sentence reads worse than none.
+  const close = `Full ingredients, allergen flags and where to buy on ${siteName}.`;
+  const body = parts.join(" ");
+  return body.length + 1 + close.length <= MAX_DESCRIPTION ? `${body} ${close}` : clip(body);
+}
+
+// schema.org Product for a product page. Google shows product details in
+// results only with offers, a review or a rating; offers are included only
+// when the page itself shows fresh prices (AggregateOffer across stores).
+// The barcode goes in as gtin only when it is a valid UPC/EAN.
+export function productLd(p: {
+  url: string;
+  name: string;
+  brand: string | null;
+  description: string;
+  image: string | null;
+  gtin: string | null;
+  prices: number[];
+}) {
+  const prices = p.prices.filter((x) => Number.isFinite(x) && x > 0);
+  return {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: p.name,
+    url: p.url,
+    description: p.description,
+    ...(p.brand ? { brand: { "@type": "Brand", name: p.brand } } : {}),
+    ...(p.image ? { image: p.image } : {}),
+    ...(p.gtin ? { gtin: p.gtin } : {}),
+    ...(prices.length
+      ? {
+          offers: {
+            "@type": "AggregateOffer",
+            priceCurrency: "USD",
+            lowPrice: Math.min(...prices).toFixed(2),
+            highPrice: Math.max(...prices).toFixed(2),
+            offerCount: prices.length,
+          },
+        }
+      : {}),
+  };
+}

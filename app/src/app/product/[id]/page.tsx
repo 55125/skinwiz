@@ -58,7 +58,8 @@ import { MatchBadge } from "@/components/match-badge";
 import { avoidLabelsFor, getIngredientNames, hasProfile, matchProduct, readProfile } from "@/lib/profile";
 import { displayManufacturer } from "@/lib/format";
 import { productBrand } from "@/lib/product-brand";
-import { productTitle, breadcrumbLd } from "@/lib/seo";
+import { productTitle, breadcrumbLd, productDescription, productLd, type DescribedProduct } from "@/lib/seo";
+import { brandSiteBarcode, validGtin } from "@/lib/product-codes";
 import { JsonLd } from "@/components/json-ld";
 import { siteUrl } from "@/lib/site-url";
 import { SITE_NAME } from "@/lib/brand";
@@ -114,9 +115,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   const { id } = await params;
   const product = getProduct(decodeURIComponent(id));
   if (!product) return {};
-  const description = product.activeIngredientText
-    ? `${product.brandName} — ${product.activeIngredientText}. Ingredients, matches and User Score on ${SITE_NAME}.`
-    : `${product.brandName} on ${SITE_NAME}.`;
+  const description = productDescription(describeForSearch(product), SITE_NAME);
   const title = productTitle(product, describeStrengths, displayManufacturer);
   const canonical = `/product/${encodeURIComponent(getCanonicalProductId(product))}`;
   // The product's own photo in link previews, instead of the site-wide card.
@@ -131,6 +130,20 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
           twitter: { card: "summary", images: [image] },
         }
       : {}),
+  };
+}
+
+// What the search snippet and the Product structured data say about it.
+function describeForSearch(product: NonNullable<ReturnType<typeof getProduct>>): DescribedProduct {
+  const passed = new Set(shownFreeFromFlags(product.freeFromFlags ?? [], product.concernId));
+  return {
+    name: product.brandName,
+    brand: productBrand(product).brand,
+    isDrugLabel: product.dataSource === "openfda" || product.dataSource === "dailymed",
+    activeIngredientText: product.activeIngredientText,
+    activeNames: (product.activeIds as string[]).map((id) => activeName(id)),
+    concernName: getConcern(product.concernId)?.name ?? null,
+    freeFrom: FREE_FROM_CHECKS.filter((c) => passed.has(c.id)).map((c) => c.label),
   };
 }
 
@@ -303,6 +316,17 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
 
   return (
     <div className="mx-auto max-w-5xl space-y-10 px-4 py-8 sm:py-10">
+      <JsonLd
+        data={productLd({
+          url: `${siteUrl()}/product/${encodeURIComponent(product.id)}`,
+          name: productTitle(product, describeStrengths, displayManufacturer),
+          brand: productBrand(product).brand,
+          description: productDescription(describeForSearch(product), SITE_NAME),
+          image: imageUrl ? (imageUrl.startsWith("/") ? `${siteUrl()}${imageUrl}` : imageUrl) : null,
+          gtin: validGtin(product.id) ? product.id : brandSiteBarcode(product.id),
+          prices: quotes.map((q) => q.price),
+        })}
+      />
       <JsonLd
         data={breadcrumbLd(siteUrl(), [
           ["Home", "/"],

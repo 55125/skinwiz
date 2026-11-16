@@ -72,6 +72,60 @@ export function claimedCrawler(ua: string): RegExp | null {
   return VERIFIABLE_CRAWLERS.find((c) => c.ua.test(ua))?.hosts ?? null;
 }
 
+// Google and Bing also publish their crawlers' address ranges. Fetched once a
+// day per process (a failed fetch is retried after 10 minutes and just leaves
+// the DNS check below to decide). A late or missing list never slows a request
+// for long: it waits at most DNS_TIMEOUT_MS.
+const PUBLISHED_RANGES: { hosts: RegExp; url: string }[] = [
+  { hosts: VERIFIABLE_CRAWLERS[0].hosts, url: "https://developers.google.com/static/crawling/ipranges/common-crawlers.json" },
+  { hosts: VERIFIABLE_CRAWLERS[1].hosts, url: "https://www.bing.com/toolbox/bingbot.json" },
+];
+const RANGES_OK_MS = 24 * 3_600_000;
+const RANGES_RETRY_MS = 10 * 60_000;
+const ranges = new Map<string, { list: BlockList | null; until: number; loading?: Promise<BlockList | null> }>();
+
+/** A BlockList of the prefixes in Google's/Bing's published JSON, or null if it has none. */
+export function parseRanges(json: unknown): BlockList | null {
+  const prefixes = (json as { prefixes?: { ipv4Prefix?: string; ipv6Prefix?: string }[] })?.prefixes;
+  if (!Array.isArray(prefixes)) return null;
+  const list = new BlockList();
+  let n = 0;
+  for (const p of prefixes) {
+    const cidr = p?.ipv4Prefix ?? p?.ipv6Prefix;
+    const [addr, bits] = typeof cidr === "string" ? cidr.split("/") : [];
+    const family = addr ? isIP(addr) : 0;
+    if (!family || !/^\d{1,3}$/.test(bits ?? "")) continue;
+    list.addSubnet(addr, Number(bits), family === 6 ? "ipv6" : "ipv4");
+    n++;
+  }
+  return n ? list : null;
+}
+
+async function inPublishedRanges(ip: string, hosts: RegExp): Promise<boolean> {
+  const source = PUBLISHED_RANGES.find((r) => r.hosts === hosts);
+  const family = isIP(ip);
+  if (!source || !family) return false;
+  const now = Date.now();
+  let entry = ranges.get(source.url);
+  if (!entry || (entry.until <= now && !entry.loading)) {
+    const loading = fetch(source.url, { signal: AbortSignal.timeout(10_000) })
+      .then((r) => (r.ok ? r.json() : null))
+      .then(parseRanges)
+      .catch(() => null)
+      .then((list) => {
+        ranges.set(source.url, { list, until: Date.now() + (list ? RANGES_OK_MS : RANGES_RETRY_MS) });
+        return list;
+      });
+    entry = { list: entry?.list ?? null, until: entry?.until ?? 0, loading };
+    ranges.set(source.url, entry);
+  }
+  let list = entry.list;
+  if (!list && entry.loading) {
+    list = await Promise.race([entry.loading, new Promise<null>((r) => setTimeout(() => r(null), DNS_TIMEOUT_MS))]);
+  }
+  return list?.check(ip, family === 6 ? "ipv6" : "ipv4") ?? false;
+}
+
 // Reverse lookup, check the domain, then forward-confirm the name maps back to
 // the same IP. Any DNS error or timeout counts as "not verified".
 async function lookupCrawler(ip: string, hosts: RegExp): Promise<boolean> {
@@ -86,6 +140,9 @@ async function lookupCrawler(ip: string, hosts: RegExp): Promise<boolean> {
     }, DNS_TIMEOUT_MS);
   });
   try {
+    // The operator's published address list first: no DNS round trip, and it
+    // still works when reverse DNS is slow or down.
+    if (await inPublishedRanges(ip, hosts)) return true;
     return await Promise.race([
       (async () => {
         const names = (await dns.reverse(ip)).filter((n) => hosts.test(n.replace(/\.$/, "")));
@@ -269,7 +326,7 @@ export function judge(req: RequestInfo): Verdict {
   const path = req.pathname;
 
   // Always reachable so well-behaved crawlers can read the rules.
-  if (path === "/robots.txt" || path === "/sitemap.xml" || path.startsWith("/sitemaps/")) return { action: "allow" };
+  if (path === "/robots.txt" || path === "/sitemap.xml" || path.startsWith("/sitemaps/") || path === "/indexnow-key.txt") return { action: "allow" };
 
   let automated = false;
   if (!ALLOWED_UA.test(ua)) {

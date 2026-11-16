@@ -12,7 +12,7 @@ import { ALL_JOBS, jobsRunning, runJobs, type JobName } from "@/lib/jobs";
 // minutes Railway's edge holds an idle request open, and a cut connection
 // made the curl cron service exit non-zero ("Deploy Crashed" emails).
 // A call while a run is in progress answers 202 with skipped, not an error.
-// Optional query: ?jobs=checkins,recalls,cleanup,prices,images,labels  ?forceRecallSync=1
+// Optional query: ?jobs=checkins,recalls,cleanup,prices,indexnow,images,labels  ?forceRecallSync=1
 // ?forcePrices=1 (run the price refresh even if it already ran today)
 // ?wait=1 waits for the run and returns the report (manual runs; mind the edge timeout).
 // Outside production only: ?now=2026-12-01T00:00:00Z to run against a faked

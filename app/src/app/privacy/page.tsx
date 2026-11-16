@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { LegalPage } from "@/components/legal-page";
 import { LEGAL_EMAIL, LEGAL_OPERATOR, LEGAL_STATE } from "@/lib/legal";
 import { SITE_NAME } from "@/lib/brand";
+import { PrivacyChoices } from "@/components/privacy-choices";
 
 export const metadata: Metadata = {
   alternates: { canonical: "/privacy" },
@@ -27,10 +28,13 @@ export default function PrivacyPage() {
             or an email to use {SITE_NAME}&apos;s tools. Your skin profile and avoid list are stored in cookies
             on your own device. Adding an email address is optional (it becomes a password-free sign-in by one-time link); if you do, we use it only to keep My products,
             avoid list and skin profile (but not any pregnancy or breastfeeding answers) across devices and to send the check-ins and safety alerts you choose, and you can delete it at any
-            time. We do not sell your information, share it for targeted advertising, or run advertising or
-            third-party analytics trackers. We count visits with our own cookieless statistics, which store no IP
-            addresses. For browsers that send Global Privacy Control or Do Not Track we only count page views and
-            clicks.
+            time. We do not sell your information. If you arrive from one of our ads on Facebook or Instagram, we tell
+            Meta that you arrived and whether you clicked through to a store, so we can see which ads work; Meta&apos;s
+            pixel loads only if you allow it (see <a href="#meta">Meta ad measurement</a>), and you can turn all of
+            this off under <a href="#choices">Your privacy choices</a>. We run no other advertising or third-party
+            analytics trackers. We count visits with our own cookieless statistics, which store no IP addresses. For
+            browsers that send Global Privacy Control or Do Not Track we only count page views and clicks, and send
+            nothing to Meta.
           </p>
         </div>
       }
@@ -136,10 +140,41 @@ export default function PrivacyPage() {
         other sites, with nothing about you, the page or the link.
       </p>
 
+      <h3 id="meta">Meta ad measurement</h3>
+      <p>
+        We advertise on Facebook and Instagram, which are run by Meta Platforms, Inc. To see which ads bring people
+        who go on to find products, we tell Meta about two things, and only for visitors who arrived by clicking one
+        of our ads in the last 7 days: that you arrived from the ad, and each time you click a link to a store or a
+        brand&apos;s site. Nothing is sent for anyone who didn&apos;t come from one of our ads.
+      </p>
+      <ul>
+        <li>
+          <strong>By default</strong>, our server sends these two events to Meta with the ad-click code Meta added to
+          the link, your IP address and your browser type. They do not include the page you were on, the product,
+          ingredient, concern or store, your searches, your skin profile or your avoid list.
+        </li>
+        <li>
+          <strong>Only if you allow it</strong>, Meta&apos;s pixel also loads in your browser. It sends Meta the same
+          two events plus each page you visit here, including the page address, which can name a product, ingredient
+          or skin concern, and it sets Meta&apos;s cookies (see <a href="#cookies">Cookies</a>). We turn off the
+          pixel&apos;s automatic detection of buttons and forms.
+        </li>
+        <li>
+          <strong>Never</strong> for browsers that send a Global Privacy Control or Do Not Track signal, or after you
+          choose &ldquo;Don&apos;t share anything&rdquo;.
+        </li>
+      </ul>
+      <p>
+        Meta uses this to report results to us and to decide who sees our ads, and it may use it as described in{" "}
+        <a href="https://www.facebook.com/privacy/policy/" rel="noopener noreferrer">Meta&apos;s Privacy Policy</a>. We
+        receive only totals. You can change your choice at any time under <a href="#choices">Your privacy choices</a>.
+      </p>
+
       <h2 id="cookies">2. Cookies</h2>
       <p>
-        We use only first-party cookies that {SITE_NAME} needs to work. We use no advertising, analytics or
-        cross-site tracking cookies.
+        We use only first-party cookies that {SITE_NAME} needs to work, plus Meta&apos;s two ad-measurement cookies,
+        which are set only if you came from one of our ads and allowed Meta&apos;s pixel. We use no other advertising,
+        analytics or cross-site tracking cookies.
       </p>
       <table>
         <thead>
@@ -165,6 +200,16 @@ export default function PrivacyPage() {
             <td>Your avoid list</td>
             <td>1 year</td>
           </tr>
+          <tr>
+            <td>_fbc</td>
+            <td>Only if you allowed Meta&apos;s pixel: the code from the ad you clicked, so Meta can match your visit to it</td>
+            <td>90 days</td>
+          </tr>
+          <tr>
+            <td>_fbp</td>
+            <td>Only if you allowed Meta&apos;s pixel: set by Meta&apos;s pixel to recognize this browser across visits</td>
+            <td>90 days</td>
+          </tr>
         </tbody>
       </table>
       <p>
@@ -172,6 +217,11 @@ export default function PrivacyPage() {
         reports stay in our database, but nothing links them to you any longer. If you have added an email, signing in
         again brings back My products, avoid list and skin profile (but not your pregnancy or breastfeeding answers), and
         signing out removes the profile and avoid-list cookies from that browser.
+      </p>
+      <p>
+        If you arrive from one of our ads, your browser&apos;s own storage also keeps the ad-click code for 7 days and
+        your Meta choice until you change it or clear site data. Choosing &ldquo;Don&apos;t share anything&rdquo;
+        deletes the ad-click code and Meta&apos;s cookies from this site.
       </p>
       <p>
         The clinic tools also use your browser&apos;s own storage: the patch-test reader keeps your tray layout and the
@@ -216,7 +266,10 @@ export default function PrivacyPage() {
         <li>To understand, in aggregate, which pages, searches and tools are used, so we can improve the site and its catalog.</li>
         <li>To comply with the law and enforce our <Link href="/terms">Terms of Service</Link>.</li>
       </ul>
-      <p>We do not use your information for advertising, and we do not build profiles of you for marketing.</p>
+      <p>
+        We do not build profiles of you for marketing. The only advertising use is measuring our own ads on Facebook
+        and Instagram, described under <a href="#meta">Meta ad measurement</a>.
+      </p>
 
       <h2 id="health-data">4. Consumer health data</h2>
       <p>
@@ -245,7 +298,10 @@ export default function PrivacyPage() {
         <li>
           <strong>Sharing:</strong> we share it only with the service providers that host and run the site,
           under their obligations to protect it, and where the law requires it. We never sell consumer health
-          data and never use it for advertising.
+          data and never use it for advertising. The ad-measurement events we send Meta by default contain none of
+          it. Meta&apos;s pixel, which loads only if you allow it, lets Meta see the addresses of pages you visit, which
+          can name a product or skin concern; allowing it is your consent to that, and you can withdraw it under{" "}
+          <a href="#choices">Your privacy choices</a>.
         </li>
         <li>
           <strong>Your rights:</strong> you may ask us to confirm whether we hold your consumer health data,
@@ -260,6 +316,11 @@ export default function PrivacyPage() {
           <strong>Service providers</strong> who run the site for us: our hosting provider (Railway) and, if you
           add an email address, our email delivery provider (Resend), which receives your address and the content
           of the emails we send you in order to deliver them. They process data on our instructions.
+        </li>
+        <li>
+          <strong>Meta Platforms</strong>, only if you arrived from one of our ads, as described under{" "}
+          <a href="#meta">Meta ad measurement</a>. Under some state laws this counts as &ldquo;sharing&rdquo; or
+          targeted advertising; you can opt out at any time.
         </li>
         <li>
           <strong>Public content</strong>: routines you submit, including any display name, are visible to
@@ -321,6 +382,10 @@ export default function PrivacyPage() {
           deleted after one day.
         </li>
         <li>Server logs are kept for a limited period set by our hosting provider, then deleted.</li>
+        <li>
+          We keep no copy of the events sent to Meta beyond our own site statistics. Meta keeps what it receives under
+          its own policies.
+        </li>
       </ul>
 
       <h2 id="security">7. Security</h2>
@@ -342,15 +407,22 @@ export default function PrivacyPage() {
         <li>
           Depending on where you live (including Connecticut, California, Washington and other US states), you
           may have the right to access, correct, delete or get a copy of your personal information, and to opt
-          out of its sale, of targeted advertising and of profiling. We do not sell or target, but you may still
-          make any request.
+          out of its sale, of targeted advertising and of profiling. We do not sell personal information or profile
+          you. Our Meta ad measurement may count as targeted advertising or &ldquo;sharing&rdquo;; you can opt out of
+          it below, and you may make any other request.
         </li>
         <li>
           We treat a Global Privacy Control signal from your browser as a valid request to opt out. While your browser
-          sends it, shopping links go straight to the retailer instead of through Sovrn, and our{" "}
-          <a href="#statistics">site statistics</a> keep only a daily count of page views and outbound clicks.
+          sends it, shopping links go straight to the retailer instead of through Sovrn, nothing is sent to Meta, and
+          our <a href="#statistics">site statistics</a> keep only a daily count of page views and outbound clicks.
         </li>
       </ul>
+      <h3 id="choices">Your privacy choices</h3>
+      <p>
+        Opt out of Meta ad measurement for this browser here. It applies to this browser only, because we don&apos;t
+        know who you are; a Global Privacy Control signal does the same on every site.
+      </p>
+      <PrivacyChoices />
       <p>
         To make a request, email {mail}. If you never added an email address, we may need details from you, such as
         what you saved and roughly when, to find information linked to your browser. We will not discriminate

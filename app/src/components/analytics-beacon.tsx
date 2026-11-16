@@ -2,6 +2,8 @@
 
 import { useEffect } from "react";
 import { usePathname } from "next/navigation";
+import { landingMeta, retailerClickMeta } from "@/lib/meta-client";
+import { isShoppingLink } from "@/lib/meta-shared";
 
 // First-party, cookieless site statistics (lib/analytics/, POST /api/e).
 // Sends a pageview on each navigation, outbound link clicks (retailer
@@ -9,6 +11,10 @@ import { usePathname } from "next/navigation";
 // Global Privacy Control or Do Not Track it sends only the bare kind of a
 // page view or outbound click, which the server adds to a daily count; the
 // server checks the same signals again.
+//
+// For visitors who arrived from one of our Meta ads, the landing page view
+// and retailer clicks also carry a "meta" object that the server forwards to
+// Meta's Conversions API (lib/meta-shared.ts has the rules).
 
 function optedOut(): boolean {
   const nav = navigator as Navigator & { globalPrivacyControl?: boolean };
@@ -36,6 +42,7 @@ export function AnalyticsBeacon() {
   useEffect(() => {
     if (pathname.startsWith("/admin")) return;
     const params = new URLSearchParams(window.location.search);
+    const meta = landingMeta();
     sendEvent({
       kind: "pageview",
       // Only the landing page has a meaningful external referrer.
@@ -43,6 +50,7 @@ export function AnalyticsBeacon() {
       utm_source: params.get("utm_source") ?? params.get("ref"),
       utm_medium: params.get("utm_medium"),
       utm_campaign: params.get("utm_campaign"),
+      ...(meta ? { meta } : {}),
     });
     firstView = false;
   }, [pathname]);
@@ -64,7 +72,8 @@ export function AnalyticsBeacon() {
         return;
       }
       if ((url.protocol === "http:" || url.protocol === "https:") && url.host !== window.location.host) {
-        sendEvent({ kind: "outbound", href: url.href });
+        const meta = isShoppingLink(url.href) ? retailerClickMeta() : null;
+        sendEvent({ kind: "outbound", href: url.href, ...(meta ? { meta } : {}) });
       }
     }
     // auxclick catches middle-click "open in new tab".

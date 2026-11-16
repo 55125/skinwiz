@@ -12,7 +12,7 @@ import unittest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from sync_sources import append_rows, new_rows, open_source_image
+from sync_sources import append_rows, new_rows, open_source_image, us_or_canada_barcode
 
 
 class NewRows(unittest.TestCase):
@@ -27,6 +27,18 @@ class NewRows(unittest.TestCase):
     def test_drops_a_kit_with_joined_lists(self):
         kit = {"product_ndc": "k", "source": "brand_direct", "active_ingredient_text": "The Glow Getter Body Wash Ingredients: Water, Glycerin"}
         self.assertEqual(new_rows([kit], set()), [])
+
+
+class UsOrCanadaBarcode(unittest.TestCase):
+    def test_keeps_us_and_canadian_upcs(self):
+        self.assertTrue(us_or_canada_barcode("0075609199202"))  # Olay, 13-digit form
+        self.assertTrue(us_or_canada_barcode("810016298021"))  # UPC-A
+        self.assertTrue(us_or_canada_barcode("0628747000017"))  # 062, inside the US range
+        self.assertTrue(us_or_canada_barcode("7541234567890"))  # GS1 Canada
+
+    def test_drops_other_countries_in_store_codes_and_skus(self):
+        for code in ["4068134071095", "8909106057647", "5901887039877", "0571915454191", "0212345678905", "93579933", "anua-AA001755"]:
+            self.assertFalse(us_or_canada_barcode(code), code)
 
 
 class AppendRows(unittest.TestCase):

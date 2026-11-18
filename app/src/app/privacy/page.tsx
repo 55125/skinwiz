@@ -29,8 +29,9 @@ export default function PrivacyPage() {
             on your own device. Adding an email address is optional (it becomes a password-free sign-in by one-time link); if you do, we use it only to keep My products,
             avoid list and skin profile (but not any pregnancy or breastfeeding answers) across devices and to send the check-ins and safety alerts you choose, and you can delete it at any
             time. We do not sell your information. If you arrive from one of our ads on Facebook or Instagram, we tell
-            Meta that you arrived and whether you clicked through to a store, so we can see which ads work; Meta&apos;s
-            pixel loads only if you allow it (see <a href="#meta">Meta ad measurement</a>), and you can turn all of
+            Meta that you arrived and whether you clicked through to a store, so we can see which ads work; where the
+            law asks for your permission, Meta&apos;s pixel loads only if you allow it (see <a href="#meta">Meta ad
+            measurement</a>), and anywhere you can turn all of
             this off under <a href="#choices">Your privacy choices</a>. We run no other advertising or third-party
             analytics trackers. We count visits with our own cookieless statistics, which store no IP addresses. For
             browsers that send Global Privacy Control or Do Not Track we only count page views and clicks, and send
@@ -154,14 +155,19 @@ export default function PrivacyPage() {
           ingredient, concern or store, your searches, your skin profile or your avoid list.
         </li>
         <li>
-          <strong>Only if you allow it</strong>, Meta&apos;s pixel also loads in your browser. It sends Meta the same
+          <strong>Meta&apos;s pixel</strong> also loads in your browser, only after you allow it if you are in the
+          EU, EEA, UK or Switzerland, outside the United States, in a US state with a consumer privacy or health data
+          law (such as California, Washington, Texas or Virginia), or anywhere we can&apos;t tell your location. In
+          the rest of the United States it loads without asking, and you can turn it off under{" "}
+          <a href="#choices">Your privacy choices</a>. We tell where you are from your IP address only, through our
+          network provider Cloudflare, and don&apos;t store it. The pixel sends Meta the same
           two events plus each page you visit here, including the page address, which can name a product, ingredient
           or skin concern, and it sets Meta&apos;s cookies (see <a href="#cookies">Cookies</a>). We turn off the
           pixel&apos;s automatic detection of buttons and forms.
         </li>
         <li>
           <strong>Never</strong> for browsers that send a Global Privacy Control or Do Not Track signal, or after you
-          choose &ldquo;Don&apos;t share anything&rdquo;.
+          choose &ldquo;Decline&rdquo; or &ldquo;Don&apos;t share anything&rdquo;.
         </li>
       </ul>
       <p>
@@ -173,7 +179,8 @@ export default function PrivacyPage() {
       <h2 id="cookies">2. Cookies</h2>
       <p>
         We use only first-party cookies that {SITE_NAME} needs to work, plus Meta&apos;s two ad-measurement cookies,
-        which are set only if you came from one of our ads and allowed Meta&apos;s pixel. We use no other advertising,
+        which are set only if you came from one of our ads and Meta&apos;s pixel loaded (see{" "}
+        <a href="#meta">Meta ad measurement</a>). We use no other advertising,
         analytics or cross-site tracking cookies.
       </p>
       <table>
@@ -202,12 +209,12 @@ export default function PrivacyPage() {
           </tr>
           <tr>
             <td>_fbc</td>
-            <td>Only if you allowed Meta&apos;s pixel: the code from the ad you clicked, so Meta can match your visit to it</td>
+            <td>Only if Meta&apos;s pixel loaded: the code from the ad you clicked, so Meta can match your visit to it</td>
             <td>90 days</td>
           </tr>
           <tr>
             <td>_fbp</td>
-            <td>Only if you allowed Meta&apos;s pixel: set by Meta&apos;s pixel to recognize this browser across visits</td>
+            <td>Only if Meta&apos;s pixel loaded: set by Meta&apos;s pixel to recognize this browser across visits</td>
             <td>90 days</td>
           </tr>
         </tbody>
@@ -299,8 +306,9 @@ export default function PrivacyPage() {
           <strong>Sharing:</strong> we share it only with the service providers that host and run the site,
           under their obligations to protect it, and where the law requires it. We never sell consumer health
           data and never use it for advertising. The ad-measurement events we send Meta by default contain none of
-          it. Meta&apos;s pixel, which loads only if you allow it, lets Meta see the addresses of pages you visit, which
-          can name a product or skin concern; allowing it is your consent to that, and you can withdraw it under{" "}
+          it. Meta&apos;s pixel lets Meta see the addresses of pages you visit, which can name a product or skin
+          concern. In Washington, Nevada and the other places listed under <a href="#meta">Meta ad measurement</a> it
+          loads only after you allow it, and allowing it is your consent to that; you can withdraw it under{" "}
           <a href="#choices">Your privacy choices</a>.
         </li>
         <li>

@@ -3,12 +3,12 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   CONSENT_EVENT,
   adClickFbc,
   captureAdClick,
+  fetchMetaConfig,
   getConsent,
   loadPixel,
   metaEligible,
@@ -18,55 +18,49 @@ import {
   pixelPageView,
   setConsent,
 } from "@/lib/meta-client";
-import { META_EVENTS, validPixelId, type MetaConsent } from "@/lib/meta-shared";
+import { META_EVENTS, type MetaConsent } from "@/lib/meta-shared";
 
 // Meta ad measurement for visitors who arrived from one of our ads (rules in
-// lib/meta-shared.ts). Renders nothing for everyone else. For an ad visitor
-// who hasn't chosen yet, a small notice asks whether Meta's pixel may load;
-// it loads only after "Allow". "Don't share anything" also stops the
-// server-side events. The choice can be changed on /privacy#choices.
-
-const DISMISSED = "sw_meta_notice_dismissed"; // sessionStorage: "Not now" for this tab
+// lib/meta-shared.ts). Renders nothing for everyone else. Where the
+// visitor's location needs consent (consentRequiredFor), a slim bar asks
+// whether Meta's pixel may load, and it loads only after "Allow"; "Decline"
+// also stops the server-side events. Elsewhere the pixel loads without a
+// notice. Either way the choice can be changed on /privacy#choices.
 
 export function MetaConsent() {
   const pathname = usePathname();
   const [eligible, setEligible] = useState(false);
   const [consent, setConsentState] = useState<MetaConsent>(null);
   const [pixelId, setPixelId] = useState<string | null>(null);
-  const [dismissed, setDismissed] = useState(false);
+  const [consentRequired, setConsentRequired] = useState(true);
 
   useEffect(() => {
     function refresh() {
       captureAdClick();
       setEligible(metaEligible());
       setConsentState(getConsent());
-      try {
-        setDismissed(window.sessionStorage.getItem(DISMISSED) === "1");
-      } catch {
-        // ignore
-      }
     }
     refresh();
     window.addEventListener(CONSENT_EVENT, refresh);
     return () => window.removeEventListener(CONSENT_EVENT, refresh);
   }, []);
 
-  // Only ad visitors ask the server whether Meta is set up.
+  // Only ad visitors ask the server whether Meta is set up, and whether
+  // their location needs the notice.
   useEffect(() => {
     if (!eligible || pixelId) return;
     let cancelled = false;
-    fetch("/api/meta/config", { cache: "no-store" })
-      .then((r) => (r.ok ? r.json() : null))
-      .then((d: { pixelId?: unknown } | null) => {
-        if (!cancelled && validPixelId(d?.pixelId)) setPixelId(d.pixelId);
-      })
-      .catch(() => {});
+    fetchMetaConfig().then((c) => {
+      if (cancelled || !c.pixelId) return;
+      setConsentRequired(c.consentRequired);
+      setPixelId(c.pixelId);
+    });
     return () => {
       cancelled = true;
     };
   }, [eligible, pixelId]);
 
-  const pixelAllowed = Boolean(pixelId && eligible && consent === "granted");
+  const pixelAllowed = Boolean(pixelId && eligible && (consent === "granted" || (consent === null && !consentRequired)));
 
   useEffect(() => {
     if (!pixelAllowed || !pixelId) return;
@@ -86,48 +80,28 @@ export function MetaConsent() {
     if (pixelAllowed) pixelPageView();
   }, [pathname, pixelAllowed]);
 
-  if (!eligible || !pixelId || consent !== null || dismissed || pathname.startsWith("/privacy")) return null;
-
-  function notNow() {
-    try {
-      window.sessionStorage.setItem(DISMISSED, "1");
-    } catch {
-      // ignore
-    }
-    setDismissed(true);
-  }
+  if (!eligible || !pixelId || !consentRequired || consent !== null || pathname.startsWith("/privacy")) return null;
 
   return (
     <div
       role="region"
       aria-label="Ad measurement choice"
-      className="fixed inset-x-0 bottom-0 z-40 px-4 pb-4 sm:left-auto sm:right-4 sm:max-w-md sm:px-0"
+      className="fixed inset-x-0 bottom-0 z-40 border-t bg-background/95 shadow-[0_-2px_8px_rgba(0,0,0,0.06)] backdrop-blur supports-[backdrop-filter]:bg-background/85"
     >
-      <div className="relative rounded-xl border bg-background p-4 pr-10 text-sm shadow-lg">
-        <button
-          type="button"
-          onClick={notNow}
-          aria-label="Not now"
-          className="absolute right-2 top-2 rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
-        >
-          <X className="size-4" />
-        </button>
-        <p className="font-medium text-foreground">You came here from one of our ads</p>
-        <p className="mt-1 text-muted-foreground">
-          We tell Meta (Facebook and Instagram) only that you arrived and whether you clicked through to a store,
-          never what you looked at. May we also load Meta&apos;s pixel? It lets Meta see which pages you visit here,
-          which can show a product or skin concern.
-        </p>
-        <div className="mt-3 flex flex-wrap items-center gap-2">
-          <Button size="sm" onClick={() => setConsent("granted")}>
-            Allow pixel
-          </Button>
-          <Button size="sm" variant="outline" onClick={() => setConsent("denied")}>
-            Don&apos;t share anything
-          </Button>
-          <Link href="/privacy#meta" className="text-xs text-muted-foreground underline">
+      <div className="mx-auto flex max-w-5xl items-center gap-3 px-4 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] text-xs sm:text-sm">
+        <p className="min-w-0 flex-1 leading-snug text-muted-foreground">
+          Allow Meta&apos;s ad pixel? It can see the pages you visit here.{" "}
+          <Link href="/privacy#meta" className="whitespace-nowrap underline hover:text-foreground">
             Details
           </Link>
+        </p>
+        <div className="flex shrink-0 gap-2">
+          <Button size="sm" variant="outline" onClick={() => setConsent("denied")}>
+            Decline
+          </Button>
+          <Button size="sm" variant="outline" onClick={() => setConsent("granted")}>
+            Allow
+          </Button>
         </div>
       </div>
     </div>

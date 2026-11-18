@@ -56,3 +56,14 @@ test("retailer and brand links are shopping; references, social and Rx price che
   assert.equal(isShoppingLink("mailto:a@b.c"), false);
   assert.equal(isShoppingLink("not a url"), false);
 });
+
+test("consent notice: shown outside the US, in privacy-law states, and when location is unknown", async () => {
+  const { consentRequiredFor } = await import("./meta-shared");
+  for (const c of ["DE", "FR", "GB", "CH", "NO", "CA", "BR", "AU", "XX", "T1", "", null, undefined]) {
+    assert.equal(consentRequiredFor(c, "ZZ"), true, String(c));
+  }
+  for (const r of ["CA", "ca", "WA", "NV", "TX", "VA", "CO", "NJ"]) assert.equal(consentRequiredFor("US", r), true, r);
+  for (const r of [null, undefined, "", "California", "1"]) assert.equal(consentRequiredFor("US", r), true, String(r));
+  for (const r of ["FL", "NY", "GA", "OH", "IL", "AZ", "NC"]) assert.equal(consentRequiredFor("US", r), false, r);
+  assert.equal(consentRequiredFor(" us ", "fl"), false);
+});

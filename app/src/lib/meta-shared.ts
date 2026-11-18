@@ -101,3 +101,32 @@ export function isShoppingLink(href: string): boolean {
   host = host.replace(/^www\./, "");
   return !NOT_SHOPPING.some((re) => re.test(host));
 }
+
+// --- where the consent notice is needed ------------------------------------
+//
+// The pixel waits for "Allow" only where the law asks for opt-in consent, or
+// where it is advisable because the pixel can reveal a skin concern (health
+// data): the EU/EEA, the UK, Switzerland, every country outside the US (we
+// only advertise in the US, so this keeps the list short and safe), the US
+// states with a comprehensive privacy law or a consumer-health-data law, and
+// anywhere the location is unknown. Elsewhere in the US the pixel loads for ad
+// visitors without a notice, and /privacy#choices still turns it off.
+// Location comes from Cloudflare: CF-IPCountry (always sent) and
+// cf-region-code ("Add visitor location headers" managed transform).
+
+/** US states where the pixel waits for consent (comprehensive privacy or consumer health data laws). */
+export const CONSENT_US_STATES: ReadonlySet<string> = new Set([
+  "CA", "CO", "CT", "DE", "IA", "IN", "KY", "MD", "MN", "MT", "NE", "NH", "NJ", "NV", "OR", "RI", "TN", "TX", "UT", "VA", "WA",
+]);
+
+/**
+ * True when ad visitors from this place must say "Allow" before the pixel
+ * loads. Unknown country or US state (missing header, "XX", Tor "T1") = true.
+ */
+export function consentRequiredFor(country: string | null | undefined, region: string | null | undefined): boolean {
+  const c = country?.trim().toUpperCase() ?? "";
+  if (c !== "US") return true;
+  const r = region?.trim().toUpperCase() ?? "";
+  if (!/^[A-Z]{2}$/.test(r)) return true;
+  return CONSENT_US_STATES.has(r);
+}

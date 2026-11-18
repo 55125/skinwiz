@@ -10,6 +10,7 @@ import {
   fbcFromClickId,
   validEventId,
   validFbc,
+  validPixelId,
   type MetaConsent,
   type MetaEventName,
 } from "./meta-shared";
@@ -211,4 +212,29 @@ export function clearMetaCookies(): void {
       }
     }
   }
+}
+
+// --- server config ----------------------------------------------------------
+
+export type MetaSiteConfig = { pixelId: string | null; consentRequired: boolean };
+
+let configPromise: Promise<MetaSiteConfig> | null = null;
+
+/**
+ * The pixel id and whether this visitor's location needs the consent notice
+ * (GET /api/meta/config). Fetched once per page load. Any failure counts as
+ * "consent required", so the pixel never loads without a notice by mistake.
+ */
+export function fetchMetaConfig(): Promise<MetaSiteConfig> {
+  configPromise ??= fetch("/api/meta/config", { cache: "no-store" })
+    .then((r) => (r.ok ? r.json() : null))
+    .then((d: { pixelId?: unknown; consentRequired?: unknown } | null) => ({
+      pixelId: validPixelId(d?.pixelId) ? d.pixelId : null,
+      consentRequired: d?.consentRequired !== false,
+    }))
+    .catch(() => {
+      configPromise = null;
+      return { pixelId: null, consentRequired: true };
+    });
+  return configPromise;
 }

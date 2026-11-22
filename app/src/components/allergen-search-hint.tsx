@@ -1,13 +1,20 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
+import { buttonVariants } from "@/components/ui/button";
+import { encodeImportCode } from "@/lib/avoid-import";
 import type { QueryAllergen } from "@/lib/allergen-search";
 
 // For a search that names patch-test allergens (lib/allergen-search.ts): each
-// one's page lists its label names and the products free of it.
+// one's page lists its label names and the products free of it. "Add all"
+// opens the same import page a clinician's QR code does (/avoid/import),
+// already filled in; "Browse" filters the catalog by them without saving.
 export function AllergenSearchHint({ allergens }: { allergens: QueryAllergen[] }) {
   if (allergens.length === 0) return null;
   const onLabels = allergens.filter((a) => a.href);
   const offLabels = allergens.filter((a) => !a.href);
+  const code = encodeImportCode(allergens.map((a) => a.id));
+  const importable = code.length > 1;
+  const freeOf = onLabels.map((a) => a.id).join(",");
   return (
     <div className="space-y-3 rounded-2xl border bg-card p-5">
       <h2 className="text-base font-semibold">Patch-test allergens in your search</h2>
@@ -38,9 +45,23 @@ export function AllergenSearchHint({ allergens }: { allergens: QueryAllergen[] }
           ))}
         </ul>
       )}
-      <Link href="/avoid" className="inline-flex items-center gap-1 text-sm font-medium text-brand hover:underline">
-        Add them to the ingredients you avoid <ArrowRight className="h-3.5 w-3.5" aria-hidden />
-      </Link>
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 pt-1">
+        {importable && (
+          <Link href={`/avoid/import?a=${code}`} className={buttonVariants({ size: "sm" })}>
+            {allergens.length === 1 ? "Add it to my avoid list" : `Add all ${allergens.length} to my avoid list`}
+          </Link>
+        )}
+        {freeOf && (
+          <Link href={`/browse?free=${encodeURIComponent(freeOf)}`} className="inline-flex items-center gap-1 text-sm font-medium text-brand hover:underline">
+            Browse products free of {onLabels.length === 1 ? "it" : "all of these"} <ArrowRight className="h-3.5 w-3.5" aria-hidden />
+          </Link>
+        )}
+        {!importable && (
+          <Link href="/avoid" className="inline-flex items-center gap-1 text-sm font-medium text-brand hover:underline">
+            Your avoid list <ArrowRight className="h-3.5 w-3.5" aria-hidden />
+          </Link>
+        )}
+      </div>
     </div>
   );
 }

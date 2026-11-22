@@ -20,6 +20,8 @@ import type { Metadata } from "next";
 import { parseFreeParam } from "@/lib/avoid-shared";
 import { AvoidSwitch } from "@/components/avoid-switch";
 import { SearchHints } from "@/components/search-hints";
+import { AllergenSearchHint } from "@/components/allergen-search-hint";
+import { allergensInQuery } from "@/lib/allergen-search";
 import { parseSearch } from "@/lib/search-terms";
 import { SearchBeacon } from "@/components/analytics-beacon";
 
@@ -68,6 +70,10 @@ export default async function SearchPage({
   const productTotal = shelfCounts.main + shelfCounts.import + shelfCounts.discontinued;
   const originCounts = keyword ? searchOriginCounts(keyword, searchFilters) : new Map();
   const hints = keyword ? parseSearch(keyword).hints : [];
+  // Patch-test results searched as if they were products: point to the
+  // allergen pages when the search is only allergen names or finds nothing.
+  const named = keyword ? allergensInQuery(keyword) : { allergens: [], allNamed: false };
+  const queryAllergens = named.allNamed || productTotal === 0 ? named.allergens : [];
 
   function hrefWith(overrides: Record<string, string | undefined>) {
     const params = new URLSearchParams();
@@ -91,6 +97,7 @@ export default async function SearchPage({
   const results = (
     <>
       <SearchHints hints={hints} />
+      <AllergenSearchHint allergens={queryAllergens} />
 
       {codeMatches && codeMatches.length === 0 && (
         <div className="space-y-1 rounded-2xl border border-dashed p-10 text-center text-muted-foreground">
@@ -111,7 +118,7 @@ export default async function SearchPage({
         </div>
       )}
 
-      {keyword && activeResults.length === 0 && productTotal === 0 && hints.length === 0 && (
+      {keyword && activeResults.length === 0 && productTotal === 0 && hints.length === 0 && queryAllergens.length === 0 && (
         <div className="rounded-2xl border border-dashed p-10 text-center text-muted-foreground">
           No results for &quot;{query}&quot;.
         </div>

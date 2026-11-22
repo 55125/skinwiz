@@ -257,3 +257,18 @@ now (`us_or_canada_barcode`: GS1 US 000-019, 030-039, 060-139, plus GS1 Canada 7
 out 8-digit EAN-8 codes (Swisse) and in-store or reserved numbers. `sync_sources.py` keeps only
 US/Canada barcodes for new OBF cosmetic rows and reports how many it skipped. Hair care isn't
 filtered this way yet.
+
+## Pass 2026-11-22 (weekly check)
+
+`/api/cron/search-gaps?days=7` (2026-11-16 to 2026-11-22): missing "cinnamic aldehyde" (1),
+"bisphenol a epoxy resin, fragrance mix ii, propolis, decyl glucosidedisperse blu" (1) and
+"bisphenol" (1); no low-result terms. None is a missing product: they are patch-test results
+searched as if they were products (one pasted straight from a panel, cut off by the search log).
+
+Nothing added to the catalog. Search now recognizes them instead (`app/src/lib/allergen-search.ts`):
+a search made only of allergen names, or one that finds no products, gets a card linking each
+named allergen's page (label names, products free of it) and saying where the not-on-label ones
+(epoxy resin, disperse dyes, rubber mixes) are met. "Bisphenol" reads as the epoxy resin allergen,
+the one patch-tested. A product search that happens to name one ("tea tree shampoo") gets no card.
+The run-together "glucosidedisperse" in the pasted query isn't recognized, so decyl glucoside and
+disperse blue aren't listed for that one.

@@ -20,7 +20,10 @@ as many photo downloads). A new product's photo follows the project's order:
 Open Beauty Facts' photo for that barcode if it has one, hotlinked, otherwise
 the brand's, self-hosted.
 
-Curated rows (curated_products.csv) are hand-picked and not polled here.
+New Open Beauty Facts cosmetics are kept only when the barcode is a US or
+Canadian one (Michael, 2026-11-16): the first full pull was mostly German and
+Indian products. Curated rows (curated_products.csv) are hand-picked and not
+polled here.
 
 Run from tools/catalog_pipeline with Pillow installed (requirements.txt).
 """
@@ -68,6 +71,20 @@ def is_kit(row: dict) -> bool:
     """A set whose page joins each product's list ("... Body Wash Ingredients:
     Water, ..."). Older brands in the crawler predate its bundle filter."""
     return row.get("source") == "brand_direct" and re.search(r"\bIngredients:", row.get("active_ingredient_text") or "", re.I) is not None
+
+
+# Catalogs whose new rows must carry a US/Canada barcode.
+US_BARCODES_ONLY = {"cosmetic"}
+
+
+def us_or_canada_barcode(code: str) -> bool:
+    """A UPC-A or EAN-13 in GS1 US's 000-019, 030-039 or 060-139 prefixes
+    (020-029 and 040-059 are in-store and reserved numbers), or GS1 Canada's
+    754-755. Most Canadian brands use GS1 US numbers."""
+    if not re.fullmatch(r"\d{12,13}", code):
+        return False
+    prefix = int(code.zfill(13)[:3])
+    return prefix <= 19 or 30 <= prefix <= 39 or 60 <= prefix <= 139 or prefix in (754, 755)
 
 
 def new_rows(fresh: list[dict], known_ids: set[str], known_labels: set[str] = frozenset()) -> list[dict]:
@@ -182,8 +199,14 @@ def main() -> None:
 
     def record(label: str, catalog: str, fresh: list[dict], gone: list[str] | None, stage: str) -> None:
         added = new_rows(fresh, known_ids, known_labels)
+        skipped = 0
+        if catalog in US_BARCODES_ONLY:
+            kept = [r for r in added if us_or_canada_barcode(r["product_ndc"])]
+            skipped, added = len(added) - len(kept), kept
         known_ids.update(r["product_ndc"] for r in added)
         summary = f"  {label}: {len(fresh)} returned, {len(added)} new"
+        if skipped:
+            summary += f" ({skipped} more without a US/Canada barcode, skipped)"
         if gone is not None:
             summary += f", {len(gone)} gone"
             if gone and catalog == "acne_sun":

@@ -229,6 +229,46 @@ that itself has more than 1,000 products is still capped (panthenol's English-la
 
 The first full pull returned 3,045 products, 991 of them new. They were **not** added: by barcode
 prefix 301 are German, 128 Indian, and many are shampoos or makeup the active matcher files under
-Brightening. Only 266 have a US/Canada prefix. The list, with each barcode's country, is in
-`output/obf_cosmetics_pending_2026-11-10.csv` for a decision on which to add. Do that before the
-next `sync_sources.py --apply --sources obf`, which would add all of them.
+Brightening. Only 266 have a US/Canada prefix. The list, with each barcode's country, was in
+`output/obf_cosmetics_pending_2026-11-10.csv` (removed 2026-11-16, decided below).
+
+## Pass 2026-11-16 (weekly check)
+
+`/api/cron/search-gaps?days=7` (2026-11-10 to 2026-11-16): nothing missing. Low results:
+"shopko absolute daily" (6 searches, 2 results), "regenerist retinol 24" (4, 2), "olay regenerist
+retinol 24" (1, 2).
+
+- **ShopKo Absolute Daily**: nothing to add. The catalog has both ShopKo Absolute Daily SPF 15
+  sunscreens (37012-626, 37012-726), which are the only two DailyMed labels under that name from
+  ShopKo. The chain closed in 2019, so these are old store-brand products.
+- **Olay Regenerist Retinol 24**: the catalog had only Japanese and UK packs from Open Beauty Facts.
+  Added the six US products from olay.com (robots.txt allows it) as `cosmetic` rows in
+  `curated_products.csv`, keyed by UPC: MAX Night Moisturizer, MAX Night Smoothing Serum, MAX Eye
+  Cream, Night Moisturizer, Night Smoothing Serum, Smoothing Eye Cream. One photo came from Open
+  Beauty Facts (hotlinked), five from olay.com (self-hosted). Left out the MINI Night Moisturizer, a
+  travel size whose page shows only part of its list. olay.com prints the same list for the
+  MAX Eye Cream and the Smoothing Eye Cream; both are copied as published.
+
+### OBF cosmetics decided (Michael)
+
+Added the US/Canada ones from the 2026-11-10 pull: 251 rows appended to `cosmetic_catalog.csv`.
+The earlier count of 266 used a loose 000-139 prefix test. The strict one, also used by the sync
+now (`us_or_canada_barcode`: GS1 US 000-019, 030-039, 060-139, plus GS1 Canada 754-755), leaves
+out 8-digit EAN-8 codes (Swisse) and in-store or reserved numbers. `sync_sources.py` keeps only
+US/Canada barcodes for new OBF cosmetic rows and reports how many it skipped. Hair care isn't
+filtered this way yet.
+
+## Pass 2026-11-22 (weekly check)
+
+`/api/cron/search-gaps?days=7` (2026-11-16 to 2026-11-22): missing "cinnamic aldehyde" (1),
+"bisphenol a epoxy resin, fragrance mix ii, propolis, decyl glucosidedisperse blu" (1) and
+"bisphenol" (1); no low-result terms. None is a missing product: they are patch-test results
+searched as if they were products (one pasted straight from a panel, cut off by the search log).
+
+Nothing added to the catalog. Search now recognizes them instead (`app/src/lib/allergen-search.ts`):
+a search made only of allergen names, or one that finds no products, gets a card linking each
+named allergen's page (label names, products free of it) and saying where the not-on-label ones
+(epoxy resin, disperse dyes, rubber mixes) are met. "Bisphenol" reads as the epoxy resin allergen,
+the one patch-tested. A product search that happens to name one ("tea tree shampoo") gets no card.
+The run-together "glucosidedisperse" in the pasted query isn't recognized, so decyl glucoside and
+disperse blue aren't listed for that one.

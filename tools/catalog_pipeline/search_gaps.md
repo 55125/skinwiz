@@ -272,3 +272,17 @@ named allergen's page (label names, products free of it) and saying where the no
 the one patch-tested. A product search that happens to name one ("tea tree shampoo") gets no card.
 The run-together "glucosidedisperse" in the pasted query isn't recognized, so decyl glucoside and
 disperse blue aren't listed for that one.
+
+### Source sync, 2026-11-22 (report only, nothing applied)
+
+| Source | Returned | New | Notes |
+|---|---|---|---|
+| openFDA | 12,242 | 492 | 196 gone, 25 of them still in the NDC directory. The first try failed with an openFDA HTTP 500; the retry ran |
+| OBF hair care | 472 | 41 | 10 gone. Most of the new ones are Latin American packs (Mexico, Colombia, Brazil); hair care has no US/Canada filter yet |
+| OBF cosmetics | 3,278 | 58 | 928 more skipped by the US/Canada barcode filter; 121 gone |
+| Brands: Skinfix | 2 | 2 | Glycolic Exfoliating Pads, Limited Edition Lipfix Balm |
+| Brands: COSRX, First Aid Beauty | | | Failed: both stores answered HTTP 429 to `/products.json` on both tries. The sync used to print these as "0 returned, 0 new"; it now reports them as failed |
+
+Search card follow-up (Michael): the allergen card now has "Add all N to my avoid list" (the
+`/avoid/import` page with the allergens filled in) and "Browse products free of all of these"
+(`/browse?free=...`), instead of a plain link to `/avoid`.

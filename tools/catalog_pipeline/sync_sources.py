@@ -20,9 +20,9 @@ as many photo downloads). A new product's photo follows the project's order:
 Open Beauty Facts' photo for that barcode if it has one, hotlinked, otherwise
 the brand's, self-hosted.
 
-New Open Beauty Facts cosmetics are kept only when the barcode is a US or
-Canadian one (Michael, 2026-11-16): the first full pull was mostly German and
-Indian products. Curated rows (curated_products.csv) are hand-picked and not
+New Open Beauty Facts cosmetics and hair care are kept only when the barcode
+is a US or Canadian one (Michael, 2026-11-16 and 2026-11-23): the first full
+pulls were mostly German, Indian and Latin American products. Curated rows (curated_products.csv) are hand-picked and not
 polled here.
 
 Run from tools/catalog_pipeline with Pillow installed (requirements.txt).
@@ -74,7 +74,7 @@ def is_kit(row: dict) -> bool:
 
 
 # Catalogs whose new rows must carry a US/Canada barcode.
-US_BARCODES_ONLY = {"cosmetic"}
+US_BARCODES_ONLY = {"cosmetic", "hair_care"}
 
 
 def us_or_canada_barcode(code: str) -> bool:

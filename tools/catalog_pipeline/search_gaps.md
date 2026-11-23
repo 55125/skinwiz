@@ -291,3 +291,10 @@ Applied 2026-11-23 (Michael): `sync_sources.py --apply --sources obf` added 62 U
 (the pull had grown from 58 to 62 overnight; 945 others skipped by the barcode filter). The two
 Skinfix products weren't added: skinfix.com answered HTTP 429 to `/products.json` on both tries,
 so they're for next week's rotation. openFDA's 492 new and hair care's 41 new are not applied.
+
+Applied 2026-11-23, second round (Michael): `sync_sources.py --apply --sources openfda` added the 492
+new openFDA products (all OTC and finished; 196 sunscreen, 99 oral care, 66 antifungal, 63
+antiperspirant, 36 skin protectant, 23 acne, 9 anti-itch). They haven't been through the DailyMed
+passes (inactive lists, package photos) yet. The US/Canada barcode filter now covers new OBF hair
+care rows too, so the 41 mostly Latin American packs won't be added; existing hair care rows are
+unchanged.

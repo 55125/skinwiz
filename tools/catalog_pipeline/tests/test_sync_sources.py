@@ -12,7 +12,7 @@ import unittest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from sync_sources import append_rows, new_rows, open_source_image, us_or_canada_barcode
+from sync_sources import US_BARCODES_ONLY, append_rows, new_rows, open_source_image, us_or_canada_barcode
 
 
 class NewRows(unittest.TestCase):
@@ -35,6 +35,9 @@ class UsOrCanadaBarcode(unittest.TestCase):
         self.assertTrue(us_or_canada_barcode("810016298021"))  # UPC-A
         self.assertTrue(us_or_canada_barcode("0628747000017"))  # 062, inside the US range
         self.assertTrue(us_or_canada_barcode("7541234567890"))  # GS1 Canada
+
+    def test_applies_to_obf_cosmetics_and_hair_care(self):
+        self.assertEqual(US_BARCODES_ONLY, {"cosmetic", "hair_care"})
 
     def test_drops_other_countries_in_store_codes_and_skus(self):
         for code in ["4068134071095", "8909106057647", "5901887039877", "0571915454191", "0212345678905", "93579933", "anua-AA001755"]:

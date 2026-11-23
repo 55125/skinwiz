@@ -20,9 +20,9 @@ as many photo downloads). A new product's photo follows the project's order:
 Open Beauty Facts' photo for that barcode if it has one, hotlinked, otherwise
 the brand's, self-hosted.
 
-New Open Beauty Facts cosmetics are kept only when the barcode is a US or
-Canadian one (Michael, 2026-11-16): the first full pull was mostly German and
-Indian products. Curated rows (curated_products.csv) are hand-picked and not
+New Open Beauty Facts cosmetics and hair care are kept only when the barcode
+is a US or Canadian one (Michael, 2026-11-16 and 2026-11-23): the first full
+pulls were mostly German, Indian and Latin American products. Curated rows (curated_products.csv) are hand-picked and not
 polled here.
 
 Run from tools/catalog_pipeline with Pillow installed (requirements.txt).
@@ -74,7 +74,7 @@ def is_kit(row: dict) -> bool:
 
 
 # Catalogs whose new rows must carry a US/Canada barcode.
-US_BARCODES_ONLY = {"cosmetic"}
+US_BARCODES_ONLY = {"cosmetic", "hair_care"}
 
 
 def us_or_canada_barcode(code: str) -> bool:
@@ -159,8 +159,12 @@ def crawl_new_brand_pages(stage: str, only: list[str] | None = None):
             continue
         known_urls = {r["source_url"] for name in ALL_CATALOGS for r in read_rows(catalog_path(name)) if r.get("source_url")}
 
+        listed: list[int] = []
+
         def unseen_products(domain: str) -> list[dict]:
-            return [p for p in fetch_catalog(domain) if f"https://{domain}/products/{p.get('handle')}" not in known_urls]
+            products = fetch_catalog(domain)
+            listed.append(len(products))
+            return [p for p in products if f"https://{domain}/products/{p.get('handle')}" not in known_urls]
 
         brands.BRANDS = {key: brand}
         brands.fetch_shopify_catalog = unseen_products
@@ -174,6 +178,11 @@ def crawl_new_brand_pages(stage: str, only: list[str] | None = None):
             brands.main()
         finally:
             os.chdir(cwd)
+        # A Shopify store that rate-limits /products.json (HTTP 429) lists
+        # nothing, which isn't the same as having nothing new.
+        if brand["discovery"] == "shopify" and listed == [0]:
+            yield brand["brand_name"], None
+            continue
         yield brand["brand_name"], read_rows(catalog_path("brand_direct", os.path.join(stage, "output")))
 
 
@@ -228,6 +237,10 @@ def main() -> None:
             if source == "brands":
                 try:
                     for name, fresh in crawl_new_brand_pages(stage, only_brands):
+                        if fresh is None:
+                            print(f"  {name}: FAILED, the store listed no products (rate-limited?)", flush=True)
+                            failed.append(f"brands:{name}")
+                            continue
                         record(name, "brand_direct", fresh, None, stage)
                 except Exception as exc:
                     print(f"  FAILED: {exc}")

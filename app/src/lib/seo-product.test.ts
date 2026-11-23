@@ -38,9 +38,10 @@ test("a drug label's snippet leads with the active and strength, and stays short
   assert.ok(wordy.endsWith("phthalate-free."), wordy);
 });
 
-test("Product data carries offers only when there are prices", () => {
+test("Product data is only emitted with prices, and carries them as an AggregateOffer", () => {
   const base = { url: "https://a/product/1", name: "N", brand: "B", description: "d", image: null, gtin: "0012345678905" };
-  assert.equal("offers" in productLd({ ...base, prices: [] }), false);
-  const ld = productLd({ ...base, prices: [12.99, 9.5, 0] }) as { offers: { lowPrice: string; highPrice: string; offerCount: number } };
+  assert.equal(productLd({ ...base, prices: [] }), null);
+  assert.equal(productLd({ ...base, prices: [0, NaN] }), null);
+  const ld = productLd({ ...base, prices: [12.99, 9.5, 0] }) as unknown as { offers: { lowPrice: string; highPrice: string; offerCount: number } };
   assert.deepEqual([ld.offers.lowPrice, ld.offers.highPrice, ld.offers.offerCount], ["9.50", "12.99", 2]);
 });

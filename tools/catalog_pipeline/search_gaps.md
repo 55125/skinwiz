@@ -286,3 +286,8 @@ disperse blue aren't listed for that one.
 Search card follow-up (Michael): the allergen card now has "Add all N to my avoid list" (the
 `/avoid/import` page with the allergens filled in) and "Browse products free of all of these"
 (`/browse?free=...`), instead of a plain link to `/avoid`.
+
+Applied 2026-11-23 (Michael): `sync_sources.py --apply --sources obf` added 62 US/Canada cosmetics
+(the pull had grown from 58 to 62 overnight; 945 others skipped by the barcode filter). The two
+Skinfix products weren't added: skinfix.com answered HTTP 429 to `/products.json` on both tries,
+so they're for next week's rotation. openFDA's 492 new and hair care's 41 new are not applied.

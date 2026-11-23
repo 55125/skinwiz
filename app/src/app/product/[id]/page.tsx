@@ -329,6 +329,17 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
     <div className="mx-auto max-w-5xl space-y-10 px-4 py-8 sm:py-10">
       {productLdData && <JsonLd data={productLdData} />}
       <JsonLd
+        data={productLd({
+          url: `${siteUrl()}/product/${encodeURIComponent(product.id)}`,
+          name: productTitle(product, describeStrengths, displayManufacturer),
+          brand: productBrand(product).brand,
+          description: productDescription(describeForSearch(product), SITE_NAME),
+          image: imageUrl ? (imageUrl.startsWith("/") ? `${siteUrl()}${imageUrl}` : imageUrl) : null,
+          gtin: validGtin(product.id) ? product.id : brandSiteBarcode(product.id),
+          prices: quotes.map((q) => q.price),
+        })}
+      />
+      <JsonLd
         data={breadcrumbLd(siteUrl(), [
           ["Home", "/"],
           ...(concern ? [[concern.name, `/concern/${concern.id}`] as [string, string]] : []),

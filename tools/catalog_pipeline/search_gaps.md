@@ -298,3 +298,11 @@ antiperspirant, 36 skin protectant, 23 acne, 9 anti-itch). They haven't been thr
 passes (inactive lists, package photos) yet. The US/Canada barcode filter now covers new OBF hair
 care rows too, so the 41 mostly Latin American packs won't be added; existing hair care rows are
 unchanged.
+
+DailyMed passes for the 492 (2026-11-23): `fetch_dailymed_spl.py` cached their labels (1,776
+fetched, 5 not on DailyMed), then `fetch_dailymed_inactive.py` and `fetch_dailymed_media.py` ran on
+that cache. Only rows for the 492 new products were kept; every existing row is unchanged, because
+this machine's cache is smaller than the one the committed files were built from and a plain
+rerun would have rewritten other rows. Photos: one chosen for all 492 labels; production's hourly
+image sync (`lib/product-images/sync.ts`) downloads them after deploy. Inactive lists: 35 products
+gained a structured list (414 rows); the other 457 already had a usable list from their openFDA label.

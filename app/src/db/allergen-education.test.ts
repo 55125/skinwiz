@@ -61,3 +61,21 @@ test("a CAS number in search names its allergen", () => {
   assert.deepEqual(allergensInQuery("7791-13-1").allergens.map((a) => a.id), ["cobalt"]);
   assert.equal(allergensInQuery("cobalt 7791-13-1, 10101-97-0").allNamed, true);
 });
+
+test("printed label names get their capitals back", async () => {
+  const { displayLabelName } = await import("./contact-allergens");
+  assert.equal(displayLabelName("germall ii"), "Germall II");
+  assert.equal(displayLabelName("ci 77288"), "CI 77288");
+  assert.equal(displayLabelName("euxyl k 400"), "Euxyl K 400");
+  assert.equal(displayLabelName("bp-3"), "BP-3");
+  assert.equal(displayLabelName("cocamide dea"), "cocamide DEA");
+  assert.equal(displayLabelName("vitamin k"), "vitamin k");
+  assert.equal(displayLabelName("hydroxyisohexyl 3-cyclohexene carboxaldehyde"), "hydroxyisohexyl 3-cyclohexene carboxaldehyde");
+  assert.equal(displayLabelName("cinnamal"), "cinnamal");
+});
+
+test("the printed sheet tells a class A steroid patient to avoid hydrocortisone by name", async () => {
+  const { watchForNames } = await import("./patch-test-series");
+  const names = watchForNames("corticosteroid-class-a", Infinity).map((n) => n.toLowerCase());
+  assert.ok(names.includes("hydrocortisone"), names.join(", "));
+});

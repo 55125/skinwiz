@@ -12,7 +12,7 @@ export function AllergenIdentifiers({ e }: { e: AllergenEducation }) {
   return (
     <dl className="grid gap-x-4 gap-y-1 text-sm sm:grid-cols-[auto_minmax(0,1fr)]">
       <dt className="text-muted-foreground">Patch-tested as</dt>
-      <dd>{e.testedAs.join(", ")}</dd>
+      <dd className="[overflow-wrap:anywhere]">{e.testedAs.join(", ")}</dd>
       {e.cas.length > 0 && (
         <>
           <dt className="text-muted-foreground">CAS number</dt>
@@ -34,9 +34,16 @@ function relatedHref(id: string): string | null {
   return getAllergen(id) || getAllergenGroup(id) ? `/allergens/${id}` : null;
 }
 
-export function AllergenEducationSections({ e }: { e: AllergenEducation }) {
+// `identifiers`: a family page has no label-names card to carry the
+// patch-test name and CAS lines, so they get their own.
+export function AllergenEducationSections({ e, identifiers = false }: { e: AllergenEducation; identifiers?: boolean }) {
   return (
     <>
+      {identifiers && (
+        <section className="rounded-2xl border bg-card p-5">
+          <AllergenIdentifiers e={e} />
+        </section>
+      )}
       <section className="space-y-3" id="where-youll-meet-it" aria-labelledby="meet-h">
         <h2 id="meet-h" className="text-xl font-semibold">
           Where you&apos;ll meet it

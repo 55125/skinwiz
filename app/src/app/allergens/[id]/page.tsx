@@ -15,6 +15,7 @@ import {
   getAllergenGroup,
   getAllergenSection,
   groupsContaining,
+  displayLabelName,
   labelNames,
   resolveAllergenId,
 } from "@/db/contact-allergens";
@@ -125,7 +126,7 @@ export default async function AllergenPage({ params }: { params: Promise<{ id: s
           <h2 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Names to look for on a label</h2>
           <p className="flex flex-wrap gap-1.5 text-sm">
             {labelNames(allergen).map((t) => (
-              <span key={t} className="rounded-md bg-muted px-2 py-1">{t}</span>
+              <span key={t} className="rounded-md bg-muted px-2 py-1">{displayLabelName(t)}</span>
             ))}
           </p>
           {allergen.aka && (
@@ -136,7 +137,7 @@ export default async function AllergenPage({ params }: { params: Promise<{ id: s
         </section>
       )}
 
-      {education && <AllergenEducationSections e={education} />}
+      {education && <AllergenEducationSections e={education} identifiers={!allergen} />}
 
       {group && (
         <section className="space-y-3">
@@ -150,7 +151,7 @@ export default async function AllergenPage({ params }: { params: Promise<{ id: s
                     {a.name}
                   </Link>
                   <span className="text-xs text-muted-foreground">
-                    {labelNames(a).filter((n) => n.toLowerCase() !== a.name.toLowerCase()).slice(0, 4).join(", ")}
+                    {labelNames(a).filter((n) => n.toLowerCase() !== a.name.toLowerCase()).slice(0, 4).map(displayLabelName).join(", ")}
                   </span>
                 </li>
               );

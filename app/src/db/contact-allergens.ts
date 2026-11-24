@@ -1289,6 +1289,23 @@ export function labelNames(a: ContactAllergen): string[] {
   return [...new Set(a.terms.map((t) => t.replace(/\*/g, "")))];
 }
 
+// Terms are stored lowercase for matching. For people reading a printed
+// sheet, put back the capitals that carry meaning: color index numbers,
+// acronyms, roman numerals and trade names ("germall ii" -> "Germall II").
+const UPPER = new Set(["ci", "ii", "iii", "ppd", "ptd", "mdbgn", "hicc", "bht", "paba", "bp", "dea", "k"]);
+const TRADE = new Set(["germall", "dowicil", "kathon", "euxyl", "amerchol", "lyral", "bronidox", "tinosorb"]);
+
+export function displayLabelName(term: string): string {
+  return term.replace(/[a-z]+/g, (w, i: number) => {
+    const before = term[i - 1];
+    // Only whole words: "bp" in "bp-3", not inside another word.
+    if (before && /[a-z]/.test(before)) return w;
+    if (UPPER.has(w) && !(w === "k" && !/euxyl k/.test(term))) return w.toUpperCase();
+    if (TRADE.has(w)) return w[0].toUpperCase() + w.slice(1);
+    return w;
+  });
+}
+
 // Every name an allergen goes by, normalized once, so searching a patch-test
 // sheet's wording ("Kathon CG", "Lyral", "wool alcohols") finds the entry.
 const SEARCH_INDEX = CONTACT_ALLERGENS.map((a) => ({

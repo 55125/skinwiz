@@ -209,7 +209,9 @@ export function PrintSheet({
   const shortUrl = url.replace(/^https?:\/\//, "");
   // The tested names, when they differ from the allergen's own name.
   const tested = (id: string) => {
-    const names = (positives[id] ?? []).filter((n) => n.toLowerCase() !== importItemName(id)?.toLowerCase());
+    // "Carba mix" under "Carba mix (rubber accelerators)" says nothing new.
+    const own = importItemName(id)?.toLowerCase() ?? "";
+    const names = (positives[id] ?? []).filter((n) => !own.startsWith(n.toLowerCase()));
     return names.length ? names.join(", ") : null;
   };
   return (
@@ -264,7 +266,7 @@ export function PrintSheet({
                     {tested(id) && <span style={{ display: "block", fontWeight: 400, fontSize: "8.5pt" }}>Positive: {tested(id)}</span>}
                   </td>
                   <td style={{ padding: "1.2mm 0" }}>
-                    {watchForNames(id, Infinity).join(", ") || (mainlyOffLabel(id) ? null : "—")}
+                    {watchForNames(id, Infinity).join(", ") || (mainlyOffLabel(id) ? null : "Listed by the name at left")}
                     {mainlyOffLabel(id) && <span style={{ display: "block" }}>{mainlyOffLabel(id)}</span>}
                   </td>
                 </tr>

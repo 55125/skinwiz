@@ -332,7 +332,7 @@ export const ALLERGEN_EDUCATION: AllergenEducation[] = [
     ],
     related: [
       { id: "benzocaine", why: "A related \"para\" compound that can cross-react." },
-      { id: "disperse-blue-106", why: "Some textile dyes cross-react with PPD." },
+      { id: "disperse-orange-3", why: "A textile dye that often cross-reacts with PPD." },
     ],
     tips: [
       "Tell your hair stylist. PPD-free dyes may still contain toluene-2,5-diamine, which often cross-reacts.",
@@ -385,7 +385,7 @@ export const ALLERGEN_EDUCATION: AllergenEducation[] = [
     cas: [{ number: "85-79-0", of: "dibucaine" }],
     foundIn: [{ where: "Medicine", items: ["Hemorrhoid and sunburn ointments"] }],
     related: [],
-    tips: ["Tell your dentist and doctors about any numbing-medicine allergy."],
+    tips: ["Dibucaine is an amide numbing medicine, like lidocaine. Tell your dentist and doctors, and ask whether lidocaine is safe for you."],
     reviewed: unreviewed,
   },
   {
@@ -435,7 +435,7 @@ export const ALLERGEN_EDUCATION: AllergenEducation[] = [
       { number: "50-23-7", of: "hydrocortisone" },
     ],
     foundIn: [
-      { where: "Medicine", items: ["Over-the-counter hydrocortisone creams", "Prednisolone and methylprednisolone creams, eye drops and injections", "Some nasal sprays, inhalers and tablets"] },
+      { where: "Medicine", items: ["Over-the-counter hydrocortisone creams", "Prednisolone eye drops", "Prednisone, prednisolone and methylprednisolone tablets and injections, which rarely cause a widespread rash in very sensitive people"] },
     ],
     related: [{ id: "corticosteroid-class-d2", why: "Hydrocortisone butyrate-type steroids often cross-react." }],
     tips: [
@@ -449,7 +449,7 @@ export const ALLERGEN_EDUCATION: AllergenEducation[] = [
     testedAs: ["Budesonide"],
     cas: [{ number: "51333-22-3", of: "budesonide" }],
     foundIn: [
-      { where: "Medicine", items: ["Budesonide inhalers and nasal sprays", "Triamcinolone, fluocinolone, fluocinonide and desonide creams", "Some steroid injections"] },
+      { where: "Medicine", items: ["Budesonide inhalers and nasal sprays", "Triamcinolone, fluocinolone, fluocinonide and desonide creams", "Triamcinolone (Kenalog) injections"] },
     ],
     related: [{ id: "corticosteroid-class-d2", why: "Budesonide also cross-reacts with hydrocortisone butyrate-type steroids." }],
     tips: ["Your dermatologist can name the steroid classes that are safe for you; keep that list with you."],
@@ -547,7 +547,7 @@ export const ALLERGEN_EDUCATION: AllergenEducation[] = [
     testedAs: ["Disperse blue 106"],
     cas: [{ number: "12223-01-7", of: "disperse blue 106" }],
     foundIn: [{ where: "Clothing", items: ["Dark polyester, acetate and nylon clothing in blue, black, brown and green", "Linings, leggings, swimwear and dark sheer tights"] }],
-    related: [{ id: "ppd", why: "Some textile dyes cross-react with PPD." }],
+    related: [{ id: "disperse-dye-mix", why: "Disperse blue 106 is one of the two dyes in the disperse blue mix, so a positive to either usually means avoiding both." }],
     tips: ["Choose cotton, linen, silk or wool, and light colors next to the skin.", "Wash new dark synthetic clothes several times before wearing them."],
     reviewed: unreviewed,
   },

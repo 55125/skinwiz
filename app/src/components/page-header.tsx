@@ -12,7 +12,7 @@ export function PageHeader({
   return (
     <div className="space-y-2">
       {eyebrow && <p className="text-xs font-semibold uppercase tracking-wider text-brand">{eyebrow}</p>}
-      <h1 className="text-3xl font-semibold sm:text-4xl">{title}</h1>
+      <h1 className="text-3xl font-semibold [overflow-wrap:anywhere] sm:text-4xl">{title}</h1>
       {description && <p className="max-w-2xl text-muted-foreground">{description}</p>}
       {children}
     </div>

@@ -2,20 +2,17 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { PATCH_TEST_SERIES, type PatchTestSeries } from "@/db/patch-test-series";
 import { allergenCount, seriesForCount } from "@/lib/patch-test-reading";
 
 // The patch-test tool's first question: how many allergens are on the
 // panel? The size settles the series (35 is the T.R.U.E. Test, 90 the ACDS
-// 2020 tray); 80 asks which tray, and a size we don't carry offers them all.
+// 2020 tray); 80 asks which tray. Other panel sizes aren't supported yet.
 // Shown once per device; the answer becomes the default (lib/patch-test-reading
 // saveDefaultSeries) and the series menu stays on the page to change it.
 const QUICK = [35, 80, 90, 100];
 
 export function SeriesCountDialog({ onPick, onClose }: { onPick: (id: string) => void; onClose: () => void }) {
   const [count, setCount] = useState<number | null>(null);
-  const [other, setOther] = useState("");
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
     ref.current?.querySelector<HTMLElement>("button")?.focus();
@@ -31,7 +28,6 @@ export function SeriesCountDialog({ onPick, onClose }: { onPick: (id: string) =>
     if (m.length === 1) onPick(m[0].id);
     else setCount(n);
   };
-  const choices: PatchTestSeries[] = count === null ? [] : matches.length > 1 ? matches : PATCH_TEST_SERIES;
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-4 sm:items-center" onClick={onClose}>
@@ -57,31 +53,14 @@ export function SeriesCountDialog({ onPick, onClose }: { onPick: (id: string) =>
                 </Button>
               ))}
             </div>
-            <form
-              className="flex items-end gap-2"
-              onSubmit={(e) => {
-                e.preventDefault();
-                const n = Number(other);
-                if (n > 0) choose(n);
-              }}
-            >
-              <label className="flex-1 space-y-1 text-sm">
-                <span className="font-medium">Another number</span>
-                <Input type="number" inputMode="numeric" min={1} max={200} value={other} onChange={(e) => setOther(e.target.value)} />
-              </label>
-              <Button type="submit" disabled={!other}>
-                Next
-              </Button>
-            </form>
           </>
         ) : (
           <>
             <h2 id="series-count-h" className="text-lg font-semibold">
-              {matches.length > 1 ? `Which ${count}-allergen tray?` : `We don't have a ${count}-allergen series yet`}
+              Which {count}-allergen tray?
             </h2>
-            {matches.length === 0 && <p className="text-sm text-muted-foreground">Pick the closest one; you can grade only the chambers you used.</p>}
             <div className="grid gap-2">
-              {choices.map((s) => (
+              {matches.map((s) => (
                 <Button key={s.id} type="button" variant="outline" className="h-auto justify-between py-2 text-left" onClick={() => onPick(s.id)}>
                   <span className="font-medium">{s.short}</span>
                   <span className="text-xs font-normal text-muted-foreground">{allergenCount(s)} allergens</span>
@@ -93,7 +72,10 @@ export function SeriesCountDialog({ onPick, onClose }: { onPick: (id: string) =>
             </Button>
           </>
         )}
-        <p className="text-xs text-muted-foreground">You can change it any time with the Series menu.</p>
+        <div className="space-y-1 text-xs text-muted-foreground">
+          <p>You can change it any time with the Series menu.</p>
+          <p>We do not support other panels at this time.</p>
+        </div>
       </div>
     </div>
   );

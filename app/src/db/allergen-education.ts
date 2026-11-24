@@ -24,6 +24,8 @@
 // al., AAAAI Practice Parameter 2015, and the allergen notes already in
 // contact-allergens.ts.
 
+import { EXTENDED_EDUCATION } from "./allergen-education-extended";
+
 export type Cas = { number: string; of: string };
 
 export type FoundInGroup = { where: string; items: string[] };
@@ -52,6 +54,7 @@ export function allergyIntro(name: string): string {
 
 const unreviewed = null;
 
+// T.R.U.E. Test allergens. The extended trays' are in allergen-education-extended.ts.
 export const ALLERGEN_EDUCATION: AllergenEducation[] = [
   // --- Metals ---
   {
@@ -553,7 +556,13 @@ export const ALLERGEN_EDUCATION: AllergenEducation[] = [
   },
 ];
 
-const BY_ID = new Map(ALLERGEN_EDUCATION.map((e) => [e.id, e]));
+const ALL = [...ALLERGEN_EDUCATION, ...EXTENDED_EDUCATION];
+const BY_ID = new Map(ALL.map((e) => [e.id, e]));
+
+/** Every record, T.R.U.E. Test and extended trays. */
+export function allEducation(): AllergenEducation[] {
+  return ALL;
+}
 
 export function educationFor(id: string): AllergenEducation | undefined {
   return BY_ID.get(id);
@@ -570,5 +579,5 @@ export function validCas(cas: string): boolean {
 
 /** Every CAS number we hold, with the allergen it belongs to, for search. */
 export function casIndex(): { number: string; id: string }[] {
-  return ALLERGEN_EDUCATION.flatMap((e) => e.cas.map((c) => ({ number: c.number, id: e.id })));
+  return ALL.flatMap((e) => e.cas.map((c) => ({ number: c.number, id: e.id })));
 }

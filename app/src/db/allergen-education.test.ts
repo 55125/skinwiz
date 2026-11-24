@@ -1,6 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { ALLERGEN_EDUCATION, allergyIntro, educationFor, validCas } from "./allergen-education";
+import { allEducation, allergyIntro, educationFor, validCas } from "./allergen-education";
+
+const ALLERGEN_EDUCATION = allEducation();
 import { getAllergen, getAllergenGroup } from "./contact-allergens";
 import { PATCH_TEST_SERIES, getNotOnLabel, seriesItems } from "./patch-test-series";
 import { allergensInQuery } from "@/lib/allergen-search";
@@ -31,10 +33,10 @@ test("CAS numbers pass the check digit", () => {
   for (const e of ALLERGEN_EDUCATION) for (const c of e.cas) assert.ok(validCas(c.number), `${e.id} ${c.number}`);
 });
 
-test("every T.R.U.E. Test allergen has a record", () => {
-  const tray = PATCH_TEST_SERIES.find((s) => s.id === "true-test")!;
-  for (const it of seriesItems(tray))
-    for (const id of it.notOnLabel ? [it.notOnLabel] : it.ids) assert.ok(educationFor(id), `${it.name} (${id})`);
+test("every allergen on every tray the reader offers has a record", () => {
+  for (const tray of PATCH_TEST_SERIES)
+    for (const it of seriesItems(tray))
+      for (const id of it.notOnLabel ? [it.notOnLabel] : it.ids) assert.ok(educationFor(id), `${tray.short}: ${it.name} (${id})`);
 });
 
 test("records say where it's found and stay unreviewed until a dermatologist signs off", () => {

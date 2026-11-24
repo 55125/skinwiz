@@ -38,14 +38,14 @@ export async function POST(request: Request) {
   if (limited) return limited;
   const parsed = await readJsonBody(request);
   if (!parsed.ok) return parsed.response;
-  const body = (parsed.body ?? {}) as { email?: unknown; a?: unknown; d?: unknown; n?: unknown };
+  const body = (parsed.body ?? {}) as { email?: unknown; a?: unknown; d?: unknown; n?: unknown; c?: unknown };
   const email = normalizeEmail(body.email);
   if (!email) return NextResponse.json({ error: "Enter a valid email address." }, { status: 400 });
   const decoded = decodeImportCode(typeof body.a === "string" ? body.a : undefined);
   if (!decoded.ok || decoded.avoidIds.length + decoded.notOnLabel.length === 0) {
     return NextResponse.json({ error: "This list's link couldn't be read." }, { status: 400 });
   }
-  const details = cleanDetails({ date: typeof body.d === "string" ? body.d : undefined, note: typeof body.n === "string" ? body.n : undefined });
+  const details = cleanDetails({ date: typeof body.d === "string" ? body.d : undefined, note: typeof body.n === "string" ? body.n : undefined, fromClinic: body.c === "1" });
   // Rebuilt from the decoded list, so the email can only ever carry one of our own links.
   const link = `${siteUrl()}${buildImportPath([...decoded.avoidIds, ...decoded.notOnLabel], details)}`;
   if (underLimits(email, Date.now())) {

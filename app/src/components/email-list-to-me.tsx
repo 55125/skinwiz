@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 // "Email this to me" on the patient's QR page: one email with this list's
 // link, to an address the patient types. Nothing is saved; for an account
 // that keeps the list, there's the sign-in card below it.
-export function EmailListToMe({ a, d, n }: { a: string; d?: string; n?: string }) {
+export function EmailListToMe({ a, d, n, c }: { a: string; d?: string; n?: string; c?: "1" }) {
   const [open, setOpen] = useState(false);
   const [email, setEmail] = useState("");
   const [state, setState] = useState<"idle" | "sending" | "sent">("idle");
@@ -36,7 +36,7 @@ export function EmailListToMe({ a, d, n }: { a: string; d?: string; n?: string }
     const res = await fetch("/api/avoid/email-link", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, a, d, n }),
+      body: JSON.stringify({ email, a, d, n, c }),
     }).catch(() => null);
     if (res?.ok) {
       setState("sent");

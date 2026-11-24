@@ -159,7 +159,7 @@ export function PatchTestReader({ clinic = null }: { clinic?: ClinicHeader | nul
   const avoidAll = avoidIdsFrom(chambers, patientGrades, includeDoubtful);
   const avoidIds = avoidAll.filter((id) => resolveAllergenId(id));
   const offLabel = avoidAll.filter((id) => getNotOnLabel(id));
-  const url = `${origin}${buildImportPath(avoidAll, { date: readDate || undefined })}`;
+  const url = `${origin}${buildImportPath(avoidAll, { date: readDate || undefined, fromClinic: true })}`;
   const hasPositives = listedChambers.length > 0;
   const { extras, loading } = useHandoutExtras(avoidAll);
   // The tested names behind each id, for the printed sheet.

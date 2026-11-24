@@ -83,6 +83,8 @@ test("details are cleaned and capped; the import path carries no name field", ()
   assert.ok(back.ok);
   assert.deepEqual(back.avoidIds, ["lanolin"]);
   assert.ok(path.length < 120);
+  const clinic = new URL(buildImportPath(["lanolin"], { fromClinic: true }), "https://activelyskin.com");
+  assert.equal(clinic.searchParams.get("c"), "1");
 });
 
 test("merging keeps the existing list and reports what was already there", () => {

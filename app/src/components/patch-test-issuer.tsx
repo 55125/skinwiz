@@ -54,7 +54,7 @@ export function PatchTestIssuer({
 
   const avoidIds = [...selected].filter((id) => resolveAllergenId(id));
   const offLabel = [...selected].filter((id) => getNotOnLabel(id));
-  const details = cleanDetails({ date, note });
+  const details = cleanDetails({ date, note, fromClinic: true });
   const privacyHits = findPrivacyHits(note);
   const path = buildImportPath(selected, details);
   const url = `${origin}${path}`;

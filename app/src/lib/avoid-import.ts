@@ -127,7 +127,9 @@ export function decodeImportCode(code: string | undefined | null): DecodedCode {
   return { ok: true, avoidIds: [...new Set(avoidIds)], notOnLabel, unknown };
 }
 
-export type ImportDetails = { date?: string; note?: string };
+// fromClinic: made with a clinic tool (patch-test reader or tick list), so the
+// import page adds the list straight away instead of asking (param c=1).
+export type ImportDetails = { date?: string; note?: string; fromClinic?: boolean };
 
 function clean(s: string | undefined | null, max: number): string | undefined {
   // Control characters out, whitespace collapsed; it's shown as plain text.
@@ -142,16 +144,17 @@ export function cleanDate(s: string | undefined | null): string | undefined {
   return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === s ? s : undefined;
 }
 
-export function cleanDetails(d: { date?: string | null; note?: string | null }): ImportDetails {
-  return { date: cleanDate(d.date), note: clean(d.note, MAX_NOTE_LENGTH) };
+export function cleanDetails(d: { date?: string | null; note?: string | null; fromClinic?: boolean }): ImportDetails {
+  return { date: cleanDate(d.date), note: clean(d.note, MAX_NOTE_LENGTH), ...(d.fromClinic ? { fromClinic: true } : {}) };
 }
 
 /** The import path (origin-relative) for these ids and optional details. */
 export function buildImportPath(ids: Iterable<string>, details: ImportDetails = {}): string {
-  const { date, note } = cleanDetails(details);
+  const { date, note, fromClinic } = cleanDetails(details);
   const params = new URLSearchParams({ a: encodeImportCode(ids) });
   if (date) params.set("d", date);
   if (note) params.set("n", note);
+  if (fromClinic) params.set("c", "1");
   return `/avoid/import?${params.toString()}`;
 }
 

@@ -19,7 +19,7 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-type Params = Partial<Record<"a" | "d" | "n", string | string[]>>;
+type Params = Partial<Record<"a" | "d" | "n" | "c", string | string[]>>;
 
 function formatDate(iso: string): string {
   return new Date(`${iso}T12:00:00Z`).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric", timeZone: "UTC" });
@@ -30,6 +30,11 @@ export default async function AvoidImportPage({ searchParams }: { searchParams: 
   const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v);
   const decoded = decodeImportCode(one(params.a));
   const { date, note } = cleanDetails({ date: one(params.d), note: one(params.n) });
+  // A list from a clinic tool is added on arrival, so the patient can't
+  // forget to: c=1 on new links, and a reading date on older ones (a
+  // patient sharing their own list never sends a date). A list someone
+  // shares from their own avoid list still asks first.
+  const fromClinic = one(params.c) === "1" || !!date;
 
   if (!decoded.ok || (decoded.avoidIds.length === 0 && decoded.notOnLabel.length === 0)) {
     const why =
@@ -73,7 +78,11 @@ export default async function AvoidImportPage({ searchParams }: { searchParams: 
       <PageHeader
         eyebrow={date ? "Patch-test results" : "Shared allergen list"}
         title={date ? "Your dermatologist marked these allergens" : "Allergens to avoid"}
-        description="Add them to your avoid list and every product you look up here is checked for them, under every name they go by on a label."
+        description={
+          fromClinic
+            ? "They're added to your avoid list on this device, so every product you look up here is checked for them, under every name they go by on a label."
+            : "Add them to your avoid list and every product you look up here is checked for them, under every name they go by on a label."
+        }
       >
         {date && <p className="text-sm text-muted-foreground">Patch test read on {formatDate(date)}</p>}
       </PageHeader>
@@ -120,8 +129,9 @@ export default async function AvoidImportPage({ searchParams }: { searchParams: 
             ids={decoded.avoidIds}
             notOnLabel={decoded.notOnLabel}
             allPresent={decoded.avoidIds.every((id) => alreadySet.has(id)) && offAllSaved}
+            auto={fromClinic}
           />
-          <EmailListToMe a={one(params.a) ?? ""} d={date} n={note} />
+          <EmailListToMe a={one(params.a) ?? ""} d={date} n={note} c={fromClinic ? "1" : undefined} />
           {otherOnList.length > 0 && (
             <p className="text-xs text-muted-foreground">
               Also on your list already, and kept: {otherOnList.map(avoidedIngredientName).join(", ")}.
@@ -173,8 +183,8 @@ export default async function AvoidImportPage({ searchParams }: { searchParams: 
           </ul>
           {decoded.avoidIds.length === 0 && (
             <>
-              <AvoidImportButton ids={[]} notOnLabel={decoded.notOnLabel} allPresent={offAllSaved} />
-              <EmailListToMe a={one(params.a) ?? ""} d={date} n={note} />
+              <AvoidImportButton ids={[]} notOnLabel={decoded.notOnLabel} allPresent={offAllSaved} auto={fromClinic} />
+              <EmailListToMe a={one(params.a) ?? ""} d={date} n={note} c={fromClinic ? "1" : undefined} />
             </>
           )}
         </section>
@@ -184,7 +194,7 @@ export default async function AvoidImportPage({ searchParams }: { searchParams: 
         <EmailSignupCard
           signedInAs={null}
           // Back here after the emailed sign-in link, so a list not yet added isn't lost.
-          next={`/avoid/import?a=${encodeURIComponent(one(params.a) ?? "")}${date ? `&d=${date}` : ""}`}
+          next={`/avoid/import?a=${encodeURIComponent(one(params.a) ?? "")}${date ? `&d=${date}` : ""}${fromClinic ? "&c=1" : ""}`}
           title="Keep this list on every device"
           blurb="Optional. Add your email and your avoid list is saved to your account, so it's there on any phone or computer you sign in on, along with My products and any plans from your clinic. No password; we send a one-time link."
         />

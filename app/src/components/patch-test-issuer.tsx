@@ -34,8 +34,8 @@ function formatDate(iso: string): string {
 
 // The clinician's side: tick the positives, add optional details, print a
 // one-page sheet with a QR code that loads the list into the patient's
-// avoid list. Everything stays in this tab; the patient's name is never
-// part of the link.
+// avoid list. Everything stays in this tab, and no patient details are
+// asked for: the sheet carries only the list, date and note.
 export function PatchTestIssuer({
   lists = [],
   initialIds = [],
@@ -50,7 +50,6 @@ export function PatchTestIssuer({
   const [ticked, setTicked] = useState<Set<string>>(() => new Set());
   const [date, setDate] = useState("");
   const [note, setNote] = useState("");
-  const [patient, setPatient] = useState("");
   const [copied, setCopied] = useState(false);
 
   const avoidIds = [...selected].filter((id) => resolveAllergenId(id));
@@ -121,16 +120,10 @@ export function PatchTestIssuer({
               <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
               <span>
                 The note may include {privacyHits.map((h) => PRIVACY_HIT_TEXT[h.kind]).join(" and ")} (&ldquo;{privacyHits[0].match}&rdquo;). The note
-                travels in the link, so please remove it; the patient&apos;s name goes in the box below, which stays on this device.
+                travels in the link, so please remove it. The sheet carries no patient details.
               </span>
             </p>
           )}
-          <Field
-            label="Patient name (printed only)"
-            hint="Stays in this browser tab. It is never sent to us and is not part of the link or QR code."
-          >
-            <Input value={patient} onChange={(e) => setPatient(e.target.value)} autoComplete="off" data-1p-ignore data-lpignore="true" />
-          </Field>
         </section>
 
         <section className="space-y-3 rounded-2xl border bg-card p-4" aria-labelledby="pt-share">
@@ -182,7 +175,6 @@ export function PatchTestIssuer({
             ids={avoidIds}
             offLabel={offLabel}
             positives={positivesById(ticked)}
-            patient={patient.trim()}
             clinic={clinic}
             extras={extras}
             {...details}
@@ -210,7 +202,6 @@ export function PrintSheet({
   ids,
   offLabel,
   positives = {},
-  patient,
   eyebrow = "Patch-test results",
   date,
   note,
@@ -222,7 +213,6 @@ export function PrintSheet({
   offLabel: string[];
   // Series item names behind each id ("Budesonide" for class B), printed with it.
   positives?: Record<string, string[]>;
-  patient: string;
   eyebrow?: string;
   date?: string;
   note?: string;
@@ -258,7 +248,6 @@ export function PrintSheet({
           <h1 style={{ fontSize: "18pt", fontWeight: 600, margin: "1mm 0 3mm" }}>{clinic ? "Your patch-test results: ingredients to avoid" : "Ingredients to avoid"}</h1>
           <table style={{ fontSize: "10pt", borderCollapse: "collapse" }}>
             <tbody>
-              {patient && <InfoRow label="Patient" value={patient} />}
               {date && <InfoRow label="Read on" value={formatDate(date)} />}
               {clinic && <InfoRow label="From" value={clinic.clinician} />}
               {clinic?.phone && <InfoRow label="Questions" value={clinic.phone} />}

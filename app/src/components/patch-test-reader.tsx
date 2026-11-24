@@ -84,7 +84,7 @@ const todayIso = () => {
 };
 
 // Tap-to-grade patch-test reading for medical assistants. Everything stays
-// in this browser tab: grades, the chart write-up, the patient's name. The
+// in this browser tab: grades and the chart write-up. The
 // only thing that can leave is the avoid-list link (allergen code + date),
 // and only when the MA prints it, shows its QR or opens their own email app.
 export function PatchTestReader({ clinic = null }: { clinic?: ClinicHeader | null }) {
@@ -98,7 +98,6 @@ export function PatchTestReader({ clinic = null }: { clinic?: ClinicHeader | nul
   // The clinic's panel placement per tray series: device setting, no patient data.
   const [trayLayouts, setTrayLayouts] = useState<TrayLayouts>(loadTrayLayouts);
   const [includeDoubtful, setIncludeDoubtful] = useState(false);
-  const [patient, setPatient] = useState("");
   const [copied, setCopied] = useState<"note" | "link" | null>(null);
   // Positives the clinician judged not relevant: kept in the chart note as
   // read, left off the patient's list and handout (chamber keys).
@@ -181,7 +180,6 @@ export function PatchTestReader({ clinic = null }: { clinic?: ClinicHeader | nul
     if (graded > 0 && !confirm("Clear all grades and start a new reading?")) return;
     setGrades({});
     setLastTapped(null);
-    setPatient("");
     setLeftOff(new Set());
     setGiven([]);
     setView("grid");
@@ -263,11 +261,6 @@ export function PatchTestReader({ clinic = null }: { clinic?: ClinicHeader | nul
                   ))}
                 </ul>
               </fieldset>
-              <label className="block max-w-sm space-y-1 text-sm">
-                <span className="font-medium">Patient name (printed only)</span>
-                <Input value={patient} onChange={(e) => setPatient(e.target.value)} autoComplete="off" data-1p-ignore data-lpignore="true" />
-                <span className="block text-xs text-muted-foreground">Stays on this device; never sent to us and not in the link.</span>
-              </label>
               {avoidAll.length === 0 ? (
                 <p className="text-sm text-muted-foreground">Every reaction is unticked, so there&apos;s no list to give.</p>
               ) : (
@@ -332,7 +325,6 @@ export function PatchTestReader({ clinic = null }: { clinic?: ClinicHeader | nul
               ids={avoidIds}
               offLabel={offLabel}
               positives={positives}
-              patient={patient.trim()}
               date={readDate || undefined}
               clinic={clinic}
               extras={extras}

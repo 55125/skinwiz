@@ -83,7 +83,7 @@ export function ShareAvoidList({ ids, notOnLabel = [] }: { ids: string[]; notOnL
           </div>
         </div>
       )}
-      {ready && createPortal(<PrintSheet url={url} ids={shareable} offLabel={notOnLabel} patient="" eyebrow="Allergen list" />, document.body)}
+      {ready && createPortal(<PrintSheet url={url} ids={shareable} offLabel={notOnLabel} eyebrow="Allergen list" />, document.body)}
     </details>
   );
 }

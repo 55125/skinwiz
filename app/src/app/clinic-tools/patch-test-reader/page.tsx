@@ -43,8 +43,8 @@ export default async function PatchTestReaderPage({ searchParams }: { searchPara
         title="Patch-test reader"
         description={
           tick
-            ? "Already have the results? Tick the patient's positives, add an optional note, and print a one-page sheet whose QR code fills in their avoid list. The patient's name stays on this device; only the allergen list, date and note travel in the link."
-            : "Pick the series, tap each chamber to grade it, then copy the write-up to the chart and hand the patient their avoid list. Grades, the write-up and the patient's name stay on this device; only the avoid-list link (allergen code and date) leaves it, when you share it."
+            ? "Already have the results? Tick the patient's positives, add an optional note, and print a one-page sheet whose QR code fills in their avoid list. No patient details are asked for; only the allergen list, date and note travel in the link."
+            : "Pick the series, tap each chamber to grade it, then copy the write-up to the chart and hand the patient their avoid list. Grades and the write-up stay on this device, and no patient details are asked for; only the avoid-list link (allergen code and date) leaves it, when you share it."
         }
       />
 

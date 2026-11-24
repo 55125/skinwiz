@@ -100,7 +100,7 @@ export default function PrivacyPage() {
           email address, NPI number, name and clinic details (name, phone and website). We check the NPI
           against the public NPPES registry and keep what it lists (credential, specialty and state). We store
           the handouts and practice avoid lists they save, and anonymous counts of how often a handout is
-          printed, opened or saved. Patient names typed for printing stay in the browser and never reach us. Clinicians must not type patient
+          printed, opened or saved. Handout and patch-test tools don&apos;t ask for patient names. Clinicians must not type patient
           names or other identifying details into handout text, notes or list names, which we do store. Because a printed
           QR code has to keep working, a handout stays on our servers after the clinician who made it deletes their email;
           email us to have a clinician profile and its handouts removed.

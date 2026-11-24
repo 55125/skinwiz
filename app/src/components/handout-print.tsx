@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { Check, Copy, Mail, Printer, QrCode as QrCodeIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { QrCode } from "@/components/qr-code";
 import { sectionsOf, type HandoutContent, type HandoutStep } from "@/lib/handout-types";
 import { SITE_NAME } from "@/lib/brand";
@@ -47,9 +46,9 @@ export function handoutEmail(v: Pick<PrintableVersion, "title" | "clinicName" | 
 // Give a handout to one patient: print it, show its QR in the room, open the
 // clinic's own email app with the link, or copy the link. Each action asks
 // the server for a NEW instance (its own one-time claim token), so two
-// patients never share a link. The patient's name is typed here for the
-// paper only, and their email address is typed into the clinic's own email
-// app: neither is ever sent to us or put in the link.
+// patients never share a link. No patient details are asked for: the
+// patient's email address is typed into the clinic's own email app, never
+// sent to us or put in the link.
 // The allergen names behind a handout's patch-test code, so whoever prints it
 // can see whose list it is (a handout version can be printed many times).
 function avoidNames(code: string | null): string[] {
@@ -58,7 +57,6 @@ function avoidNames(code: string | null): string[] {
 }
 
 export function HandoutPrint({ v }: { v: PrintableVersion }) {
-  const [patient, setPatient] = useState("");
   const [link, setLink] = useState<Link | null>(null);
   const [mode, setMode] = useState<Mode | null>(null);
   const [printNow, setPrintNow] = useState(false);
@@ -106,13 +104,6 @@ export function HandoutPrint({ v }: { v: PrintableVersion }) {
   return (
     <div className="space-y-4 rounded-2xl border bg-card p-4">
       <h2 className="text-base font-semibold">Give to a patient</h2>
-      <label className="block space-y-1 text-sm">
-        <span className="font-medium">Patient name (printed only)</span>
-        <Input value={patient} onChange={(e) => setPatient(e.target.value)} autoComplete="off" data-1p-ignore data-lpignore="true" />
-        <span className="block text-xs text-muted-foreground">
-          Stays in this browser tab. It is never sent to us and is not part of the link or QR code.
-        </span>
-      </label>
       {v.content.avoidCode && (
         <p className="rounded-xl border border-amber-300 bg-amber-50 p-3 text-xs text-amber-950 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-100">
           Includes a patch-test avoid list: {avoidNames(v.content.avoidCode).join(", ")}. Only give it to the patient these results belong to.
@@ -151,7 +142,7 @@ export function HandoutPrint({ v }: { v: PrintableVersion }) {
           {error}
         </p>
       )}
-      {link && createPortal(<PrintSheet v={v} patient={patient.trim()} link={link} date={today} />, document.body)}
+      {link && createPortal(<PrintSheet v={v} link={link} date={today} />, document.body)}
     </div>
   );
 }
@@ -164,7 +155,7 @@ const ORDER: [string, (s: HandoutStep) => boolean][] = [
 
 // Same print approach as the patch-test sheet: rendered into <body> and
 // shown only when printing.
-function PrintSheet({ v, patient, link, date }: { v: PrintableVersion; patient: string; link: Link; date: string }) {
+function PrintSheet({ v, link, date }: { v: PrintableVersion; link: Link; date: string }) {
   return (
     <div className="pt-print-sheet" aria-hidden>
       <style>{`
@@ -184,7 +175,6 @@ function PrintSheet({ v, patient, link, date }: { v: PrintableVersion; patient: 
           <h1 style={{ fontSize: "17pt", fontWeight: 600, margin: "1mm 0 2mm" }}>{v.title}</h1>
           <table style={{ fontSize: "9.5pt", borderCollapse: "collapse" }}>
             <tbody>
-              {patient && <Row label="For" value={patient} />}
               <Row label="From" value={v.clinicianName} />
               <Row label="Date" value={date} />
               {v.clinicPhone && <Row label="Questions" value={v.clinicPhone} />}

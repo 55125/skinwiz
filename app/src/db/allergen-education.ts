@@ -25,6 +25,7 @@
 // contact-allergens.ts.
 
 import { EXTENDED_EDUCATION } from "./allergen-education-extended";
+import { SEARCH_EDUCATION } from "./allergen-education-search";
 
 export type Cas = { number: string; of: string };
 
@@ -556,10 +557,10 @@ export const ALLERGEN_EDUCATION: AllergenEducation[] = [
   },
 ];
 
-const ALL = [...ALLERGEN_EDUCATION, ...EXTENDED_EDUCATION];
+const ALL = [...ALLERGEN_EDUCATION, ...EXTENDED_EDUCATION, ...SEARCH_EDUCATION];
 const BY_ID = new Map(ALL.map((e) => [e.id, e]));
 
-/** Every record, T.R.U.E. Test and extended trays. */
+/** Every record: T.R.U.E. Test, the extended trays, and search-only allergens. */
 export function allEducation(): AllergenEducation[] {
   return ALL;
 }

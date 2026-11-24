@@ -3,8 +3,8 @@ import assert from "node:assert/strict";
 import { allEducation, allergyIntro, educationFor, validCas } from "./allergen-education";
 
 const ALLERGEN_EDUCATION = allEducation();
-import { getAllergen, getAllergenGroup } from "./contact-allergens";
-import { PATCH_TEST_SERIES, getNotOnLabel, seriesItems } from "./patch-test-series";
+import { CONTACT_ALLERGENS, getAllergen, getAllergenGroup } from "./contact-allergens";
+import { NOT_ON_LABELS, PATCH_TEST_SERIES, getNotOnLabel, seriesItems } from "./patch-test-series";
 import { allergensInQuery } from "@/lib/allergen-search";
 
 const known = (id: string) => !!(getAllergen(id) || getAllergenGroup(id) || getNotOnLabel(id));
@@ -80,4 +80,8 @@ test("the printed sheet tells a class A steroid patient to avoid hydrocortisone 
   const { watchForNames } = await import("./patch-test-series");
   const names = watchForNames("corticosteroid-class-a", Infinity).map((n) => n.toLowerCase());
   assert.ok(names.includes("hydrocortisone"), names.join(", "));
+});
+
+test("every allergen the reader can pick, on a tray or by search, has a record", () => {
+  for (const id of [...CONTACT_ALLERGENS.map((a) => a.id), ...NOT_ON_LABELS.map((n) => n.id)]) assert.ok(educationFor(id), id);
 });

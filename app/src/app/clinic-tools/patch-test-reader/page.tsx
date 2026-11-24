@@ -4,7 +4,8 @@ import { PageHeader } from "@/components/page-header";
 import { PatchTestReader } from "@/components/patch-test-reader";
 import { PatchTestIssuer } from "@/components/patch-test-issuer";
 import { FEATURES } from "@/lib/feature-flags";
-import { currentClinician } from "@/lib/clinicians";
+import { clinicianDisplayName, currentClinician } from "@/lib/clinicians";
+import type { ClinicHeader } from "@/components/patch-test-handout";
 import { listsForClinician } from "@/lib/clinician-lists";
 import { cn } from "@/lib/utils";
 
@@ -26,9 +27,13 @@ export const dynamic = "force-dynamic";
 export default async function PatchTestReaderPage({ searchParams }: { searchParams: Promise<{ mode?: string; list?: string }> }) {
   const { mode, list } = await searchParams;
   const tick = mode === "tick" || !!list;
-  // A signed-in clinician's starter lists; anyone else gets the plain tick list.
-  const { clinician } = tick && FEATURES.HANDOUTS ? await currentClinician() : { clinician: null };
-  const lists = clinician ? listsForClinician(clinician.id).map((l) => ({ id: l.id, name: l.name, ids: l.ids })) : [];
+  // A signed-in clinician's starter lists and clinic header; anyone else
+  // gets the plain tick list and an unbranded sheet.
+  const { clinician } = FEATURES.HANDOUTS ? await currentClinician() : { clinician: null };
+  const clinic: ClinicHeader | null = clinician
+    ? { name: clinician.clinicName, clinician: clinicianDisplayName(clinician), phone: clinician.clinicPhone, website: clinician.clinicWebsite }
+    : null;
+  const lists = clinician && tick ? listsForClinician(clinician.id).map((l) => ({ id: l.id, name: l.name, ids: l.ids })) : [];
   const initialIds = lists.find((l) => l.id === list)?.ids ?? [];
 
   return (
@@ -64,7 +69,7 @@ export default async function PatchTestReaderPage({ searchParams }: { searchPara
         ))}
       </nav>
 
-      {tick ? <PatchTestIssuer lists={lists} initialIds={initialIds} key={list ?? "none"} /> : <PatchTestReader />}
+      {tick ? <PatchTestIssuer lists={lists} initialIds={initialIds} clinic={clinic} key={list ?? "none"} /> : <PatchTestReader clinic={clinic} />}
 
       {tick ? (
         <p className="text-xs leading-relaxed text-muted-foreground">

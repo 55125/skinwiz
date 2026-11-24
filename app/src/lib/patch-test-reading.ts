@@ -83,6 +83,9 @@ export function readingWriteUp(opts: {
   day: ReadingDay;
   readDate?: string;
   appliedDate?: string;
+  // What went to the patient: positives the clinician left off their avoid
+  // list as not relevant, and how the handout was given ("printed").
+  handout?: { leftOff: string[]; given: string[] };
 }): string {
   const { series, chambers, grades } = opts;
   const day = READING_DAYS.find((d) => d.id === opts.day)?.label ?? opts.day;
@@ -107,6 +110,10 @@ export function readingWriteUp(opts: {
     const g = grades[control.key] ?? "neg";
     lines.push(g === "neg" ? "Negative control: negative." : `Negative control: ${g}; interpret other reactions with caution.`);
   }
+  const leftOff = opts.handout?.leftOff ?? [];
+  const given = opts.handout?.given ?? [];
+  if (leftOff.length) lines.push(`Left off the patient's avoid list as not relevant: ${leftOff.join(", ")}.`);
+  if (given.length) lines.push(`Patient allergen handout given: ${given.join(", ")}.`);
   lines.push("Clinical relevance to be determined by the clinician.");
   return lines.join("\n");
 }

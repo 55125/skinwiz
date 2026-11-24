@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { PatchTestChecklist } from "@/components/patch-test-checklist";
 import { QrCode } from "@/components/qr-code";
+import { HandoutAllergenSections, HandoutIntro, HandoutProducts, useHandoutExtras, type ClinicHeader, type HandoutExtras } from "@/components/patch-test-handout";
 import { resolveAllergenId } from "@/db/contact-allergens";
 import { getNotOnLabel, importItemName, mainlyOffLabel, positivesById, watchForNames } from "@/db/patch-test-series";
 import { MAX_NOTE_LENGTH, buildImportPath, cleanDetails } from "@/lib/avoid-import";
@@ -35,7 +36,15 @@ function formatDate(iso: string): string {
 // one-page sheet with a QR code that loads the list into the patient's
 // avoid list. Everything stays in this tab; the patient's name is never
 // part of the link.
-export function PatchTestIssuer({ lists = [], initialIds = [] }: { lists?: { id: string; name: string; ids: string[] }[]; initialIds?: string[] }) {
+export function PatchTestIssuer({
+  lists = [],
+  initialIds = [],
+  clinic = null,
+}: {
+  lists?: { id: string; name: string; ids: string[] }[];
+  initialIds?: string[];
+  clinic?: ClinicHeader | null;
+}) {
   const origin = useOrigin();
   const [selected, setSelected] = useState<Set<string>>(() => new Set(initialIds));
   const [ticked, setTicked] = useState<Set<string>>(() => new Set());
@@ -51,6 +60,7 @@ export function PatchTestIssuer({ lists = [], initialIds = [] }: { lists?: { id:
   const path = buildImportPath(selected, details);
   const url = `${origin}${path}`;
   const ready = selected.size > 0 && origin !== "";
+  const { extras, loading } = useHandoutExtras([...selected]);
 
   return (
     <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_340px]">
@@ -134,8 +144,8 @@ export function PatchTestIssuer({ lists = [], initialIds = [] }: { lists?: { id:
                 {avoidIds.length} to avoid{offLabel.length > 0 ? ` · ${offLabel.length} not on labels` : ""}
               </p>
               <div className="flex flex-wrap gap-2">
-                <Button type="button" data-track="patch-test:print" onClick={() => window.print()} className="flex-1 rounded-full">
-                  <Printer className="h-4 w-4" /> Print sheet
+                <Button type="button" data-track="patch-test:print" onClick={() => window.print()} disabled={loading} className="flex-1 rounded-full">
+                  <Printer className="h-4 w-4" /> {loading ? "Preparing…" : "Print handout"}
                 </Button>
                 <Button
                   type="button"
@@ -167,7 +177,16 @@ export function PatchTestIssuer({ lists = [], initialIds = [] }: { lists?: { id:
 
       {ready &&
         createPortal(
-          <PrintSheet url={url} ids={avoidIds} offLabel={offLabel} positives={positivesById(ticked)} patient={patient.trim()} {...details} />,
+          <PrintSheet
+            url={url}
+            ids={avoidIds}
+            offLabel={offLabel}
+            positives={positivesById(ticked)}
+            patient={patient.trim()}
+            clinic={clinic}
+            extras={extras}
+            {...details}
+          />,
           document.body,
         )}
     </div>
@@ -195,6 +214,8 @@ export function PrintSheet({
   eyebrow = "Patch-test results",
   date,
   note,
+  clinic,
+  extras,
 }: {
   url: string;
   ids: string[];
@@ -205,6 +226,10 @@ export function PrintSheet({
   eyebrow?: string;
   date?: string;
   note?: string;
+  // The signed-in clinician's clinic, for the header and "Questions?" line.
+  clinic?: ClinicHeader | null;
+  // Per-allergen education and named safe products (patch-test-handout.tsx).
+  extras?: HandoutExtras | null;
 }) {
   const shortUrl = url.replace(/^https?:\/\//, "");
   // The tested names, when they differ from the allergen's own name.
@@ -229,14 +254,18 @@ export function PrintSheet({
       `}</style>
       <div style={{ display: "flex", gap: "8mm", alignItems: "flex-start" }}>
         <div style={{ flex: 1 }}>
-          <p style={{ fontSize: "9pt", textTransform: "uppercase", letterSpacing: "0.08em", margin: 0 }}>{eyebrow}</p>
-          <h1 style={{ fontSize: "18pt", fontWeight: 600, margin: "1mm 0 3mm" }}>Ingredients to avoid</h1>
+          <p style={{ fontSize: "9pt", textTransform: "uppercase", letterSpacing: "0.08em", margin: 0 }}>{clinic ? clinic.name : eyebrow}</p>
+          <h1 style={{ fontSize: "18pt", fontWeight: 600, margin: "1mm 0 3mm" }}>{clinic ? "Your patch-test results: ingredients to avoid" : "Ingredients to avoid"}</h1>
           <table style={{ fontSize: "10pt", borderCollapse: "collapse" }}>
             <tbody>
               {patient && <InfoRow label="Patient" value={patient} />}
               {date && <InfoRow label="Read on" value={formatDate(date)} />}
+              {clinic && <InfoRow label="From" value={clinic.clinician} />}
+              {clinic?.phone && <InfoRow label="Questions" value={clinic.phone} />}
+              {clinic?.website && <InfoRow label="Website" value={clinic.website.replace(/^https?:\/\//, "")} />}
             </tbody>
           </table>
+          {extras && <HandoutIntro ids={[...ids, ...offLabel]} />}
           {note && <p style={{ margin: "3mm 0 0", padding: "2mm 3mm", border: "1px solid #000", borderRadius: "2mm" }}>{note}</p>}
         </div>
         <div style={{ width: "44mm", textAlign: "center" }}>
@@ -290,11 +319,14 @@ export function PrintSheet({
         </>
       )}
 
+      {extras && <HandoutProducts extras={extras} date={date} />}
+      {extras && <HandoutAllergenSections ids={[...ids, ...offLabel]} extras={extras} positives={positives} />}
+
       <div style={{ marginTop: "6mm", paddingTop: "2mm", borderTop: "0.5px solid #999", fontSize: "8pt" }}>
         <p style={{ margin: 0, wordBreak: "break-all", fontFamily: "ui-monospace, monospace" }}>{shortUrl}</p>
         <p style={{ margin: "1.5mm 0 0" }}>
-          Labels can use names not listed here, and “fragrance” or “parfum” can hide fragrance allergens. When in doubt, ask
-          your dermatologist. The link carries only the allergen list{date || note ? ", date and note" : ""}, never your name.
+          Labels can use names not listed here, and “fragrance” or “parfum” can hide fragrance allergens.{" "}
+          {clinic ? `Questions? Contact ${clinic.name}${clinic.phone ? ` at ${clinic.phone}` : ""}.` : "When in doubt, ask your dermatologist."} The link carries only the allergen list{date || note ? ", date and note" : ""}, never your name.
         </p>
       </div>
     </div>

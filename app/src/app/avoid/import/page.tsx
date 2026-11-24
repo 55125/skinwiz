@@ -10,6 +10,7 @@ import { EmailSignupCard } from "@/components/email-signup-card";
 import { personForSession } from "@/lib/identity";
 import { readDeviceSessionId } from "@/lib/session";
 import { FilterChip } from "@/components/filter-chip";
+import { EmailListToMe } from "@/components/email-list-to-me";
 
 // Where a dermatologist's QR code lands (/clinic-tools/patch-test-reader). A
 // tool page: noindex, and /avoid is disallowed in robots.txt anyway.
@@ -120,6 +121,7 @@ export default async function AvoidImportPage({ searchParams }: { searchParams: 
             notOnLabel={decoded.notOnLabel}
             allPresent={decoded.avoidIds.every((id) => alreadySet.has(id)) && offAllSaved}
           />
+          <EmailListToMe a={one(params.a) ?? ""} d={date} n={note} />
           {otherOnList.length > 0 && (
             <p className="text-xs text-muted-foreground">
               Also on your list already, and kept: {otherOnList.map(avoidedIngredientName).join(", ")}.
@@ -169,7 +171,12 @@ export default async function AvoidImportPage({ searchParams }: { searchParams: 
               </li>
             ))}
           </ul>
-          {decoded.avoidIds.length === 0 && <AvoidImportButton ids={[]} notOnLabel={decoded.notOnLabel} allPresent={offAllSaved} />}
+          {decoded.avoidIds.length === 0 && (
+            <>
+              <AvoidImportButton ids={[]} notOnLabel={decoded.notOnLabel} allPresent={offAllSaved} />
+              <EmailListToMe a={one(params.a) ?? ""} d={date} n={note} />
+            </>
+          )}
         </section>
       )}
 

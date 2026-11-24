@@ -79,3 +79,12 @@ test("the reader extends formaldehyde to its releasers by default, as the clinic
   const ids = avoidIdsFrom(ch, { [formaldehyde.key]: "+" }, false);
   assert.ok(ids.includes("formaldehyde") && ids.includes("formaldehyde-and-releasers"), ids.join());
 });
+
+test("the write-up records what went to the patient", () => {
+  const series = getSeries("true-test");
+  const ch = chambersFor(series);
+  const text = readingWriteUp({ series, chambers: ch, grades: { "1": "++" }, day: "d3", handout: { leftOff: ["Thimerosal"], given: ["printed"] } });
+  assert.match(text, /Left off the patient's avoid list as not relevant: Thimerosal\./);
+  assert.match(text, /Patient allergen handout given: printed\./);
+  assert.doesNotMatch(readingWriteUp({ series, chambers: ch, grades: {}, day: "d3" }), /handout|Left off/);
+});

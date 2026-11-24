@@ -11,6 +11,7 @@
 import {
   ALLERGEN_SECTIONS,
   PATCH_TEST_FAMILY,
+  displayLabelName,
   allergenMembers,
   getAllergen,
   getAllergenGroup,
@@ -668,9 +669,12 @@ export function importItemName(id: string): string | undefined {
 export function watchForNames(id: string, max = 6): string[] {
   const allergen = getAllergen(id);
   if (allergen) {
-    const own = allergen.name.toLowerCase();
+    // Leave out names the allergen's own title already spells out, but not
+    // a class's example: "Corticosteroids, class A (hydrocortisone type)"
+    // still lists hydrocortisone, which the patient must avoid by name.
+    const own = allergen.name.toLowerCase().replace(/[a-z0-9-]+ type\b/g, "");
     const names = labelNames(allergen).filter((t) => !own.includes(t) && t.length > 2);
-    return names.slice(0, max);
+    return names.slice(0, max).map(displayLabelName);
   }
   // A family is avoided whole, so every member is listed.
   if (getAllergenGroup(id)) return allergenMembers(id).map((m) => getAllergen(m)!.name);

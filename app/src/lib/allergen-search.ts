@@ -5,6 +5,7 @@
 // 2026-11-22 weekly search gaps.
 import { ALLERGEN_GROUPS, allergensInList, CONTACT_ALLERGENS, getAllergen, normalizeForAllergens } from "@/db/contact-allergens";
 import { NOT_ON_LABELS } from "@/db/patch-test-series";
+import { casIndex } from "@/db/allergen-education";
 
 export type QueryAllergen = {
   id: string;
@@ -29,6 +30,8 @@ const NAMED: [RegExp, string][] = [
   [word("epoxy resin|bisphenol a|bisphenol|bpa epoxy"), "epoxy-resin"],
   ...ALLERGEN_GROUPS.map((g): [RegExp, string] => [word(normalizeForAllergens(g.name).replace(/[.*+?^${}()|[\]\\]/g, "\\$&")), g.id]),
   ...NOT_ON_LABELS.map((n): [RegExp, string] => [word(normalizeForAllergens(n.name.replace(/\s*\(.*$/, "")).replace(/[.*+?^${}()|[\]\\]/g, "\\$&")), n.id]),
+  // CAS numbers, as labs and safety data sheets print them ("7791-13-1").
+  ...casIndex().map((c): [RegExp, string] => [word(normalizeForAllergens(c.number)), c.id]),
 ];
 
 function idsIn(text: string): string[] {

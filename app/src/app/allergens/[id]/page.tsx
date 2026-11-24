@@ -15,6 +15,7 @@ import {
   getAllergenGroup,
   getAllergenSection,
   groupsContaining,
+  displayLabelName,
   labelNames,
   resolveAllergenId,
 } from "@/db/contact-allergens";
@@ -25,6 +26,8 @@ import { siteUrl } from "@/lib/site-url";
 import { allergenSummary } from "@/lib/answer-summary";
 import { regulatoryNoteFor, regulatoryNoteForGroup } from "@/db/regulatory-notes";
 import { RegulatoryNoteCard } from "@/components/regulatory-note";
+import { AllergenEducationSections, AllergenIdentifiers } from "@/components/allergen-education";
+import { educationFor } from "@/db/allergen-education";
 
 export const dynamic = "force-dynamic";
 
@@ -65,6 +68,7 @@ export default async function AllergenPage({ params }: { params: Promise<{ id: s
   // only what's free of them: the surprise is the familiar products.
   const regulatory = allergen ? regulatoryNoteFor(allergen.id) : regulatoryNoteForGroup(members);
   const containing = regulatory ? getProductsContainingAllergens(members, 8, regulatory.featuredProductIds) : null;
+  const education = educationFor(id);
 
   return (
     <div className="mx-auto max-w-5xl space-y-10 px-4 py-10">
@@ -122,15 +126,18 @@ export default async function AllergenPage({ params }: { params: Promise<{ id: s
           <h2 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Names to look for on a label</h2>
           <p className="flex flex-wrap gap-1.5 text-sm">
             {labelNames(allergen).map((t) => (
-              <span key={t} className="rounded-md bg-muted px-2 py-1">{t}</span>
+              <span key={t} className="rounded-md bg-muted px-2 py-1">{displayLabelName(t)}</span>
             ))}
           </p>
           {allergen.aka && (
             <p className="text-sm text-muted-foreground">Also known as {allergen.aka.join(", ")}.</p>
           )}
           {allergen.note && <p className="text-sm leading-relaxed">{allergen.note}</p>}
+          {education && <AllergenIdentifiers e={education} />}
         </section>
       )}
+
+      {education && <AllergenEducationSections e={education} identifiers={!allergen} />}
 
       {group && (
         <section className="space-y-3">
@@ -144,7 +151,7 @@ export default async function AllergenPage({ params }: { params: Promise<{ id: s
                     {a.name}
                   </Link>
                   <span className="text-xs text-muted-foreground">
-                    {labelNames(a).filter((n) => n.toLowerCase() !== a.name.toLowerCase()).slice(0, 4).join(", ")}
+                    {labelNames(a).filter((n) => n.toLowerCase() !== a.name.toLowerCase()).slice(0, 4).map(displayLabelName).join(", ")}
                   </span>
                 </li>
               );

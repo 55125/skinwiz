@@ -1,6 +1,8 @@
 "use client";
 
-import { useState, useSyncExternalStore } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
+import { SeriesCountDialog } from "@/components/series-count-dialog";
+import { loadDefaultSeries, saveDefaultSeries } from "@/lib/patch-test-reading";
 import { createPortal } from "react-dom";
 import { AlertTriangle, Check, Copy, ExternalLink, Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -10,7 +12,7 @@ import { PatchTestChecklist } from "@/components/patch-test-checklist";
 import { QrCode } from "@/components/qr-code";
 import { HandoutAllergenSections, HandoutIntro, HandoutProducts, useHandoutExtras, type ClinicHeader, type HandoutExtras } from "@/components/patch-test-handout";
 import { resolveAllergenId } from "@/db/contact-allergens";
-import { getNotOnLabel, importItemName, mainlyOffLabel, positivesById, watchForNames } from "@/db/patch-test-series";
+import { PATCH_TEST_SERIES, getNotOnLabel, importItemName, mainlyOffLabel, positivesById, watchForNames } from "@/db/patch-test-series";
 import { MAX_NOTE_LENGTH, buildImportPath, cleanDetails } from "@/lib/avoid-import";
 import { SITE_NAME } from "@/lib/brand";
 import { PRIVACY_HIT_TEXT, findPrivacyHits } from "@/lib/note-privacy";
@@ -60,6 +62,21 @@ export function PatchTestIssuer({
   const url = `${origin}${path}`;
   const ready = selected.size > 0 && origin !== "";
   const { extras, loading } = useHandoutExtras([...selected]);
+  // The clinic's usual series (shared with the reader), or ask the panel's size.
+  const [tab, setTab] = useState(PATCH_TEST_SERIES[0].id);
+  const [ask, setAsk] = useState(false);
+  useEffect(() => {
+    const def = loadDefaultSeries();
+    /* eslint-disable react-hooks/set-state-in-effect -- one-time read of the device setting */
+    if (def) setTab(def);
+    else if (initialIds.length === 0) setAsk(true);
+    /* eslint-enable react-hooks/set-state-in-effect */
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- on arrival only
+  }, []);
+  const pickTab = (id: string) => {
+    setTab(id);
+    if (PATCH_TEST_SERIES.some((s) => s.id === id)) saveDefaultSeries(id);
+  };
 
   return (
     <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_340px]">
@@ -88,7 +105,18 @@ export function PatchTestIssuer({
             </select>
           </label>
         )}
+        {ask && (
+          <SeriesCountDialog
+            onPick={(id) => {
+              pickTab(id);
+              setAsk(false);
+            }}
+            onClose={() => setAsk(false)}
+          />
+        )}
         <PatchTestChecklist
+          tab={tab}
+          onTabChange={pickTab}
           selected={selected}
           ticked={ticked}
           onTickedChange={setTicked}

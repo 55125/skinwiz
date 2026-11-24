@@ -88,3 +88,14 @@ test("the write-up records what went to the patient", () => {
   assert.match(text, /Patient allergen handout given: printed\./);
   assert.doesNotMatch(readingWriteUp({ series, chambers: ch, grades: {}, day: "d3" }), /handout|Left off/);
 });
+
+test("the panel's size picks the series; 80 asks which tray", async () => {
+  const { seriesForCount } = await import("./patch-test-reading");
+  const ids = (n: number) => seriesForCount(n).map((s) => s.id);
+  assert.deepEqual(ids(35), ["true-test"]);
+  assert.deepEqual(ids(36), ["true-test"]);
+  assert.deepEqual(ids(90), ["acds-2020"]);
+  assert.deepEqual(ids(80).sort(), ["acds-2017", "nac-80"]);
+  assert.deepEqual(ids(100), ["core"]);
+  assert.deepEqual(ids(64), []);
+});

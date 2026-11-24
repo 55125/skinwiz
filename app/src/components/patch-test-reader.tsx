@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { QrCode } from "@/components/qr-code";
 import { PrintSheet, useOrigin } from "@/components/patch-test-issuer";
 import { useHandoutExtras, type ClinicHeader } from "@/components/patch-test-handout";
+import { SeriesCountDialog } from "@/components/series-count-dialog";
 import { PATCH_TEST_SERIES, getNotOnLabel, positivesById, seriesItemKey } from "@/db/patch-test-series";
 import { resolveAllergenId } from "@/db/contact-allergens";
 import { buildImportPath } from "@/lib/avoid-import";
@@ -23,6 +24,8 @@ import {
   type BackSpec,
   type Numbering,
   avoidIdsFrom,
+  loadDefaultSeries,
+  saveDefaultSeries,
   chambersFor,
   getSeries,
   nextGrade,
@@ -99,6 +102,8 @@ export function PatchTestReader({ clinic = null }: { clinic?: ClinicHeader | nul
   const [trayLayouts, setTrayLayouts] = useState<TrayLayouts>(loadTrayLayouts);
   const [includeDoubtful, setIncludeDoubtful] = useState(false);
   const [copied, setCopied] = useState<"note" | "link" | null>(null);
+  // First visit on this device: ask the panel's size to pick the series.
+  const [ask, setAsk] = useState(false);
   // Positives the clinician judged not relevant: kept in the chart note as
   // read, left off the patient's list and handout (chamber keys).
   const [leftOff, setLeftOff] = useState<Set<string>>(() => new Set());
@@ -110,10 +115,19 @@ export function PatchTestReader({ clinic = null }: { clinic?: ClinicHeader | nul
   // save on every change.
   const restored = useRef(false);
   useEffect(() => {
+    // Once: a second run (React's dev double-invoke) would read back the
+    // save effect's first write instead of the tab's reading.
+    if (restored.current) return;
     const saved = loadReading();
     restored.current = true;
-    if (!saved) return;
-    /* eslint-disable react-hooks/set-state-in-effect -- one-time restore from tab storage */
+    /* eslint-disable react-hooks/set-state-in-effect -- one-time restore from tab and device storage */
+    if (!saved) {
+      // The clinic's usual series, or ask how many allergens the panel has.
+      const def = loadDefaultSeries();
+      if (def) setSeriesId(def);
+      else setAsk(true);
+      return;
+    }
     setSeriesId(saved.seriesId);
     setDay(saved.day);
     setReadDate(saved.readDate);
@@ -337,6 +351,16 @@ export function PatchTestReader({ clinic = null }: { clinic?: ClinicHeader | nul
 
   return (
     <div className="space-y-5">
+      {ask && (
+        <SeriesCountDialog
+          onPick={(id) => {
+            setSeriesId(id);
+            saveDefaultSeries(id);
+            setAsk(false);
+          }}
+          onClose={() => setAsk(false)}
+        />
+      )}
       <div className="flex flex-wrap items-end gap-3">
         <label className="space-y-1 text-sm">
           <span className="block font-medium">Series</span>
@@ -348,6 +372,7 @@ export function PatchTestReader({ clinic = null }: { clinic?: ClinicHeader | nul
               setGrades({});
               setLastTapped(null);
               setSeriesId(e.target.value);
+              saveDefaultSeries(e.target.value);
             }}
           >
             {PATCH_TEST_SERIES.map((s) => (

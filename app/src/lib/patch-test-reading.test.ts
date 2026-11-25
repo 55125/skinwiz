@@ -92,6 +92,7 @@ test("the write-up records what went to the patient", () => {
 test("the panel's size picks the series; 80 asks which tray", async () => {
   const { seriesForCount } = await import("./patch-test-reading");
   const ids = (n: number) => seriesForCount(n).map((s) => s.id);
+  assert.deepEqual(ids(32), ["ebs-2023"]);
   assert.deepEqual(ids(35), ["true-test"]);
   assert.deepEqual(ids(36), ["true-test"]);
   assert.deepEqual(ids(90), ["acds-2020"]);

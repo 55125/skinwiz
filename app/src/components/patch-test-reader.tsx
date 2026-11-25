@@ -412,10 +412,10 @@ export function PatchTestReader({ clinic = null }: { clinic?: ClinicHeader | nul
           <Smartphone className="h-3.5 w-3.5 rotate-90" /> Turn your phone sideways for bigger boxes.
         </span>
       </p>
-      {!spec && (
+      {series.id === "core" && (
         <p className="text-xs text-muted-foreground">
           This list is grouped by allergen type, not tray order. To read by position, pick your tray: the T.R.U.E. Test, ACDS core
-          (2020 or 2017) or NAC-80.
+          (2020 or 2017), NAC-80 or the European baseline.
         </p>
       )}
       {spec && (

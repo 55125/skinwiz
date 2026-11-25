@@ -5,11 +5,11 @@ import { Button } from "@/components/ui/button";
 import { allergenCount, seriesForCount } from "@/lib/patch-test-reading";
 
 // The patch-test tool's first question: how many allergens are on the
-// panel? The size settles the series (35 is the T.R.U.E. Test, 90 the ACDS
+// panel? The size settles the series (32 is the European baseline, 35 the T.R.U.E. Test, 90 the ACDS
 // 2020 tray); 80 asks which tray. Other panel sizes aren't supported yet.
 // Shown once per device; the answer becomes the default (lib/patch-test-reading
 // saveDefaultSeries) and the series menu stays on the page to change it.
-const QUICK = [35, 80, 90, 100];
+const QUICK = [32, 35, 80, 90, 100];
 
 export function SeriesCountDialog({ onPick, onClose }: { onPick: (id: string) => void; onClose: () => void }) {
   const [count, setCount] = useState<number | null>(null);
@@ -45,7 +45,7 @@ export function SeriesCountDialog({ onPick, onClose }: { onPick: (id: string) =>
               How many allergens are on your panel?
             </h2>
             <p className="text-sm text-muted-foreground">We&apos;ll pick the matching series and remember it on this device.</p>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
               {QUICK.map((n) => (
                 <Button key={n} type="button" variant="outline" className="h-auto flex-col gap-0 py-2" onClick={() => choose(n)}>
                   <span className="text-base font-semibold">{n}</span>
@@ -83,5 +83,5 @@ export function SeriesCountDialog({ onPick, onClose }: { onPick: (id: string) =>
 
 function hint(n: number): string {
   const m = seriesForCount(n);
-  return m.length === 1 ? m[0].short : m.length > 1 ? m.map((s) => s.short.replace(/ \(\d+\)$/, "")).join(" or ") : "";
+  return m.length === 1 ? m[0].short : m.length > 1 ? m.map((s) => s.short.replace(/ \(\d+\)$/, "").replace("ACDS core ", "ACDS ")).join(" or ") : "";
 }

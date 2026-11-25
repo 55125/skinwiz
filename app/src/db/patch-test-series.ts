@@ -556,6 +556,46 @@ const CORE_GROUPS: { section: AllergenSectionId | "off-label"; items: SeriesItem
   },
 ];
 
+
+// European Baseline Series (ESCD, 2023 revision): 32 allergens, numbered as
+// on the Chemotechnique S-1000 sheet and DermNet's 2023 table (both agree).
+// Not a fixed tray: clinics load it on Finn or IQ chamber strips, so it is
+// read by number, not by panel position on the back.
+const EBS_2023_ITEMS: SeriesItem[] = [
+  item("Potassium dichromate", "chromium"),
+  item("p-Phenylenediamine (PPD)", "ppd"),
+  offLabel("Thiuram mix", "thiuram-mix"),
+  item("Neomycin sulfate", "neomycin"),
+  item("Cobalt chloride", "cobalt"),
+  item("Caine mix III", "benzocaine", "dibucaine", "tetracaine"),
+  item("Nickel sulfate", "nickel"),
+  item("2-Hydroxyethyl methacrylate (HEMA)", "acrylate-monomers"),
+  item("Colophonium", "colophonium"),
+  item("Paraben mix", "parabens"),
+  offLabel("N-Isopropyl-N'-phenyl-p-phenylenediamine (IPPD)", "black-rubber-mix"),
+  item("Lanolin alcohol", "lanolin"),
+  offLabel("Mercapto mix", "mercapto-mix"),
+  offLabel("Epoxy resin, bisphenol A", "epoxy-resin"),
+  item("Myroxylon pereirae (balsam of Peru)", "balsam-of-peru"),
+  offLabel("p-tert-Butylphenol formaldehyde resin", "ptbp-formaldehyde-resin"),
+  offLabel("Mercaptobenzothiazole (MBT)", "mbt"),
+  item("Formaldehyde", "formaldehyde"),
+  item("Fragrance mix I", "fragrance-mix-1"),
+  item("Sesquiterpene lactone mix", "compositae"),
+  item("Sodium metabisulfite", "sulfites"),
+  item("Propolis", "propolis"),
+  item("Methylchloroisothiazolinone/methylisothiazolinone", "mci-mi"),
+  item("Budesonide", "corticosteroid-class-b"),
+  item("Tixocortol-21-pivalate", "corticosteroid-class-a"),
+  item("Methyldibromo glutaronitrile", "mdbgn"),
+  item("Fragrance mix II", "fragrance-mix-2"),
+  item("Hydroxyisohexyl 3-cyclohexene carboxaldehyde (HICC)", "hicc"),
+  item("Methylisothiazolinone", "methylisothiazolinone"),
+  item("Benzisothiazolinone", "benzisothiazolinone"),
+  offLabel("Textile dye mix II", "disperse-dye-mix"),
+  item("Decyl glucoside", "decyl-glucoside"),
+].map((it, i) => ({ ...it, pos: i + 1 }));
+
 export const PATCH_TEST_SERIES: PatchTestSeries[] = [
   {
     id: "true-test",
@@ -588,6 +628,13 @@ export const PATCH_TEST_SERIES: PatchTestSeries[] = [
     short: "NAC-80",
     description: "The NACDG's 80-allergen screening series as numbered on the NAC-80 tray: 8 panels of 10.",
     groups: PANELS_80.map((p, i) => ({ title: `Panel ${p}`, items: NAC_80_ITEMS.slice(i * 10, i * 10 + 10) })),
+  },
+  {
+    id: "ebs-2023",
+    name: "European Baseline Series (2023)",
+    short: "European baseline (32)",
+    description: "The ESCD's 32-allergen European Baseline Series, 2023 revision, numbered 1 to 32.",
+    groups: [{ title: "European Baseline Series", items: EBS_2023_ITEMS }],
   },
   {
     id: "core",

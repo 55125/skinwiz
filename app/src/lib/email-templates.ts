@@ -193,3 +193,23 @@ export function recallEmail(r: RecallEmailInput, unsubscribeUrl: string, setting
     .join("\n");
   return { subject, html, text };
 }
+
+// --- patch-test list, sent by the patient to themselves -----------------------
+
+/** The allergen-list link a patient emails to themselves from the QR page. Names no allergen and no clinic: the subject and body stay generic. */
+export function avoidListLinkEmail(link: string): Rendered {
+  const subject = "Your skin allergy list";
+  const lead = `Here's the link to the allergen list from your patch test. Open it to see every name each allergen goes by on product labels, add them to your avoid list, and find products that are clear of them.`;
+  const html = layout(
+    subject,
+    [
+      p(lead),
+      p(button(link, "Open my list")),
+      p(`Or paste this address into your browser:<br><a href="${escapeHtml(link)}" style="color:#1f5f4a;word-break:break-all;">${escapeHtml(link)}</a>`),
+      p(`Anyone with this link can see the list, so forward it only to people you choose.`),
+    ].join("\n"),
+    `You're getting this one-time email because this address was entered on ${escapeHtml(SITE_NAME)} to send the list. We don't keep the address.`,
+  );
+  const text = [lead, "", link, "", "Anyone with this link can see the list, so forward it only to people you choose.", "", `Sent once because this address was entered on ${SITE_NAME}. We don't keep the address.`].join("\n");
+  return { subject, html, text };
+}

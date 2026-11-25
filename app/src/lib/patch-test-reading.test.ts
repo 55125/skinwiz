@@ -79,3 +79,24 @@ test("the reader extends formaldehyde to its releasers by default, as the clinic
   const ids = avoidIdsFrom(ch, { [formaldehyde.key]: "+" }, false);
   assert.ok(ids.includes("formaldehyde") && ids.includes("formaldehyde-and-releasers"), ids.join());
 });
+
+test("the write-up records what went to the patient", () => {
+  const series = getSeries("true-test");
+  const ch = chambersFor(series);
+  const text = readingWriteUp({ series, chambers: ch, grades: { "1": "++" }, day: "d3", handout: { leftOff: ["Thimerosal"], given: ["printed"] } });
+  assert.match(text, /Left off the patient's avoid list as not relevant: Thimerosal\./);
+  assert.match(text, /Patient allergen handout given: printed\./);
+  assert.doesNotMatch(readingWriteUp({ series, chambers: ch, grades: {}, day: "d3" }), /handout|Left off/);
+});
+
+test("the panel's size picks the series; 80 asks which tray", async () => {
+  const { seriesForCount } = await import("./patch-test-reading");
+  const ids = (n: number) => seriesForCount(n).map((s) => s.id);
+  assert.deepEqual(ids(32), ["ebs-2023"]);
+  assert.deepEqual(ids(35), ["true-test"]);
+  assert.deepEqual(ids(36), ["true-test"]);
+  assert.deepEqual(ids(90), ["acds-2020"]);
+  assert.deepEqual(ids(80).sort(), ["acds-2017", "nac-80"]);
+  assert.deepEqual(ids(100), ["core"]);
+  assert.deepEqual(ids(64), []);
+});

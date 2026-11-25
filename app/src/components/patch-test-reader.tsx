@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { QrCode } from "@/components/qr-code";
 import { PrintSheet, useOrigin } from "@/components/patch-test-issuer";
+import { useHandoutExtras, type ClinicHeader } from "@/components/patch-test-handout";
+import { SeriesCountDialog } from "@/components/series-count-dialog";
 import { PATCH_TEST_SERIES, getNotOnLabel, positivesById, seriesItemKey } from "@/db/patch-test-series";
 import { resolveAllergenId } from "@/db/contact-allergens";
 import { buildImportPath } from "@/lib/avoid-import";
@@ -22,6 +24,8 @@ import {
   type BackSpec,
   type Numbering,
   avoidIdsFrom,
+  loadDefaultSeries,
+  saveDefaultSeries,
   chambersFor,
   getSeries,
   nextGrade,
@@ -83,10 +87,10 @@ const todayIso = () => {
 };
 
 // Tap-to-grade patch-test reading for medical assistants. Everything stays
-// in this browser tab: grades, the chart write-up, the patient's name. The
+// in this browser tab: grades and the chart write-up. The
 // only thing that can leave is the avoid-list link (allergen code + date),
 // and only when the MA prints it, shows its QR or opens their own email app.
-export function PatchTestReader() {
+export function PatchTestReader({ clinic = null }: { clinic?: ClinicHeader | null }) {
   const origin = useOrigin();
   const [seriesId, setSeriesId] = useState(PATCH_TEST_SERIES[0].id);
   const [day, setDay] = useState<ReadingDay>("d2");
@@ -97,17 +101,33 @@ export function PatchTestReader() {
   // The clinic's panel placement per tray series: device setting, no patient data.
   const [trayLayouts, setTrayLayouts] = useState<TrayLayouts>(loadTrayLayouts);
   const [includeDoubtful, setIncludeDoubtful] = useState(false);
-  const [patient, setPatient] = useState("");
   const [copied, setCopied] = useState<"note" | "link" | null>(null);
+  // First visit on this device: ask the panel's size to pick the series.
+  const [ask, setAsk] = useState(false);
+  // Positives the clinician judged not relevant: kept in the chart note as
+  // read, left off the patient's list and handout (chamber keys).
+  const [leftOff, setLeftOff] = useState<Set<string>>(() => new Set());
+  // How the handout went to the patient, for the chart note.
+  const [given, setGiven] = useState<string[]>([]);
+  const markGiven = (how: string) => setGiven((all) => (all.includes(how) ? all : [...all, how]));
 
   // Restore after mount (the server render can't see sessionStorage), then
   // save on every change.
   const restored = useRef(false);
   useEffect(() => {
+    // Once: a second run (React's dev double-invoke) would read back the
+    // save effect's first write instead of the tab's reading.
+    if (restored.current) return;
     const saved = loadReading();
     restored.current = true;
-    if (!saved) return;
-    /* eslint-disable react-hooks/set-state-in-effect -- one-time restore from tab storage */
+    /* eslint-disable react-hooks/set-state-in-effect -- one-time restore from tab and device storage */
+    if (!saved) {
+      // The clinic's usual series, or ask how many allergens the panel has.
+      const def = loadDefaultSeries();
+      if (def) setSeriesId(def);
+      else setAsk(true);
+      return;
+    }
     setSeriesId(saved.seriesId);
     setDay(saved.day);
     setReadDate(saved.readDate);
@@ -135,16 +155,31 @@ export function PatchTestReader() {
   const groups = useMemo(() => [...new Set(chambers.map((c) => c.group))], [chambers]);
   const graded = Object.values(grades).filter((g) => g !== "neg").length;
 
-  const writeUp = readingWriteUp({ series, chambers, grades, day, readDate: readDate || undefined });
-  const avoidAll = avoidIdsFrom(chambers, grades, includeDoubtful);
+  const isListed = (key: string) => {
+    const g = grades[key] ?? "neg";
+    return POSITIVE.has(g) || (includeDoubtful && g === "?+");
+  };
+  const listedChambers = chambers.filter((c) => c.item && isListed(c.key));
+  // The grades as they go to the patient: positives left off count as negative.
+  const patientGrades = Object.fromEntries(Object.entries(grades).filter(([k]) => !leftOff.has(k)));
+  const writeUp = readingWriteUp({
+    series,
+    chambers,
+    grades,
+    day,
+    readDate: readDate || undefined,
+    handout: { leftOff: listedChambers.filter((c) => leftOff.has(c.key)).map((c) => c.item!.name), given },
+  });
+  const avoidAll = avoidIdsFrom(chambers, patientGrades, includeDoubtful);
   const avoidIds = avoidAll.filter((id) => resolveAllergenId(id));
   const offLabel = avoidAll.filter((id) => getNotOnLabel(id));
-  const url = `${origin}${buildImportPath(avoidAll, { date: readDate || undefined })}`;
-  const hasPositives = avoidAll.length > 0;
+  const url = `${origin}${buildImportPath(avoidAll, { date: readDate || undefined, fromClinic: true })}`;
+  const hasPositives = listedChambers.length > 0;
+  const { extras, loading } = useHandoutExtras(avoidAll);
   // The tested names behind each id, for the printed sheet.
   const positives = positivesById(
     chambers
-      .filter((c) => c.item && (POSITIVE.has(grades[c.key] ?? "neg") || (includeDoubtful && grades[c.key] === "?+")))
+      .filter((c) => c.item && isListed(c.key) && !leftOff.has(c.key))
       .map((c) => seriesItemKey(series.id, c.item!)),
   );
 
@@ -159,7 +194,8 @@ export function PatchTestReader() {
     if (graded > 0 && !confirm("Clear all grades and start a new reading?")) return;
     setGrades({});
     setLastTapped(null);
-    setPatient("");
+    setLeftOff(new Set());
+    setGiven([]);
     setView("grid");
   }
 
@@ -211,11 +247,37 @@ export function PatchTestReader() {
                 <input type="checkbox" checked={includeDoubtful} onChange={(e) => setIncludeDoubtful(e.target.checked)} />
                 Include doubtful (?+) reactions
               </label>
-              <label className="block max-w-sm space-y-1 text-sm">
-                <span className="font-medium">Patient name (printed only)</span>
-                <Input value={patient} onChange={(e) => setPatient(e.target.value)} autoComplete="off" data-1p-ignore data-lpignore="true" />
-                <span className="block text-xs text-muted-foreground">Stays on this device; never sent to us and not in the link.</span>
-              </label>
+              <fieldset className="space-y-1.5">
+                <legend className="text-sm font-medium">On the patient&apos;s list</legend>
+                <p className="text-xs text-muted-foreground">Untick a reaction you judge not relevant. It stays in the chart note as read and is left off the handout.</p>
+                <ul className="grid gap-1 sm:grid-cols-2">
+                  {listedChambers.map((c) => (
+                    <li key={c.key}>
+                      <label className="flex items-start gap-2 text-sm">
+                        <input
+                          type="checkbox"
+                          className="mt-0.5"
+                          checked={!leftOff.has(c.key)}
+                          onChange={(e) =>
+                            setLeftOff((prev) => {
+                              const next = new Set(prev);
+                              if (e.target.checked) next.delete(c.key);
+                              else next.add(c.key);
+                              return next;
+                            })
+                          }
+                        />
+                        <span>
+                          {c.item!.name} <span className="text-muted-foreground">({grades[c.key]})</span>
+                        </span>
+                      </label>
+                    </li>
+                  ))}
+                </ul>
+              </fieldset>
+              {avoidAll.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Every reaction is unticked, so there&apos;s no list to give.</p>
+              ) : (
               <div className="grid gap-4 sm:grid-cols-[176px_minmax(0,1fr)] sm:items-start">
                 {origin && <QrCode value={url} className="mx-auto h-44 w-44" title="QR code for the patient's avoid list" />}
                 <div className="space-y-3 text-sm">
@@ -225,10 +287,19 @@ export function PatchTestReader() {
                     for it.
                   </p>
                   <div className="flex flex-wrap gap-2">
-                    <Button type="button" data-track="patch-reader:print" onClick={() => window.print()} className="rounded-full">
-                      <Printer className="h-4 w-4" /> Print sheet
+                    <Button
+                      type="button"
+                      data-track="patch-reader:print"
+                      disabled={loading}
+                      onClick={() => {
+                        markGiven("printed");
+                        window.print();
+                      }}
+                      className="rounded-full"
+                    >
+                      <Printer className="h-4 w-4" /> {loading ? "Preparing…" : "Print handout"}
                     </Button>
-                    <a href={mail} data-track="patch-reader:email" className="inline-flex h-9 items-center gap-1.5 rounded-full border bg-background px-4 text-sm font-medium hover:bg-muted">
+                    <a href={mail} data-track="patch-reader:email" onClick={() => markGiven("link emailed")} className="inline-flex h-9 items-center gap-1.5 rounded-full border bg-background px-4 text-sm font-medium hover:bg-muted">
                       <Mail className="h-4 w-4" /> Email
                     </a>
                     <Button
@@ -239,6 +310,7 @@ export function PatchTestReader() {
                       onClick={async () => {
                         await navigator.clipboard?.writeText(url).catch(() => {});
                         setCopied("link");
+                        markGiven("link copied");
                       }}
                     >
                       {copied === "link" ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />} {copied === "link" ? "Copied" : "Copy link"}
@@ -246,10 +318,11 @@ export function PatchTestReader() {
                   </div>
                   <p className="text-xs text-muted-foreground">
                     Email opens your own email app; you add the patient&apos;s address there, so it never reaches us. The link holds only the
-                    allergen code and reading date.
+                    allergen code and reading date. The patient can also email it to themselves from the page the QR code opens.
                   </p>
                 </div>
               </div>
+              )}
             </>
           )}
         </section>
@@ -258,15 +331,36 @@ export function PatchTestReader() {
           <RotateCcw className="h-4 w-4" /> New reading
         </Button>
 
-        {hasPositives &&
+        {avoidAll.length > 0 &&
           origin &&
-          createPortal(<PrintSheet url={url} ids={avoidIds} offLabel={offLabel} positives={positives} patient={patient.trim()} date={readDate || undefined} />, document.body)}
+          createPortal(
+            <PrintSheet
+              url={url}
+              ids={avoidIds}
+              offLabel={offLabel}
+              positives={positives}
+              date={readDate || undefined}
+              clinic={clinic}
+              extras={extras}
+            />,
+            document.body,
+          )}
       </div>
     );
   }
 
   return (
     <div className="space-y-5">
+      {ask && (
+        <SeriesCountDialog
+          onPick={(id) => {
+            setSeriesId(id);
+            saveDefaultSeries(id);
+            setAsk(false);
+          }}
+          onClose={() => setAsk(false)}
+        />
+      )}
       <div className="flex flex-wrap items-end gap-3">
         <label className="space-y-1 text-sm">
           <span className="block font-medium">Series</span>
@@ -278,6 +372,7 @@ export function PatchTestReader() {
               setGrades({});
               setLastTapped(null);
               setSeriesId(e.target.value);
+              saveDefaultSeries(e.target.value);
             }}
           >
             {PATCH_TEST_SERIES.map((s) => (
@@ -317,10 +412,10 @@ export function PatchTestReader() {
           <Smartphone className="h-3.5 w-3.5 rotate-90" /> Turn your phone sideways for bigger boxes.
         </span>
       </p>
-      {!spec && (
+      {series.id === "core" && (
         <p className="text-xs text-muted-foreground">
           This list is grouped by allergen type, not tray order. To read by position, pick your tray: the T.R.U.E. Test, ACDS core
-          (2020 or 2017) or NAC-80.
+          (2020 or 2017), NAC-80 or the European baseline.
         </p>
       )}
       {spec && (

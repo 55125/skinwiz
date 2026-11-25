@@ -47,14 +47,21 @@ export function PatchTestChecklist({
   onChange,
   ticked: tickedProp,
   onTickedChange,
+  tab: tabProp,
+  onTabChange,
 }: {
   selected: Set<string>;
   onChange: (next: Set<string>) => void;
   // Series items ticked by name (seriesItemKey), for callers that print them.
   ticked?: Set<string>;
   onTickedChange?: (next: Set<string>) => void;
+  // The series tab, for a caller that remembers the clinic's usual series.
+  tab?: string;
+  onTabChange?: (id: string) => void;
 }) {
-  const [tab, setTab] = useState(PATCH_TEST_SERIES[0].id);
+  const [ownTab, setOwnTab] = useState(PATCH_TEST_SERIES[0].id);
+  const tab = tabProp ?? ownTab;
+  const setTab = onTabChange ?? setOwnTab;
   const [query, setQuery] = useState("");
   const [ownTicked, setOwnTicked] = useState<Set<string>>(() => new Set());
   const ticked = tickedProp ?? ownTicked;
@@ -294,7 +301,7 @@ export function PatchTestSeriesPicker({ onAdd, defaultOpen }: { onAdd: (ids: str
         <span>
           <span className="block text-sm font-semibold">Pick from a patch-test series</span>
           <span className="block text-xs text-muted-foreground">
-            Tick your positives on the series your dermatologist used: the T.R.U.E. Test, an ACDS or NAC-80 tray, or the core series.
+            Tick your positives on the series your dermatologist used: the T.R.U.E. Test, an ACDS or NAC-80 tray, the European baseline series, or the core series.
           </span>
         </span>
       </summary>

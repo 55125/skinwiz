@@ -4,7 +4,8 @@ import { PageHeader } from "@/components/page-header";
 import { PatchTestReader } from "@/components/patch-test-reader";
 import { PatchTestIssuer } from "@/components/patch-test-issuer";
 import { FEATURES } from "@/lib/feature-flags";
-import { currentClinician } from "@/lib/clinicians";
+import { clinicianDisplayName, currentClinician } from "@/lib/clinicians";
+import type { ClinicHeader } from "@/components/patch-test-handout";
 import { listsForClinician } from "@/lib/clinician-lists";
 import { cn } from "@/lib/utils";
 
@@ -26,9 +27,13 @@ export const dynamic = "force-dynamic";
 export default async function PatchTestReaderPage({ searchParams }: { searchParams: Promise<{ mode?: string; list?: string }> }) {
   const { mode, list } = await searchParams;
   const tick = mode === "tick" || !!list;
-  // A signed-in clinician's starter lists; anyone else gets the plain tick list.
-  const { clinician } = tick && FEATURES.HANDOUTS ? await currentClinician() : { clinician: null };
-  const lists = clinician ? listsForClinician(clinician.id).map((l) => ({ id: l.id, name: l.name, ids: l.ids })) : [];
+  // A signed-in clinician's starter lists and clinic header; anyone else
+  // gets the plain tick list and an unbranded sheet.
+  const { clinician } = FEATURES.HANDOUTS ? await currentClinician() : { clinician: null };
+  const clinic: ClinicHeader | null = clinician
+    ? { name: clinician.clinicName, clinician: clinicianDisplayName(clinician), phone: clinician.clinicPhone, website: clinician.clinicWebsite }
+    : null;
+  const lists = clinician && tick ? listsForClinician(clinician.id).map((l) => ({ id: l.id, name: l.name, ids: l.ids })) : [];
   const initialIds = lists.find((l) => l.id === list)?.ids ?? [];
 
   return (
@@ -38,8 +43,8 @@ export default async function PatchTestReaderPage({ searchParams }: { searchPara
         title="Patch-test reader"
         description={
           tick
-            ? "Already have the results? Tick the patient's positives, add an optional note, and print a one-page sheet whose QR code fills in their avoid list. The patient's name stays on this device; only the allergen list, date and note travel in the link."
-            : "Pick the series, tap each chamber to grade it, then copy the write-up to the chart and hand the patient their avoid list. Grades, the write-up and the patient's name stay on this device; only the avoid-list link (allergen code and date) leaves it, when you share it."
+            ? "Already have the results? Tick the patient's positives, add an optional note, and print a one-page sheet whose QR code fills in their avoid list. No patient details are asked for; only the allergen list, date and note travel in the link."
+            : "Pick the series, tap each chamber to grade it, then copy the write-up to the chart and hand the patient their avoid list. Grades and the write-up stay on this device, and no patient details are asked for; only the avoid-list link (allergen code and date) leaves it, when you share it."
         }
       />
 
@@ -64,7 +69,7 @@ export default async function PatchTestReaderPage({ searchParams }: { searchPara
         ))}
       </nav>
 
-      {tick ? <PatchTestIssuer lists={lists} initialIds={initialIds} key={list ?? "none"} /> : <PatchTestReader />}
+      {tick ? <PatchTestIssuer lists={lists} initialIds={initialIds} clinic={clinic} key={list ?? "none"} /> : <PatchTestReader clinic={clinic} />}
 
       {tick ? (
         <p className="text-xs leading-relaxed text-muted-foreground">

@@ -83,6 +83,9 @@ export function readingWriteUp(opts: {
   day: ReadingDay;
   readDate?: string;
   appliedDate?: string;
+  // What went to the patient: positives the clinician left off their avoid
+  // list as not relevant, and how the handout was given ("printed").
+  handout?: { leftOff: string[]; given: string[] };
 }): string {
   const { series, chambers, grades } = opts;
   const day = READING_DAYS.find((d) => d.id === opts.day)?.label ?? opts.day;
@@ -107,6 +110,10 @@ export function readingWriteUp(opts: {
     const g = grades[control.key] ?? "neg";
     lines.push(g === "neg" ? "Negative control: negative." : `Negative control: ${g}; interpret other reactions with caution.`);
   }
+  const leftOff = opts.handout?.leftOff ?? [];
+  const given = opts.handout?.given ?? [];
+  if (leftOff.length) lines.push(`Left off the patient's avoid list as not relevant: ${leftOff.join(", ")}.`);
+  if (given.length) lines.push(`Patient allergen handout given: ${given.join(", ")}.`);
   lines.push("Clinical relevance to be determined by the clinician.");
   return lines.join("\n");
 }
@@ -164,4 +171,38 @@ export function backSpec(series: PatchTestSeries, acds: AcdsLayout = defaultTray
     };
   }
   return null;
+}
+
+// --- Which series, from the panel's size ------------------------------------
+
+/** Allergens on a series (the T.R.U.E. Test's negative control doesn't count). */
+export function allergenCount(series: PatchTestSeries): number {
+  return chambersFor(series).filter((c) => c.item).length;
+}
+
+/** The series a panel of `n` allergens could be: one when the size settles it, several when trays share a size (80), none when we don't carry it. */
+export function seriesForCount(n: number): PatchTestSeries[] {
+  if (!Number.isInteger(n) || n <= 0) return [];
+  // The T.R.U.E. Test is sold as 36 chambers (35 allergens and a control).
+  return PATCH_TEST_SERIES.filter((s) => allergenCount(s) === n || (s.id === "true-test" && n === 36));
+}
+
+// The clinic's usual series, remembered on this device (like the tray
+// layouts): picked once from the "how many allergens?" question, updated
+// whenever the series menu changes. No patient data.
+export const DEFAULT_SERIES_KEY = "actively.reader.defaultSeries";
+
+export function loadDefaultSeries(): string | null {
+  try {
+    const id = localStorage.getItem(DEFAULT_SERIES_KEY);
+    return id && PATCH_TEST_SERIES.some((s) => s.id === id) ? id : null;
+  } catch {
+    return null;
+  }
+}
+
+export function saveDefaultSeries(id: string): void {
+  try {
+    localStorage.setItem(DEFAULT_SERIES_KEY, id);
+  } catch {}
 }

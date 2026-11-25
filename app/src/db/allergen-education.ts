@@ -48,10 +48,7 @@ export type AllergenEducation = {
   reviewed: { by: string; on: string } | null;
 };
 
-/** The two-sentence opening every allergen's handout section shares. */
-export function allergyIntro(name: string): string {
-  return `Your patch test shows a contact allergy to ${name}. Touching it can cause an itchy rash, redness, swelling or small blisters, usually 1 to 3 days after contact, so the cause is easy to miss.`;
-}
+export { allergyIntro, allergyIntroMany } from "./allergen-education-intro";
 
 const unreviewed = null;
 

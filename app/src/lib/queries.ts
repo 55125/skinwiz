@@ -35,6 +35,7 @@ import { isDailymedImageUrl } from "@/lib/image-urls";
 import { LISTED, canonicalIdsOf, inProductGroup } from "@/lib/canonical";
 import { parseProductCode } from "@/lib/product-codes";
 import { productBrand } from "@/lib/product-brand";
+import { KNOWN_BRANDS, brandEntries, brandFromName } from "@/lib/product-brand-match";
 import { originIdsJson } from "@/lib/origin";
 import { ORIGINS, type OriginId } from "@/lib/origin-shared";
 import { discontinuedIdsJson, importIdsJson, inStockIdsJson, popularIdsJson } from "@/lib/availability";
@@ -1319,3 +1320,99 @@ export const getProductsContainingAllergens = ttlCache((ids: string[], limit: nu
   const total = db.get<{ n: number }>(sql`SELECT COUNT(*) AS n FROM products WHERE ${where}`)!.n;
   return { rows, byConcern, total };
 });
+
+/** The kinds of product the printed patch-test handout names examples of. */
+export const HANDOUT_PRODUCT_KINDS: { concernId: string; label: string }[] = [
+  { concernId: "dry-skin-eczema", label: "Moisturizer or cleanser" },
+  { concernId: "sun-protection", label: "Sunscreen" },
+  { concernId: "hair-care", label: "Shampoo or hair care" },
+];
+
+/** `title` is the printed line: the brand, then the product name when the name doesn't already start with it. */
+export type HandoutProduct = { id: string; title: string };
+
+export function handoutProductTitle(name: string, brand: string | null): string {
+  const b = brand?.split(",")[0].trim();
+  const n = name.trim();
+  if (!b || n.toLowerCase().startsWith(b.toLowerCase())) return n;
+  return `${b} ${n}`;
+}
+
+const KNOWN_BRAND_ENTRIES = brandEntries(KNOWN_BRANDS);
+
+// Named examples for the printed patch-test handout: products whose full
+// ingredient list is clear of every allergen on the list, picked so the
+// patient can find them in a store. In stock at a US retailer now first,
+// then popular on this site, then a household brand (KNOWN_BRANDS), then
+// sold by the most retailers; discontinued and import-only products are left
+// out entirely, and no product or brand shows up twice. No prices or links:
+// paper goes stale.
+export function getHandoutSafeProducts(
+  ids: string[],
+  kinds: { concernId: string; label: string }[] = HANDOUT_PRODUCT_KINDS,
+  perKind = 2,
+): { concernId: string; label: string; products: HandoutProduct[] }[] {
+  const allergenIds = [...new Set(ids)].filter((id) => resolveAllergenId(id) || avoidedIngredientId(id));
+  if (allergenIds.length === 0) return [];
+  const since = new Date(Date.now() - 30 * 86_400_000).toISOString();
+  const retailers = sql<number>`(
+    (SELECT COUNT(DISTINCT pq.merchant_name) FROM price_quotes pq WHERE pq.product_id = ${products.id} AND pq.fetched_at >= ${since})
+    + (SELECT COUNT(DISTINCT m.retailer) FROM manual_affiliate_links m WHERE m.product_id = ${products.id})
+  )`;
+  const usedBrands = new Set<string>();
+  const used = new Set<string>();
+  const out: { concernId: string; label: string; products: HandoutProduct[] }[] = [];
+  for (const kind of kinds) {
+    const rows = db
+      .select({
+        id: products.id,
+        brandName: products.brandName,
+        manufacturer: products.manufacturer,
+        dataSource: products.dataSource,
+        inStock: sql<number>`CASE WHEN ${inIds(inStockIdsJson())} THEN 1 ELSE 0 END`,
+        popular: sql<number>`CASE WHEN ${inIds(popularIdsJson())} THEN 1 ELSE 0 END`,
+        retailers,
+      })
+      .from(products)
+      .where(
+        and(
+          LISTED_OTC,
+          inConcern(kind.concernId),
+          concernListingClause(kind.concernId),
+          notDuplicate(),
+          sql`NOT ${inIds(discontinuedIdsJson())}`,
+          sql`NOT ${inIds(importIdsJson())}`,
+          sql`${products.id} NOT IN (SELECT value FROM json_each(${poorTitleIdsJson()}))`,
+          ...freeFromWhereClauses(allergenIds),
+        ),
+      )
+      .orderBy(
+        sql`CASE WHEN ${inIds(inStockIdsJson())} THEN 0 ELSE 1 END`,
+        sql`CASE WHEN ${inIds(popularIdsJson())} THEN 0 ELSE 1 END`,
+        sql`${retailers} DESC`,
+        concernTierOrder(kind.concernId),
+        sql`${products.imageUrl} IS NULL`,
+        sql`${products}.rowid`,
+      )
+      .limit(300)
+      .all();
+    const ranked = rows
+      .map((r, i) => {
+        const brand = productBrand(r).brand;
+        const known = !!(brandFromName(r.brandName, KNOWN_BRAND_ENTRIES) || (brand && brandFromName(brand, KNOWN_BRAND_ENTRIES)));
+        return { r, i, brand, known };
+      })
+      .sort((a, b) => b.r.inStock - a.r.inStock || b.r.popular - a.r.popular || Number(b.known) - Number(a.known) || b.r.retailers - a.r.retailers || a.i - b.i);
+    const picked: HandoutProduct[] = [];
+    for (const { r, brand } of ranked) {
+      if (picked.length >= perKind) break;
+      const brandKey = (brand ?? r.brandName).trim().toLowerCase();
+      if (used.has(r.id) || usedBrands.has(brandKey)) continue;
+      used.add(r.id);
+      usedBrands.add(brandKey);
+      picked.push({ id: r.id, title: handoutProductTitle(r.brandName, brand) });
+    }
+    if (picked.length) out.push({ ...kind, products: picked });
+  }
+  return out;
+}

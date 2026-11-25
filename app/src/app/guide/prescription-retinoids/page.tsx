@@ -102,7 +102,6 @@ export default function PrescriptionRetinoidGuide() {
             <li key={s}>{s}</li>
           ))}
         </ul>
-        <p className="pt-2">Drafted with AI assistance; physician review in progress.</p>
       </section>
     </div>
   );

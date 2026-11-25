@@ -73,11 +73,6 @@ export default async function HandoutPreviewPage({ params }: { params: Promise<{
             <li key={s}>{s}</li>
           ))}
         </ul>
-        <p className="pt-2">
-          {t.reviewed
-            ? "Drafted with AI assistance and reviewed by the site's dermatologist before clinical use."
-            : "Drafted with AI assistance; physician review in progress. Read it before you hand it out; every word is editable."}
-        </p>
       </section>
     </div>
   );

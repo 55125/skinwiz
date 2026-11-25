@@ -100,11 +100,6 @@ export default function ClinicToolsPage() {
               Plain-language handouts written to be edited. Using one needs a free clinician account (email plus NPI) so the copy
               carries your name and clinic.
             </p>
-            <p className="text-xs text-muted-foreground">
-              {items.every((t) => !t.draft)
-                ? "Drafted with AI assistance and reviewed by the site's dermatologist before clinical use."
-                : "Drafted with AI assistance; physician review in progress. Read each one before you hand it out."}
-            </p>
             <p className="flex flex-wrap gap-x-4 gap-y-1 pt-1 text-sm">
               <Link href="/clinicians/handouts/new" className="font-medium text-brand hover:underline">
                 Start from a blank page →

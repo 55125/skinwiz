@@ -101,11 +101,6 @@ export function AllergenEducationSections({ e, identifiers = false }: { e: Aller
         </section>
       )}
 
-      {!e.reviewed && (
-        <p className="text-xs text-muted-foreground">
-          The sections above are drawn from standard patient-education sources and haven&apos;t been reviewed by a dermatologist yet.
-        </p>
-      )}
     </>
   );
 }

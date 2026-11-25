@@ -87,7 +87,6 @@ export function HowToUse({
           <p className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
             <ClipboardList className="h-3.5 w-3.5" /> Using{" "}
             <IngredientLink id={g.activeId}>{(ACTIVE_NAME.get(g.activeId) ?? g.activeId).toLowerCase()}</IngredientLink>
-            {g.draft && <span className="rounded-full bg-amber-100 px-1.5 py-px text-[10px] font-semibold uppercase tracking-wider text-amber-900">Draft</span>}
           </p>
           <ul className="list-disc space-y-0.5 pl-5 text-sm leading-relaxed">
             {g.howToUse.map((h) => <li key={h}>{h}</li>)}
@@ -107,7 +106,6 @@ export function HowToUse({
         <div className="space-y-1">
           <p className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
             Applying a {formulation.label.toLowerCase()}
-            {formulation.draft && <span className="rounded-full bg-amber-100 px-1.5 py-px text-[10px] font-semibold uppercase tracking-wider text-amber-900">Draft</span>}
           </p>
           <ul className="list-disc space-y-0.5 pl-5 text-sm leading-relaxed">
             {formulation.howToApply.map((h) => <li key={h}>{h}</li>)}

@@ -85,16 +85,9 @@ export function HandoutAllergenSections({ ids, extras, positives = {} }: { ids: 
   const byId = new Map(extras.education.map((e) => [e.id, e]));
   const records = ids.map((id) => byId.get(id)).filter((e) => e !== undefined);
   if (records.length === 0) return null;
-  const unreviewed = records.some((e) => !e.reviewed);
   return (
     <div style={{ breakBefore: "page" }}>
-      <h2 style={{ ...H2, margin: "0 0 1mm", fontSize: "14pt" }}>About each allergen</h2>
-      {unreviewed && (
-        <p style={{ margin: "0 0 2mm", fontSize: "8pt" }}>
-          These notes are drawn from standard patient-education sources and haven&apos;t been reviewed by a dermatologist yet. Your own
-          dermatologist&apos;s advice comes first.
-        </p>
-      )}
+      <h2 style={{ ...H2, margin: "0 0 2mm", fontSize: "14pt" }}>About each allergen</h2>
       {records.map((e) => (
         <AllergenBlock key={e.id} e={e} tested={positives[e.id]} />
       ))}

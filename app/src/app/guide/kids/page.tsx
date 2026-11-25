@@ -30,7 +30,6 @@ export default function KidsGuidesPage() {
           </li>
         ))}
       </ul>
-      <p className="text-xs text-muted-foreground">Drafted with AI assistance; physician review in progress.</p>
     </div>
   );
 }

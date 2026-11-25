@@ -133,12 +133,6 @@ export function HandoutBuilder({
 
   return (
     <div className="space-y-8">
-      {initial.templateDraft && (
-        <p className="text-xs text-muted-foreground">
-          This template was drafted with AI assistance; physician review in progress. Read it before handing it out; every word is
-          yours to edit.
-        </p>
-      )}
 
       <label className="block space-y-1 text-sm">
         <span className="font-medium">Handout title (the patient sees this)</span>

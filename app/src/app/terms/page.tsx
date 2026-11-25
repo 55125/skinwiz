@@ -161,8 +161,7 @@ export default function TermsPage() {
         </li>
         <li>
           The clinic tools are information and convenience tools. You remain responsible for every clinical decision,
-          for reading and editing each handout before you give it out, and for what you tell your patients. Library
-          handouts were drafted with AI assistance, and many have not yet had physician review.
+          for reading and editing each handout before you give it out, and for what you tell your patients.
         </li>
         <li>
           The clinic tools are built so that patient information does not reach us. Do not type patient names, dates

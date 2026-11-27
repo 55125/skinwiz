@@ -218,6 +218,13 @@
       "when": 1794815799826,
       "tag": "0030_indexnow_urls",
       "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "6",
+      "when": 1795752204258,
+      "tag": "0031_analytics_geo",
+      "breakpoints": true
     }
   ]
 }

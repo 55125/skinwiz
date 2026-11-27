@@ -2,6 +2,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
+  geoFromHeaders,
   cleanPath,
   cleanSearchTerm,
   dayRange,
@@ -124,4 +125,20 @@ test("day ranges and percent change", () => {
   assert.deepEqual(dayRange(new Date("2026-10-08T05:00:00Z"), 3), ["2026-10-06", "2026-10-07", "2026-10-08"]);
   assert.equal(percentChange(150, 100), 50);
   assert.equal(percentChange(5, 0), null);
+});
+
+test("geoFromHeaders: Cloudflare's coarse location, only when the request came through Cloudflare", () => {
+  const h = new Headers({ "cf-ipcountry": "us", "cf-region-code": "tx", "cf-ipcity": "Austin", "cf-iplatitude": "30.2" });
+  assert.deepEqual(geoFromHeaders(h, true), { country: "US", region: "TX", city: "Austin" });
+  assert.deepEqual(geoFromHeaders(h, false), { country: null, region: null, city: null }, "spoofable off Cloudflare");
+  assert.equal(geoFromHeaders(new Headers({ "cf-ipcountry": "XX", "cf-ipcity": "X" }), true).country, null);
+  assert.equal(geoFromHeaders(new Headers({ "cf-ipcountry": "T1" }), true).country, null, "Tor");
+  assert.deepEqual(geoFromHeaders(new Headers({ "cf-ipcountry": "DE" }), true), { country: "DE", region: null, city: null });
+  const latin1 = Buffer.from("São Paulo", "utf8").toString("latin1");
+  assert.equal(geoFromHeaders(new Headers({ "cf-ipcountry": "BR", "cf-ipcity": latin1 }), true).city, "São Paulo");
+  assert.deepEqual(geoFromHeaders(new Headers({ "cf-ipcountry": "US", "cf-ipcity": 'Saint "Paul"', "cf-region-code": "bad!" }), true), {
+    country: "US",
+    region: null,
+    city: "Saint Paul",
+  });
 });

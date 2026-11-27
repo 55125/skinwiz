@@ -286,6 +286,13 @@ for (const r of ["2400:cb00::/32", "2606:4700::/32", "2803:f800::/32", "2405:b50
   CLOUDFLARE.addSubnet(r.split("/")[0], Number(r.split("/")[1]), "ipv6");
 }
 
+/** True when the request reached us through Cloudflare, so its CF-* headers can be believed. */
+export function viaCloudflare(headers: Headers): boolean {
+  const real = headers.get("x-real-ip")?.trim();
+  const peer = real || headers.get("x-forwarded-for")?.split(",").pop()!.trim() || null;
+  return peer !== null && fromCloudflare(peer);
+}
+
 function fromCloudflare(ip: string): boolean {
   const family = isIP(ip);
   return family !== 0 && CLOUDFLARE.check(ip, family === 6 ? "ipv6" : "ipv4");

@@ -126,13 +126,14 @@ export default function PrivacyPage() {
         To see how the site is used, we keep our own first-party statistics. We do not use Google Analytics or
         any other outside analytics service, and they set no cookies. For each page you view, we record the page
         address (without its query string, and with private link codes removed), the website that referred you,
-        any campaign tags in the link (such as utm_source), whether you are on a phone, tablet or computer, and
-        the time. We also count clicks on links to retailers and other sites (the destination site only), searches
+        any campaign tags in the link (such as utm_source), whether you are on a phone, tablet or computer, your
+        approximate location (country, state or region, and city, as estimated from your IP address by our network
+        provider, Cloudflare), and the time. We also count clicks on links to retailers and other sites (the destination site only), searches
         typed into our search box with how many results they found (terms that look like an email address or phone
         number are discarded), and clicks on clinician tool buttons such as Print.
       </p>
       <p>
-        We never store your IP address for this. To count each visitor once per day, we combine the IP address
+        We never store your IP address or your exact location for this. To count each visitor once per day, we combine the IP address
         and browser type with a random value that changes every day and keep only a scrambled (hashed) result. The
         daily value is deleted after one day, after which that result cannot be traced back to you or linked to
         your visits on other days. These statistics are not linked to your session cookie, your email or your

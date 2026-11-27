@@ -1072,6 +1072,11 @@ export const analyticsEvents = sqliteTable(
     detail: text("detail"), // outbound: retailer host; search: the term; tool: tool name
     value: integer("value"), // search: result count
     productId: text("product_id"), // outbound clicks from a product page
+    // Approximate location from Cloudflare's geolocation headers (no IP, no
+    // coordinates): ISO country, region/state code, city name. Null when unknown.
+    country: text("country"),
+    region: text("region"),
+    city: text("city"),
   },
   (table) => [
     index("analytics_events_kind_day_idx").on(table.kind, table.day),

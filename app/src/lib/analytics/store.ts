@@ -5,7 +5,7 @@ import { randomBytes } from "node:crypto";
 import { and, eq, lt, sql } from "drizzle-orm";
 import { db } from "@/db/client";
 import { analyticsEvents, analyticsSalts, optOutTallies, serverErrors } from "@/db/schema";
-import { deviceFromUa, utcDay, visitorHash, type CleanEvent, type OptOutSignal, type TallyKind } from "./core";
+import { NO_GEO, deviceFromUa, utcDay, visitorHash, type CleanEvent, type Geo, type OptOutSignal, type TallyKind } from "./core";
 
 export const ANALYTICS_RETENTION_DAYS = 395;
 const ERROR_RETENTION_DAYS = 90;
@@ -20,7 +20,8 @@ export function dailySalt(now: Date): string {
   return db.select({ salt: analyticsSalts.salt }).from(analyticsSalts).where(eq(analyticsSalts.day, day)).get()!.salt;
 }
 
-export function recordEvent(event: CleanEvent, client: { ip: string; ua: string }, now = new Date()): void {
+export function recordEvent(event: CleanEvent, client: { ip: string; ua: string; geo?: Geo }, now = new Date()): void {
+  const geo = client.geo ?? NO_GEO;
   const visitor = visitorHash(dailySalt(now), client.ip, client.ua);
   // One pageview per visitor per path per minute: a reload loop or a stuck
   // tab shouldn't inflate the counts.
@@ -56,6 +57,9 @@ export function recordEvent(event: CleanEvent, client: { ip: string; ua: string 
       detail: event.detail,
       value: event.value,
       productId: event.productId,
+      country: geo.country,
+      region: geo.region,
+      city: geo.city,
     })
     .run();
 }

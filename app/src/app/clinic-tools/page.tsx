@@ -46,6 +46,11 @@ export default function ClinicToolsPage() {
           icon: Pill,
           title: "Prescribe-safe finder",
           body: "Pick a patient's contact allergens (or paste their avoid-list link) and see which topical prescriptions list none of them in the vehicle or the active, labeler by labeler. No sign-in needed.",
+        }, {
+          href: "/rx",
+          icon: Pill,
+          title: "Prescription medicines",
+          body: "Every topical and oral skin prescription by medicine: strengths, vehicles, brands, steroid class, and each FDA label summary.",
         }]
       : []),
     // Starter lists live on the clinician dashboard, which is a 404 while handouts are off.

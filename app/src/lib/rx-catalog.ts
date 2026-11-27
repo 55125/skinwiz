@@ -7,6 +7,7 @@ import { and, asc, eq, inArray, or, sql } from "drizzle-orm";
 import { parseProductCode } from "@/lib/product-codes";
 import { db } from "@/db/client";
 import { products, rxLabelSections } from "@/db/schema";
+import { rxDisplayName } from "@/lib/rx-catalog-pure";
 
 export type RxProduct = typeof products.$inferSelect;
 export type RxLabel = typeof rxLabelSections.$inferSelect;
@@ -69,17 +70,7 @@ export function searchRxForHandout(q: string, limit = 20): RxProduct[] {
   return out;
 }
 
-/** "Tretinoin 0.025% cream" -- generic + strength + vehicle, the way a prescriber writes it. */
-export function rxDisplayName(p: Pick<RxProduct, "genericName" | "strengthText" | "dosageForm" | "brandName">): string {
-  const generic = p.genericName?.trim() || p.brandName;
-  const strengths = (p.strengthText ?? "")
-    .split(";")
-    .map((s) => s.trim().match(/(\d[\d.]*\s*(?:%|mg|mcg|ug|g)(?![a-z]).*)$/i)?.[1] ?? "")
-    .filter(Boolean);
-  const form = (p.dosageForm ?? "").toLowerCase().replace(/^aerosol, /, "").replace(/, augmented$/, " (augmented)");
-  const words = [generic, strengths.join(" / "), form].filter(Boolean).join(" ");
-  return words.charAt(0).toUpperCase() + words.slice(1);
-}
+export { rxDisplayName };
 
 /**
  * Prescription rows a barcode, NDC or set id names (the box's UPC carries

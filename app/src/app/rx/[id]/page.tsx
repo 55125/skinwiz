@@ -10,13 +10,13 @@ import { innermostPackage, marketingCategoryLabel, rxGroupLabel, rxPriceCheckUrl
 import { POTENCY_LABEL, type PotencyClass } from "@/db/steroid-potency";
 import { displayManufacturer } from "@/lib/format";
 import { SITE_NAME } from "@/lib/brand";
-import { canViewRxPage, canViewRxReference } from "@/lib/clinicians";
+import { canViewRxPage } from "@/lib/clinicians";
 import { DAILYMED_IMAGE_CAPTION, isDailymedImageUrl, productImageAlt, thumbnailUrl } from "@/lib/image-urls";
 
 // Prescription reference page: what the FDA label says, never a
 // recommendation. Open to anyone with the link, a search or a barcode while
 // FEATURE_RX_CATALOG is on (lib/clinicians.ts canViewRxPage; 404 otherwise);
-// the /rx index stays for verified clinicians. Noindex, no
+// so is the /rx browse. Noindex, no
 // JSON-LD, no affiliate or buy link -- only a plain "check prices" search.
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
@@ -32,7 +32,6 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 
 export default async function RxProductPage({ params }: { params: Promise<{ id: string }> }) {
   if (!canViewRxPage()) notFound();
-  const clinician = await canViewRxReference();
   const { id } = await params;
   const p = getRxProduct(decodeURIComponent(id));
   if (!p) notFound();
@@ -51,15 +50,9 @@ export default async function RxProductPage({ params }: { params: Promise<{ id: 
 
   return (
     <div className="mx-auto max-w-4xl space-y-8 px-4 py-10">
-      {clinician ? (
-        <Link href="/rx" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
-          <ChevronLeft className="h-4 w-4" /> Prescription reference
-        </Link>
-      ) : (
-        <Link href="/search" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
-          <ChevronLeft className="h-4 w-4" /> Search
-        </Link>
-      )}
+      <Link href="/rx" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+        <ChevronLeft className="h-4 w-4" /> Prescription medicines
+      </Link>
 
       {/* Package label image (DailyMed, via the image sync) helps match the
           product a patient brings in; absent until synced. */}

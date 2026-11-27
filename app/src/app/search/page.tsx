@@ -253,7 +253,10 @@ function RxResults({ rows }: { rows: RxProduct[] }) {
           Prescription medicines{" "}
           <span className="text-base font-normal tabular-nums text-muted-foreground">{rows.length}</span>
         </h2>
-        <p className="text-sm text-muted-foreground">What the FDA label says. These need a prescription: ask your dermatologist.</p>
+        <p className="text-sm text-muted-foreground">
+          What the FDA label says. These need a prescription: ask your dermatologist.{" "}
+          <Link href="/rx" className="font-medium text-brand hover:underline">Browse all prescription medicines →</Link>
+        </p>
       </div>
       <ul className="grid gap-2 sm:grid-cols-2">
         {rows.map((r) => (

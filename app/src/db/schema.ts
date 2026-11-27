@@ -172,6 +172,12 @@ export const products = sqliteTable("products", {
   // US topical steroid potency class 1 (superpotent) .. 7, from
   // db/steroid-potency.ts; null = not a steroid, or unclassified.
   steroidPotencyClass: integer("steroid_potency_class"),
+  // Set when the NDC directory's listed strength disagreed with the FDA
+  // Orange Book (tools/catalog_pipeline/check_rx_strengths.py):
+  // "corrected" = strengthText is the confirmed approved strength and
+  // listed is what the labeler keyed; "unverified" = shown as listed, with a
+  // check-the-label note. Null = matched, or nothing to check against.
+  rxStrengthCheck: text("rx_strength_check", { mode: "json" }).$type<{ status: "corrected" | "unverified"; listed: string; approved: string; source: string } | null>(),
   // Isotretinoin: a reference page only, never addable to a handout (iPLEDGE).
   informationalOnly: integer("informational_only", { mode: "boolean" }).notNull().default(false),
   // Set on a duplicate listing only: the id of the product it is the same

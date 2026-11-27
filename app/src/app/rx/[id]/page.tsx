@@ -124,7 +124,20 @@ export default async function RxProductPage({ params }: { params: Promise<{ id: 
       )}
 
       <section className="grid gap-3 sm:grid-cols-2">
-        <Fact label="Strength">{p.strengthText ?? "Not listed"}</Fact>
+        <Fact label="Strength">
+          {p.strengthText ?? "Not listed"}
+          {p.rxStrengthCheck?.status === "corrected" && (
+            <span className="block text-xs text-muted-foreground">
+              Corrected: the FDA drug listing says &ldquo;{p.rxStrengthCheck.listed}&rdquo;, a unit slip. FDA approved {p.rxStrengthCheck.approved} for this
+              product{p.rxStrengthCheck.source.includes("label") ? ", and the label text agrees" : ""}.
+            </span>
+          )}
+          {p.rxStrengthCheck?.status === "unverified" && (
+            <span className="block text-xs text-amber-700 dark:text-amber-400">
+              We couldn&apos;t confirm the listed strength (&ldquo;{p.rxStrengthCheck.listed}&rdquo;) against the FDA approval ({p.rxStrengthCheck.approved}). Check the package label.
+            </span>
+          )}
+        </Fact>
         <Fact label="Form">{(p.dosageForm ?? "Not listed").toLowerCase()}</Fact>
         {potency && (
           <Fact label="Steroid potency">

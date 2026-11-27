@@ -1,0 +1,1 @@
+ALTER TABLE `products` ADD `rx_strength_check` text;

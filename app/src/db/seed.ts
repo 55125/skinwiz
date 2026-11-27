@@ -66,6 +66,7 @@ const RX_CATALOG_CSV = process.env.RX_CATALOG_CSV ?? path.join(REPO_ROOT, "tools
 const RX_LABEL_SECTIONS_CSV = path.join(REPO_ROOT, "tools/catalog_pipeline/output/rx_label_sections.csv");
 // Inactive-ingredient lists from the SPL XML for FDA rows whose catalog CSV
 // row has none (fetch_dailymed_inactive.py). Optional.
+const RX_STRENGTH_CSV = path.join(REPO_ROOT, "tools/catalog_pipeline/output/rx_strength_checks.csv");
 const RX_INACTIVE_CSV = path.join(REPO_ROOT, "tools/catalog_pipeline/output/rx_inactive_ingredients.csv");
 const SPL_INACTIVE_CSV = path.join(REPO_ROOT, "tools/catalog_pipeline/output/dailymed_inactive_ingredients.csv");
 // FDA dosage forms from the SPL XML for DailyMed rows whose catalog row has
@@ -672,6 +673,8 @@ function rxProducts(seenNdc: Set<string>): (typeof schema.products.$inferInsert)
   }
   const out: (typeof schema.products.$inferInsert)[] = [];
   let classified = 0;
+  let fixed = 0;
+  const checks = rxStrengthChecks();
   for (const row of readCsv<RxCatalogRow>(RX_CATALOG_CSV)) {
     if (!row.product_ndc || seenNdc.has(row.product_ndc)) continue;
     seenNdc.add(row.product_ndc);
@@ -683,6 +686,15 @@ function rxProducts(seenNdc: Set<string>): (typeof schema.products.$inferInsert)
       }));
     } catch {
       ingredients = [];
+    }
+    // A unit slip the Orange Book and the label text both contradict
+    // (".05 g/mL" clobetasol read as 5%) is replaced before the potency class.
+    const check = checks.get(row.product_ndc);
+    let strengthText = row.strength_text || null;
+    if (check?.status === "corrected" && check.pcts && check.pcts.length === ingredients.length) {
+      ingredients = ingredients.map((i, n) => ({ ...i, pct: check.pcts![n] }));
+      strengthText = check.strengthText || strengthText;
+      fixed++;
     }
     const potency = steroidPotencyClass(ingredients, row.dosage_form);
     if (potency) classified++;
@@ -708,13 +720,34 @@ function rxProducts(seenNdc: Set<string>): (typeof schema.products.$inferInsert)
       isRx: true,
       genericName: row.generic_name || null,
       rxGroup: row.rx_group || null,
-      strengthText: row.strength_text || null,
+      strengthText,
+      rxStrengthCheck: check ? { status: check.status, listed: check.listed, approved: check.approved, source: check.source } : null,
       route: row.route || null,
       steroidPotencyClass: potency,
       informationalOnly: row.informational_only === "1",
     });
   }
-  console.log(`  ${out.length} prescription (reference-only) rows, ${classified} with a steroid potency class`);
+  console.log(`  ${out.length} prescription (reference-only) rows, ${classified} with a steroid potency class, ${fixed} strengths corrected`);
+  return out;
+}
+
+type RxStrengthCheck = { status: "corrected" | "unverified"; listed: string; pcts: number[] | null; strengthText: string; approved: string; source: string };
+
+/** check_rx_strengths.py output, by NDC; empty when it hasn't been run. */
+function rxStrengthChecks(): Map<string, RxStrengthCheck> {
+  const out = new Map<string, RxStrengthCheck>();
+  if (!fs.existsSync(RX_STRENGTH_CSV)) return out;
+  for (const r of readCsv<Record<string, string>>(RX_STRENGTH_CSV)) {
+    if (r.status !== "corrected" && r.status !== "unverified") continue;
+    let pcts: number[] | null = null;
+    try {
+      pcts = r.pcts_json ? (JSON.parse(r.pcts_json) as number[]) : null;
+    } catch {
+      pcts = null;
+    }
+    if (r.status === "corrected" && !pcts) continue; // never mark corrected without the numbers
+    out.set(r.product_ndc, { status: r.status, listed: r.listed, pcts, strengthText: r.strength_text, approved: r.approved, source: r.source });
+  }
   return out;
 }
 

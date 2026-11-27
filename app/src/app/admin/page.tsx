@@ -137,6 +137,26 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
         <DailyChart series={traffic.series} />
       </Section>
 
+      <Section
+        title="Where visitors are"
+        note={`Unique daily visitors by approximate location, from the IP address via Cloudflare (no IP or exact location is stored; VPNs and some mobile networks show the provider's location). ${fmt(traffic.locations.unknown)} of ${fmt(traffic.locations.located + traffic.locations.unknown)} had no known location, including visits recorded before this was added.`}
+      >
+        <div className="grid gap-6 md:grid-cols-3">
+          <div>
+            <p className="mb-2 text-xs font-medium text-muted-foreground">Countries</p>
+            <Bars rows={traffic.locations.countries.map((r) => ({ ...r, label: countryLabel(r.label) }))} empty="No located visits yet." />
+          </div>
+          <div>
+            <p className="mb-2 text-xs font-medium text-muted-foreground">States and regions</p>
+            <Bars rows={traffic.locations.regions} empty="No region data yet." />
+          </div>
+          <div>
+            <p className="mb-2 text-xs font-medium text-muted-foreground">Cities</p>
+            <Bars rows={traffic.locations.cities} empty="No city data yet." />
+          </div>
+        </div>
+      </Section>
+
       <div className="grid gap-6 lg:grid-cols-2">
         <Section title="Top pages" note="Pageviews, with unique daily visitors in grey.">
           <Bars rows={traffic.topPages} extraLabel="visitors" />
@@ -588,6 +608,18 @@ function Empty({ children }: { children: React.ReactNode }) {
 }
 
 /** part as a share of total, e.g. "4%". */
+const countryNames = new Intl.DisplayNames(["en"], { type: "region" });
+
+/** "United States (US)" from "US"; the code alone if the name isn't known. */
+function countryLabel(code: string): string {
+  try {
+    const name = countryNames.of(code);
+    return name && name !== code ? `${name} (${code})` : code;
+  } catch {
+    return code;
+  }
+}
+
 function share(part: number, total: number): string {
   return total ? `${Math.round((part / total) * 100)}%` : "0%";
 }

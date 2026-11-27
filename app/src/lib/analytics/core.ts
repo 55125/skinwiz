@@ -219,3 +219,38 @@ export function percentChange(current: number, previous: number): number | null 
   if (previous === 0) return null;
   return Math.round(((current - previous) / previous) * 100);
 }
+
+/** Approximate visitor location, as coarse as Cloudflare gives it. Never an IP or coordinates. */
+export type Geo = { country: string | null; region: string | null; city: string | null };
+
+export const NO_GEO: Geo = { country: null, region: null, city: null };
+
+// Cloudflare sends header values as raw UTF-8 bytes, which fetch's Headers
+// reads as Latin-1 ("SÃ£o Paulo"). Re-read them as UTF-8 when that's valid.
+function utf8Header(v: string): string {
+  if (!/[\u0080-ÿ]/.test(v) || /[^\u0000-ÿ]/.test(v)) return v;
+  const s = Buffer.from(v, "latin1").toString("utf8");
+  return s.includes("�") ? v : s;
+}
+
+/**
+ * The visitor's approximate location from Cloudflare's geolocation headers:
+ * CF-IPCountry (always sent) and cf-region-code / cf-ipcity (the "Add visitor
+ * location headers" managed transform). Only believed when the request came
+ * through Cloudflare (`trusted`); anyone reaching the Railway host directly
+ * could set them. "XX" (unknown) and "T1" (Tor) count as unknown.
+ */
+export function geoFromHeaders(headers: Headers, trusted: boolean): Geo {
+  if (!trusted) return NO_GEO;
+  const c = headers.get("cf-ipcountry")?.trim().toUpperCase() ?? "";
+  const country = /^[A-Z]{2}$/.test(c) && c !== "XX" && c !== "T1" ? c : null;
+  if (!country) return NO_GEO;
+  const r = headers.get("cf-region-code")?.trim().toUpperCase() ?? "";
+  const region = /^[A-Z0-9]{1,3}$/.test(r) ? r : null;
+  const rawCity = utf8Header(headers.get("cf-ipcity")?.trim() ?? "")
+    .replace(/[\u0000-\u001f\u007f<>"]/g, "")
+    .replace(/\s+/g, " ")
+    .slice(0, 60)
+    .trim();
+  return { country, region, city: rawCity || null };
+}

@@ -109,6 +109,19 @@ export function trafficReport(now: Date, days: RangeDays) {
     clinicianPages: counts(sql`SELECT path AS label, COUNT(*) AS n, COUNT(DISTINCT day || visitor) AS extra FROM analytics_events
       WHERE ${pv} AND (path LIKE '/for-clinicians%' OR path LIKE '/clinic-tools%' OR path LIKE '/clinicians%' OR path = '/h/[token]')
       GROUP BY path ORDER BY n DESC`),
+    // Approximate location (Cloudflare geolocation), unique daily visitors.
+    // Visitors whose location wasn't known are counted apart, not as a row.
+    locations: {
+      countries: counts(sql`SELECT country AS label, COUNT(DISTINCT day || visitor) AS n FROM analytics_events
+        WHERE ${pv} AND country IS NOT NULL GROUP BY country ORDER BY n DESC, label LIMIT 25`),
+      regions: counts(sql`SELECT region || ', ' || country AS label, COUNT(DISTINCT day || visitor) AS n FROM analytics_events
+        WHERE ${pv} AND country IS NOT NULL AND region IS NOT NULL GROUP BY country, region ORDER BY n DESC, label LIMIT 25`),
+      cities: counts(sql`SELECT city || COALESCE(', ' || region, '') || ', ' || country AS label, COUNT(DISTINCT day || visitor) AS n
+        FROM analytics_events WHERE ${pv} AND country IS NOT NULL AND city IS NOT NULL
+        GROUP BY country, region, city ORDER BY n DESC, label LIMIT 25`),
+      located: one(sql`SELECT COUNT(DISTINCT day || visitor) FROM analytics_events WHERE ${pv} AND country IS NOT NULL`),
+      unknown: one(sql`SELECT COUNT(DISTINCT day || visitor) FROM analytics_events WHERE ${pv} AND country IS NULL`),
+    },
     clientErrors: countKind("client_error", from, to),
     // Global Privacy Control / Do Not Track visitors: bare daily counts
     // (opt_out_tallies), not part of any figure above. GPC links skip Sovrn.
@@ -280,6 +293,9 @@ export function trafficCsv(now: Date, days: RangeDays): string {
   add("referrer", t.referrers);
   add("campaign", t.campaigns);
   add("device", t.devices);
+  add("country", t.locations.countries);
+  add("region", t.locations.regions);
+  add("city", t.locations.cities);
   add("retailer_clicks", t.outboundByRetailer);
   add("product_clicks", t.outboundByProduct);
   add("search", t.searchTerms);

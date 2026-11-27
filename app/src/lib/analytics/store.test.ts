@@ -38,10 +38,10 @@ beforeEach(() => {
   db.run(sql`DELETE FROM server_errors`);
 });
 
-function record(body: Record<string, unknown>, ip: string, at = NOW) {
+function record(body: Record<string, unknown>, ip: string, at = NOW, geo?: import("./core").Geo) {
   const e = core.parseEvent(body, HOST);
   assert.ok(e, JSON.stringify(body));
-  store.recordEvent(e, { ip, ua: UA }, at);
+  store.recordEvent(e, { ip, ua: UA, geo }, at);
 }
 
 test("records no IP address, only a daily hash", () => {
@@ -150,4 +150,20 @@ test("GPC / Do Not Track visitors: only a daily count of page views and clicks, 
   assert.equal(Object.fromEntries(t.kpis.map((k) => [k.label, k.value])).Pageviews, 0, "not mixed into tracked figures");
   store.purgeAnalytics(NOW);
   assert.equal(db.all(sql`SELECT * FROM opt_out_tallies WHERE day = '2025-01-01'`).length, 0, "purged with the statistics");
+});
+
+test("visitor locations: coarse geo only, counted per unique daily visitor", () => {
+  const austin = { country: "US", region: "TX", city: "Austin" };
+  record({ kind: "pageview", path: "/" }, "1.1.1.1", NOW, austin);
+  record({ kind: "pageview", path: "/browse" }, "1.1.1.1", NOW, austin);
+  record({ kind: "pageview", path: "/" }, "2.2.2.2", NOW, { country: "CA", region: "ON", city: "Toronto" });
+  record({ kind: "pageview", path: "/" }, "3.3.3.3", NOW, { country: "US", region: "TX", city: null });
+  record({ kind: "pageview", path: "/" }, "4.4.4.4");
+  const l = report.trafficReport(NOW, 7).locations;
+  assert.deepEqual(l.countries, [{ label: "US", n: 2 }, { label: "CA", n: 1 }]);
+  assert.deepEqual(l.regions, [{ label: "TX, US", n: 2 }, { label: "ON, CA", n: 1 }]);
+  assert.deepEqual(l.cities, [{ label: "Austin, TX, US", n: 1 }, { label: "Toronto, ON, CA", n: 1 }]);
+  assert.equal(l.located, 3);
+  assert.equal(l.unknown, 1);
+  assert.match(report.trafficCsv(NOW, 7), /\ncity,"Austin, TX, US",1,\n/);
 });

@@ -1,8 +1,8 @@
 import { NextResponse, after } from "next/server";
 import { cookies } from "next/headers";
 import { rateLimit, readJsonBody } from "@/lib/api-guard";
-import { clientIp } from "@/lib/anti-scrape";
-import { isBot, optOutSignal, parseEvent, tallyKind } from "@/lib/analytics/core";
+import { clientIp, viaCloudflare } from "@/lib/anti-scrape";
+import { geoFromHeaders, isBot, optOutSignal, parseEvent, tallyKind } from "@/lib/analytics/core";
 import { recordEvent, tallyOptOut } from "@/lib/analytics/store";
 import { ADMIN_COOKIE, isAdminCookie } from "@/lib/admin-auth";
 import { buildServerEvent, metaConfig, metaEventFromBeacon, sendMetaEvent } from "@/lib/meta-capi";
@@ -19,6 +19,10 @@ import { siteUrl } from "@/lib/site-url";
 // a "meta" object (lib/meta-client.ts); those become Conversions API events,
 // sent after the response (lib/meta-capi.ts). Opted-out, bot and admin
 // beacons return above before that point.
+//
+// Location is the approximate country / region / city Cloudflare adds to the
+// request (geoFromHeaders), believed only when the request came through
+// Cloudflare. The IP itself is never stored.
 export async function POST(request: Request) {
   const done = new NextResponse(null, { status: 204, headers: { "Cache-Control": "no-store" } });
   if (rateLimit(request, "beacon", 120, 60_000)) return done;
@@ -43,7 +47,7 @@ export async function POST(request: Request) {
   if (!event) return done;
   const ip = clientIp(request.headers);
   try {
-    recordEvent(event, { ip: ip ?? "unknown", ua });
+    recordEvent(event, { ip: ip ?? "unknown", ua, geo: geoFromHeaders(request.headers, viaCloudflare(request.headers)) });
   } catch (err) {
     console.error("[analytics] record failed:", (err as Error).message);
   }

@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CheckCircle2, ShieldAlert } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { CopyTextButton } from "@/components/copy-text-button";
 import { ALLERGEN_GROUPS, allergenLabel, getAllergen } from "@/db/contact-allergens";
@@ -46,30 +46,26 @@ function selectedIds(s: Search): string[] {
 }
 
 export default async function VehicleFinderPage({ searchParams }: { searchParams: Promise<Search> }) {
-  if (!FEATURES.RX_CATALOG || !FEATURES.HANDOUTS) notFound();
+  // Open to anyone (Michael, 2026-11-27): label facts, no sign-in. Still off
+  // until FEATURE_RX_CATALOG is on. Only the links to the full /rx reference
+  // pages stay for verified clinicians, since those pages 404 for everyone else.
+  if (!FEATURES.RX_CATALOG) notFound();
   const s = await searchParams;
-  const allowed = await canViewRxReference();
+  const rxLinks = await canViewRxReference();
 
   return (
     <div className="mx-auto max-w-5xl space-y-8 px-4 py-10">
       <PageHeader
         eyebrow="Clinic tools"
         title="Prescribe-safe finder"
-        description="Pick a patient's contact allergens and see which topical prescriptions list none of them, in the vehicle or the active, label by label. Nothing about the patient is stored."
+        description="Pick a patient's contact allergens and see which topical prescriptions list none of them, in the vehicle or the active, label by label. Free, no sign-in, and nothing about the patient is stored. Label facts to discuss with the prescriber, not a recommendation."
       />
-      {allowed ? <Finder s={s} /> : (
-        <div className="space-y-3 rounded-2xl border bg-card p-6">
-          <p>Prescription label data is for verified clinicians. Sign in with your email and NPI to use the finder.</p>
-          <Link href="/clinicians" className={buttonVariants({ className: "rounded-full" })}>
-            Sign in as a clinician
-          </Link>
-        </div>
-      )}
+      <Finder s={s} rxLinks={rxLinks} />
     </div>
   );
 }
 
-function Finder({ s }: { s: Search }) {
+function Finder({ s, rxLinks }: { s: Search; rxLinks: boolean }) {
   const rows = loadVehicleRows();
   const ids = selectedIds(s);
   const potency = Number(s.p) >= 1 && Number(s.p) <= 7 ? Number(s.p) : undefined;
@@ -166,7 +162,11 @@ function Finder({ s }: { s: Search }) {
                       <li key={r.id} className="flex flex-col gap-2 rounded-xl bg-muted/40 p-3 sm:flex-row sm:items-start sm:justify-between">
                         <div className="min-w-0 space-y-1 text-sm">
                           <p>
-                            <Link href={`/rx/${encodeURIComponent(r.id)}`} className="font-medium hover:underline">{r.brandName}</Link>
+                            {rxLinks ? (
+                              <Link href={`/rx/${encodeURIComponent(r.id)}`} className="font-medium hover:underline">{r.brandName}</Link>
+                            ) : (
+                              <span className="font-medium">{r.brandName}</span>
+                            )}
                             {r.labeler && <span className="text-muted-foreground"> · {r.labeler}</span>}
                             <span className="text-muted-foreground"> · NDC {r.id}</span>
                           </p>

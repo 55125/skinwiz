@@ -40,12 +40,12 @@ export default function ClinicToolsPage() {
       title: "Product review before a visit",
       body: "A waiting-room QR code: patients list every product they use and mark the ones they reacted to. At the visit you scan their code and see actives, listed allergens, doubled-up actives and the ingredients worth suspecting on one page.",
     },
-    ...(FEATURES.HANDOUTS && FEATURES.RX_CATALOG
+    ...(FEATURES.RX_CATALOG
       ? [{
           href: "/clinic-tools/vehicle-finder",
           icon: Pill,
           title: "Prescribe-safe finder",
-          body: "Pick a patient's contact allergens (or paste their avoid-list link) and see which topical prescriptions list none of them in the vehicle or the active, labeler by labeler. For verified clinicians.",
+          body: "Pick a patient's contact allergens (or paste their avoid-list link) and see which topical prescriptions list none of them in the vehicle or the active, labeler by labeler. No sign-in needed.",
         }]
       : []),
     // Starter lists live on the clinician dashboard, which is a 404 while handouts are off.

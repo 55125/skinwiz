@@ -741,6 +741,15 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
             dislikes={profile.dislikes}
           />
 
+          {product.allergenHits !== null && (
+            <p className="text-sm text-muted-foreground">
+              Reacted to this?{" "}
+              <Link href={`/reactions?r=${encodeURIComponent(product.id)}`} className="font-medium text-brand hover:underline" data-track="product:reaction-detective">
+                Find out which ingredient it might be →
+              </Link>
+            </p>
+          )}
+
           <HowToUse label={labelSection} activeGuidance={activeGuidance} formulation={formulationGuidance} />
         </div>
       </div>

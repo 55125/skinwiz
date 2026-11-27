@@ -66,6 +66,7 @@ const RX_CATALOG_CSV = process.env.RX_CATALOG_CSV ?? path.join(REPO_ROOT, "tools
 const RX_LABEL_SECTIONS_CSV = path.join(REPO_ROOT, "tools/catalog_pipeline/output/rx_label_sections.csv");
 // Inactive-ingredient lists from the SPL XML for FDA rows whose catalog CSV
 // row has none (fetch_dailymed_inactive.py). Optional.
+const RX_INACTIVE_CSV = path.join(REPO_ROOT, "tools/catalog_pipeline/output/rx_inactive_ingredients.csv");
 const SPL_INACTIVE_CSV = path.join(REPO_ROOT, "tools/catalog_pipeline/output/dailymed_inactive_ingredients.csv");
 // FDA dosage forms from the SPL XML for DailyMed rows whose catalog row has
 // none (fetch_dailymed_forms.py); the dupe finder matches on form. Optional.
@@ -303,6 +304,7 @@ function addStarterRoutines() {
 }
 
 function reseed() {
+  db.delete(schema.rxVehicles).run();
   db.delete(schema.affiliateLinks).run();
   db.delete(schema.productBarcodes).run();
   db.delete(schema.productIngredients).run();
@@ -580,6 +582,7 @@ function reseed() {
   );
   insertLabelSections();
   insertRxLabelSections();
+  insertRxVehicles(new Set(productBatch.filter((p) => p.isRx).map((p) => p.id)));
   linkPackageImages();
   applyImageOverrides();
   applyProductIdRenames();
@@ -726,6 +729,28 @@ type RxLabelRow = {
   pregnancy: string;
   lactation: string;
 };
+
+// Topical Rx vehicles (fetch_rx_inactive.py) into their own table, matched
+// for allergens and free-from checks like any drug label's inactive list.
+function insertRxVehicles(rxIds: Set<string>) {
+  if (!fs.existsSync(RX_INACTIVE_CSV)) {
+    console.log("  no rx_inactive_ingredients.csv, skipping Rx vehicles (run tools/catalog_pipeline/fetch_rx_inactive.py)");
+    return;
+  }
+  const rows: (typeof schema.rxVehicles.$inferInsert)[] = [];
+  for (const [productId, spl] of groupSplInactive(readCsv<SplInactiveCsvRow>(RX_INACTIVE_CSV))) {
+    if (!rxIds.has(productId)) continue;
+    const inactive = drugInactiveList(null, spl);
+    if (!inactive.text || inactive.parsed.length === 0) continue;
+    const flags = computeFreeFromFlags(inactive.text);
+    const hits = computeAllergenHits(inactive.text);
+    if (!flags || !hits) continue;
+    rows.push({ productId, names: inactive.parsed.map((p) => p.raw), allergenHits: hits, freeFromFlags: flags });
+  }
+  const BATCH = 200;
+  for (let i = 0; i < rows.length; i += BATCH) db.insert(schema.rxVehicles).values(rows.slice(i, i + BATCH)).run();
+  console.log(`  inserted ${rows.length} Rx vehicles (inactive ingredient lists)`);
+}
 
 function insertRxLabelSections() {
   db.delete(schema.rxLabelSections).run();

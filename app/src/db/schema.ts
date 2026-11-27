@@ -519,6 +519,22 @@ export const rxLabelSections = sqliteTable("rx_label_sections", {
   lactation: text("lactation"),
 });
 
+// The vehicle (inactive ingredients) of each topical prescription row, from
+// its SPL XML (tools/catalog_pipeline/fetch_rx_inactive.py), with the same
+// allergen and free-from matching consumer products get. A table of its own
+// so Rx rows stay bare on products (no ingredient memberships or flags that
+// a consumer query could pick up). Read only by the clinician vehicle
+// finder. Catalog data: wiped and reloaded by every seed.
+export const rxVehicles = sqliteTable("rx_vehicles", {
+  productId: text("product_id")
+    .primaryKey()
+    .references(() => products.id, { onDelete: "cascade" }),
+  // the inactive ingredients in label order, as display names
+  names: text("names", { mode: "json" }).$type<string[]>().notNull(),
+  allergenHits: text("allergen_hits", { mode: "json" }).$type<string[]>().notNull(),
+  freeFromFlags: text("free_from_flags", { mode: "json" }).$type<string[]>().notNull(),
+});
+
 // ---------------------------------------------------------------------------
 // Optional email (lib/identity.ts). There are still no accounts or
 // passwords: a person is just a verified email address that one or more

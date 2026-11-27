@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, ClipboardCheck, FilePlus2, ListChecks, ShieldCheck } from "lucide-react";
+import { ArrowRight, ClipboardCheck, FilePlus2, ListChecks, Pill, ShieldCheck, ShoppingBag } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { HandoutLibrary } from "@/components/handout-library";
 import { HANDOUT_CATEGORIES, libraryItems } from "@/db/handout-templates";
@@ -34,6 +34,20 @@ export default function ClinicToolsPage() {
       title: "Patch-test reader",
       body: "For MAs: tap each chamber to grade it, then copy a ready-to-chart write-up and hand the patient a QR code. Already read? Tick the positives and print a one-page sheet instead.",
     },
+    {
+      href: "/clinic-tools/product-review",
+      icon: ShoppingBag,
+      title: "Product review before a visit",
+      body: "A waiting-room QR code: patients list every product they use and mark the ones they reacted to. At the visit you scan their code and see actives, listed allergens, doubled-up actives and the ingredients worth suspecting on one page.",
+    },
+    ...(FEATURES.HANDOUTS && FEATURES.RX_CATALOG
+      ? [{
+          href: "/clinic-tools/vehicle-finder",
+          icon: Pill,
+          title: "Prescribe-safe finder",
+          body: "Pick a patient's contact allergens (or paste their avoid-list link) and see which topical prescriptions list none of them in the vehicle or the active, labeler by labeler. For verified clinicians.",
+        }]
+      : []),
     // Starter lists live on the clinician dashboard, which is a 404 while handouts are off.
     ...(FEATURES.HANDOUTS
       ? [{ href: "/clinicians#lists", icon: ListChecks, title: "Starter lists", body: "Save your practice's standard avoid lists (for example, fragrance-allergic) and issue them in one click." }]

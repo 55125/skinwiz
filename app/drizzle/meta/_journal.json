@@ -225,6 +225,13 @@
       "when": 1795752204258,
       "tag": "0031_analytics_geo",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "6",
+      "when": 1795760301693,
+      "tag": "0032_rx_vehicles",
+      "breakpoints": true
     }
   ]
 }

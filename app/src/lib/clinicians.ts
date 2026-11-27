@@ -40,8 +40,19 @@ export const isVerified = (c: Clinician | null | undefined): boolean => !!c?.ver
  * A patient still sees the Rx steps their own clinician put in their plan.
  */
 export async function canViewRxReference(): Promise<boolean> {
+  // (The /rx index and the handout builder's Rx search: the browsable side.)
   if (!FEATURES.RX_CATALOG || !FEATURES.HANDOUTS) return false;
   return isVerified((await currentClinician()).clinician);
+}
+
+/**
+ * One prescription page (/rx/[id]) by direct link, search or barcode: open to
+ * everyone while FEATURE_RX_CATALOG is on (Michael, 2026-11-27). Prescription
+ * rows still never appear in browse, concern or ingredient listings, the
+ * sitemap or the /rx index for non-clinicians; the pages are noindex.
+ */
+export function canViewRxPage(): boolean {
+  return FEATURES.RX_CATALOG;
 }
 
 /** "Dr. Adams, MD" / "Jane Smith, PA-C" -- for the badge, print sheet and chart. */

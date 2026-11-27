@@ -12,7 +12,7 @@ export const SEARCH_HINTS: Record<SearchHint, { title: string; body: string; hre
   },
   "rx-retinoid": {
     title: "Using a prescription retinoid?",
-    body: "Prescription medicines like tretinoin aren't in our product catalog, and we don't give directions for them: your prescriber does. Our guide covers the everyday products that usually pair well with one, and what to space out.",
+    body: "We don't sell or give directions for prescription medicines like tretinoin: your prescriber does. Our guide covers the everyday products that usually pair well with one, and what to space out.",
     href: "/guide/prescription-retinoids",
     cta: "Read the prescription retinoid guide",
   },

@@ -11,7 +11,7 @@ import { POTENCY_LABEL, ROMAN, type PotencyClass } from "@/db/steroid-potency";
 import { RX_GROUPS, rxGroupLabel } from "@/db/rx";
 import { decodeImportCode } from "@/lib/avoid-import";
 import { normalizeAvoidId } from "@/lib/avoid-shared";
-import { canViewRxReference } from "@/lib/clinicians";
+import { canViewRxPage } from "@/lib/clinicians";
 import { FEATURES } from "@/lib/feature-flags";
 import { findVehicles, formWord, vehicleChartNote } from "@/lib/vehicle-finder";
 import { loadVehicleRows } from "@/lib/vehicle-finder-data";
@@ -47,11 +47,10 @@ function selectedIds(s: Search): string[] {
 
 export default async function VehicleFinderPage({ searchParams }: { searchParams: Promise<Search> }) {
   // Open to anyone (Michael, 2026-11-27): label facts, no sign-in. Still off
-  // until FEATURE_RX_CATALOG is on. Only the links to the full /rx reference
-  // pages stay for verified clinicians, since those pages 404 for everyone else.
+  // until FEATURE_RX_CATALOG is on, which also opens the /rx/[id] pages it links to.
   if (!FEATURES.RX_CATALOG) notFound();
   const s = await searchParams;
-  const rxLinks = await canViewRxReference();
+  const rxLinks = canViewRxPage();
 
   return (
     <div className="mx-auto max-w-5xl space-y-8 px-4 py-10">

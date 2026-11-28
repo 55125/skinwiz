@@ -172,6 +172,12 @@ export const products = sqliteTable("products", {
   // US topical steroid potency class 1 (superpotent) .. 7, from
   // db/steroid-potency.ts; null = not a steroid, or unclassified.
   steroidPotencyClass: integer("steroid_potency_class"),
+  // Set when the NDC directory's listed strength disagreed with the FDA
+  // Orange Book (tools/catalog_pipeline/check_rx_strengths.py):
+  // "corrected" = strengthText is the confirmed approved strength and
+  // listed is what the labeler keyed; "unverified" = shown as listed, with a
+  // check-the-label note. Null = matched, or nothing to check against.
+  rxStrengthCheck: text("rx_strength_check", { mode: "json" }).$type<{ status: "corrected" | "unverified"; listed: string; approved: string; source: string } | null>(),
   // Isotretinoin: a reference page only, never addable to a handout (iPLEDGE).
   informationalOnly: integer("informational_only", { mode: "boolean" }).notNull().default(false),
   // Set on a duplicate listing only: the id of the product it is the same
@@ -517,6 +523,22 @@ export const rxLabelSections = sqliteTable("rx_label_sections", {
   warnings: text("warnings"),
   pregnancy: text("pregnancy"),
   lactation: text("lactation"),
+});
+
+// The vehicle (inactive ingredients) of each topical prescription row, from
+// its SPL XML (tools/catalog_pipeline/fetch_rx_inactive.py), with the same
+// allergen and free-from matching consumer products get. A table of its own
+// so Rx rows stay bare on products (no ingredient memberships or flags that
+// a consumer query could pick up). Read only by the clinician vehicle
+// finder. Catalog data: wiped and reloaded by every seed.
+export const rxVehicles = sqliteTable("rx_vehicles", {
+  productId: text("product_id")
+    .primaryKey()
+    .references(() => products.id, { onDelete: "cascade" }),
+  // the inactive ingredients in label order, as display names
+  names: text("names", { mode: "json" }).$type<string[]>().notNull(),
+  allergenHits: text("allergen_hits", { mode: "json" }).$type<string[]>().notNull(),
+  freeFromFlags: text("free_from_flags", { mode: "json" }).$type<string[]>().notNull(),
 });
 
 // ---------------------------------------------------------------------------

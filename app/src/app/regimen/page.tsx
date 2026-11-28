@@ -32,7 +32,7 @@ import { EscalationList } from "@/components/escalation-guidance";
 import { getConcerns } from "@/lib/queries";
 import { cn } from "@/lib/utils";
 import { SITE_NAME } from "@/lib/brand";
-import { canViewRxReference } from "@/lib/clinicians";
+import { canViewRxPage } from "@/lib/clinicians";
 
 export const metadata: Metadata = {
   title: "My products",
@@ -146,7 +146,7 @@ function RegimenTabs({ list, selectedId }: { list: RegimenSummary[]; selectedId:
 export default async function RegimenPage({ searchParams }: { searchParams: Promise<{ r?: string; saved?: string; skipped?: string }> }) {
   const { r, saved, skipped } = await searchParams;
   const sessionId = await readSessionId();
-  const rxLinks = await canViewRxReference();
+  const rxLinks = canViewRxPage();
   const list = sessionId ? listRegimens(sessionId) : [];
   const selected = list.find((x) => String(x.id) === r) ?? list.find((x) => x.active) ?? list[0] ?? null;
 

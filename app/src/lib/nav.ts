@@ -8,6 +8,7 @@ export const INGREDIENT_ITEMS: NavItem[] = [
   { href: "/check", label: "Check an ingredient list", hint: "Paste any label and see what it contains" },
   { href: "/allergens", label: "Allergen guide", hint: "Contact allergens under all their label names" },
   { href: "/compare", label: "Compare products", hint: "Two products side by side" },
+  { href: "/reactions", label: "Reaction Detective", hint: "Which ingredient caused my reaction?" },
 ];
 
 // The personal pages, shown as tabs on each of them. /shelf redirects to

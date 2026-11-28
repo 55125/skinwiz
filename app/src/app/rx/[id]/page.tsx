@@ -5,22 +5,26 @@ import { AlertOctagon, ChevronLeft, ExternalLink, Info, Stethoscope } from "luci
 import { Badge } from "@/components/ui/badge";
 import { RxLabelSection } from "@/components/rx-label-section";
 import { getRxProduct } from "@/lib/queries";
-import { getRxLabel, listRxProducts, rxDisplayName } from "@/lib/rx-catalog";
+import { getRxLabel, listRxProducts, rxDisplayName, rxVehicleMap } from "@/lib/rx-catalog";
+import { variantKey } from "@/lib/rx-browse";
+import { compareMakers, type MakerComparison } from "@/lib/rx-makers";
+import { allergenLabel } from "@/db/contact-allergens";
 import { innermostPackage, marketingCategoryLabel, rxGroupLabel, rxPriceCheckUrl } from "@/db/rx";
 import { POTENCY_LABEL, type PotencyClass } from "@/db/steroid-potency";
 import { displayManufacturer } from "@/lib/format";
 import { SITE_NAME } from "@/lib/brand";
-import { canViewRxReference } from "@/lib/clinicians";
+import { canViewRxPage } from "@/lib/clinicians";
 import { DAILYMED_IMAGE_CAPTION, isDailymedImageUrl, productImageAlt, thumbnailUrl } from "@/lib/image-urls";
 
 // Prescription reference page: what the FDA label says, never a
-// recommendation. Verified clinicians only (lib/clinicians.ts canViewRxReference;
-// 404 for everyone else), noindex, no
+// recommendation. Open to anyone with the link, a search or a barcode while
+// FEATURE_RX_CATALOG is on (lib/clinicians.ts canViewRxPage; 404 otherwise);
+// so is the /rx browse. Noindex, no
 // JSON-LD, no affiliate or buy link -- only a plain "check prices" search.
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
-  const p = (await canViewRxReference()) ? getRxProduct(decodeURIComponent(id)) : undefined;
+  const p = canViewRxPage() ? getRxProduct(decodeURIComponent(id)) : undefined;
   if (!p) return { robots: { index: false, follow: false } };
   return {
     title: `${rxDisplayName(p)} (prescription)`,
@@ -30,7 +34,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 }
 
 export default async function RxProductPage({ params }: { params: Promise<{ id: string }> }) {
-  if (!(await canViewRxReference())) notFound();
+  if (!canViewRxPage()) notFound();
   const { id } = await params;
   const p = getRxProduct(decodeURIComponent(id));
   if (!p) notFound();
@@ -41,7 +45,21 @@ export default async function RxProductPage({ params }: { params: Promise<{ id: 
   const generic = p.genericName ?? p.brandName;
   // Other strengths and forms of the same generic, one link each.
   const siblings = new Map<string, { id: string; name: string }>();
-  for (const r of listRxProducts()) {
+  const all = listRxProducts();
+  // Every maker's listing of this same medicine, strength and vehicle, with its inactive ingredients.
+  const vehicles = rxVehicleMap();
+  const key = variantKey(p);
+  const sameVariant = all.filter((r) => !r.canonicalId && (r.id === p.id || variantKey(r) === key));
+  const makers = compareMakers(
+    sameVariant.map((r) => ({
+      id: r.id,
+      labeler: r.manufacturer ? displayManufacturer(r.manufacturer) : r.brandName,
+      brandName: r.brandName,
+      names: vehicles.get(r.id)?.names ?? null,
+      allergenHits: vehicles.get(r.id)?.allergenHits ?? null,
+    })),
+  );
+  for (const r of all) {
     if (r.id === p.id || r.genericName !== p.genericName) continue;
     const name = rxDisplayName(r);
     if (name !== rxDisplayName(p) && !siblings.has(name)) siblings.set(name, { id: r.id, name });
@@ -50,7 +68,7 @@ export default async function RxProductPage({ params }: { params: Promise<{ id: 
   return (
     <div className="mx-auto max-w-4xl space-y-8 px-4 py-10">
       <Link href="/rx" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
-        <ChevronLeft className="h-4 w-4" /> Prescription reference
+        <ChevronLeft className="h-4 w-4" /> Prescription medicines
       </Link>
 
       {/* Package label image (DailyMed, via the image sync) helps match the
@@ -116,7 +134,20 @@ export default async function RxProductPage({ params }: { params: Promise<{ id: 
       )}
 
       <section className="grid gap-3 sm:grid-cols-2">
-        <Fact label="Strength">{p.strengthText ?? "Not listed"}</Fact>
+        <Fact label="Strength">
+          {p.strengthText ?? "Not listed"}
+          {p.rxStrengthCheck?.status === "corrected" && (
+            <span className="block text-xs text-muted-foreground">
+              Corrected: the FDA drug listing says &ldquo;{p.rxStrengthCheck.listed}&rdquo;, a unit slip. FDA approved {p.rxStrengthCheck.approved} for this
+              product{p.rxStrengthCheck.source.includes("label") ? ", and the label text agrees" : ""}.
+            </span>
+          )}
+          {p.rxStrengthCheck?.status === "unverified" && (
+            <span className="block text-xs text-amber-700 dark:text-amber-400">
+              We couldn&apos;t confirm the listed strength (&ldquo;{p.rxStrengthCheck.listed}&rdquo;) against the FDA approval ({p.rxStrengthCheck.approved}). Check the package label.
+            </span>
+          )}
+        </Fact>
         <Fact label="Form">{(p.dosageForm ?? "Not listed").toLowerCase()}</Fact>
         {potency && (
           <Fact label="Steroid potency">
@@ -154,6 +185,8 @@ export default async function RxProductPage({ params }: { params: Promise<{ id: 
         </a>
         <p className="text-xs text-muted-foreground">A plain search on GoodRx. Not an affiliate link: we earn nothing from it.</p>
       </section>
+
+      {makers.makers.some((m) => m.names) && <MakersSection c={makers} currentId={p.id} display={rxDisplayName(p)} />}
 
       {siblings.size > 0 && (
         <section className="space-y-2">
@@ -199,5 +232,91 @@ function Fact({ label, children }: { label: string; children: React.ReactNode })
       <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">{label}</p>
       <div className="mt-0.5 text-sm font-medium">{children}</div>
     </div>
+  );
+}
+
+function MakersSection({ c, currentId, display }: { c: MakerComparison; currentId: string; display: string }) {
+  const name = (id: string) => (id === "fragrance" ? "fragrance" : (allergenLabel(id) ?? id));
+  const makerOf = new Map(c.makers.map((m) => [m.id, m.labeler]));
+  const known = c.makers.filter((m) => m.names).length;
+  const several = c.makers.length > 1;
+  const labelers = new Set(c.makers.map((m) => m.labeler)).size;
+  const who = (ids: string[]) => [...new Set(ids.map((id) => makerOf.get(id)))].join(", ");
+  return (
+    <section id="makers" className="scroll-mt-20 space-y-4 rounded-2xl border bg-card p-4" aria-labelledby="makers-h">
+      <div className="space-y-1">
+        <h2 id="makers-h" className="font-semibold">{several ? "Inactive ingredients by maker" : "Inactive ingredients"}</h2>
+        <p className="text-sm text-muted-foreground">
+          {several
+            ? `${c.makers.length} listings of ${display.toLowerCase()} from ${labelers} maker${labelers === 1 ? "" : "s"}. The active is the same, but each maker picks its own base, so the inactive ingredients, and the contact allergens in them, can differ. A pharmacy may fill any of them unless the prescription says "dispense as written".`
+            : "What this label lists besides the active ingredient."}
+        </p>
+      </div>
+
+      {several && c.allergens.length > 0 && (
+        <div className="space-y-2">
+          <h3 className="text-sm font-medium">Allergens that differ between makers</h3>
+          <ul className="space-y-1.5 text-sm">
+            {c.allergens.map((a) => (
+              <li key={a.id}>
+                <span className="font-medium">{name(a.id)}</span>
+                <span className="text-amber-800 dark:text-amber-300"> in {who(a.inIds)}</span>
+                <span className="text-muted-foreground">; not in {who(a.notInIds)}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {several && known > 1 && c.allergens.length === 0 && (
+        <p className="text-sm">Every maker with a list on file lists the same contact allergens{c.makers[0].allergenHits?.length ? "" : " (none)"}.</p>
+      )}
+
+      <ul className="divide-y text-sm">
+        {c.makers.map((m) => (
+          <li key={m.id} className="space-y-1 py-2.5">
+            <p>
+              {m.id === currentId ? (
+                <span className="font-medium">{m.labeler}</span>
+              ) : (
+                <Link href={`/rx/${encodeURIComponent(m.id)}#makers`} className="font-medium hover:underline">{m.labeler}</Link>
+              )}
+              <span className="text-muted-foreground"> · {m.brandName} · NDC {m.id}{m.id === currentId ? " · this page" : ""}</span>
+            </p>
+            {!m.names ? (
+              <p className="text-xs text-muted-foreground">No inactive ingredient list on file.</p>
+            ) : (
+              <>
+                <p className="flex flex-wrap gap-1.5">
+                  {(m.allergenHits ?? []).length === 0 ? (
+                    <span className="text-xs text-emerald-700 dark:text-emerald-400">No common contact allergen listed</span>
+                  ) : (
+                    m.allergenHits!.map((id) => (
+                      <Badge key={id} variant="outline" className="font-normal">{name(id)}</Badge>
+                    ))
+                  )}
+                </p>
+                <details>
+                  <summary className="cursor-pointer text-xs text-muted-foreground">
+                    {several && known > 1 ? `Only in this version (${m.distinctive.length})` : `All ${m.names.length} inactive ingredients`}
+                  </summary>
+                  <p className="pt-1 text-xs [overflow-wrap:anywhere]">{(several && known > 1 ? m.distinctive : m.names).join(", ") || "Nothing beyond the shared list."}</p>
+                </details>
+              </>
+            )}
+          </li>
+        ))}
+      </ul>
+
+      {several && known > 1 && c.shared.length > 0 && (
+        <details className="text-sm">
+          <summary className="cursor-pointer text-muted-foreground">In every version ({c.shared.length})</summary>
+          <p className="pt-1 text-xs [overflow-wrap:anywhere]">{c.shared.join(", ")}</p>
+        </details>
+      )}
+      <p className="text-xs text-muted-foreground">
+        From each maker&apos;s FDA label. A label can change, and a trace below labeling thresholds isn&apos;t excluded. Checking a patient&apos;s patch-test list?{" "}
+        <Link href="/clinic-tools/vehicle-finder" className="font-medium text-brand hover:underline">Prescribe-safe finder →</Link>
+      </p>
+    </section>
   );
 }

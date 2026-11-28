@@ -8,8 +8,13 @@
 //                               /guide/pregnancy-breastfeeding
 //   FEATURE_ESCALATION=on       "When OTC isn't enough" guidance on concern,
 //                               regimen and shelf pages
-//   FEATURE_RX_CATALOG=on       prescription reference pages (/rx, /rx/[id]),
-//                               noindex; off = 404 (review/rx-handouts-review.html)
+//   FEATURE_RX_CATALOG=on       prescription mode: each /rx/[id] reference
+//                               page (noindex) by direct link, by /search
+//                               (its own "Prescription medicines" section)
+//                               or a scanned barcode/NDC, for anyone; the
+//                               /rx index and handout Rx search stay for
+//                               verified clinicians; the Prescribe-safe
+//                               finder; off = all 404 (review/rx-handouts-review.html)
 //   FEATURE_HANDOUTS=on         clinician sign-in, NPI verification, the
 //                               handout builder, dashboard, /h/[token] claim
 //                               links and clinician-issued regimens; off = 404

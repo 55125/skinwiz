@@ -24,6 +24,9 @@ import { AllergenSearchHint } from "@/components/allergen-search-hint";
 import { allergensInQuery } from "@/lib/allergen-search";
 import { parseSearch } from "@/lib/search-terms";
 import { SearchBeacon } from "@/components/analytics-beacon";
+import { canViewRxPage } from "@/lib/clinicians";
+import { lookupRxByCode, rxDisplayName, searchRxPublic, type RxProduct } from "@/lib/rx-catalog";
+import { rxGroupLabel } from "@/db/rx";
 
 export async function generateMetadata({
   searchParams,
@@ -50,6 +53,12 @@ export default async function SearchPage({
   // a code several listings share lists just those (lib/product-codes.ts).
   const codeMatches = query ? lookupProductsByCode(query) : null;
   if (codeMatches?.length === 1) redirect(`/product/${encodeURIComponent(codeMatches[0].id)}`);
+  // Prescription medicines are reachable by search and barcode only (never
+  // browse listings) while FEATURE_RX_CATALOG is on: a scanned prescription
+  // box goes straight to its reference page.
+  const rxOn = canViewRxPage();
+  const rxCodeMatches = rxOn && codeMatches ? lookupRxByCode(query) : [];
+  if (codeMatches?.length === 0 && rxCodeMatches.length === 1) redirect(`/rx/${encodeURIComponent(rxCodeMatches[0].id)}`);
   const freeFromIds = parseFreeParam(free);
   const selectedTier = TRUST_TIERS.find((t) => t.label === tier);
   const concerns = getConcerns();
@@ -57,6 +66,7 @@ export default async function SearchPage({
   const origin = parseOrigin(fromParam);
   const searchFilters = { concernId: concern, dataSources: selectedTier?.dataSources, freeFromIds, origin };
   const keyword = codeMatches ? "" : query;
+  const rxResults = rxOn ? (keyword ? searchRxPublic(keyword) : rxCodeMatches) : [];
   const activeResults = keyword ? searchActives(keyword) : [];
   // Sold in the US first; imported brands and likely-discontinued products
   // in their own sections below (lib/availability-rules.ts), each fetched
@@ -99,7 +109,7 @@ export default async function SearchPage({
       <SearchHints hints={hints} />
       <AllergenSearchHint allergens={queryAllergens} />
 
-      {codeMatches && codeMatches.length === 0 && (
+      {codeMatches && codeMatches.length === 0 && rxResults.length === 0 && (
         <div className="space-y-1 rounded-2xl border border-dashed p-10 text-center text-muted-foreground">
           <p>No product in our catalog has the code &quot;{query}&quot;.</p>
           <p className="text-sm">
@@ -118,7 +128,9 @@ export default async function SearchPage({
         </div>
       )}
 
-      {keyword && activeResults.length === 0 && productTotal === 0 && hints.length === 0 && queryAllergens.length === 0 && (
+      {rxResults.length > 0 && <RxResults rows={rxResults} />}
+
+      {keyword && activeResults.length === 0 && productTotal === 0 && rxResults.length === 0 && hints.length === 0 && queryAllergens.length === 0 && (
         <div className="rounded-2xl border border-dashed p-10 text-center text-muted-foreground">
           No results for &quot;{query}&quot;.
         </div>
@@ -228,5 +240,36 @@ export default async function SearchPage({
         .
       </p>
     </div>
+  );
+}
+
+// Prescription matches, apart from the product results: reference pages only,
+// no buy links, no filters.
+function RxResults({ rows }: { rows: RxProduct[] }) {
+  return (
+    <section aria-labelledby="search-rx" className="space-y-3">
+      <div className="space-y-1">
+        <h2 id="search-rx" className="text-xl font-semibold">
+          Prescription medicines{" "}
+          <span className="text-base font-normal tabular-nums text-muted-foreground">{rows.length}</span>
+        </h2>
+        <p className="text-sm text-muted-foreground">
+          What the FDA label says. These need a prescription: ask your dermatologist.{" "}
+          <Link href="/rx" className="font-medium text-brand hover:underline">Browse all prescription medicines →</Link>
+        </p>
+      </div>
+      <ul className="grid gap-2 sm:grid-cols-2">
+        {rows.map((r) => (
+          <li key={r.id}>
+            <Link href={`/rx/${encodeURIComponent(r.id)}`} className="block rounded-xl border bg-card p-3 hover:border-brand/50">
+              <span className="block font-medium">{rxDisplayName(r)}</span>
+              <span className="block text-xs text-muted-foreground">
+                {r.brandName} · {rxGroupLabel(r.rxGroup)} · Prescription only
+              </span>
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }

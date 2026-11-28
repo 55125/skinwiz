@@ -86,7 +86,7 @@ import { DiscontinuedBanner } from "@/components/discontinued-banner";
 import { availabilityOf } from "@/lib/availability";
 import { regulatoryStatusFor } from "@/db/regulatory-status";
 import { BannedIngredientsBox } from "@/components/regulatory-note";
-import { canViewRxReference } from "@/lib/clinicians";
+import { canViewRxPage } from "@/lib/clinicians";
 import { isAmazonLink, manualLinkHref, manualLinkLabel } from "@/lib/manual-links";
 import { headers } from "next/headers";
 import { gpcEnabled } from "@/lib/gpc";
@@ -154,9 +154,9 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
     // An old id (db/product-id-renames.ts) moves to the product's address now.
     const renamed = renamedProductId(decodeURIComponent(id));
     if (renamed) permanentRedirect(`/product/${encodeURIComponent(renamed)}`);
-    // Prescription rows have no consumer product page; a verified clinician
-    // is sent to the Rx reference page instead, everyone else gets a 404.
-    if (getRxProduct(decodeURIComponent(id)) && (await canViewRxReference())) redirect(`/rx/${encodeURIComponent(decodeURIComponent(id))}`);
+    // Prescription rows have no consumer product page: they go to the Rx
+    // reference page while prescription pages are on, else a 404.
+    if (getRxProduct(decodeURIComponent(id)) && canViewRxPage()) redirect(`/rx/${encodeURIComponent(decodeURIComponent(id))}`);
     notFound();
   }
   // A merged duplicate listing (lib/canonical.ts) is the same product as its
@@ -740,6 +740,15 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
             likes={profile.likes}
             dislikes={profile.dislikes}
           />
+
+          {product.allergenHits !== null && (
+            <p className="text-sm text-muted-foreground">
+              Reacted to this?{" "}
+              <Link href={`/reactions?r=${encodeURIComponent(product.id)}`} className="font-medium text-brand hover:underline" data-track="product:reaction-detective">
+                Find out which ingredient it might be →
+              </Link>
+            </p>
+          )}
 
           <HowToUse label={labelSection} activeGuidance={activeGuidance} formulation={formulationGuidance} />
         </div>

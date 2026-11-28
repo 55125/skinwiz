@@ -314,19 +314,20 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
   const hasFullList = fullList.items.length > 0 || !!fullList.fallbackText;
   const otherNotes = evidenceNotes.filter((n) => !strengthRows.some((r) => r.id === n.activeId));
 
+  // Only with fresh prices (lib/seo.ts productLd says why).
+  const productLdData = productLd({
+    url: `${siteUrl()}/product/${encodeURIComponent(product.id)}`,
+    name: productTitle(product, describeStrengths, displayManufacturer),
+    brand: productBrand(product).brand,
+    description: productDescription(describeForSearch(product), SITE_NAME),
+    image: imageUrl ? (imageUrl.startsWith("/") ? `${siteUrl()}${imageUrl}` : imageUrl) : null,
+    gtin: validGtin(product.id) ? product.id : brandSiteBarcode(product.id),
+    prices: quotes.map((q) => q.price),
+  });
+
   return (
     <div className="mx-auto max-w-5xl space-y-10 px-4 py-8 sm:py-10">
-      <JsonLd
-        data={productLd({
-          url: `${siteUrl()}/product/${encodeURIComponent(product.id)}`,
-          name: productTitle(product, describeStrengths, displayManufacturer),
-          brand: productBrand(product).brand,
-          description: productDescription(describeForSearch(product), SITE_NAME),
-          image: imageUrl ? (imageUrl.startsWith("/") ? `${siteUrl()}${imageUrl}` : imageUrl) : null,
-          gtin: validGtin(product.id) ? product.id : brandSiteBarcode(product.id),
-          prices: quotes.map((q) => q.price),
-        })}
-      />
+      {productLdData && <JsonLd data={productLdData} />}
       <JsonLd
         data={breadcrumbLd(siteUrl(), [
           ["Home", "/"],

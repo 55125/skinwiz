@@ -91,10 +91,11 @@ export function productDescription(p: DescribedProduct, siteName: string): strin
   return body.length + 1 + close.length <= MAX_DESCRIPTION ? `${body} ${close}` : clip(body);
 }
 
-// schema.org Product for a product page. Google shows product details in
-// results only with offers, a review or a rating; offers are included only
-// when the page itself shows fresh prices (AggregateOffer across stores).
-// The barcode goes in as gtin only when it is a valid UPC/EAN.
+// schema.org Product for a product page, or null. Google requires offers, a
+// review or a rating on Product markup and flags every page without one as
+// an error in Search Console, so the markup is only emitted when the page
+// shows fresh prices (an AggregateOffer across stores). We have no reviews or
+// ratings Google accepts. The barcode goes in as gtin only when it is a valid UPC/EAN.
 export function productLd(p: {
   url: string;
   name: string;
@@ -105,6 +106,7 @@ export function productLd(p: {
   prices: number[];
 }) {
   const prices = p.prices.filter((x) => Number.isFinite(x) && x > 0);
+  if (!prices.length) return null;
   return {
     "@context": "https://schema.org",
     "@type": "Product",
@@ -114,16 +116,12 @@ export function productLd(p: {
     ...(p.brand ? { brand: { "@type": "Brand", name: p.brand } } : {}),
     ...(p.image ? { image: p.image } : {}),
     ...(p.gtin ? { gtin: p.gtin } : {}),
-    ...(prices.length
-      ? {
-          offers: {
-            "@type": "AggregateOffer",
-            priceCurrency: "USD",
-            lowPrice: Math.min(...prices).toFixed(2),
-            highPrice: Math.max(...prices).toFixed(2),
-            offerCount: prices.length,
-          },
-        }
-      : {}),
+    offers: {
+      "@type": "AggregateOffer",
+      priceCurrency: "USD",
+      lowPrice: Math.min(...prices).toFixed(2),
+      highPrice: Math.max(...prices).toFixed(2),
+      offerCount: prices.length,
+    },
   };
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { linkPrefetch } from "@/lib/prefetch";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { ChevronDown, Menu, Search, UserRound, X } from "lucide-react";
@@ -103,6 +104,7 @@ function NavMenu({
             <Link
               key={item.href}
               href={item.href}
+              prefetch={linkPrefetch(item.href)}
               onClick={() => setOpen(false)}
               aria-current={isActive(pathname, item.href) ? "page" : undefined}
               className={cn(
@@ -189,6 +191,7 @@ function MobileMenu({ pathname, concerns, showSearch }: { pathname: string; conc
     <Link
       key={item.href}
       href={item.href}
+      prefetch={linkPrefetch(item.href)}
       onClick={() => setOpen(false)}
       aria-current={isActive(pathname, item.href) ? "page" : undefined}
       className="rounded-xl px-3 py-2 text-[15px] transition-colors hover:bg-muted aria-[current=page]:bg-brand-soft aria-[current=page]:font-medium aria-[current=page]:text-brand-foreground"

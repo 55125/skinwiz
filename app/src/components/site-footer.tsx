@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { linkPrefetch } from "@/lib/prefetch";
 import { SiteLogo } from "@/components/site-header";
 import { FREE_FROM_CHECKS } from "@/db/ingredient-flags";
 import { SITE_NAME } from "@/lib/brand";
@@ -61,7 +62,7 @@ export function SiteFooter() {
               <ul className="space-y-2 text-sm">
                 {group.links.map((link) => (
                   <li key={link.href}>
-                    <Link href={link.href} className="text-foreground/80 hover:text-foreground">
+                    <Link href={link.href} prefetch={linkPrefetch(link.href)} className="text-foreground/80 hover:text-foreground">
                       {link.label}
                     </Link>
                   </li>

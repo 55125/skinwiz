@@ -168,6 +168,7 @@ export default function Home() {
                 <Link
                   key={c.id}
                   href={`/concern/${c.id}`}
+                  prefetch={false}
                   className="group flex flex-col gap-3 rounded-2xl border bg-card p-4 transition-all hover:-translate-y-0.5 hover:border-brand/40 hover:shadow-lg hover:shadow-brand/5 sm:p-5"
                 >
                   <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-soft text-brand-foreground">

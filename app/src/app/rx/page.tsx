@@ -5,7 +5,8 @@ import { Info } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { listRxProducts } from "@/lib/rx-catalog";
+import { listRxProducts, rxVehicleMap } from "@/lib/rx-catalog";
+import { allergenLabel } from "@/db/contact-allergens";
 import { browseMedicines, type BrowseMedicine } from "@/lib/rx-browse";
 import { formWord } from "@/lib/vehicle-finder";
 import { RX_GROUPS } from "@/db/rx";
@@ -31,7 +32,10 @@ type Search = { q?: string; g?: string; f?: string; p?: string };
 export default async function RxIndexPage({ searchParams }: { searchParams: Promise<Search> }) {
   if (!canViewRxPage()) notFound();
   const s = await searchParams;
-  const rows = listRxProducts().filter((r) => !r.canonicalId);
+  const vehicles = rxVehicleMap();
+  const rows = listRxProducts()
+    .filter((r) => !r.canonicalId)
+    .map((r) => ({ ...r, allergenHits: vehicles.get(r.id)?.allergenHits ?? null }));
   const group = RX_GROUPS.some((g) => g.id === s.g) ? s.g : undefined;
   const forms = [...new Set(rows.map((r) => formWord(r.dosageForm)))].sort();
   const form = forms.includes(s.f ?? "") ? s.f : undefined;
@@ -118,6 +122,12 @@ function MedicineCard({ m }: { m: BrowseMedicine }) {
           {m.forms.join(", ")} · {m.labelers} labeler{m.labelers === 1 ? "" : "s"}
           {m.brands.length > 0 && ` · brand${m.brands.length === 1 ? "" : "s"}: ${m.brands.slice(0, 4).join(", ")}${m.brands.length > 4 ? "…" : ""}`}
         </p>
+        {m.varies.length > 0 && (
+          <p className="text-xs text-amber-800 dark:text-amber-300">
+            Inactive ingredients vary by maker: some versions list {listNames(m.varies.map((id) => (allergenLabel(id) ?? id).replace(/^./, (c) => c.toLowerCase())))}, others don&apos;t.
+            Strengths marked * differ; open one to compare makers.
+          </p>
+        )}
       </div>
       <ul className="flex flex-wrap gap-1.5">
         {shown.map((v) => (
@@ -145,11 +155,12 @@ function MedicineCard({ m }: { m: BrowseMedicine }) {
 function Chip({ v }: { v: BrowseMedicine["variants"][number] }) {
   return (
     <Link
-      href={`/rx/${encodeURIComponent(v.id)}`}
+      href={`/rx/${encodeURIComponent(v.id)}${v.varies.length ? "#makers" : ""}`}
       className="inline-block rounded-full border px-2.5 py-0.5 text-xs hover:border-brand/50 hover:text-brand"
-      title={v.potency ? POTENCY_LABEL[v.potency as PotencyClass] : undefined}
+      title={[v.potency ? POTENCY_LABEL[v.potency as PotencyClass] : "", v.varies.length ? "Inactive ingredients differ between makers" : ""].filter(Boolean).join(". ") || undefined}
     >
       {v.label}
+      {v.varies.length > 0 && <span aria-label="inactive ingredients differ between makers">*</span>}
     </Link>
   );
 }
@@ -168,4 +179,10 @@ function Select({ label, name, value, options }: { label: string; name: string; 
       </select>
     </label>
   );
+}
+
+function listNames(names: string[]): string {
+  const shown = names.slice(0, 3);
+  const more = names.length - shown.length;
+  return more > 0 ? `${shown.join(", ")} and ${more} more` : shown.length > 1 ? `${shown.slice(0, -1).join(", ")} or ${shown.at(-1)}` : shown[0];
 }

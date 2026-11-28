@@ -20,6 +20,8 @@ export type BrowseRow = {
   manufacturer: string | null;
   steroidPotencyClass: number | null;
   informationalOnly: boolean;
+  /** Vehicle allergen ids from the label (rx_vehicles); null/undefined = no inactive list on file. */
+  allergenHits?: string[] | null;
 };
 
 export type BrowseVariant = {
@@ -29,6 +31,8 @@ export type BrowseVariant = {
   id: string;
   potency: number | null;
   labelers: number;
+  /** Allergens only some makers' versions list. */
+  varies: string[];
 };
 
 export type BrowseMedicine = {
@@ -43,7 +47,16 @@ export type BrowseMedicine = {
   /** Strongest and mildest steroid class among the variants (1 = strongest). */
   potency: [number, number] | null;
   informationalOnly: boolean;
+  /** Allergen ids some makers' versions of one strength + vehicle list and others don't. */
+  varies: string[];
 };
+
+/** Allergens in some but not all of these labels (each label's vehicle allergen ids). */
+export function allergensThatVary(hitSets: string[][]): string[] {
+  if (hitSets.length < 2) return [];
+  const all = new Set(hitSets.flat());
+  return [...all].filter((id) => !hitSets.every((h) => h.includes(id))).sort();
+}
 
 export type BrowseFilters = { group?: string; form?: string; potency?: number; q?: string };
 
@@ -70,13 +83,26 @@ function medicineKey(name: string): string {
   return [...new Set(name.split(" ").filter((w) => w && w !== "and" && w !== "with"))].sort().join(" ");
 }
 
+/** Strength + vehicle part of a listing's display name ("0.05% cream"). */
+function variantLabel(r: Pick<BrowseRow, "genericName" | "brandName" | "strengthText" | "dosageForm">): string {
+  const raw = (r.genericName?.trim() || r.brandName).toLowerCase();
+  const full = rxDisplayName(r);
+  return full.toLowerCase().startsWith(raw) ? full.slice(raw.length).trim() || full : full;
+}
+
+/** Same medicine, strength and vehicle, whoever makes it: the listings a maker comparison sets side by side. */
+export function variantKey(r: Pick<BrowseRow, "genericName" | "brandName" | "strengthText" | "dosageForm">): string {
+  const raw = (r.genericName?.trim() || r.brandName).toLowerCase();
+  return `${medicineKey(medicineName(raw) || raw)}|${variantLabel(r).toLowerCase()}`;
+}
+
 const firstNumber = (s: string) => Number(s.match(/\d*\.?\d+/)?.[0] ?? Infinity);
 const title = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 /** One card per generic (case-folded) within a group, filtered, A to Z (steroids: strongest first). */
 export function browseMedicines(rows: BrowseRow[], f: BrowseFilters = {}): BrowseMedicine[] {
   const q = f.q?.trim().toLowerCase();
-  const meds = new Map<string, { m: BrowseMedicine; names: Map<string, number>; labelers: Set<string>; variants: Map<string, BrowseVariant & { nda: boolean; makers: Set<string> }> }>();
+  const meds = new Map<string, { m: BrowseMedicine; names: Map<string, number>; labelers: Set<string>; variants: Map<string, BrowseVariant & { nda: boolean; makers: Set<string>; hitSets: string[][] }> }>();
   for (const r of rows) {
     const group = r.rxGroup ?? "other";
     if (f.group && group !== f.group) continue;
@@ -89,7 +115,7 @@ export function browseMedicines(rows: BrowseRow[], f: BrowseFilters = {}): Brows
     let e = meds.get(key);
     if (!e) {
       e = {
-        m: { key, name: title(generic), rxGroup: group, variants: [], forms: [], brands: [], labelers: 0, potency: null, informationalOnly: false },
+        m: { key, name: title(generic), rxGroup: group, variants: [], forms: [], brands: [], labelers: 0, potency: null, informationalOnly: false, varies: [] },
         names: new Map(),
         labelers: new Set(),
         variants: new Map(),
@@ -105,13 +131,13 @@ export function browseMedicines(rows: BrowseRow[], f: BrowseFilters = {}): Brows
     const nda = r.marketingCategory === "NDA";
     const brand = r.brandName.trim();
     if (nda && brand.toLowerCase() !== generic && !e.m.brands.some((b) => b.toLowerCase() === brand.toLowerCase())) e.m.brands.push(brand);
-    const full = rxDisplayName(r);
-    const label = full.toLowerCase().startsWith(raw) ? full.slice(raw.length).trim() || full : full;
+    const label = variantLabel(r);
     const v = e.variants.get(label.toLowerCase());
     if (!v) {
-      e.variants.set(label.toLowerCase(), { label, id: r.id, potency: r.steroidPotencyClass, labelers: 0, nda, makers: new Set([maker]) });
+      e.variants.set(label.toLowerCase(), { label, id: r.id, potency: r.steroidPotencyClass, labelers: 0, varies: [], nda, makers: new Set([maker]), hitSets: r.allergenHits ? [r.allergenHits] : [] });
     } else {
       v.makers.add(maker);
+      if (r.allergenHits) v.hitSets.push(r.allergenHits);
       if (nda && !v.nda) Object.assign(v, { id: r.id, nda: true });
       if (v.potency == null) v.potency = r.steroidPotencyClass;
     }
@@ -123,10 +149,11 @@ export function browseMedicines(rows: BrowseRow[], f: BrowseFilters = {}): Brows
     m.name = title(best);
     m.labelers = labelers.size;
     m.variants = [...variants.values()]
-      .map(({ label, id, potency, makers }) => ({ label, id, potency, labelers: makers.size }))
+      .map(({ label, id, potency, makers, hitSets }) => ({ label, id, potency, labelers: makers.size, varies: allergensThatVary(hitSets) }))
       .sort((a, b) => (a.potency ?? 9) - (b.potency ?? 9) || firstNumber(a.label) - firstNumber(b.label) || a.label.localeCompare(b.label));
     const classes = m.variants.flatMap((v) => (v.potency ? [v.potency] : []));
     m.potency = classes.length ? [Math.min(...classes), Math.max(...classes)] : null;
+    m.varies = [...new Set(m.variants.flatMap((v) => v.varies))].sort();
     m.forms.sort();
     m.brands.sort();
     out.push(m);

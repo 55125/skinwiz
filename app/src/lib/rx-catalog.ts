@@ -6,7 +6,7 @@
 import { and, asc, eq, inArray, or, sql } from "drizzle-orm";
 import { parseProductCode } from "@/lib/product-codes";
 import { db } from "@/db/client";
-import { products, rxLabelSections } from "@/db/schema";
+import { products, rxLabelSections, rxVehicles } from "@/db/schema";
 import { rxDisplayName } from "@/lib/rx-catalog-pure";
 
 export type RxProduct = typeof products.$inferSelect;
@@ -126,4 +126,17 @@ export function searchRxPublic(q: string, limit = 12): RxProduct[] {
     if (out.length >= limit) break;
   }
   return out;
+}
+
+export type RxVehicle = { names: string[]; allergenHits: string[] };
+
+/** Every Rx label's inactive ingredients and vehicle allergen ids, by product id (rx_vehicles). */
+export function rxVehicleMap(): Map<string, RxVehicle> {
+  return new Map(
+    db
+      .select({ id: rxVehicles.productId, names: rxVehicles.names, hits: rxVehicles.allergenHits })
+      .from(rxVehicles)
+      .all()
+      .map((r) => [r.id, { names: r.names ?? [], allergenHits: r.hits ?? [] }]),
+  );
 }
